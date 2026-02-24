@@ -1,0 +1,11 @@
+[project]
+name = "eaip-scraper"
+version = "0.1.0"
+description = "eAIP Scraper"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "beautifulsoup4>=4.14.3",
+    "requests>=2.32.5",
+    "urllib3>=2.6.3",
+]
