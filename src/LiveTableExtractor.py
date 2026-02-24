@@ -80,19 +80,70 @@ class LiveTableExtractor:
         self.session = session or requests.Session()
         self.parser = TableParser() 
 
-    def extract_section(self, url, section_id, mode="grid"):
-        print(f"\n[*] Fetching target URL: {url} for section {section_id}")
-        
+    def _fetch_soup(self, url):
+        """Fetches a URL and returns the parsed BeautifulSoup object."""
+        print(f"\n[*] Fetching target URL: {url}")
         try:
-            response = self.session.get(url, timeout=10)
+            response = self.session.get(url, timeout=30)
             response.raise_for_status()
         except requests.RequestException as e:
             print(f"[!] Failed to fetch {url}: {e}")
             return None
+        return BeautifulSoup(response.text, 'html.parser')
 
-        soup = BeautifulSoup(response.text, 'html.parser')
-        tables = soup.find_all('table')
+    def extract_all_sections(self, url, target_sections, soup=None):
+        """
+        HIGH-PERFORMANCE BATCH EXTRACTOR: Fetches the page ONCE, then extracts 
+        all requested sections from the same parsed HTML tree.
         
+        Args:
+            url: The airport page URL (used for fetching if soup is not provided).
+            target_sections: List of tuples (search_id, router_key, json_key, mode).
+            soup: Optional pre-fetched BeautifulSoup object.
+            
+        Returns:
+            Dict mapping json_key -> extracted grid for each section found.
+        """
+        if soup is None:
+            soup = self._fetch_soup(url)
+        
+        if soup is None:
+            return {}
+        
+        # Pre-compute the full table list ONCE for all sections
+        tables = soup.find_all('table')
+        results = {}
+        
+        for search_id, router_key, json_key, mode in target_sections:
+            print(f"    -> Extracting Table: {search_id} in {mode.upper()} mode...")
+            grid = self._extract_from_tables(tables, search_id, mode)
+            if grid:
+                results[json_key] = (router_key, grid)
+            else:
+                print(f"    [-] {search_id} not found or empty.")
+        
+        return results
+
+    def extract_section(self, url, section_id, mode="grid", soup=None):
+        """
+        Extracts a single section. Accepts an optional pre-fetched soup 
+        to avoid redundant HTTP requests when called in a loop.
+        """
+        if soup is None:
+            soup = self._fetch_soup(url)
+            print(f"  (fetching for section {section_id})")
+
+        if soup is None:
+            return None
+        
+        tables = soup.find_all('table')
+        return self._extract_from_tables(tables, section_id, mode)
+
+    def _extract_from_tables(self, tables, section_id, mode):
+        """
+        Core extraction logic operating on a pre-computed table list.
+        Separated from I/O so it can be reused by both single and batch extraction.
+        """
         target_index = -1
         
         def get_primary_row_count(tbl):

@@ -10,17 +10,27 @@ class ChartExtractor:
         # or creates a new one if run independently.
         self.session = session or requests.Session()
 
-    def extract_charts(self, parent_url):
-        print(f"[*] Parent Context: Fetching {parent_url}")
+    def extract_charts(self, parent_url, soup=None):
+        """
+        Extracts PDF chart links from the airport page.
         
-        try:
-            response = self.session.get(parent_url, timeout=10)
-            response.raise_for_status()
-        except requests.RequestException as e:
-            print(f"[!] Failed to fetch parent page: {e}")
-            return []
+        Args:
+            parent_url: The airport page URL.
+            soup: Optional pre-fetched BeautifulSoup object. If provided,
+                  skips the HTTP request for the parent page entirely.
+        """
+        if soup is None:
+            print(f"[*] Parent Context: Fetching {parent_url}")
+            try:
+                response = self.session.get(parent_url, timeout=30)
+                response.raise_for_status()
+            except requests.RequestException as e:
+                print(f"[!] Failed to fetch parent page: {e}")
+                return []
+            soup = BeautifulSoup(response.text, 'html.parser')
+        else:
+            print(f"[*] Parent Context: Using cached page for {parent_url}")
 
-        soup = BeautifulSoup(response.text, 'html.parser')
         extracted_charts = []
         
         # Step 1: IFrame Targeting Logic
@@ -41,7 +51,7 @@ class ChartExtractor:
             iframe_url = urljoin(parent_url, safe_src)
             
             try:
-                iframe_response = self.session.get(iframe_url, timeout=10)
+                iframe_response = self.session.get(iframe_url, timeout=30)
                 iframe_response.raise_for_status()
             except requests.RequestException as e:
                 print(f"[!] Failed to fetch iframe {iframe_url}: {e}")

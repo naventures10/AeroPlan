@@ -5,6 +5,9 @@ from requests.adapters import HTTPAdapter
 from src.AIRACResolver import AIRACResolver
 from src.MasterOrchestrator import MasterOrchestrator
 
+# Concurrency tuning: number of parallel airport workers
+MAX_WORKERS = 4
+
 if __name__ == "__main__":
     HOME_URL = "https://aim-india.aai.aero/"
     
@@ -28,7 +31,12 @@ if __name__ == "__main__":
         status_forcelist=[429, 500, 502, 503, 504],
         allowed_methods=["HEAD", "GET", "OPTIONS"]
     )
-    adapter = HTTPAdapter(max_retries=retry_strategy)
+    # Pool size matches worker count for optimal connection reuse under concurrency
+    adapter = HTTPAdapter(
+        max_retries=retry_strategy,
+        pool_connections=MAX_WORKERS + 2,
+        pool_maxsize=MAX_WORKERS + 2
+    )
     master_session.mount("https://", adapter)
     master_session.mount("http://", adapter)
     
@@ -37,7 +45,11 @@ if __name__ == "__main__":
     active_eaip_url = resolver.get_current_eaip_url()
     
     if active_eaip_url:
-        orchestrator = MasterOrchestrator(active_eaip_url, session=master_session)
+        orchestrator = MasterOrchestrator(
+            active_eaip_url, 
+            session=master_session,
+            max_workers=MAX_WORKERS
+        )
         orchestrator.run_pipeline()
     else:
         print("[!] Critical Failure: Could not resolve a valid eAIP target URL. Exiting.")
