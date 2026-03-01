@@ -2,10 +2,10 @@ import requests
 import json
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from src.AIPManifestCreator import AIPManifestCreator
-from src.LiveTableExtractor import LiveTableExtractor
-from src.ChartExtractor import ChartExtractor
-from src.AIPSchemaMapper import AIPSchemaMapper
+from src.scrapper.AIPManifestCreator import AIPManifestCreator
+from src.scrapper.LiveTableExtractor import LiveTableExtractor
+from src.scrapper.ChartExtractor import ChartExtractor
+from src.scrapper.AIPSchemaMapper import AIPSchemaMapper
 
 
 # Section definitions: (search_id, router_key, json_key, mode)
