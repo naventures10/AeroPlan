@@ -123,11 +123,11 @@ class SpatialRouter:
 
 
 class DBLoader:
-    def __init__(self, bucket_name="eaip-raw-data"):
+    def __init__(self, bucket_name="ais"):
         self.s3 = boto3.client('s3',
             endpoint_url='http://localhost:9000',
-            aws_access_key_id='admin',
-            aws_secret_access_key='password',
+            aws_access_key_id='ais_admin',
+            aws_secret_access_key='AviationData2026!',
             region_name='us-east-1'
         )
         self.bucket_name = bucket_name
@@ -231,5 +231,5 @@ class DBLoader:
         print(f"\n[+] Ingestion Complete! Loaded {success_count} airports and {total_features} total spatial points into PostGIS.")
 
 if __name__ == "__main__":
-    loader = DBLoader(bucket_name="eaip-raw-data")
-    loader.load_from_minio(filename="master_aip_data.json")
+    loader = DBLoader(bucket_name="ais")
+    loader.load_from_minio(filename="output/master_aip_data.json")
