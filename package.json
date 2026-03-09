@@ -10,11 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@deck.gl/aggregation-layers": "^9.2.11",
+    "@deck.gl/core": "^9.2.11",
     "@deck.gl/geo-layers": "^9.2.11",
     "@deck.gl/layers": "^9.2.11",
     "@deck.gl/react": "^9.2.11",
+    "@heroui/react": "^2.8.9",
     "@tailwindcss/vite": "^4.2.1",
     "deck.gl": "^9.2.11",
+    "framer-motion": "^12.35.0",
     "lucide-react": "^0.577.0",
     "maplibre-gl": "^5.19.0",
     "react": "^19.2.0",

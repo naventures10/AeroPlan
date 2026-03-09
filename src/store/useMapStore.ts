@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { FlyToInterpolator } from '@deck.gl/core';
+import { FlyToInterpolator, LinearInterpolator } from '@deck.gl/core';
 
 // 1. Define the TypeScript Blueprint
 interface MapState {
@@ -16,7 +16,13 @@ interface MapState {
     };
 
     // UI & App State
-    is3DMode: boolean;
+    viewMode: 'ENROUTE' | 'TERMINAL';
+    setViewMode: (mode: 'ENROUTE' | 'TERMINAL') => void;
+
+    // Metadata for the active aerodrome
+    activeAerodromeMetadata: any | null;
+    setActiveAerodromeMetadata: (data: any) => void;
+
     searchQuery: string;
     activeLayers: {
         waypoints: boolean;
@@ -26,29 +32,36 @@ interface MapState {
 
     activeAirport: string | null;
     setActiveAirport: (code: string | null) => void;
-    setIs3DMode: (is3D: boolean) => void;
 
     // Actions (Functions to change the state)
     setViewState: (viewState: any) => void;
-    toggle3DMode: () => void;
+    toggleViewMode: () => void;
     setSearchQuery: (query: string) => void;
     toggleLayer: (layer: keyof MapState['activeLayers']) => void;
     flyToLocation: (lng: number, lat: number, zoom?: number, pitch?: number) => void;
+    returnToEnroute: () => void;
 }
+
+export const DEFAULT_VIEW = {
+    longitude: 78.9629,
+    latitude: 20.5937,
+    zoom: 4.5,
+    pitch: 0,
+    bearing: 0,
+    maxPitch: 85,
+};
 
 // 2. Initialize the Store
 export const useMapStore = create<MapState>((set, get) => ({
     // Default starting view (High-level India)
-    viewState: {
-        longitude: 78.9629,
-        latitude: 20.5937,
-        zoom: 4.5,
-        pitch: 0,
-        bearing: 0,
-        maxPitch: 85,
-    },
+    viewState: DEFAULT_VIEW,
 
-    is3DMode: false,
+    viewMode: 'ENROUTE',
+    setViewMode: (mode) => set({ viewMode: mode }),
+
+    activeAerodromeMetadata: null,
+    setActiveAerodromeMetadata: (data) => set({ activeAerodromeMetadata: data }),
+
     searchQuery: '',
     activeLayers: {
         waypoints: true,
@@ -60,8 +73,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     activeAirport: null,
     setActiveAirport: (code) => set({ activeAirport: code }),
 
-    setIs3DMode: (is3D) => set({ is3DMode: is3D }),
-
     // Basic Setters
     setViewState: (viewState) => set({ viewState }),
     setSearchQuery: (query) => set({ searchQuery: query }),
@@ -70,17 +81,29 @@ export const useMapStore = create<MapState>((set, get) => ({
             activeLayers: { ...state.activeLayers, [layer]: !state.activeLayers[layer] }
         })),
 
-    // The 2D <-> 3D Toggle Logic
-    toggle3DMode: () => {
-        const { is3DMode, viewState } = get();
-        const newMode = !is3DMode;
+    // The Enroute <-> Terminal Toggle Logic
+    toggleViewMode: () => {
+        const { viewMode, viewState } = get();
+        const newMode = viewMode === 'ENROUTE' ? 'TERMINAL' : 'ENROUTE';
 
         set({
-            is3DMode: newMode,
+            viewMode: newMode,
             viewState: {
                 ...viewState,
-                pitch: newMode ? 45 : 0, // Tilt to 45 degrees if 3D, back to 0 if 2D
-                transitionDuration: 1000, // 1 second smooth animation
+                pitch: newMode === 'TERMINAL' ? 45 : 0, // Tilt to 45 if Terminal, 0 if Enroute
+                transitionDuration: 1000,
+                transitionInterpolator: new LinearInterpolator(['pitch']),
+            }
+        });
+    },
+
+    returnToEnroute: () => {
+        set({
+            viewMode: 'ENROUTE',
+            activeAirport: null,
+            viewState: {
+                ...DEFAULT_VIEW,
+                transitionDuration: 2500,
                 transitionInterpolator: new FlyToInterpolator(),
             }
         });
@@ -89,13 +112,13 @@ export const useMapStore = create<MapState>((set, get) => ({
     // The "Search & Fly" Logic
     flyToLocation: (lng, lat, zoom = 14, pitch = 45) => {
         set({
-            is3DMode: pitch > 0, // Automatically enter 3D mode if pitch is requested
+            viewMode: pitch > 0 ? 'TERMINAL' : 'ENROUTE',
             viewState: {
                 longitude: lng,
                 latitude: lat,
                 zoom: zoom,
                 pitch: pitch,
-                bearing: 0, // You could calculate runway alignment here later!
+                bearing: 0,
                 maxPitch: 85,
                 transitionDuration: 2500, // 2.5 seconds for a long-distance flight
                 transitionInterpolator: new FlyToInterpolator(),
