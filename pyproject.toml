@@ -9,6 +9,7 @@ dependencies = [
     "boto3>=1.42.63",
     "fastapi>=0.135.1",
     "geoalchemy2>=0.18.4",
+    "greenlet>=3.3.2",
     "pydantic>=2.12.5",
     "sqlalchemy>=2.0.48",
     "uvicorn[standard]>=0.41.0",

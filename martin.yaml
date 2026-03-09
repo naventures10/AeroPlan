@@ -1,0 +1,52 @@
+# Martin Tile Server Configuration
+# Docs: https://maplibre.org/martin/config-file.html
+
+postgres:
+  connection_string: postgres://postgres:postgres@host.docker.internal:5432/aeronautical_information_system
+
+  tables:
+
+    significant_points:
+      schema: public
+      table: significant_points
+      id_column: id
+      geometry_column: geom
+      srid: 4326
+
+    spatial_features:
+      schema: public
+      table: spatial_features
+      id_column: feature_id
+      geometry_column: geom
+      srid: 4326
+      properties:
+        icao_code: "varchar"
+        feature_category: "varchar"
+        feature_name: "varchar"
+        elevation_m: "numeric"
+
+    radio_nav_aids:
+      schema: public
+      table: radio_nav_aids
+      id_column: id
+      geometry_column: geom
+      srid: 4326
+
+    fir_airspaces:
+      schema: public
+      table: fir_airspaces
+      geometry_column: geom
+      srid: 4326
+
+    ats_route_waypoints:
+      schema: public
+      table: ats_route_waypoints
+      id_column: id
+      geometry_column: geom
+      srid: 4326
+
+    ats_routes_geom:
+      schema: public
+      table: ats_routes_geom
+      geometry_column: geom
+      srid: 4326
