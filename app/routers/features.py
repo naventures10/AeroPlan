@@ -25,7 +25,10 @@ async def get_all_aerodromes(db: AsyncSession = Depends(get_db)):
                         'properties', jsonb_build_object(
                             'icao_code', sf.icao_code,
                             'name', ad.airport_name,
-                            'elevation', sf.elevation_m
+                            'elevation', substring(ad.aip_document->'data'->'geographical_data'->>'elevation_reference_temp' from '([0-9.]+)\\s*FT'),
+                            'magnetic_variation', ad.aip_document->'data'->'geographical_data'->>'magnetic_variation',
+                            'remarks', COALESCE(ad.aip_document->'data'->'geographical_data'->>'remarks', 'None'),
+                            'communications', ad.aip_document->'data'->'communications'
                         )
                     )
                 ),
