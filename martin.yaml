@@ -12,6 +12,10 @@ postgres:
       id_column: id
       geometry_column: geom
       srid: 4326
+      properties:
+        waypoint_name: "varchar"
+        raw_coordinates: "varchar"
+        routes: "text[]"
 
     spatial_features:
       schema: public
@@ -31,6 +35,14 @@ postgres:
       id_column: id
       geometry_column: geom
       srid: 4326
+      properties:
+        station_name: "varchar"
+        ident: "varchar"
+        aid_type: "varchar"
+        frequency: "varchar"
+        hours_of_operation: "varchar"
+        elevation: "varchar"
+        raw_coordinates: "varchar"
 
     fir_airspaces:
       schema: public
