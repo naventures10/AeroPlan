@@ -11,9 +11,12 @@ class CoordinateConverter:
         if not dms_string or not isinstance(dms_string, str):
             return {"raw_dms": dms_string, "decimal_lat": None, "decimal_lng": None}
 
+        # Sanitize: Remove all newlines and whitespace that could bisect decimals (e.g. '2538.\n73N')
+        clean_string = re.sub(r'[\s\n\r]+', '', dms_string.upper())
+
         # The Regex Hunter: safely extracts the first valid Lat/Lng pair
-        lat_matches = re.findall(r"(\d+(?:\.\d+)?[NS])", dms_string.upper())
-        lng_matches = re.findall(r"(\d+(?:\.\d+)?[EW])", dms_string.upper())
+        lat_matches = re.findall(r"(\d+(?:\.\d+)?[NS])", clean_string)
+        lng_matches = re.findall(r"(\d+(?:\.\d+)?[EW])", clean_string)
 
         if not lat_matches or not lng_matches:
             return {"raw_dms": dms_string, "decimal_lat": None, "decimal_lng": None}
