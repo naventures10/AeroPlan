@@ -4,6 +4,7 @@ import { Search, Building2, Map as MapIcon, Navigation, Radio, Target, MapPin, X
 import { motion, AnimatePresence } from 'framer-motion';
 import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer, TextLayer } from '@deck.gl/layers';
+import { MVTLayer } from '@deck.gl/geo-layers';
 import Map, { NavigationControl, Source, Layer } from 'react-map-gl/maplibre';
 import type { MapRef } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -92,12 +93,13 @@ export default function App() {
     setViewMode,
     activeAirport,
     setActiveAirport,
-    toggleViewMode,
     returnToEnroute,
     activeAerodromeMetadata,
     setActiveAerodromeMetadata,
     viewState,
-    setViewState
+    setViewState,
+    activeLayers,
+    toggleLayer
   } = useMapStore();
 
   const [aerodromes, setAerodromes] = useState<any>(null);
@@ -129,11 +131,6 @@ export default function App() {
         setViewState(nextVs);
         return nextVs;
       }
-    } else {
-      setTimeout(() => {
-        if (vs.pitch === 0 && viewMode === 'TERMINAL') setViewMode('ENROUTE');
-        if (vs.pitch > 0 && viewMode === 'ENROUTE') setViewMode('TERMINAL');
-      }, 0);
     }
     setViewState(vs);
     return vs;
@@ -224,37 +221,81 @@ export default function App() {
   }, [aerodromes]);
 
   // OPTIMIZATION: Memoizing the layer array stops DeckGL from re-evaluating new layer objects constantly
-  const deckLayers = useMemo(() => [
-    new GeoJsonLayer({
-      id: 'aerodromes-layer',
-      data: aerodromes,
-      visible: viewMode === 'ENROUTE',
-      pickable: true,
-      pointType: 'icon',
-      getIcon: () => ({ url: '/ARP.svg', width: 339, height: 324, anchorY: 162, mask: false }),
-      getIconSize: 20,
-      iconSizeUnits: 'pixels',
-      onClick: (info: any) => {
-        if (info.object) handleAerodromeClick(info.object.properties.icao_code, info.object.geometry.coordinates);
-      }
-    }),
-    new TextLayer({
-      id: 'aerodrome-text-layer',
-      data: textData,
-      visible: viewMode === 'ENROUTE',
-      pickable: false,
-      getPosition: (d: any) => d.position,
-      getText: (d: any) => d.text,
-      getSize: 12,
-      sizeUnits: 'pixels',
-      getColor: [255, 255, 255, 230],
-      getPixelOffset: [0, 20],
-      fontFamily: 'Inter, sans-serif',
-      fontWeight: 700,
-      outlineWidth: 2,
-      outlineColor: [0, 0, 0, 180]
-    })
-  ], [aerodromes, viewMode, textData, handleAerodromeClick]);
+  const deckLayers = useMemo(() => {
+    const layers: any[] = [];
+    
+    if (activeLayers.aerodromes) {
+      layers.push(
+        new GeoJsonLayer({
+          id: 'aerodromes-layer',
+          data: aerodromes,
+          visible: viewMode === 'ENROUTE',
+          pickable: true,
+          pointType: 'icon',
+          getIcon: () => ({ url: '/ARP.svg', width: 339, height: 324, anchorY: 162, mask: false }),
+          getIconSize: 20,
+          iconSizeUnits: 'pixels',
+          onClick: (info: any) => {
+            if (info.object) handleAerodromeClick(info.object.properties.icao_code, info.object.geometry.coordinates);
+          }
+        }),
+        new TextLayer({
+          id: 'aerodrome-text-layer',
+          data: textData,
+          visible: viewMode === 'ENROUTE',
+          pickable: false,
+          getPosition: (d: any) => d.position,
+          getText: (d: any) => d.text,
+          getSize: 12,
+          sizeUnits: 'pixels',
+          getColor: [255, 255, 255, 230],
+          getPixelOffset: [0, 20],
+          fontFamily: 'Inter, sans-serif',
+          fontWeight: 700,
+          outlineWidth: 2,
+          outlineColor: [0, 0, 0, 180]
+        })
+      );
+    }
+    
+    if (activeLayers.waypoints) {
+      layers.push(
+        new MVTLayer({
+          id: 'waypoints-layer',
+          data: `${window.location.origin}/tiles/significant_points/{z}/{x}/{y}`,
+          visible: viewMode === 'ENROUTE',
+          pickable: true,
+          pointType: 'circle',
+          getFillColor: [167, 139, 250, 200], // Violet-400
+          getLineColor: [255, 255, 255, 220],
+          getLineWidth: 1,
+          lineWidthMinPixels: 1,
+          getPointRadius: 3,
+          pointRadiusMinPixels: 2.5,
+        })
+      );
+    }
+    
+    if (activeLayers.navaids) {
+      layers.push(
+        new MVTLayer({
+          id: 'navaids-layer',
+          data: `${window.location.origin}/tiles/radio_nav_aids/{z}/{x}/{y}`,
+          visible: viewMode === 'ENROUTE',
+          pickable: true,
+          pointType: 'circle',
+          getFillColor: [52, 211, 153, 220], // Emerald-400
+          getLineColor: [255, 255, 255, 220],
+          getLineWidth: 1,
+          lineWidthMinPixels: 1,
+          getPointRadius: 4,
+          pointRadiusMinPixels: 3.5,
+        })
+      );
+    }
+
+    return layers;
+  }, [aerodromes, viewMode, textData, handleAerodromeClick, activeLayers]);
 
 
   // === TOOLTIP ===
@@ -301,6 +342,38 @@ export default function App() {
         </div>`,
         style: tooltipStyle
       };
+    } else if (object && layer?.id === 'waypoints-layer') {
+        const p = object.properties ?? {};
+        // Clean array string syntax typical of Postgres arrays "{"route1","route2"}"
+        const routes = p.routes ? p.routes.replace(/[{"}]/g, '').split(',') : [];
+        const routesDisplay = routes.length > 0 && routes[0] !== "" ? `<div style="margin-top:6px; font-size:10px; color:#a1a1aa;">ROUTES: <span style="color:#d8b4fe; font-weight:600;">${routes.join(', ')}</span></div>` : '';
+        
+        return {
+           html: `<div style="display:flex;flex-direction:column;gap:4px;max-width:250px;">
+             <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">${p.waypoint_name || 'WAYPOINT'}</span>
+             <span style="color:#a1a1aa;font-size:10px;font-weight:600;letter-spacing:.1em;">SIGNIFICANT POINT</span>
+             <span style="color:#a1a1aa;font-size:9px;font-family:monospace;margin-top:2px;">${p.raw_coordinates?.replace(/\\n/g, '') || ''}</span>
+             ${routesDisplay}
+           </div>`,
+           style: tooltipStyle
+        };
+    } else if (object && layer?.id === 'navaids-layer') {
+        const p = object.properties ?? {};
+        const hours = p.hours_of_operation && p.hours_of_operation !== 'None' ? `<div style="color:#a1a1aa;font-size:9px;margin-top:4px;">HOURS: ${p.hours_of_operation}</div>` : '';
+        const elev = p.elevation && p.elevation !== 'None' ? `<span style="color:#a1a1aa;font-size:9px;margin-left:8px;">ELEV: ${p.elevation.replace(/\\n/g, '')}</span>` : '';
+        
+        return {
+           html: `<div style="display:flex;flex-direction:column;gap:4px;max-width:260px;">
+             <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">${p.station_name || ''} <span style="color:#a1a1aa;">${p.aid_type || ''}</span></span>
+             <div style="display:flex;align-items:center;margin-top:2px;">
+                 <span style="color:#a1a1aa;font-size:10px;font-weight:600;background:#065f46;color:#6ee7b7;padding:2px 6px;border-radius:4px;margin-right:8px;">${p.ident || 'UNK'}</span> 
+                 <span style="color:#f4f4f5;font-size:11px;font-weight:700;">${p.frequency || ''}</span>
+             </div>
+             <span style="color:#a1a1aa;font-size:9px;font-family:monospace;margin-top:2px;">${p.raw_coordinates?.replace(/\\n/g, '') || ''}${elev}</span>
+             ${hours}
+           </div>`,
+           style: tooltipStyle
+        };
     }
 
     const map = mapRef.current?.getMap();
@@ -340,9 +413,29 @@ export default function App() {
                   categoryDisplay = `${category} | ${geom.coordinates[1].toFixed(5)}, ${geom.coordinates[0].toFixed(5)}`;
                 }
               } else if (category === 'OBSTACLE' && Array.isArray(docs.obstacles)) {
-                const obs = docs.obstacles.find((o: any) => o.obstacle_type === name || name.includes(o.obstacle_type));
-                if (obs) extraInfo = `${divider}${row('AREA AFFECTED', obs.area_affected)}${row('LGT/MARKING', obs.marking_lgt)}${row('REMARKS', obs.remarks)}</div>`;
-              } else if ((category === 'NAVAID' || category === 'NAV') && Array.isArray(docs.radio_navigation_and_landing_aids)) {
+              let bestObs = null;
+              
+              // 1. Try strict matching using Name AND Elevation to uniquely identify identical generic types
+              if (elev != null) {
+                const targetElev = parseFloat(elev);
+                bestObs = docs.obstacles.find((o: any) => {
+                  const nameMatch = o.obstacle_type === name || name.includes(o.obstacle_type);
+                  if (!nameMatch || !o.elevation) return false;
+                  
+                  const docElevMatch = o.elevation.match(/(\d+(?:\.\d+)?)/);
+                  if (docElevMatch) {
+                    // Float comparison (within 1.0 margin of error since tiles may snap decimals)
+                    return Math.abs(parseFloat(docElevMatch[1]) - targetElev) < 1.0;
+                  }
+                  return false;
+                });
+              }
+
+              // 2. Fallback to name-only matching if elevation is missing or didn't strict-match
+              const obs = bestObs || docs.obstacles.find((o: any) => o.obstacle_type === name || name.includes(o.obstacle_type));
+              
+              if (obs) extraInfo = `${divider}${row('AREA AFFECTED', obs.area_affected)}${row('LGT/MARKING', obs.marking_lgt)}${row('REMARKS', obs.remarks)}</div>`;
+            } else if ((category === 'NAVAID' || category === 'NAV') && Array.isArray(docs.radio_navigation_and_landing_aids)) {
                 let bestMatch = null;
                 let highestScore = 0;
                 const nameParts = name.split(/\s+/);
@@ -499,18 +592,81 @@ export default function App() {
 
         {/* Left toolbar */}
         <div className="absolute top-1/2 left-6 -translate-y-1/2 flex flex-col gap-3 pointer-events-auto">
-          {[Navigation, Target, Radio].map((Icon, i) => (
-            <Button key={i} isIconOnly radius="full" variant="flat" className="bg-zinc-950/40 backdrop-blur-2xl border border-zinc-800/60 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60 shadow-xl"><Icon size={18} /></Button>
-          ))}
+          {(() => {
+            const toggleButtons = [
+              { icon: Target, id: 'aerodromes' as const, color: 'text-indigo-400', border: 'border-indigo-500/50', bg: 'bg-indigo-500/20' },
+              { icon: Navigation, id: 'waypoints' as const, color: 'text-violet-400', border: 'border-violet-500/50', bg: 'bg-violet-500/20' },
+              { icon: Radio, id: 'navaids' as const, color: 'text-emerald-400', border: 'border-emerald-500/50', bg: 'bg-emerald-500/20' }
+            ];
+            
+            return toggleButtons.map(({ icon: Icon, id, color, border, bg }) => {
+              const isActive = activeLayers[id];
+              return (
+                <Button 
+                  key={id} 
+                  isIconOnly 
+                  radius="full" 
+                  variant="flat" 
+                  onPress={() => toggleLayer(id)}
+                  title={`Toggle ${id}`}
+                  className={`backdrop-blur-2xl shadow-xl transition-all duration-300 ${
+                    isActive 
+                      ? `${bg} ${color} border ${border} shadow-[0_0_15px_rgba(0,0,0,0.2)]` 
+                      : 'bg-zinc-950/40 border border-zinc-800/60 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60 opacity-80'
+                  }`}
+                >
+                  <Icon size={18} />
+                </Button>
+              );
+            });
+          })()}
         </div>
 
         {/* 3D toggle + logo */}
         <div className="absolute bottom-6 right-6 flex flex-col items-end gap-4 pointer-events-auto">
           {(activeAirport || viewMode === 'TERMINAL') && (
-            <Button radius="full" variant="solid" onPress={viewMode === 'TERMINAL' ? returnToEnroute : toggleViewMode} startContent={viewMode === 'TERMINAL' ? <MapIcon size={16} /> : <Building2 size={16} />}
-              className={`shadow-2xl font-semibold tracking-[0.1em] text-[11px] h-12 px-6 backdrop-blur-xl transition-all ${viewMode === 'TERMINAL' ? 'bg-zinc-900/70 text-zinc-100 border border-zinc-700/50 hover:bg-zinc-800/80' : 'bg-indigo-500 text-white hover:bg-indigo-400'}`}>
-              {viewMode === 'TERMINAL' ? 'RETURN TO ENROUTE' : `EXPLORE ${activeAirport} 3D`}
-            </Button>
+            <button
+              onClick={() => {
+                setViewState({ ...viewState, pitch: viewState.pitch > 0 ? 0 : 60, transitionDuration: 1000 });
+              }}
+              className="relative w-12 h-12 group focus:outline-none"
+              style={{ perspective: '1000px' }}
+              title="Toggle View Mode"
+            >
+              <div
+                className="w-full h-full transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+                style={{
+                  transformStyle: 'preserve-3d',
+                  transform: viewState.pitch > 0 
+                    ? 'rotateX(-90deg) scale(0.95)' 
+                    : 'rotateX(0deg)',
+                }}
+              >
+                {/* 2D Face (Front) */}
+                <div 
+                  className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 border border-zinc-700/80 shadow-xl"
+                  style={{ transform: 'translateZ(24px)' }}
+                >
+                  <MapIcon className="text-zinc-200 group-hover:text-white transition-colors" size={20} strokeWidth={2} />
+                  <span className="text-[10px] font-bold text-zinc-500 tracking-widest mt-0.5">2D</span>
+                </div>
+                
+                {/* 3D Face (Top) */}
+                <div 
+                  className="absolute inset-0 flex flex-col items-center justify-center bg-indigo-600 border border-indigo-400 shadow-[0_0_20px_rgba(79,70,229,0.3)]"
+                  style={{ transform: 'rotateX(90deg) translateZ(24px)' }}
+                >
+                  <Building2 className="text-white group-hover:scale-110 transition-transform" size={20} strokeWidth={2} />
+                  <span className="text-[10px] font-bold text-indigo-100 tracking-widest mt-0.5">3D</span>
+                </div>
+                
+                {/* Cube Sides (Darker flat planes with borders to complete the solid, seamless shape) */}
+                <div className="absolute inset-0 bg-zinc-950 border border-zinc-800/50" style={{ transform: 'rotateX(-90deg) translateZ(24px)' }} />
+                <div className="absolute inset-0 bg-zinc-900 border border-zinc-800/50" style={{ transform: 'rotateY(90deg) translateZ(24px)' }} />
+                <div className="absolute inset-0 bg-zinc-900 border border-zinc-800/50" style={{ transform: 'rotateY(-90deg) translateZ(24px)' }} />
+                <div className="absolute inset-0 bg-zinc-950 border border-zinc-800/50" style={{ transform: 'rotateY(180deg) translateZ(24px)' }} />
+              </div>
+            </button>
           )}
           <div className="flex flex-col items-end select-none pointer-events-none mt-1">
             <div className="text-zinc-200 font-bold tracking-[0.4em] text-[10px] uppercase opacity-90">Aero Plan</div>

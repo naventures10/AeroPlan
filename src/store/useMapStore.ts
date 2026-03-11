@@ -25,9 +25,9 @@ interface MapState {
 
     searchQuery: string;
     activeLayers: {
+        aerodromes: boolean;
         waypoints: boolean;
-        vors: boolean;
-        ndbs: boolean;
+        navaids: boolean;
     };
 
     activeAirport: string | null;
@@ -64,9 +64,9 @@ export const useMapStore = create<MapState>((set, get) => ({
 
     searchQuery: '',
     activeLayers: {
-        waypoints: true,
-        vors: true,
-        ndbs: false,
+        aerodromes: true,
+        waypoints: false,
+        navaids: false,
     },
 
     // 3. NEW: Active Airport State
