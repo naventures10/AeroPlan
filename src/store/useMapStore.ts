@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { FlyToInterpolator, LinearInterpolator } from '@deck.gl/core';
+import { FlyToInterpolator, LinearInterpolator, WebMercatorViewport } from '@deck.gl/core';
 
 // 1. Define the TypeScript Blueprint
 interface MapState {
@@ -28,7 +28,12 @@ interface MapState {
         aerodromes: boolean;
         waypoints: boolean;
         navaids: boolean;
+        atsRoutes: boolean;
+        wacMap: boolean;
     };
+
+    selectedRouteIds: string[];
+    setSelectedRouteIds: (routeIds: string[]) => void;
 
     activeAirport: string | null;
     setActiveAirport: (code: string | null) => void;
@@ -39,6 +44,7 @@ interface MapState {
     setSearchQuery: (query: string) => void;
     toggleLayer: (layer: keyof MapState['activeLayers']) => void;
     flyToLocation: (lng: number, lat: number, zoom?: number, pitch?: number) => void;
+    fitBounds: (bounds: [number, number, number, number]) => void;
     returnToEnroute: () => void;
 }
 
@@ -67,11 +73,16 @@ export const useMapStore = create<MapState>((set, get) => ({
         aerodromes: true,
         waypoints: false,
         navaids: false,
+        atsRoutes: false,
+        wacMap: false,
     },
 
     // 3. NEW: Active Airport State
     activeAirport: null,
     setActiveAirport: (code) => set({ activeAirport: code }),
+
+    selectedRouteIds: [],
+    setSelectedRouteIds: (routeIds) => set({ selectedRouteIds: routeIds }),
 
     // Basic Setters
     setViewState: (viewState) => set({ viewState }),
@@ -124,5 +135,34 @@ export const useMapStore = create<MapState>((set, get) => ({
                 transitionInterpolator: new FlyToInterpolator(),
             }
         });
+    },
+
+    fitBounds: (bounds) => {
+        // bounds array [minX, minY, maxX, maxY]
+        const { viewState } = get();
+        try {
+            // Using typical viewport dimensions, 100px padding to keep the airway fully visible
+            const vp = new WebMercatorViewport({ width: window.innerWidth || 1024, height: window.innerHeight || 768 });
+            const { longitude, latitude, zoom } = vp.fitBounds(
+                [[bounds[0], bounds[1]], [bounds[2], bounds[3]]],
+                { padding: 100 }
+            );
+
+            set({
+                viewMode: 'ENROUTE', // Always lock to 2D Enroute map mode to see airway
+                viewState: {
+                    ...viewState,
+                    longitude,
+                    latitude,
+                    zoom,
+                    pitch: 0,
+                    bearing: 0,
+                    transitionDuration: 2000,
+                    transitionInterpolator: new FlyToInterpolator(),
+                }
+            });
+        } catch (e) {
+            console.error("Failed to calculate fitBounds", e);
+        }
     }
 }));

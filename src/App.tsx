@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Button } from "@heroui/react";
-import { Search, Building2, Map as MapIcon, Navigation, Radio, Target, MapPin, X } from "lucide-react";
+import { Search, Building2, Map as MapIcon, Navigation, Radio, Target, X, Route, Layers } from "lucide-react";
 import { motion, AnimatePresence } from 'framer-motion';
 import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer, TextLayer } from '@deck.gl/layers';
@@ -86,6 +86,15 @@ const POINT_PAINT = {
 };
 
 
+// Global Search Output Type
+interface SearchResult {
+  id: string;
+  name: string;
+  type: 'AERODROME' | 'NAVAID' | 'WAYPOINT' | 'ATS_ROUTE';
+  center: [number, number] | null;
+  bounds: [number, number, number, number] | null;
+}
+
 export default function App() {
   const {
     flyToLocation,
@@ -99,11 +108,16 @@ export default function App() {
     viewState,
     setViewState,
     activeLayers,
-    toggleLayer
+    toggleLayer,
+    selectedRouteIds,
+    setSelectedRouteIds,
+    fitBounds
   } = useMapStore();
 
   const [aerodromes, setAerodromes] = useState<any>(null);
+  // Search State
   const [searchInput, setSearchInput] = useState('');
+  const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchSelectedIndex, setSearchSelectedIndex] = useState(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -158,17 +172,24 @@ export default function App() {
       .catch(err => console.error("Failed to fetch metadata", err));
   }, [flyToLocation, setActiveAirport, setActiveAerodromeMetadata]);
 
-  // === SEARCH LOGIC ===
-  const suggestions = useMemo(() => {
-    if (!searchInput.trim() || !aerodromes?.features) return [];
-    const query = searchInput.trim().toUpperCase();
-    return aerodromes.features
-      .filter((f: any) => {
-        const p = f.properties;
-        return p.name?.toUpperCase().includes(query) || p.icao_code?.toUpperCase().includes(query);
-      })
-      .slice(0, 5);
-  }, [searchInput, aerodromes]);
+  // === GLOBAL SEARCH LOGIC ===
+  useEffect(() => {
+    const query = searchInput.trim();
+    if (query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    
+    // Apply basic debounce to avoid API spam on fast typing
+    const timer = setTimeout(() => {
+      fetch(`/api/search?q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => setSuggestions(data || []))
+        .catch(err => console.error("Search API Failed:", err));
+    }, 250);
+    
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   useEffect(() => setSearchSelectedIndex(-1), [searchInput]);
 
@@ -178,6 +199,53 @@ export default function App() {
     setSearchInput('');
     searchInputRef.current?.blur();
   }, []);
+
+  const handleGlobalSearchSelect = useCallback((item: SearchResult) => {
+    // 1. Zoom/Pan
+    if (item.type === 'ATS_ROUTE' && item.bounds) {
+      // Use the new bounds-framing logic
+      fitBounds(item.bounds);
+    } else if (item.center) {
+      // Use the standard point-based flyTo
+      // Aerodromes fly into 3D Terminal (pitch 60), NavAids/Waypoints stay in 2D Enroute (pitch 0)
+      const targetPitch = item.type === 'AERODROME' ? 60 : 0;
+      flyToLocation(item.center[0], item.center[1], 15, targetPitch);
+    }
+    
+    // 2. Map Layer & State Injection
+    switch(item.type) {
+      case 'AERODROME':
+        if (!activeLayers.aerodromes) toggleLayer('aerodromes');
+        setActiveAirport(item.id);
+        
+        // Fetch specific tooltip metadata
+        fetch(`/api/aerodromes/${item.id}/metadata`)
+          .then(res => res.json())
+          .then(data => {
+            if (data?.aip_document) setActiveAerodromeMetadata(data.aip_document);
+            else if (data?.data) setActiveAerodromeMetadata(data);
+            else setActiveAerodromeMetadata(null);
+          })
+          .catch(err => console.error("Failed to fetch metadata", err));
+        break;
+        
+      case 'NAVAID':
+        if (!activeLayers.navaids) toggleLayer('navaids');
+        break;
+        
+      case 'WAYPOINT':
+        if (!activeLayers.waypoints) toggleLayer('waypoints');
+        break;
+        
+      case 'ATS_ROUTE':
+        if (!activeLayers.atsRoutes) toggleLayer('atsRoutes');
+        // Force the green selection highlight
+        setSelectedRouteIds([item.id]);
+        break;
+    }
+    
+    resetSearchState();
+  }, [activeLayers, toggleLayer, setActiveAirport, flyToLocation, fitBounds, setSelectedRouteIds, setActiveAerodromeMetadata, resetSearchState]);
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'ArrowDown') {
@@ -189,27 +257,16 @@ export default function App() {
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (searchSelectedIndex >= 0 && searchSelectedIndex < suggestions.length) {
-        const item = suggestions[searchSelectedIndex];
-        handleAerodromeClick(item.properties.icao_code, item.geometry.coordinates);
-        resetSearchState();
-      } else {
-        handleSearchSubmit();
+        handleGlobalSearchSelect(suggestions[searchSelectedIndex]);
+      } else if (suggestions.length > 0) {
+        // Default to first choice if hit enter blindly
+        handleGlobalSearchSelect(suggestions[0]);
       }
     } else if (e.key === 'Escape') {
       setIsSearchFocused(false);
       searchInputRef.current?.blur();
     }
   };
-
-  const handleSearchSubmit = useCallback(() => {
-    const code = searchInput.trim().toUpperCase();
-    if (!code || !aerodromes) return;
-    const feature = aerodromes.features.find((f: any) => f.properties.icao_code === code);
-    if (feature) {
-      handleAerodromeClick(code, feature.geometry.coordinates);
-      resetSearchState();
-    }
-  }, [searchInput, aerodromes, handleAerodromeClick, resetSearchState]);
 
   // === DECK.GL LAYERS ===
   const textData = useMemo(() => {
@@ -294,8 +351,79 @@ export default function App() {
       );
     }
 
+    if (activeLayers.atsRoutes) {
+      layers.push(
+        new MVTLayer({
+          id: 'atsRoutes-geom-layer',
+          data: `${window.location.origin}/tiles/ats_routes_geom/{z}/{x}/{y}`,
+          visible: viewMode === 'ENROUTE',
+          pickable: true,
+          getLineColor: (d: any) => selectedRouteIds.includes(d.properties.route_id) ? [34, 197, 94, 255] : [34, 211, 238, 100],
+          getLineWidth: (d: any) => selectedRouteIds.includes(d.properties.route_id) ? 4 : 2,
+          lineWidthMinPixels: 1.5,
+          onClick: (info: any) => {
+            if (info.object && info.object.properties.route_id) {
+              const rId = info.object.properties.route_id;
+              // Toggle logic for single route click
+              setSelectedRouteIds(selectedRouteIds.includes(rId) ? [] : [rId]);
+            } else {
+              setSelectedRouteIds([]);
+            }
+          },
+          updateTriggers: {
+            getLineColor: [selectedRouteIds],
+            getLineWidth: [selectedRouteIds]
+          }
+        }),
+        new MVTLayer({
+          id: 'atsRoutes-waypoints-layer',
+          data: `${window.location.origin}/tiles/ats_route_waypoints/{z}/{x}/{y}`,
+          visible: viewMode === 'ENROUTE',
+          pickable: true,
+          pointType: 'circle',
+          getFillColor: [255, 255, 255, 255],
+          getLineColor: (d: any) => {
+            const routes = d.properties.route_ids ? String(d.properties.route_ids).replace(/[{"}]/g, '').split(',') : [];
+            return routes.some(r => selectedRouteIds.includes(r)) ? [34, 197, 94, 255] : [34, 211, 238, 200];
+          },
+          getLineWidth: (d: any) => {
+            const routes = d.properties.route_ids ? String(d.properties.route_ids).replace(/[{"}]/g, '').split(',') : [];
+            return routes.some(r => selectedRouteIds.includes(r)) ? 2 : 1;
+          },
+          lineWidthMinPixels: 1,
+          getPointRadius: (d: any) => {
+            const routes = d.properties.route_ids ? String(d.properties.route_ids).replace(/[{"}]/g, '').split(',') : [];
+            return routes.some(r => selectedRouteIds.includes(r)) ? 3 : 2;
+          },
+          pointRadiusMinPixels: 1.5,
+          onClick: (info: any) => {
+             if (info.object && info.object.properties.route_ids) {
+                 const routes = String(info.object.properties.route_ids).replace(/[{"}]/g, '').split(',');
+                 
+                 // If the current selection exactly matches these waypoint routes, toggle it off by clearing it.
+                 // Otherwise, set the selection to equal all intersecting routes.
+                 const isAlreadySelected = routes.length > 0 && selectedRouteIds.length === routes.length && routes.every(r => selectedRouteIds.includes(r));
+                 
+                 if (isAlreadySelected) {
+                   setSelectedRouteIds([]);
+                 } else if (routes.length > 0) {
+                   setSelectedRouteIds(routes);
+                 }
+             } else {
+                 setSelectedRouteIds([]);
+             }
+          },
+          updateTriggers: {
+             getLineColor: [selectedRouteIds],
+             getLineWidth: [selectedRouteIds],
+             getPointRadius: [selectedRouteIds]
+          }
+        })
+      );
+    }
+
     return layers;
-  }, [aerodromes, viewMode, textData, handleAerodromeClick, activeLayers]);
+  }, [aerodromes, viewMode, textData, handleAerodromeClick, activeLayers, selectedRouteIds]);
 
 
   // === TOOLTIP ===
@@ -371,6 +499,27 @@ export default function App() {
              </div>
              <span style="color:#a1a1aa;font-size:9px;font-family:monospace;margin-top:2px;">${p.raw_coordinates?.replace(/\\n/g, '') || ''}${elev}</span>
              ${hours}
+           </div>`,
+           style: tooltipStyle
+        };
+    } else if (object && layer?.id === 'atsRoutes-geom-layer') {
+        const p = object.properties ?? {};
+        return {
+           html: `<div style="display:flex;flex-direction:column;gap:4px;max-width:250px;">
+             <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">ROUTE ${p.route_designator || p.route_id || 'UNKNOWN'}</span>
+             <span style="color:#a1a1aa;font-size:10px;font-weight:600;letter-spacing:.1em;color:#22d3ee;">${p.route_type || 'AIRWAY'}</span>
+             <span style="color:#a1a1aa;font-size:9px;margin-top:2px;">WAYPOINTS: ${p.waypoint_count || '?'}</span>
+             ${p.remarks && p.remarks !== 'None' ? `<span style="color:#a1a1aa;font-size:9px;">${p.remarks}</span>` : ''}
+           </div>`,
+           style: tooltipStyle
+        };
+    } else if (object && layer?.id === 'atsRoutes-waypoints-layer') {
+        const p = object.properties ?? {};
+        const routes = p.route_ids ? String(p.route_ids).replace(/[{"}]/g, '').split(',') : [];
+        return {
+           html: `<div style="display:flex;flex-direction:column;gap:4px;max-width:250px;">
+             <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">${p.waypoint_name || 'WAYPOINT'}</span>
+             <span style="color:#a1a1aa;font-size:10px;font-weight:600;letter-spacing:.1em;color:#22d3ee;">INTERSECTING: ${routes.join(', ')}</span>
            </div>`,
            style: tooltipStyle
         };
@@ -523,6 +672,12 @@ export default function App() {
           >
             <Source id="maptiler-terrain" type="raster-dem" url={`https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${MAPTILER_KEY}`} />
 
+            {viewMode === 'ENROUTE' && activeLayers.wacMap && (
+              <Source id="wac-source" type="raster" tiles={['http://localhost:3000/wac_india/{z}/{x}/{y}']} tileSize={256} minzoom={7} maxzoom={12}>
+                <Layer id="wac-layer" type="raster" paint={{ 'raster-opacity': 0.7, 'raster-resampling': 'linear' }} />
+              </Source>
+            )}
+
             {viewMode === 'TERMINAL' && (
               <Source id="spatial-features-source" type="vector" tiles={[`${window.location.origin}/tiles/spatial_features/{z}/{x}/{y}`]}>
                 <Layer id="mvt-polygons" type="fill-extrusion" source-layer="spatial_features" filter={['==', ['geometry-type'], 'Polygon']} paint={POLYGON_PAINT as any} />
@@ -562,27 +717,46 @@ export default function App() {
             {/* Autocomplete Dropdown */}
             <AnimatePresence>
               {isSearchFocused && searchInput.trim().length > 0 && (
-                <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} transition={{ duration: 0.15 }} className="absolute top-full left-0 right-0 mt-2 glass-morphism-heavy rounded-2xl overflow-hidden shadow-2xl border border-zinc-800/60">
+                <motion.div 
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }} 
+                  animate={{ opacity: 1, y: 0, scale: 1 }} 
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }} 
+                  transition={{ duration: 0.15 }} 
+                  className="absolute top-full left-0 right-0 mt-2 glass-morphism-heavy rounded-2xl overflow-hidden shadow-2xl border border-zinc-800/60"
+                >
                   {suggestions.length > 0 ? (
                     <div className="py-2">
-                      {suggestions.map((item: any, index: number) => (
-                        <div key={item.properties.icao_code} className={`px-4 py-3 cursor-pointer flex items-center justify-between transition-colors ${index === searchSelectedIndex ? 'bg-indigo-500/20' : 'hover:bg-zinc-800/50'}`}
-                          onClick={() => { handleAerodromeClick(item.properties.icao_code, item.geometry.coordinates); resetSearchState(); }}>
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-zinc-800/80 flex items-center justify-center"><MapPin size={14} className="text-indigo-400" /></div>
-                            <div className="flex flex-col">
-                              <span className="text-zinc-100 font-semibold text-sm tracking-wide">{item.properties.name || 'UNKNOWN AERODROME'}</span>
-                              <span className="text-zinc-500 text-xs tracking-[0.1em]">{item.properties.type || 'AERODROME'}</span>
+                       {suggestions.map((item: SearchResult, index: number) => (
+                          <div 
+                            key={`${item.type}-${item.id}`} 
+                            className={`px-4 py-3 cursor-pointer flex items-center justify-between transition-colors border-l-2 ${index === searchSelectedIndex ? 'bg-zinc-800/80 border-cyan-400' : 'hover:bg-zinc-800/50 border-transparent'} ${index !== suggestions.length - 1 ? 'border-b border-zinc-800/50' : ''}`}
+                            onClick={() => { handleGlobalSearchSelect(item); }}
+                            onMouseEnter={() => setSearchSelectedIndex(index)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-zinc-800/80 flex items-center justify-center">
+                                <Search size={14} className="text-zinc-400" />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className={`font-mono font-semibold tracking-wider text-[15px] ${index === searchSelectedIndex ? 'text-cyan-400' : 'text-zinc-100'}`}>
+                                  {item.id}
+                                </span>
+                                <span className="text-[11px] font-medium tracking-wide text-zinc-400 mt-0.5 uppercase">
+                                  {item.name || 'UNKNOWN LOCATION'}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="px-2 py-0.5 rounded-sm bg-zinc-800/50">
+                               <span className="text-[10px] font-bold tracking-widest text-zinc-500">{item.type.replace('_', ' ')}</span>
                             </div>
                           </div>
-                          <div className="px-2 py-1 rounded bg-indigo-500/10 border border-indigo-500/20">
-                            <span className="text-indigo-400 font-bold text-xs tracking-widest">{item.properties.icao_code}</span>
-                          </div>
-                        </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="px-4 py-8 text-center text-zinc-500 text-sm font-medium tracking-wide">NO MATCHING AERODROMES FOUND</div>
+                    <div className="px-4 py-8 text-center text-zinc-500 text-sm font-medium tracking-wide leading-relaxed">
+                      NO MATCHING LOCATIONS FOUND<br/>
+                      <span className="text-xs text-zinc-600 mt-2 block">Search Aerodromes, Waypoints, NavAids, or ATS Routes</span>
+                    </div>
                   )}
                 </motion.div>
               )}
@@ -596,7 +770,8 @@ export default function App() {
             const toggleButtons = [
               { icon: Target, id: 'aerodromes' as const, color: 'text-indigo-400', border: 'border-indigo-500/50', bg: 'bg-indigo-500/20' },
               { icon: Navigation, id: 'waypoints' as const, color: 'text-violet-400', border: 'border-violet-500/50', bg: 'bg-violet-500/20' },
-              { icon: Radio, id: 'navaids' as const, color: 'text-emerald-400', border: 'border-emerald-500/50', bg: 'bg-emerald-500/20' }
+              { icon: Radio, id: 'navaids' as const, color: 'text-emerald-400', border: 'border-emerald-500/50', bg: 'bg-emerald-500/20' },
+              { icon: Route, id: 'atsRoutes' as const, color: 'text-cyan-400', border: 'border-cyan-500/50', bg: 'bg-cyan-500/20' }
             ];
             
             return toggleButtons.map(({ icon: Icon, id, color, border, bg }) => {
@@ -624,6 +799,22 @@ export default function App() {
 
         {/* 3D toggle + logo */}
         <div className="absolute bottom-6 right-6 flex flex-col items-end gap-4 pointer-events-auto">
+          
+          {/* WAC Map Layer Toggle */}
+          {viewMode === 'ENROUTE' && (
+            <button
+               onClick={() => toggleLayer('wacMap')}
+               title="Toggle World Aeronautical Chart"
+               className={`flex items-center justify-center w-12 h-12 rounded-full backdrop-blur-2xl shadow-xl transition-all duration-300 focus:outline-none ${
+                 activeLayers.wacMap
+                   ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
+                   : 'bg-zinc-950/40 border border-zinc-800/60 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60 opacity-80'
+               }`}
+             >
+               <Layers size={20} strokeWidth={2} />
+             </button>
+          )}
+
           {(activeAirport || viewMode === 'TERMINAL') && (
             <button
               onClick={() => {
@@ -660,7 +851,7 @@ export default function App() {
                   <span className="text-[10px] font-bold text-indigo-100 tracking-widest mt-0.5">3D</span>
                 </div>
                 
-                {/* Cube Sides (Darker flat planes with borders to complete the solid, seamless shape) */}
+                {/* Cube Sides */}
                 <div className="absolute inset-0 bg-zinc-950 border border-zinc-800/50" style={{ transform: 'rotateX(-90deg) translateZ(24px)' }} />
                 <div className="absolute inset-0 bg-zinc-900 border border-zinc-800/50" style={{ transform: 'rotateY(90deg) translateZ(24px)' }} />
                 <div className="absolute inset-0 bg-zinc-900 border border-zinc-800/50" style={{ transform: 'rotateY(-90deg) translateZ(24px)' }} />
