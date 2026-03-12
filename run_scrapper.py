@@ -1,6 +1,7 @@
 import os
 import requests
 import urllib3
+import boto3
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 import concurrent.futures
@@ -106,3 +107,34 @@ if __name__ == "__main__":
         output_file="output/master_aip_data.json"
     )
     orchestrator.run_pipeline()
+
+    # MinIO Upload Sequence
+    def upload_output_to_minio(output_dir="output", bucket_name="ais"):
+        print("\n[*] Starting MinIO synchronization...")
+        s3 = boto3.client('s3',
+            endpoint_url='http://localhost:9000',
+            aws_access_key_id='ais_admin',
+            aws_secret_access_key='AviationData2026!',
+            region_name='us-east-1'
+        )
+        
+        # Ensure bucket exists
+        try:
+            s3.head_bucket(Bucket=bucket_name)
+        except Exception:
+            print(f"[*] Bucket '{bucket_name}' not found. Creating it...")
+            s3.create_bucket(Bucket=bucket_name)
+
+        for root, dirs, files in os.walk(output_dir):
+            for file in files:
+                if not file.endswith(".json"):
+                    continue
+                file_path = os.path.join(root, file)
+                # Ensure the object key uses forward slashes regardless of OS
+                object_key = file_path.replace(os.sep, '/')
+                print(f"    -> Uploading {object_key}...")
+                s3.upload_file(file_path, bucket_name, object_key)
+                
+        print(f"[+] MinIO synchronization complete. All files uploaded to bucket '{bucket_name}'.\n")
+
+    upload_output_to_minio()

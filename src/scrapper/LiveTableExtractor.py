@@ -152,7 +152,7 @@ class LiveTableExtractor:
         # 1. Anchor
         for i, table in enumerate(tables):
             table_text = table.get_text(separator=' ', strip=True)
-            if section_id in table_text and get_primary_row_count(table) == 1:
+            if section_id in table_text and get_primary_row_count(table) <= 3:
                 target_index = i
                 print(f"[DEBUG] Found Anchor for {section_id} at Table Index {i}")
                 break
@@ -173,7 +173,7 @@ class LiveTableExtractor:
             print(f"[DEBUG] Text Preview: {text[:80]}...")
             
             # Boundary limit
-            if row_count == 1 and ("AD 2." in text or "AD 3." in text):
+            if row_count <= 3 and ("AD 2." in text or "AD 3." in text):
                 print(f"[DEBUG] !!! HIT BOUNDARY !!! Stopped collecting at Table {j}.")
                 break
                 
