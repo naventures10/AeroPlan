@@ -52,13 +52,25 @@ postgres:
 
     ats_route_waypoints:
       schema: public
-      table: ats_route_waypoints
-      id_column: id
+      table: ats_waypoints_grouped
       geometry_column: geom
       srid: 4326
+      properties:
+        route_ids: "text[]"
+        waypoint_name: "varchar"
 
     ats_routes_geom:
       schema: public
       table: ats_routes_geom
       geometry_column: geom
       srid: 4326
+      properties:
+        route_id: "varchar"
+        route_designator: "varchar"
+        route_type: "varchar"
+        remarks: "text"
+        waypoint_count: "int8"
+
+mbtiles:
+  sources:
+    wac_india: /data/wac_india.mbtiles
