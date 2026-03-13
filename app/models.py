@@ -63,7 +63,7 @@ class AerodromeChart(Base):
     icao_code = Column(String(10), index=True)
     chart_title = Column(String(255))
     chart_index = Column(String(50))
-    minio_url = Column(Text)
+    chart_url = Column(Text)
 
 
 class AtsRoutesGeom(Base):

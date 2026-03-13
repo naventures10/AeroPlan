@@ -89,7 +89,7 @@
 | `icao_code` | `character varying(10)` | Yes | `None` |
 | `chart_title` | `character varying(255)` | Yes | `None` |
 | `chart_index` | `character varying(50)` | Yes | `None` |
-| `minio_url` | `text` | Yes | `None` |
+| `chart_url` | `text` | Yes | `None` |
 
 **Primary Key(s):** `chart_id`
 

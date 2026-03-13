@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,6 +8,36 @@ from app.database import get_db
 
 # Initialize the router
 router = APIRouter(prefix="/api", tags=["Aero Plan"])
+
+
+# ── AIP Section ID → Database JSON Key Mapping ──────────────────────────────
+# Derived from AIPSchemaMapper.strategy_router (AD 2.2 – AD 2.24)
+SECTION_MAP: dict[str, dict] = {
+    "AD_2_2":  {"key": "geographical_data",                  "title": "Aerodrome Geographical and Administrative Data", "data_type": "object"},
+    "AD_2_3":  {"key": "operational_hours",                  "title": "Operational Hours",                              "data_type": "object"},
+    "AD_2_4":  {"key": "handling_services",                  "title": "Handling Services and Facilities",               "data_type": "object"},
+    "AD_2_5":  {"key": "passenger_facilities",               "title": "Passenger Facilities",                           "data_type": "object"},
+    "AD_2_6":  {"key": "rescue_and_fire_fighting",           "title": "Rescue and Fire Fighting Services",              "data_type": "object"},
+    "AD_2_7":  {"key": "seasonal_clearing",                  "title": "Seasonal Availability — Clearing",               "data_type": "object"},
+    "AD_2_8":  {"key": "aprons_taxiways_checkpoints",        "title": "Aprons, Taxiways and Check Locations",           "data_type": "object"},
+    "AD_2_9":  {"key": "smgcs_markings",                     "title": "Surface Movement Guidance and Control System",   "data_type": "object"},
+    "AD_2_10": {"key": "obstacles",                          "title": "Aerodrome Obstacles",                            "data_type": "array"},
+    "AD_2_11": {"key": "meteorological_information",         "title": "Meteorological Information Provided",            "data_type": "object"},
+    "AD_2_12": {"key": "runway_physical_characteristics",    "title": "Runway Physical Characteristics",                "data_type": "array"},
+    "AD_2_13": {"key": "declared_distances",                 "title": "Declared Distances",                             "data_type": "array"},
+    "AD_2_14": {"key": "approach_runway_lighting",           "title": "Approach and Runway Lighting",                   "data_type": "array"},
+    "AD_2_15": {"key": "other_lighting_power_supply",        "title": "Other Lighting, Secondary Power Supply",         "data_type": "object"},
+    "AD_2_16": {"key": "helicopter_landing_area",            "title": "Helicopter Landing Area",                        "data_type": "object"},
+    "AD_2_17": {"key": "ats_airspace",                       "title": "ATS Airspace",                                   "data_type": "object"},
+    "AD_2_18": {"key": "communications",                     "title": "ATS Communication Facilities",                   "data_type": "array"},
+    "AD_2_19": {"key": "radio_navigation_and_landing_aids",  "title": "Radio Navigation and Landing Aids",              "data_type": "array"},
+    "AD_2_20": {"key": "local_aerodrome_regulations",        "title": "Local Aerodrome Regulations",                    "data_type": "hybrid"},
+    "AD_2_21": {"key": "noise_abatement_procedures",         "title": "Noise Abatement Procedures",                     "data_type": "hybrid"},
+    "AD_2_22": {"key": "flight_procedures",                  "title": "Flight Procedures",                              "data_type": "hybrid"},
+    "AD_2_23": {"key": "additional_information",             "title": "Additional Information",                          "data_type": "hybrid"},
+    "AD_2_24": {"key": "charts_related_to_aerodrome",        "title": "Charts Related to an Aerodrome",                 "data_type": "array"},
+}
+
 
 
 @router.get("/aerodromes")
@@ -61,6 +93,38 @@ async def get_aerodrome_metadata(icao_code: str, db: AsyncSession = Depends(get_
     if row and row[0]:
         return row[0]
     return {}
+
+
+@router.get("/aerodromes/{icao_code}/section/{section_id}")
+async def get_aerodrome_section(icao_code: str, section_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    Returns a specific AIP sub-section for an aerodrome.
+    Uses SECTION_MAP to extract only the relevant JSONB fragment.
+    """
+    section_id_upper = section_id.upper()
+    section_meta = SECTION_MAP.get(section_id_upper)
+    if not section_meta:
+        raise HTTPException(status_code=404, detail=f"Unknown section: {section_id}")
+
+    json_key = section_meta["key"]
+
+    query = text("""
+        SELECT aip_document->'data'->:json_key AS section_data
+        FROM aerodrome_documents
+        WHERE icao_code = :icao;
+    """)
+    result = await db.execute(query, {"icao": icao_code.upper(), "json_key": json_key})
+    row = result.fetchone()
+
+    if not row or row[0] is None:
+        raise HTTPException(status_code=404, detail=f"No data found for {icao_code.upper()} section {section_id_upper}")
+
+    return {
+        "section_id": section_id_upper,
+        "title": section_meta["title"],
+        "data_type": section_meta["data_type"],
+        "data": row[0],
+    }
 
 
 @router.get("/features/{icao_code}")
@@ -192,3 +256,55 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)):
         output.append(match)
         
     return output
+
+
+@router.get("/aerodromes/{icao_code}/charts")
+async def get_aerodrome_charts(icao_code: str, db: AsyncSession = Depends(get_db)):
+    """
+    Returns the list of available aerodrome charts for a given ICAO code.
+    """
+    query = text("""
+        SELECT chart_id, chart_title, chart_index, chart_url
+        FROM aerodrome_charts
+        WHERE icao_code = :icao
+        ORDER BY chart_index;
+    """)
+    result = await db.execute(query, {"icao": icao_code.upper()})
+    rows = result.fetchall()
+    return [
+        {
+            "chart_id": r.chart_id,
+            "chart_title": r.chart_title,
+            "chart_index": r.chart_index,
+            "chart_url": r.chart_url,
+        }
+        for r in rows
+    ]
+
+
+@router.get("/proxy-pdf")
+async def proxy_pdf(url: str = Query(..., description="Remote PDF URL to proxy")):
+    """
+    Proxies a remote PDF through the backend so the frontend can render it
+    in an iframe without CORS issues.
+    """
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    }
+    try:
+        async with httpx.AsyncClient(
+            follow_redirects=True, timeout=30.0, verify=False
+        ) as client:
+            resp = await client.get(url, headers=headers)
+        if resp.status_code != 200:
+            return Response(
+                content=f"Upstream returned {resp.status_code}",
+                status_code=resp.status_code,
+            )
+        return Response(
+            content=resp.content,
+            media_type="application/pdf",
+            headers={"Content-Disposition": "inline"},
+        )
+    except httpx.RequestError as exc:
+        return Response(content=f"Proxy error: {exc}", status_code=502)
