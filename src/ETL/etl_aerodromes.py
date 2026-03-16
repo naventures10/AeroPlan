@@ -12,7 +12,7 @@ class CoordinateConverter:
             return {"raw_dms": dms_string, "decimal_lat": None, "decimal_lng": None}
 
         # Sanitize: Remove all newlines and whitespace that could bisect decimals (e.g. '2538.\n73N')
-        clean_string = re.sub(r'[\s\n\r]+', '', dms_string.upper())
+        clean_string = re.sub(r"[\s\n\r]+", "", dms_string.upper())
 
         # The Regex Hunter: safely extracts the first valid Lat/Lng pair
         lat_matches = re.findall(r"(\d+(?:\.\d+)?[NS])", clean_string)
@@ -270,7 +270,7 @@ class DBLoader:
                         execute_values(
                             cur,
                             """
-                            INSERT INTO aerodrome_charts (icao_code, chart_title, chart_index, minio_url)
+                            INSERT INTO aerodrome_charts (icao_code, chart_title, chart_index, chart_url)
                             VALUES %s
                         """,
                             chart_records,

@@ -32,63 +32,70 @@ TARGET_SECTIONS = [
     ("AD 2.21", "AD_2_21", "noise_abatement_procedures", "document"),
     ("AD 2.22", "AD_2_22", "flight_procedures", "document"),
     ("AD 2.23", "AD_2_23", "additional_information", "document"),
-    ("AD 2.24", "AD_2_24", "charts_related_to_aerodrome", "grid")
+    (
+        "AD 2.24 CHARTS RELATED TO AN AERODROME",
+        "AD_2_24",
+        "charts_related_to_aerodrome",
+        "grid",
+    ),
 ]
 
 
 class MasterOrchestrator:
-    def __init__(self, base_url, session=None, output_file="master_aip_data.json", max_workers=4):
+    def __init__(
+        self, base_url, session=None, output_file="master_aip_data.json", max_workers=4
+    ):
         self.base_url = base_url
         self.output_file = output_file
         self.max_workers = max_workers
-        
+
         # 1. Initialize the Shared Session
         self.session = session or requests.Session()
-        
+
         # 2. Instantiate all system components using the shared session
         self.manifest_creator = AIPManifestCreator(self.base_url)
-        self.manifest_creator.session = self.session 
-        
+        self.manifest_creator.session = self.session
+
         self.schema_mapper = AIPSchemaMapper()
 
     def _process_airport(self, entry):
         """
-        Processes a single airport: fetches the page ONCE, extracts all tables 
+        Processes a single airport: fetches the page ONCE, extracts all tables
         and charts from the same parsed HTML, and returns the airport record.
-        
+
         Thread-safe: each call uses its own LiveTableExtractor and ChartExtractor
         instances (sharing the thread-safe requests.Session for connection pooling).
         """
-        icao = entry['icao']
-        url = entry['source_url']
-        
+        icao = entry["icao"]
+        url = entry["source_url"]
+
         print(f"\n[+] Processing [{icao}] - {entry['name']}")
-        
+
         # Initialize per-thread extractors (sharing the session for connection reuse)
         table_extractor = LiveTableExtractor(session=self.session)
         chart_extractor = ChartExtractor(session=self.session)
-        
+
         # === THE KEY OPTIMIZATION: Fetch the airport page exactly ONCE ===
         soup = table_extractor._fetch_soup(url)
-        
+
         if soup is None:
             print(f"[!] Failed to fetch page for [{icao}]. Skipping.")
             return None
-        
+
         # Initialize the JSON document for this specific airport
         airport_record = {
             "icao": icao,
-            "name": entry['name'],
+            "name": entry["name"],
             "source_url": url,
             "data": {},
-            "charts": []
+            "charts": [],
         }
-        
+
         # --- Batch Extract ALL Tables from the single fetched page ---
         section_results = table_extractor.extract_all_sections(
             url, TARGET_SECTIONS, soup=soup
         )
-        
+
         for json_key, (router_key, grid) in section_results.items():
             mapped_data = self.schema_mapper.process_grid(router_key, grid)
             airport_record["data"][json_key] = mapped_data.get(json_key, [])
@@ -97,44 +104,48 @@ class MasterOrchestrator:
         print("    -> Extracting PDF Charts...")
         charts = chart_extractor.extract_charts(url, soup=soup)
         airport_record["charts"] = charts
-        
+
         return airport_record
 
     def run_pipeline(self):
         print("[*] Initiating Full eAIP Extraction Pipeline...")
         start_time = time.time()
-        
+
         # Phase 1: Discovery
         print("\n--- PHASE 1: DISCOVERY ---")
         manifest = self.manifest_creator.run_discovery()
-        
+
         if not manifest:
             print("[!] Discovery failed. Aborting pipeline.")
             return
-        
+
         discovery_time = time.time()
-        print(f"[*] Discovery completed in {discovery_time - start_time:.1f}s. Found {len(manifest)} airports.")
-            
+        print(
+            f"[*] Discovery completed in {discovery_time - start_time:.1f}s. Found {len(manifest)} airports."
+        )
+
         work_queue = manifest
-        
-        print(f"\n--- PHASE 2: EXTRACTION ({len(work_queue)} airports, {self.max_workers} workers) ---")
-        
+
+        print(
+            f"\n--- PHASE 2: EXTRACTION ({len(work_queue)} airports, {self.max_workers} workers) ---"
+        )
+
         # Phase 2: Concurrent Extraction
         master_database = []
         failed_airports = []
-        
+
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             # Submit all airport jobs
             future_to_entry = {
-                executor.submit(self._process_airport, entry): entry 
+                executor.submit(self._process_airport, entry): entry
                 for entry in work_queue
             }
-            
+
             # Collect results as they complete
             for future in as_completed(future_to_entry):
                 entry = future_to_entry[future]
-                icao = entry['icao']
-                
+                icao = entry["icao"]
+
                 try:
                     result = future.result()
                     if result:
@@ -148,21 +159,23 @@ class MasterOrchestrator:
                     print(f"[✗] [{icao}] failed with exception: {e}")
 
         extraction_time = time.time()
-        
+
         # Phase 3: Persistence
         print("\n--- PHASE 3: PERSISTENCE ---")
         print(f"[*] Saving scraped data to {self.output_file}...")
-        
-        with open(self.output_file, 'w', encoding='utf-8') as file:
+
+        with open(self.output_file, "w", encoding="utf-8") as file:
             json.dump(master_database, file, indent=2, ensure_ascii=False)
-        
+
         # Summary
         total_time = time.time() - start_time
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print(f"[+] PIPELINE COMPLETE")
         print(f"    Airports scraped : {len(master_database)}/{len(work_queue)}")
-        print(f"    Failed           : {len(failed_airports)} {failed_airports if failed_airports else ''}")
+        print(
+            f"    Failed           : {len(failed_airports)} {failed_airports if failed_airports else ''}"
+        )
         print(f"    Discovery time   : {discovery_time - start_time:.1f}s")
         print(f"    Extraction time  : {extraction_time - discovery_time:.1f}s")
         print(f"    Total time       : {total_time:.1f}s")
-        print(f"{'='*50}")
+        print(f"{'=' * 50}")

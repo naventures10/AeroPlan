@@ -1057,8 +1057,8 @@ class AIPSchemaMapper:
 
             col0_text = row[0].strip()
 
-            # Identify valid data rows (they always start with an index number)
-            if not col0_text.isdigit():
+            # Identify valid data rows (they always start with an index number, e.g., "1" or "1.")
+            if not re.match(r"^\d+\.?$", col0_text):
                 continue
 
             # The Data Contract Mapping
