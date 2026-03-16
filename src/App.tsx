@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Button } from "@heroui/react";
 import { Search, Building2, Map as MapIcon, Navigation, Radio, Target, X, Route, Layers } from "lucide-react";
+import AerodromeInfoDropdown from './components/AerodromeInfoDropdown';
+import SectionModal from './components/SectionModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer, TextLayer } from '@deck.gl/layers';
@@ -123,6 +125,14 @@ export default function App() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const mapRef = useRef<MapRef>(null);
 
+  // AIP Section Modal State
+  const [sectionModalOpen, setSectionModalOpen] = useState(false);
+  const [sectionData, setSectionData] = useState<any>(null);
+  const [sectionTitle, setSectionTitle] = useState('');
+  const [sectionId, setSectionId] = useState('');
+  const [sectionDataType, setSectionDataType] = useState('object');
+  const [sectionLoading, setSectionLoading] = useState(false);
+
   // === KEYBOARD SHORTCUTS ===
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -171,6 +181,34 @@ export default function App() {
       })
       .catch(err => console.error("Failed to fetch metadata", err));
   }, [flyToLocation, setActiveAirport, setActiveAerodromeMetadata]);
+
+  // === AIP SECTION HANDLER ===
+  const handleSectionSelect = useCallback((selectedSectionId: string) => {
+    if (!activeAirport) return;
+    setSectionLoading(true);
+    setSectionModalOpen(true);
+    setSectionId(selectedSectionId);
+    setSectionData(null);
+    setSectionTitle('');
+    setSectionDataType('object');
+
+    fetch(`/api/aerodromes/${activeAirport}/section/${selectedSectionId}`)
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(result => {
+        setSectionTitle(result.title || '');
+        setSectionDataType(result.data_type || 'object');
+        setSectionData(result.data);
+      })
+      .catch(err => {
+        console.error('Failed to fetch section:', err);
+        setSectionData(null);
+        setSectionTitle('Error loading section');
+      })
+      .finally(() => setSectionLoading(false));
+  }, [activeAirport]);
 
   // === GLOBAL SEARCH LOGIC ===
   useEffect(() => {
@@ -690,112 +728,126 @@ export default function App() {
       </div>
 
       <div className="absolute inset-0 pointer-events-none z-10">
+        {/* AIP Section Dropdown — TERMINAL view only */}
+        {(activeAirport || viewMode === 'TERMINAL') && (
+          <div className="absolute top-6 left-6 pointer-events-auto z-50">
+            <AerodromeInfoDropdown
+              onSectionSelect={handleSectionSelect}
+              activeAirport={activeAirport}
+            />
+          </div>
+        )}
+
         {/* Search */}
-        <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-[28rem] max-w-[90vw] pointer-events-auto z-50">
-          <div className="relative rounded-full shadow-2xl">
-            <div className="flex items-center w-full glass-morphism h-14 px-4 bg-zinc-950/40 hover:bg-zinc-950/60 focus-within:!bg-zinc-950/40 border-zinc-800/60 rounded-full transition-colors duration-300">
-              <Search size={18} strokeWidth={2} className="text-zinc-400 shrink-0" />
-              <input
-                ref={searchInputRef}
-                className="flex-1 bg-transparent border-none outline-none shadow-none text-zinc-100 font-semibold text-sm placeholder-zinc-500 uppercase tracking-[0.1em] px-3 h-full w-full"
-                placeholder="SEARCH AIRPORT OR ICAO..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                onKeyDown={handleSearchKeyDown}
-              />
+        {viewMode === 'ENROUTE' && (
+          <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-[28rem] max-w-[90vw] pointer-events-auto z-50">
+            <div className="relative rounded-full shadow-2xl">
+              <div className="flex items-center w-full glass-morphism h-14 px-4 bg-zinc-950/40 hover:bg-zinc-950/60 focus-within:!bg-zinc-950/40 border-zinc-800/60 rounded-full transition-colors duration-300">
+                <Search size={18} strokeWidth={2} className="text-zinc-400 shrink-0" />
+                <input
+                  ref={searchInputRef}
+                  className="flex-1 bg-transparent border-none outline-none shadow-none text-zinc-100 font-semibold text-sm placeholder-zinc-500 uppercase tracking-[0.1em] px-3 h-full w-full"
+                  placeholder="SEARCH AIRPORT OR ICAO..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                  onKeyDown={handleSearchKeyDown}
+                />
+                <AnimatePresence>
+                  {searchInput && (
+                    <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="flex items-center">
+                      <Button isIconOnly size="sm" variant="light" radius="full" onPress={() => setSearchInput('')} className="text-zinc-400 hover:text-zinc-200"><X size={16} /></Button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Autocomplete Dropdown */}
               <AnimatePresence>
-                {searchInput && (
-                  <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="flex items-center">
-                    <Button isIconOnly size="sm" variant="light" radius="full" onPress={() => setSearchInput('')} className="text-zinc-400 hover:text-zinc-200"><X size={16} /></Button>
+                {isSearchFocused && searchInput.trim().length > 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }} 
+                    animate={{ opacity: 1, y: 0, scale: 1 }} 
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }} 
+                    transition={{ duration: 0.15 }} 
+                    className="absolute top-full left-0 right-0 mt-2 glass-morphism-heavy rounded-2xl overflow-hidden shadow-2xl border border-zinc-800/60"
+                  >
+                    {suggestions.length > 0 ? (
+                      <div className="py-2">
+                         {suggestions.map((item: SearchResult, index: number) => (
+                            <div 
+                              key={`${item.type}-${item.id}`} 
+                              className={`px-4 py-3 cursor-pointer flex items-center justify-between transition-colors border-l-2 ${index === searchSelectedIndex ? 'bg-zinc-800/80 border-cyan-400' : 'hover:bg-zinc-800/50 border-transparent'} ${index !== suggestions.length - 1 ? 'border-b border-zinc-800/50' : ''}`}
+                              onClick={() => { handleGlobalSearchSelect(item); }}
+                              onMouseEnter={() => setSearchSelectedIndex(index)}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-zinc-800/80 flex items-center justify-center">
+                                  <Search size={14} className="text-zinc-400" />
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className={`font-mono font-semibold tracking-wider text-[15px] ${index === searchSelectedIndex ? 'text-cyan-400' : 'text-zinc-100'}`}>
+                                    {item.id}
+                                  </span>
+                                  <span className="text-[11px] font-medium tracking-wide text-zinc-400 mt-0.5 uppercase">
+                                    {item.name || 'UNKNOWN LOCATION'}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="px-2 py-0.5 rounded-sm bg-zinc-800/50">
+                                 <span className="text-[10px] font-bold tracking-widest text-zinc-500">{item.type.replace('_', ' ')}</span>
+                              </div>
+                            </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="px-4 py-8 text-center text-zinc-500 text-sm font-medium tracking-wide leading-relaxed">
+                        NO MATCHING LOCATIONS FOUND<br/>
+                        <span className="text-xs text-zinc-600 mt-2 block">Search Aerodromes, Waypoints, NavAids, or ATS Routes</span>
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
-
-            {/* Autocomplete Dropdown */}
-            <AnimatePresence>
-              {isSearchFocused && searchInput.trim().length > 0 && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -10, scale: 0.95 }} 
-                  animate={{ opacity: 1, y: 0, scale: 1 }} 
-                  exit={{ opacity: 0, y: -10, scale: 0.95 }} 
-                  transition={{ duration: 0.15 }} 
-                  className="absolute top-full left-0 right-0 mt-2 glass-morphism-heavy rounded-2xl overflow-hidden shadow-2xl border border-zinc-800/60"
-                >
-                  {suggestions.length > 0 ? (
-                    <div className="py-2">
-                       {suggestions.map((item: SearchResult, index: number) => (
-                          <div 
-                            key={`${item.type}-${item.id}`} 
-                            className={`px-4 py-3 cursor-pointer flex items-center justify-between transition-colors border-l-2 ${index === searchSelectedIndex ? 'bg-zinc-800/80 border-cyan-400' : 'hover:bg-zinc-800/50 border-transparent'} ${index !== suggestions.length - 1 ? 'border-b border-zinc-800/50' : ''}`}
-                            onClick={() => { handleGlobalSearchSelect(item); }}
-                            onMouseEnter={() => setSearchSelectedIndex(index)}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-zinc-800/80 flex items-center justify-center">
-                                <Search size={14} className="text-zinc-400" />
-                              </div>
-                              <div className="flex flex-col">
-                                <span className={`font-mono font-semibold tracking-wider text-[15px] ${index === searchSelectedIndex ? 'text-cyan-400' : 'text-zinc-100'}`}>
-                                  {item.id}
-                                </span>
-                                <span className="text-[11px] font-medium tracking-wide text-zinc-400 mt-0.5 uppercase">
-                                  {item.name || 'UNKNOWN LOCATION'}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="px-2 py-0.5 rounded-sm bg-zinc-800/50">
-                               <span className="text-[10px] font-bold tracking-widest text-zinc-500">{item.type.replace('_', ' ')}</span>
-                            </div>
-                          </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="px-4 py-8 text-center text-zinc-500 text-sm font-medium tracking-wide leading-relaxed">
-                      NO MATCHING LOCATIONS FOUND<br/>
-                      <span className="text-xs text-zinc-600 mt-2 block">Search Aerodromes, Waypoints, NavAids, or ATS Routes</span>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
-        </div>
+        )}
 
         {/* Left toolbar */}
-        <div className="absolute top-1/2 left-6 -translate-y-1/2 flex flex-col gap-3 pointer-events-auto">
-          {(() => {
-            const toggleButtons = [
-              { icon: Target, id: 'aerodromes' as const, color: 'text-indigo-400', border: 'border-indigo-500/50', bg: 'bg-indigo-500/20' },
-              { icon: Navigation, id: 'waypoints' as const, color: 'text-violet-400', border: 'border-violet-500/50', bg: 'bg-violet-500/20' },
-              { icon: Radio, id: 'navaids' as const, color: 'text-emerald-400', border: 'border-emerald-500/50', bg: 'bg-emerald-500/20' },
-              { icon: Route, id: 'atsRoutes' as const, color: 'text-cyan-400', border: 'border-cyan-500/50', bg: 'bg-cyan-500/20' }
-            ];
-            
-            return toggleButtons.map(({ icon: Icon, id, color, border, bg }) => {
-              const isActive = activeLayers[id];
-              return (
-                <Button 
-                  key={id} 
-                  isIconOnly 
-                  radius="full" 
-                  variant="flat" 
-                  onPress={() => toggleLayer(id)}
-                  title={`Toggle ${id}`}
-                  className={`backdrop-blur-2xl shadow-xl transition-all duration-300 ${
-                    isActive 
-                      ? `${bg} ${color} border ${border} shadow-[0_0_15px_rgba(0,0,0,0.2)]` 
-                      : 'bg-zinc-950/40 border border-zinc-800/60 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60 opacity-80'
-                  }`}
-                >
-                  <Icon size={18} />
-                </Button>
-              );
-            });
-          })()}
-        </div>
+        {viewMode === 'ENROUTE' && (
+          <div className="absolute top-1/2 left-6 -translate-y-1/2 flex flex-col gap-3 pointer-events-auto">
+            {(() => {
+              const toggleButtons = [
+                { icon: Target, id: 'aerodromes' as const, color: 'text-indigo-400', border: 'border-indigo-500/50', bg: 'bg-indigo-500/20' },
+                { icon: Navigation, id: 'waypoints' as const, color: 'text-violet-400', border: 'border-violet-500/50', bg: 'bg-violet-500/20' },
+                { icon: Radio, id: 'navaids' as const, color: 'text-emerald-400', border: 'border-emerald-500/50', bg: 'bg-emerald-500/20' },
+                { icon: Route, id: 'atsRoutes' as const, color: 'text-cyan-400', border: 'border-cyan-500/50', bg: 'bg-cyan-500/20' }
+              ];
+              
+              return toggleButtons.map(({ icon: Icon, id, color, border, bg }) => {
+                const isActive = activeLayers[id];
+                return (
+                  <Button 
+                    key={id} 
+                    isIconOnly 
+                    radius="full" 
+                    variant="flat" 
+                    onPress={() => toggleLayer(id)}
+                    title={`Toggle ${id}`}
+                    className={`backdrop-blur-2xl shadow-xl transition-all duration-300 ${
+                      isActive 
+                        ? `${bg} ${color} border ${border} shadow-[0_0_15px_rgba(0,0,0,0.2)]` 
+                        : 'bg-zinc-950/40 border border-zinc-800/60 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60 opacity-80'
+                    }`}
+                  >
+                    <Icon size={18} />
+                  </Button>
+                );
+              });
+            })()}
+          </div>
+        )}
 
         {/* 3D toggle + logo */}
         <div className="absolute bottom-6 right-6 flex flex-col items-end gap-4 pointer-events-auto">
@@ -865,6 +917,17 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {/* AIP Section Modal */}
+      <SectionModal
+        isOpen={sectionModalOpen}
+        onClose={() => setSectionModalOpen(false)}
+        title={sectionTitle}
+        sectionId={sectionId}
+        data={sectionData}
+        dataType={sectionDataType}
+        isLoading={sectionLoading}
+      />
     </div>
   );
 }
