@@ -100,6 +100,16 @@ class MasterOrchestrator:
             mapped_data = self.schema_mapper.process_grid(router_key, grid)
             airport_record["data"][json_key] = mapped_data.get(json_key, [])
 
+        # Ensure all expected sections are present — missing document-mode
+        # sections (e.g. "NIL" content embedded in the header table) get a
+        # default NIL entry so the output schema is always complete.
+        for _search_id, _router_key, json_key, mode in TARGET_SECTIONS:
+            if json_key not in airport_record["data"]:
+                if mode == "document":
+                    airport_record["data"][json_key] = [
+                        {"type": "paragraph", "content": "NIL"}
+                    ]
+
         # --- Extract Charts from the same fetched page ---
         print("    -> Extracting PDF Charts...")
         charts = chart_extractor.extract_charts(url, soup=soup)

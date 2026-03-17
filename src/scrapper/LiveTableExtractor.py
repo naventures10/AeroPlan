@@ -173,7 +173,7 @@ class LiveTableExtractor:
             print(f"[DEBUG] Text Preview: {text[:80]}...")
             
             # Boundary limit
-            if row_count <= 3 and ("AD 2." in text or "AD 3." in text):
+            if row_count <= 3 and ("AD 2." in text[:100] or "AD 3." in text[:100]):
                 print(f"[DEBUG] !!! HIT BOUNDARY !!! Stopped collecting at Table {j}.")
                 break
                 
