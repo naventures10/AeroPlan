@@ -7,11 +7,29 @@ interface TableRendererProps {
 }
 
 /**
+ * Column width map based on data keys to ensure wide tables stay readable.
+ */
+const MIN_WIDTHS: Record<string, string> = {
+  designation: '80px',
+  designator: '80px',
+  true_bearing: '140px',
+  dimensions: '140px',
+  coordinates: '280px',
+  thr_elevation: '200px',
+  remarks: '350px',
+  Remarks: '350px',
+  obstacle_type: '180px',
+  marking_lgt: '160px',
+  area_affected: '180px',
+};
+
+/**
  * Renders AIP data_type: "array" sections as styled HTML tables.
  * 
- * If columnConfig is provided, uses the official AIP headers and
- * renders columns in the specified order.
- * Otherwise falls back to auto-generating headers from object keys.
+ * Includes Horizontal Scroll optimization:
+ * - Sticky Top Headers: Always visible while scrolling long tables.
+ * - Sticky Left Identifier: The first column (Runway ID) stays fixed while scrolling horizontally.
+ * - Min-Width Strategy: Prevents wide tables (AD 2.12) from squashing text.
  */
 export default function TableRenderer({ data, columnConfig }: TableRendererProps) {
   if (!Array.isArray(data) || data.length === 0) {
@@ -31,14 +49,17 @@ export default function TableRenderer({ data, columnConfig }: TableRendererProps
       }));
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-sm">
-        <thead>
+    <div className="relative overflow-auto aip-scrollbar max-h-[70vh]">
+      <table className="w-full border-separate border-spacing-0 text-sm">
+        <thead className="sticky top-0 z-30">
           <tr>
-            {columns.map((col) => (
+            {columns.map((col, idx) => (
               <th
                 key={col.key}
-                className="text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-zinc-400 bg-zinc-900/80 border-b border-zinc-700/50 whitespace-nowrap"
+                className={`text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-zinc-400 bg-zinc-950 border-b border-zinc-800 whitespace-nowrap ${
+                  idx === 0 ? 'sticky left-0 z-40 bg-zinc-950 shadow-[2px_0_5px_rgba(0,0,0,0.3)]' : ''
+                }`}
+                style={{ minWidth: MIN_WIDTHS[col.key] || '140px' }}
               >
                 {col.header}
               </th>
@@ -49,16 +70,22 @@ export default function TableRenderer({ data, columnConfig }: TableRendererProps
           {data.map((row: any, rowIdx: number) => (
             <tr
               key={rowIdx}
-              className={`border-b border-zinc-800/40 transition-colors hover:bg-zinc-800/30 ${
-                rowIdx % 2 === 0 ? 'bg-zinc-900/20' : 'bg-transparent'
+              className={`transition-colors hover:bg-white/[0.04] ${
+                rowIdx % 2 === 0 ? 'bg-white/[0.02]' : 'bg-transparent'
               }`}
             >
-              {columns.map((col) => {
+              {columns.map((col, idx) => {
                 const cellValue = extractDisplayValue(row[col.key]);
+                const isSticky = idx === 0;
+
                 return (
                   <td
                     key={col.key}
-                    className="px-4 py-3 text-zinc-200 text-[13px] leading-relaxed align-top"
+                    className={`px-4 py-3 text-zinc-200 text-[13px] leading-relaxed align-top border-b border-zinc-800/40 ${
+                      isSticky ? 'sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.3)]' : ''
+                    } ${
+                      isSticky && rowIdx % 2 === 0 ? 'bg-zinc-950' : isSticky ? 'bg-zinc-950' : ''
+                    }`}
                     dangerouslySetInnerHTML={{
                       __html: cellValue
                         .replace(/\\n/g, '<br/>')
@@ -75,3 +102,4 @@ export default function TableRenderer({ data, columnConfig }: TableRendererProps
     </div>
   );
 }
+

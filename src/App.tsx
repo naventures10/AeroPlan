@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Button } from "@heroui/react";
 import { Search, Building2, Map as MapIcon, Navigation, Radio, Target, X, Route, Layers } from "lucide-react";
 import AerodromeInfoDropdown from './components/AerodromeInfoDropdown';
+import AerodromeChartViewer from './components/AerodromeChartViewer';
 import SectionModal from './components/SectionModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import DeckGL from '@deck.gl/react';
@@ -194,6 +195,10 @@ export default function App() {
 
     fetch(`/api/aerodromes/${activeAirport}/section/${selectedSectionId}`)
       .then(res => {
+        if (res.status === 404) {
+          // Section has no data for this aerodrome — normal in AIP
+          return { title: 'No Data for This Section', data_type: 'object', data: null };
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
@@ -735,6 +740,13 @@ export default function App() {
               onSectionSelect={handleSectionSelect}
               activeAirport={activeAirport}
             />
+          </div>
+        )}
+
+        {/* Aerodrome Charts Carousel — visible when airport active */}
+        {activeAirport && (
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 pointer-events-auto z-40">
+            <AerodromeChartViewer icaoCode={activeAirport} />
           </div>
         )}
 
