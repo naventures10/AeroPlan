@@ -102,14 +102,17 @@ class AIPSchemaMapper:
             ):
                 continue
 
+            # Helper to clean up Virtual Grid delimiters into clean newlines
+            clean = lambda c: c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
+
             # The Data Contract Mapping
             obstacle_record = {
-                "area_affected": row[0].strip(),
-                "obstacle_type": row[1].strip(),
-                "coordinates": row[2].strip(),
-                "elevation": row[3].strip(),
-                "marking_lgt": row[4].strip(),
-                "remarks": row[5].strip(),
+                "area_affected": clean(row[0]),
+                "obstacle_type": clean(row[1]),
+                "coordinates": clean(row[2]),
+                "elevation": clean(row[3]),
+                "marking_lgt": clean(row[4]),
+                "remarks": clean(row[5]),
             }
 
             obstacles_data.append(obstacle_record)
@@ -809,25 +812,23 @@ class AIPSchemaMapper:
         ignore_headers = ["AD 2.20", "LOCAL AERODROME REGULATIONS", "VAAH", "VAAM"]
 
         for row in grid:
-            # Extract and clean cells, filtering out empty ones
-            raw_cells = [
-                cell.replace(" | ", "\n").strip() for cell in row if cell.strip()
-            ]
+            # Clean all cells to preserve grid alignment for proper frontend rendering
+            cleaned_cells = [cell.replace(" | ", "\n").strip() for cell in row]
+            
+            # Find unique non-empty values to route row type
+            non_empty_unique = list(dict.fromkeys([c for c in cleaned_cells if c]))
 
-            # Deduplicate to handle Virtual Grid COLSPAN cloning
-            unique_cells = list(dict.fromkeys(raw_cells))
-
-            if not unique_cells:
+            if not non_empty_unique:
                 continue
 
             # Skip title headers
-            if len(unique_cells) == 1 and any(
-                h == unique_cells[0].upper() for h in ignore_headers
+            if len(non_empty_unique) == 1 and any(
+                h == non_empty_unique[0].upper() for h in ignore_headers
             ):
                 continue
 
             # HYBRID ROUTER: If the row has multiple distinct values, it is a Table
-            if len(unique_cells) > 1:
+            if len(non_empty_unique) > 1:
                 # If we were previously reading text, flush it to the document first
                 if current_text_block:
                     document.append(
@@ -835,8 +836,8 @@ class AIPSchemaMapper:
                     )
                     current_text_block = []
 
-                # Append the row to the active table
-                current_table.append(unique_cells)
+                # Append the FULL aligned row to the active table
+                current_table.append(cleaned_cells)
 
             # HYBRID ROUTER: If the row has only 1 unique value, it is a Paragraph/Heading
             else:
@@ -846,7 +847,7 @@ class AIPSchemaMapper:
                     current_table = []
 
                 # Avoid appending duplicate consecutive lines
-                text_val = unique_cells[0]
+                text_val = non_empty_unique[0]
                 paragraphs = [p.strip() for p in text_val.split("\n") if p.strip()]
 
                 for p in paragraphs:
@@ -881,29 +882,28 @@ class AIPSchemaMapper:
         ]
 
         for row in grid:
-            # Extract, clean, and deduplicate cells
-            raw_cells = [
-                cell.replace(" | ", "\n").strip() for cell in row if cell.strip()
-            ]
-            unique_cells = list(dict.fromkeys(raw_cells))
+            # Clean all cells to preserve grid alignment for proper frontend rendering
+            cleaned_cells = [cell.replace(" | ", "\n").strip() for cell in row]
+            
+            non_empty_unique = list(dict.fromkeys([c for c in cleaned_cells if c]))
 
-            if not unique_cells:
+            if not non_empty_unique:
                 continue
 
             # Skip title headers
-            if len(unique_cells) == 1 and any(
-                h == unique_cells[0].upper() for h in ignore_headers
+            if len(non_empty_unique) == 1 and any(
+                h == non_empty_unique[0].upper() for h in ignore_headers
             ):
                 continue
 
             # HYBRID ROUTER: Multi-column = Table
-            if len(unique_cells) > 1:
+            if len(non_empty_unique) > 1:
                 if current_text_block:
                     document.append(
                         {"type": "text", "content": "\n\n".join(current_text_block)}
                     )
                     current_text_block = []
-                current_table.append(unique_cells)
+                current_table.append(cleaned_cells)
 
             # HYBRID ROUTER: Single-column = Paragraph
             else:
@@ -911,7 +911,7 @@ class AIPSchemaMapper:
                     document.append({"type": "table", "content": current_table})
                     current_table = []
 
-                text_val = unique_cells[0]
+                text_val = non_empty_unique[0]
                 paragraphs = [p.strip() for p in text_val.split("\n") if p.strip()]
 
                 for p in paragraphs:
@@ -945,24 +945,23 @@ class AIPSchemaMapper:
         ]
 
         for row in grid:
-            # Extract, clean, and deduplicate cells
-            raw_cells = [
-                cell.replace(" | ", "\n").strip() for cell in row if cell.strip()
-            ]
-            unique_cells = list(dict.fromkeys(raw_cells))
+            # Clean all cells to preserve grid alignment for proper frontend rendering
+            cleaned_cells = [cell.replace(" | ", "\n").strip() for cell in row]
+            
+            non_empty_unique = list(dict.fromkeys([c for c in cleaned_cells if c]))
 
-            if not unique_cells:
+            if not non_empty_unique:
                 continue
 
             # Skip title headers
-            if len(unique_cells) == 1 and any(
-                h == unique_cells[0].upper() for h in ignore_headers
+            if len(non_empty_unique) == 1 and any(
+                h == non_empty_unique[0].upper() for h in ignore_headers
             ):
                 continue
 
             # HYBRID ROUTER: Multi-column = Table
-            if len(unique_cells) > 1:
-                current_table.append(unique_cells)
+            if len(non_empty_unique) > 1:
+                current_table.append(cleaned_cells)
 
             # HYBRID ROUTER: Single-column = Paragraph
             else:
@@ -971,7 +970,7 @@ class AIPSchemaMapper:
                     document.append({"type": "table", "content": current_table})
                     current_table = []
 
-                text_val = unique_cells[0]
+                text_val = non_empty_unique[0]
 
                 # The Virtual Grid may have concatenated multiple <p> tags into one cell.
                 # We split them by newline to ensure every paragraph gets its own node.
@@ -1008,23 +1007,21 @@ class AIPSchemaMapper:
         ]
 
         for row in grid:
-            raw_cells = [
-                cell.replace(" | ", "\n").strip() for cell in row if cell.strip()
-            ]
-            unique_cells = list(dict.fromkeys(raw_cells))
+            cleaned_cells = [cell.replace(" | ", "\n").strip() for cell in row]
+            non_empty_unique = list(dict.fromkeys([c for c in cleaned_cells if c]))
 
-            if not unique_cells:
+            if not non_empty_unique:
                 continue
 
             # Skip title headers
-            if len(unique_cells) == 1 and any(
-                h == unique_cells[0].upper() for h in ignore_headers
+            if len(non_empty_unique) == 1 and any(
+                h == non_empty_unique[0].upper() for h in ignore_headers
             ):
                 continue
 
             # HYBRID ROUTER: Multi-column = Table
-            if len(unique_cells) > 1:
-                current_table.append(unique_cells)
+            if len(non_empty_unique) > 1:
+                current_table.append(cleaned_cells)
 
             # HYBRID ROUTER: Single-column = Paragraph
             else:
@@ -1032,7 +1029,7 @@ class AIPSchemaMapper:
                     document.append({"type": "table", "content": current_table})
                     current_table = []
 
-                text_val = unique_cells[0]
+                text_val = non_empty_unique[0]
                 paragraphs = [p.strip() for p in text_val.split("\n") if p.strip()]
 
                 for p in paragraphs:

@@ -2,7 +2,7 @@
   "metadata": {
     "section": "ENR 4.4",
     "title": "NAME CODE DESIGNATORS FOR SIGNIFICANT POINTS",
-    "extracted_at": "2026-03-16T17:36:12.679217+05:30",
+    "extracted_at": "2026-03-18T23:54:52.489597+05:30",
     "airac_base_url": "https://aim-india.aai.aero/eaip/eaip-v2-01-2026/index-en-GB.html"
   },
   "source_url": "https://aim-india.aai.aero/eaip/eaip-v2-01-2026/eAIP/IN-ENR%204.4-en-GB.html",
@@ -4323,8 +4323,8 @@
       "routes": [
         "A589",
         "W25",
-        "| W69",
-        "| Z7"
+        "W69",
+        "Z7"
       ]
     },
     {

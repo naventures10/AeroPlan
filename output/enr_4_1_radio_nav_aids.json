@@ -2,7 +2,7 @@
   "metadata": {
     "section": "ENR 4.1",
     "title": "RADIO NAVIGATION AIDS - EN-ROUTE",
-    "extracted_at": "2026-03-16T17:36:09.429325+05:30",
+    "extracted_at": "2026-03-18T23:54:49.335035+05:30",
     "airac_base_url": "https://aim-india.aai.aero/eaip/eaip-v2-01-2026/index-en-GB.html"
   },
   "radio_navigation_aids": [
@@ -248,6 +248,24 @@
       "coordinates": "175523.00N 0773005.00E",
       "elevation": "",
       "remarks": "1. Controlling Authority: Indian Air Force"
+    },
+    {
+      "station_name": "BIKANER DVOR/DME",
+      "id": "LKA",
+      "frequency": "114.000MHZ\n(87X)",
+      "hours_of_operation": "H24",
+      "coordinates": "281120.42N 0740640.68E",
+      "elevation": "881.00  FT",
+      "remarks": "EGM 08"
+    },
+    {
+      "station_name": "BIKANER DVOR/DME",
+      "id": "LUN",
+      "frequency": "117.600MHZ\n(123X)",
+      "hours_of_operation": "H24",
+      "coordinates": "283309.85N 0734714.90E",
+      "elevation": "693.57  FT",
+      "remarks": "I) Gravity Model: EGM-08\nII) DME colocated with DVOR"
     },
     {
       "station_name": "CALICUT DVOR/DME",
@@ -871,6 +889,15 @@
       "remarks": ""
     },
     {
+      "station_name": "KOLKATA DVOR/DME",
+      "id": "CEA",
+      "frequency": "112.500MHZ\n(72X)",
+      "hours_of_operation": "H24",
+      "coordinates": "224035.43N 0882652.54E",
+      "elevation": "46.59  FT",
+      "remarks": "(I) Gravity Model: EGM-08\n(II) DME Colocated with DVOR."
+    },
+    {
       "station_name": "KOTA NDB",
       "id": "KO",
       "frequency": "284KHZ",
@@ -914,6 +941,24 @@
       "coordinates": "340757.50N 0773230.30E",
       "elevation": "10839.90  FT",
       "remarks": "1. Controlling Authority:\nIndian Air Force\n2. Limited range (MAX 58NM) due to\nmountainous terrain.\n3. Operational Hours for\nDVOR may be\nextended to meet\noperational requirement subject to\nprior intimation and coordination with IAF."
+    },
+    {
+      "station_name": "LENGPUI DVOR/DME",
+      "id": "LPU",
+      "frequency": "113.800MHZ\n(85X)",
+      "hours_of_operation": "AS ATS",
+      "coordinates": "235244.10N 0923505.70E",
+      "elevation": "3244.75  FT",
+      "remarks": "1. Collocated with DVOR\n2. Geoid Model EGM08"
+    },
+    {
+      "station_name": "LENGPUI DVOR/DME",
+      "id": "LLP",
+      "frequency": "114.200MHZ\n(89X)",
+      "hours_of_operation": "AS ATS",
+      "coordinates": "234949.37N 0923724.82E",
+      "elevation": "1459.00  FT",
+      "remarks": "1. Collocated with DVOR\n2. Geoid Model EGM08"
     },
     {
       "station_name": "LILABARI DVOR/DME",
@@ -1258,6 +1303,15 @@
       "remarks": ""
     },
     {
+      "station_name": "SARSAWA DVOR/DME",
+      "id": "SSW",
+      "frequency": "112.200MHZ\n(59X)",
+      "hours_of_operation": "HJ",
+      "coordinates": "295931.01N 0772458.08E",
+      "elevation": "943.00  FT",
+      "remarks": "1. Controlling Authority: IAF\n2. DME collocated with DVOR"
+    },
+    {
       "station_name": "SARSAWA NDB",
       "id": "SP",
       "frequency": "298KHZ",
@@ -1499,7 +1553,25 @@
       "coordinates": "163215.81N 0805008.22E",
       "elevation": "72.50  FT",
       "remarks": "Vertical datum: EGM08"
+    },
+    {
+      "station_name": "VISAKHAPATNAM DVOR/DME",
+      "id": "VSP",
+      "frequency": "116.600MHZ\n(113X)",
+      "hours_of_operation": "H24",
+      "coordinates": "174327.40N 0831410.50E",
+      "elevation": "39.00  FT",
+      "remarks": ""
+    },
+    {
+      "station_name": "VISAKHAPATNAM DVOR/DME",
+      "id": "VVZ",
+      "frequency": "114.000MHZ\n(87X)",
+      "hours_of_operation": "H24",
+      "coordinates": "174007.77N 0831510.32E",
+      "elevation": "1204.40  FT",
+      "remarks": "1. Controlling Authority: AAI\n2. Vertical datum: EGM08"
     }
   ],
-  "total_count": 166
+  "total_count": 174
 }

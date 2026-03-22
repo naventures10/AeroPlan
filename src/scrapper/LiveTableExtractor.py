@@ -11,6 +11,19 @@ class TableParser:
     def clean_cell_text(self, cell_soup):
         # By using get_text with a separator, BeautifulSoup automatically handles 
         # <p>, <h6>, <br>, and any other tags perfectly without us needing to hunt for them.
+        
+        # 1. Clean up amendments - Decompose deleted text
+        for tag in cell_soup.find_all('del'):
+            tag.decompose()
+            
+        # 2. Unwrap inserted text and purely stylistic tags 
+        for tag in cell_soup.find_all(['ins', 'span', 'strong', 'em', 'b', 'i']):
+            tag.unwrap()
+            
+        # 3. Smooth to merge adjacent text nodes so they aren't separated by the delimiter
+        if hasattr(cell_soup, 'smooth'):
+            cell_soup.smooth()
+            
         return cell_soup.get_text(separator=self.text_delimiter, strip=True)
 
     def get_direct_rows(self, table_soup):

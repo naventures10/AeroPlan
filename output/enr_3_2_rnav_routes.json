@@ -2,7 +2,7 @@
   "metadata": {
     "section": "ENR 3.2",
     "title": "AREA NAVIGATION (RNAV) ROUTES",
-    "extracted_at": "2026-03-16T17:37:06.507361+05:30",
+    "extracted_at": "2026-03-18T23:55:35.708174+05:30",
     "airac_base_url": "https://aim-india.aai.aero/eaip/eaip-v2-01-2026/index-en-GB.html"
   },
   "routes": [
@@ -423,10 +423,10 @@
         },
         {
           "waypoint_name": "KOLKATA DVOR",
-          "coordinates": "DVOR/DME (CEA)\n224033N\n224035N\n0882653E"
+          "coordinates": "DVOR/DME (CEA)\n224035N   0882653E"
         }
       ],
-      "remarks": "REMARKS\n1. Kolkata ACC:\n• 120.700 MHz\n1. Kolkata ACC:\n• 120.700 MHz\n• 125.900 MHz\n2. Kolkata ACC shall provide Air Traffic Service between AVPOP and  ESDOT in DHAKA FIR. All aircraft shall report AVPOP and ESDOT to DHAKA ACC also on 125.7MHZ. Bangladesh shall provide search and rescue services in DHAKA FIR. Kolkata ACC shall provide information to DHAKA ACC for search and rescue requirements as appropriate"
+      "remarks": "REMARKS\n1. Kolkata ACC:  • 120.700 MHz  • 125.900 MHz\n2. Kolkata ACC shall provide Air Traffic Service between AVPOP and  ESDOT in DHAKA FIR. All aircraft shall report AVPOP and ESDOT to DHAKA ACC also on 125.7MHZ. Bangladesh shall provide search and rescue services in DHAKA FIR. Kolkata ACC shall provide information to DHAKA ACC for search and rescue requirements as appropriate"
     },
     {
       "route_id": "L509",
@@ -645,7 +645,7 @@
           "coordinates": "083430N   0942500E"
         }
       ],
-      "remarks": "REMARKS\n1. Chennai Radio: • 17907 KHz• 3470 KHz• 5670 KHz• 13318 KHz•  6583 KHz• 11285 KHz•  8861 KHz • 8909 KHz\n2. Chennai OCC: • 126.150 MHz\n3. Kolkata Radio: • 10066 KHz•  6556 KHz•  6593 KHz• 3491 KHz• 8861 KHz• 8906 KHz\n4. Kolkata ACC South:• 132.450 MHz\n5.Kolkata Oceanic South (OCC-S): • 128.300MHZ.\n5\n6\n. Nagpur ACC: • 123.900 MHz• 133.650 MHz• 132.300 MHz\n6\n7\n. Delhi ACC: • 124.550 MHz• 124.200 MHz• 120.900 MHz\n7\n8\n. Delhi Radio: • 3467 KHz• 10018 KHz• 5658 KHz\n8\n9\n. In case of any deviation from the route between EMRAN and NIMOV, aircraft shall coordinate with CarNicobar ATC on 121.800 MHz.\n9\n10\n. Though L510 is a unidirectional east bound ATS route, ATC may use L510 as bypass route to accommodate westbound flights at F280, F300, F340 and F360 with a condition that the flight crosses GIVAL at 1500 UTC or later and IBANI at 2230 UTC or earlier.\n10\n11\n. Route is bidirectional between AGEGA -EMRAN.\n11\n12\n. For  Air Traffic  Management purpose, ACFT Landing at  Phuket to expect descend to FL 310 by EMRAN or subject to COOR."
+      "remarks": "REMARKS\n1. Chennai Radio: • 17907 KHz• 3470 KHz• 5670 KHz• 13318 KHz•  6583 KHz• 11285 KHz•  8861 KHz • 8909 KHz\n2. Chennai OCC: • 126.150 MHz\n3. Kolkata Radio: • 10066 KHz•  6556 KHz•  6593 KHz• 3491 KHz• 8861 KHz• 8906 KHz\n4. Kolkata ACC South:• 132.450 MHz\n5.Kolkata Oceanic South (OCC-S): • 128.300MHZ.\n6. Nagpur ACC: • 123.900 MHz• 133.650 MHz• 132.300 MHz\n7. Delhi ACC: • 124.550 MHz• 124.200 MHz• 120.900 MHz\n8. Delhi Radio: • 3467 KHz• 10018 KHz• 5658 KHz\n9. In case of any deviation from the route between EMRAN and NIMOV, aircraft shall coordinate with CarNicobar ATC on 121.800 MHz.\n10. Though L510 is a unidirectional east bound ATS route, ATC may use L510 as bypass route to accommodate westbound flights at F280, F300, F340 and F360 with a condition that the flight crosses GIVAL at 1500 UTC or later and IBANI at 2230 UTC or earlier.\n11. Route is bidirectional between AGEGA -EMRAN.\n12. For  Air Traffic  Management purpose, ACFT Landing at  Phuket to expect descend to FL 310 by EMRAN or subject to COOR."
     },
     {
       "route_id": "L516",
@@ -823,7 +823,7 @@
           "coordinates": "185931N   0772802E"
         },
         {
-          "track_distance": "154/334\n118.\n5\n2\nNM",
+          "track_distance": "154/334\n118.2 NM",
           "limits_class": "FL 460\nFL 280\nClass D\n4300 FT",
           "lateral_limits": "20 NM",
           "direction_odd": "↓",
@@ -831,10 +831,10 @@
         },
         {
           "waypoint_name": "HYDERABAD DVOR",
-          "coordinates": "VOR/DME (HIA)\n171340N\n171347N\n0782421E"
+          "coordinates": "VOR/DME (HIA)\n171347N   0782421E"
         },
         {
-          "track_distance": "108/288\n53.\n6\n7\nNM",
+          "track_distance": "108/288\n53.7 NM",
           "limits_class": "FL 460\nFL 280\nClass D\n3900 FT",
           "lateral_limits": "20 NM",
           "direction_odd": "↓",
@@ -1033,7 +1033,7 @@
           "coordinates": "DVOR/DME (NNP)\n210455N   0790322E"
         }
       ],
-      "remarks": "REMARKS\n1. Minimum 10 Minute longitudinal separation applicable.\n2. 50NM Longitudinal separation may be applied between RNP10 aircraft which either LOGON to CPDLC or are within VHF range i.e. direct controller pilot communication (DCPC) exists.\n3. Kolkata OCC: • 132.450 MHz\n4. Kolkata UBS ACC:• 132.350 MHz\n5. Kolkata Oceanic North (OCC-N): • 123.775 MHZ.\n5\n6\n. Nagpur ACC:• 123.900 MHz • 133.650 MHz\n6\n7\n. Kolkata Radio:• 10066 KHz • 6556 KHz • 3491 KHz"
+      "remarks": "REMARKS\n1. Minimum 10 Minute longitudinal separation applicable.\n2. 50NM Longitudinal separation may be applied between RNP10 aircraft which either LOGON to CPDLC or are within VHF range i.e. direct controller pilot communication (DCPC) exists.\n3. Kolkata OCC: • 132.450 MHz\n4. Kolkata UBS ACC:• 132.350 MHz\n5. Kolkata Oceanic North (OCC-N): • 123.775 MHZ.\n6. Nagpur ACC:• 123.900 MHz • 133.650 MHz\n7. Kolkata Radio:• 10066 KHz • 6556 KHz • 3491 KHz"
     },
     {
       "route_id": "L626",
@@ -1525,7 +1525,7 @@
           "coordinates": "115000N   0942500E"
         }
       ],
-      "remarks": "REMARKS\n1. Delhi ACC:          • 120.900 MHz       •124.200 MHz       • 124.550 MHz\n2. i) Varanasi ACC:  • 128.150 MHz       •118.950 MHz\nii) Varanasi APP:  • 123.875 MHz\n3.  Nagpur ACC:      • 123.900 MHz       • 132.300 MHz      • 133.650 MHz\n4.  Contact Gwalior TWR after passing Agra VOR (AGG).\n5.  Route segment between Jamshedpur VOR & Khajuraho VOR(KKJ) on B209 not available for aircraft using L759.\n6.  Route bi-directional between Khajuraho VOR and MIPAK\n7.  Kolkata ACC:      • 132.450 MHz • 120.100 MHz\n8. Kolkata Oceanic North (OCC-N): • 123.775 MHz\n9. Kolkata Oceanic South (OCC-S): • 128.300 MHz\n8\n10\n.  Kolkata Radio:    • 10066 KHz     • 6556 KHz    • 6583 KHz   • 3491 KHz     • 8861 KHz   • 8906 KHz\n9\n11\n.   Chennai OCC:     • 126.15MHz  •132.95 MHz\n10\n12\n. Chennai Radio:   • 11285 KHz   • 13318 KHz   • 5670 KHz   • 3470 KHz\n11\n13\n. A longitudinal separation minima of 50NM shall be applicable between     RNAV approved aircraft flying on the same track, at the same      level, climbing and             descending through the level of another aircraft flying on the     same route within segment between DELHI VOR/DME (DPN) and TATUX."
+      "remarks": "REMARKS\n1. Delhi ACC:          • 120.900 MHz       •124.200 MHz       • 124.550 MHz\n2. i) Varanasi ACC:  • 128.150 MHz       •118.950 MHz\nii) Varanasi APP:  • 123.875 MHz\n3.  Nagpur ACC:      • 123.900 MHz       • 132.300 MHz      • 133.650 MHz\n4.  Contact Gwalior TWR after passing Agra VOR (AGG).\n5.  Route segment between Jamshedpur VOR & Khajuraho VOR(KKJ) on B209 not available for aircraft using L759.\n6.  Route bi-directional between Khajuraho VOR and MIPAK\n7.  Kolkata ACC:      • 132.450 MHz • 120.100 MHz\n8. Kolkata Oceanic North (OCC-N): • 123.775 MHz\n9. Kolkata Oceanic South (OCC-S): • 128.300 MHz\n10.  Kolkata Radio:    • 10066 KHz     • 6556 KHz    • 6583 KHz   • 3491 KHz     • 8861 KHz   • 8906 KHz\n11.   Chennai OCC:     • 126.15MHz  •132.95 MHz\n12. Chennai Radio:   • 11285 KHz   • 13318 KHz   • 5670 KHz   • 3470 KHz\n13. A longitudinal separation minima of 50NM shall be applicable between     RNAV approved aircraft flying on the same track, at the same      level, climbing and             descending through the level of another aircraft flying on the     same route within segment between DELHI VOR/DME (DPN) and TATUX."
     },
     {
       "route_id": "L760",
@@ -2155,7 +2155,7 @@
           "coordinates": "DVOR/DME (JJS)\n224847N   0861026E"
         }
       ],
-      "remarks": "REMARKS\n1.The route segment from BUBKO -\nJamshedpur VOR (JJS) is available only between 1630 UTC to 2330 UTC.\nJamshedpur VOR (JJS) is available\nonly between 1630 UTC to 2330\nUTC.\n2. Outside these times aircraft to\n2. Outside these times aircraft to route via M773 (BUBKO - LEGOS\n- Kolkata VOR (CEA))\n3. Kolkata ACC:\n120.100 MHz 125.900 MHz 132.450 MHz 126.100 MHz\n120.100 MHz\n125.900 MHz\n132.450 MHz\n126.100 MHz\n4.  Kolkata Oceanic North (OCC-N): • 123.775 MHz\n5. Kolkata Oceanic South (OCC-S): • 128.300 MHz"
+      "remarks": "REMARKS\n1.The route segment from BUBKO - Jamshedpur VOR (JJS) is available only between 1630 UTC to 2330 UTC.\n2. Outside these times aircraft to route via M773 (BUBKO - LEGOS - Kolkata VOR (CEA))\n3. Kolkata ACC: 120.100 MHz 125.900 MHz 132.450 MHz 126.100 MHz\n4.  Kolkata Oceanic North (OCC-N): • 123.775 MHz\n5. Kolkata Oceanic South (OCC-S): • 128.300 MHz"
     },
     {
       "route_id": "M773",
@@ -2197,7 +2197,7 @@
         },
         {
           "waypoint_name": "KOLKATA DVOR",
-          "coordinates": "DVOR/DME (CEA)\n224033N\n224035N\n0882653E"
+          "coordinates": "DVOR/DME (CEA)\n224035N   0882653E"
         }
       ],
       "remarks": "REMARKS\n1. Kolkata ACC:\n120.100 MHz\n125.900 MHz\n132.450 MHz\n126.100 MHz\n2. Kolkata Oceanic North (OCC-N): • 123.775 MHZ."
@@ -2334,7 +2334,7 @@
           "coordinates": "282800N   0784655E"
         },
         {
-          "track_distance": "322/\n142\n141\n115.\n9\n2\nNM",
+          "track_distance": "322/141\n115.2 NM",
           "limits_class": "FL 460\nFL 300\nClass E\n2200 FT",
           "lateral_limits": "20 NM",
           "direction_odd": "↑",
@@ -2342,10 +2342,10 @@
         },
         {
           "waypoint_name": "SARSAWA NDB",
-          "coordinates": "NDB (SP)\n300000N\n295921N\n0772555E\n0772617E"
+          "coordinates": "NDB (SP)\n295921N  0772617E"
         },
         {
-          "track_distance": "333\n332\n/152\n26\n27\n.\n8\n6\nNM",
+          "track_distance": "332/152\n27.6 NM",
           "limits_class": "FL 460\nFL 300\nClass E\n3700 FT",
           "lateral_limits": "20 NM",
           "direction_odd": "↑",
@@ -2389,7 +2389,7 @@
           "coordinates": "312047N   0743357E"
         }
       ],
-      "remarks": "REMARKS\n1.Flights from SULOM  to Lucknow VOR (LLK)-\na) At and above FL300 shall follow route M890.\nb\n)\n)\nBelow FL300, aircraft shall follow A466/A589 - Delhi VOR (DPN) -\nR460/R594.\nR460/R594.\n2\n.\n.\nAll flights to contact 'A' Control on 119.7MHz for identification\n.\n3\n.\n.\nSuitably equipped aircraft are required to squawk mode 3A assigned code and Mode C.\n4\n.\n.\nAircraft not assigned any code shall squawk mode 3A code 2000  and ModeC.\n5\n.\n.\nMinimum 10 Min. longitudinal separation applicable based on Mach\nnumber technique.\nnumber technique.\n6. DELHI ACC 120.9 MHz, 124.2 MHz, 124.55 MHz\n7. A longitudinal separation minima of 50NM shall be applicable between RNAV approved aircraft flying on the same track, at the same level, climbing and descending through the level of another aircraft flying on the same route within segment between LUCKNOW VOR/DME (LKN) and SULOM."
+      "remarks": "REMARKS\n1.Flights from SULOM  to Lucknow VOR (LLK)-\na) At and above FL300 shall follow route M890.\nb) Below FL300, aircraft shall follow A466/A589 - Delhi VOR (DPN) - R460/R594.\n2. All flights to contact 'A' Control on 119.7MHz for identification.\n3. Suitably equipped aircraft are required to squawk mode 3A assigned code and Mode C.\n4. Aircraft not assigned any code shall squawk mode 3A code 2000  and ModeC.\n5. Minimum 10 Min. longitudinal separation applicable based on Mach number technique.\n6. DELHI ACC 120.9 MHz, 124.2 MHz, 124.55 MHz\n7. A longitudinal separation minima of 50NM shall be applicable between RNAV approved aircraft flying on the same track, at the same level, climbing and descending through the level of another aircraft flying on the same route within segment between LUCKNOW VOR/DME (LKN) and SULOM."
     },
     {
       "route_id": "N519",
@@ -3101,7 +3101,7 @@
         },
         {
           "waypoint_name": "AHMEDABAD DVOR",
-          "coordinates": "DVOR/DME (AAE)\n230406N\n230407N\n0723745E\n0723744E"
+          "coordinates": "DVOR/DME (AAE)\n230407N  0723744E"
         }
       ],
       "remarks": "REMARKS\n1. Ahmedabad ACC:\n123.75MHz, 134.2MHz.\n2. A longitudinal separation minima of 50NM shall be applicable between RNAV approved aircraft flying on the same track, at the same level, climbing and descending through the level of another aircraft flying on the same route within segment between TELEM and AHMEDABAD VOR/DME ( AAE )."
@@ -3356,7 +3356,7 @@
           "coordinates": "241438N   0705159E"
         }
       ],
-      "remarks": "REMARKS\n1.Kolkata ACC:• 120.100 MHz• 126.100 MHz• 132.450 MHz• 125.900 MHz\n2.Kolkata Radio: • 3491 KHz• 10066 KHz•   6556 KHz• 6583 KHz• 8861 KHz• 8948 KHz\n3.Kolkata Oceanic North (OCC-N): • 123.775 MHZ.\n3\n4\n.Nagpur ACC:• 123.900 MHz• 132.300 MHz• 133.650 MHz\n4\n5\n.Ahmedabad ACC:• 123.750 MHz• 134.200 MHz\n5\n6\n.RNAV 5 Approved aircraft operating between Ahmedabad and Hyderabad may flight plan between AAE VOR and MONPI via N895 (RNP 10)."
+      "remarks": "REMARKS\n1.Kolkata ACC:• 120.100 MHz• 126.100 MHz• 132.450 MHz• 125.900 MHz\n2.Kolkata Radio: • 3491 KHz• 10066 KHz•   6556 KHz• 6583 KHz• 8861 KHz• 8948 KHz\n3.Kolkata Oceanic North (OCC-N): • 123.775 MHZ.\n4.Nagpur ACC:• 123.900 MHz• 132.300 MHz• 133.650 MHz\n5.Ahmedabad ACC:• 123.750 MHz• 134.200 MHz\n6.RNAV 5 Approved aircraft operating between Ahmedabad and Hyderabad may flight plan between AAE VOR and MONPI via N895 (RNP 10)."
     },
     {
       "route_id": "P323",
@@ -3968,7 +3968,7 @@
           "coordinates": "275215N   0712528E"
         }
       ],
-      "remarks": "REMARKS\n1.ATC may require VOR navigation between IGREX - VATLA for separating traffic.\n2.Within TMA Class D airspace.\n3.10 Min. or 80NM RNAV longitudinal separation is applicable based on Mach number technique.\n4.Radar separation or 10 Min.longitudinal separation applicable between crossing traffic at BOBET, PUKES, IBANI, NIKOT AND BIDAN.\n5.Chennai OCC :126.150 MHz.\n6. Chennai Radio: 17907 KHz, 3470 KHz, 11285 KHz, 5683 KHz, 13318 KHz, 8861 KHz, 8909 KHz, 5670 KHz.\n7. Kolkata ACC: 132.450 MHz\n8. Kolkata Radio:  3491 KHz, 10066KHz, 6556KHz, 8861 KHz, 8906 KHz, 6593 KHz\n9.Kolkata Oceanic South (OCC-S): • 128.300MHZ.\n9\n10\n. Nagpur ACC: 123.900 MHz, 133.650 MHz, 132.300 MHz\n10\n11\n. Delhi ACC: 124.550 MHz, 124.2 MHz, 120.9 MHz\n11\n12\n. Delhi Radio: 3467 KHz,10018KHz,5658 KHz\n12\n13\n. Sri Vijaya Puram TWR: 123.500MHZ, 118.100MHZ\n13\n14\n. Route bi-directional between IBANI and VIKIT."
+      "remarks": "REMARKS\n1.ATC may require VOR navigation between IGREX - VATLA for separating traffic.\n2.Within TMA Class D airspace.\n3.10 Min. or 80NM RNAV longitudinal separation is applicable based on Mach number technique.\n4.Radar separation or 10 Min.longitudinal separation applicable between crossing traffic at BOBET, PUKES, IBANI, NIKOT AND BIDAN.\n5.Chennai OCC :126.150 MHz.\n6. Chennai Radio: 17907 KHz, 3470 KHz, 11285 KHz, 5683 KHz, 13318 KHz, 8861 KHz, 8909 KHz, 5670 KHz.\n7. Kolkata ACC: 132.450 MHz\n8. Kolkata Radio:  3491 KHz, 10066KHz, 6556KHz, 8861 KHz, 8906 KHz, 6593 KHz\n9.Kolkata Oceanic South (OCC-S): • 128.300MHZ.\n10. Nagpur ACC: 123.900 MHz, 133.650 MHz, 132.300 MHz\n11. Delhi ACC: 124.550 MHz, 124.2 MHz, 120.9 MHz\n12. Delhi Radio: 3467 KHz,10018KHz,5658 KHz\n13. Sri Vijaya Puram TWR: 123.500MHZ, 118.100MHZ\n14. Route bi-directional between IBANI and VIKIT."
     },
     {
       "route_id": "P646",
@@ -4187,11 +4187,11 @@
           "direction_even": "↑"
         },
         {
-          "waypoint_name": "PORT BLAIR DVOR",
-          "coordinates": "SRI VIJAYA PURAM DVOR\nDVOR/DME (PPB)\n113858N   0924450E"
+          "waypoint_name": "SRI VIJAYA PURAM DVOR",
+          "coordinates": "DVOR/DME (PPB)\n113858N   0924450E"
         }
       ],
-      "remarks": "REMARKS\n1. Chennai Radio: •17907 KHz   •3470 KHz      •11285 KHz       •6583 KHz     •13318 KHz     •8861 KHz      •8909 KHz     •5670 KHz\n2. Chennai ACC: • 118.900 MHz• 125.300 MHz\n3.\nPort Blair\nSri Vijaya Puram\nTWR:\n•\n123.\n500 MHz•\n500MHZ,\n118.\n100 MHz\n100MHZ\n4. All arrival to Chennai on ATS Route P761 to FPL via connector\nroute V3 ( IDASO-AVMOR [ 123326.84 N 0820041.18E ] - MMV ) after IDASO."
+      "remarks": "REMARKS\n1. Chennai Radio: •17907 KHz   •3470 KHz      •11285 KHz       •6583 KHz     •13318 KHz     •8861 KHz      •8909 KHz     •5670 KHz\n2. Chennai ACC: • 118.900 MHz• 125.300 MHz\n3. Sri Vijaya Puram TWR: 123.500MHZ, 118.100MHZ\n4. All arrival to Chennai on ATS Route P761 to FPL via connector\nroute V3 ( IDASO-AVMOR [ 123326.84 N 0820041.18E ] - MMV ) after IDASO."
     },
     {
       "route_id": "P762",
@@ -4221,8 +4221,8 @@
           "direction_even": "↓"
         },
         {
-          "waypoint_name": "PORT BLAIR DVOR",
-          "coordinates": "SRI VIJAYA PURAM DVOR\nDVOR/DME (PPB)\n113858N   0924450E"
+          "waypoint_name": "SRI VIJAYA PURAM DVOR",
+          "coordinates": "DVOR/DME (PPB)\n113858N   0924450E"
         },
         {
           "track_distance": "254/074\n58.6 NM",
@@ -4291,7 +4291,7 @@
           "coordinates": "085306N   0844753E"
         }
       ],
-      "remarks": "REMARKS\n1.ATC may require VOR navigation between LULDA -AMVUR for separating traffic\n2.Chennai FIC:      • 126.150 MHz\n3. Chennai Radio: • 17907 KHz  • 3470 KHz    •11285 KHz     •6583 KHz    •13318 KHz  • 8861 KHz       • 8909 KHz    • 5670 KHz\n4\n.Port Blair\n. Sri Vijaya Puram\nTWR:\n•\n123.\n500 MHz •\n500MHZ,\n118.\n100 MHz\n100MHZ"
+      "remarks": "REMARKS\n1.ATC may require VOR navigation between LULDA -AMVUR for separating traffic\n2.Chennai FIC:      • 126.150 MHz\n3. Chennai Radio: • 17907 KHz  • 3470 KHz    •11285 KHz     •6583 KHz    •13318 KHz  • 8861 KHz       • 8909 KHz    • 5670 KHz\n4. Sri Vijaya Puram TWR: 123.500MHZ, 118.100MHZ"
     },
     {
       "route_id": "P895",
@@ -4626,7 +4626,7 @@
         },
         {
           "waypoint_name": "KOLKATA DVOR",
-          "coordinates": "DVOR/DME (CEA)\n224033N\n224035N\n0882653E"
+          "coordinates": "DVOR/DME (CEA)\n224035N   0882653E"
         }
       ],
       "remarks": "REMARKS\n1. Chennai ACC:• 134.250 MHz\n2. Kolkata ACC:• 132.450 MHz• 120.700 MHz• 125.900 MHz\n3. GNSS required.\n4. Minimum longitudinal separation applicable is 50NM based on Mach No.technique. On opportunity basis Longitudinal separation of  20 NM BTN RNP 2 approved ACFT will be applied. ACFT that are not approved for RNP 2 shall inform all  Area Control Centres (ACC) on first CTC using  Phraseology - NEGATIVE RNP 2"
@@ -4637,7 +4637,7 @@
       "waypoints": [
         {
           "waypoint_name": "KOLKATA DVOR",
-          "coordinates": "DVOR/DME (CEA)\n224033N\n224035N\n0882653E",
+          "coordinates": "DVOR/DME (CEA)\n224035N   0882653E",
           "remarks": "See remarks below"
         },
         {
@@ -5157,11 +5157,11 @@
       "waypoints": [
         {
           "waypoint_name": "HYDERABAD DVOR",
-          "coordinates": "VOR/DME (HIA)\n171340N\n171347N\n0782421E",
+          "coordinates": "VOR/DME (HIA)\n171347N   0782421E",
           "remarks": "See remarks below"
         },
         {
-          "track_distance": "039\n040\n/-\n119.\n2\n1\nNM",
+          "track_distance": "040/-\n119.1 NM",
           "limits_class": "FL 460\nFL 290\nClass D\n4500 FT",
           "lateral_limits": "10 NM",
           "direction_odd": "↓"
@@ -5585,7 +5585,7 @@
         },
         {
           "waypoint_name": "KOLKATA DVOR",
-          "coordinates": "DVOR/DME (CEA)\n224033N\n224035N\n0882653E"
+          "coordinates": "DVOR/DME (CEA)\n224035N   0882653E"
         }
       ],
       "remarks": "REMARKS\n1. GNSS OR DME/DME/IRU\n2. Surveillance/DCPC required.\n3. Nagpur ACC:\n• 123.900 MHz\n• 133.650 MHz\n4. Mumbai ACC:\n• 125.350 MHz\n• 132.700 MHz\n• 120.500 MHz\n5. Upper Kolkata West ACC:\n• 132.250 MHz\n6. Upper Raipur ACC:\n• 125.900 MHz\n7. Minimum Longitudinal Separation 20NM."
@@ -5718,7 +5718,7 @@
       "waypoints": [
         {
           "waypoint_name": "KOLKATA DVOR",
-          "coordinates": "DVOR/DME (CEA)\n224033N\n224035N\n0882653E",
+          "coordinates": "DVOR/DME (CEA)\n224035N   0882653E",
           "remarks": "See remarks below"
         },
         {
@@ -5840,11 +5840,11 @@
       "waypoints": [
         {
           "waypoint_name": "HYDERABAD DVOR",
-          "coordinates": "VOR/DME (HIA)\n171340N\n171347N\n0782421E",
+          "coordinates": "VOR/DME (HIA)\n171347N   0782421E",
           "remarks": "See remarks below"
         },
         {
-          "track_distance": "175/-\n61.\n4\n3\nNM",
+          "track_distance": "175/-\n61.3 NM",
           "limits_class": "FL 460\nFL 290\nClass D\n4200 FT",
           "lateral_limits": "10 NM",
           "direction_odd": "↓"
@@ -5956,14 +5956,14 @@
           "coordinates": "163400N   0781747E"
         },
         {
-          "track_distance": "010/-\n40.\n2\n1\nNM",
+          "track_distance": "010/-\n40.1 NM",
           "limits_class": "FL 460\nFL 290\nClass D\n7500 FT",
           "lateral_limits": "10 NM",
           "direction_odd": "↓"
         },
         {
           "waypoint_name": "HYDERABAD DVOR",
-          "coordinates": "VOR/DME (HIA)\n171340N\n171347N\n0782421E"
+          "coordinates": "VOR/DME (HIA)\n171347N   0782421E"
         }
       ],
       "remarks": "REMARKS\n1. GNSS Required\n2. Surveillance Required.\n3. Hyderabad ACC: • 120.950 MHz• 128.350 MHz\n4. Chennai UHS ACC: • 128.100 MHz• 119.250 MHz\n5. Bengaluru ACC: •119.450 MHz 126.325 MHz 125.750 MHz (Backup)\n6. Chennai UBL ACC: • 124.500 MHz• 134.125 MHz\n7. Minimum Longitudinal Separation 20NM.\n8. RNP2 approval may be indicated in the flight plan as:\na) in item 10 - R G\nb) in item 18- PBN/C1- NAV/RNP2 CONTINENTALOR- PBN/C2- NAV/RNP2 CONTINENTAL\n9. Track data/VOR/DME position of Waypoint from nearest VOR/DME [WP/VOR/Radial/Distance]\na) MOTRI/Bengaluru VOR (BIA)/R011/50.4 NM\nb) LATID/Bellary VOR (BBI)/R125/74.5 NM\nc) VIRAM/Bellary VOR (BBI)/R082/71.6 NM\nd) BOSGA/Hyderabad VOR (HIA)/R189/61.9 NM\ne) SAKRO/Hyderabad VOR (HIA)/R190/40.2 NM\n10. Aircraft bound for Delhi to follow Hyderabad VOR (HIA)-DCT-ALBED-Q24\n11. MFA applicable within route width only."
@@ -6098,7 +6098,7 @@
           "coordinates": "180702N   0781153E"
         },
         {
-          "track_distance": "139/-\n52\n8\n.\n3\n4\nNM",
+          "track_distance": "139/-\n8.4 NM",
           "limits_class": "FL 460\nFL 290\nClass D\n4200 FT",
           "lateral_limits": "10 NM",
           "direction_odd": "↓"
@@ -6380,7 +6380,7 @@
       "waypoints": [
         {
           "waypoint_name": "KOLKATA DVOR",
-          "coordinates": "DVOR/DME (CEA)\n224033N\n224035N\n0882653E",
+          "coordinates": "DVOR/DME (CEA)\n224035N   0882653E",
           "remarks": "See remarks below"
         },
         {
@@ -6407,18 +6407,18 @@
           "remarks": "See remarks below"
         },
         {
-          "track_distance": "310\n308\n/\n130\n128\n66.\n4\n6\nNM",
+          "track_distance": "308/128\n66.6 NM",
           "limits_class": "FL 460\nFL 245\nClass D\n4300 FT",
           "lateral_limits": "10 NM",
           "direction_odd": "↑",
           "direction_even": "↓"
         },
         {
-          "waypoint_name": "SUSMA",
-          "coordinates": "BIDAR DVOR\nDVOR/DME (BDR)\n175523N\n175418N\n0773005E\n0772856E"
+          "waypoint_name": "BIDAR DVOR",
+          "coordinates": "DVOR/DME (BDR)\n175418N \n0772856E"
         },
         {
-          "track_distance": "313/\n132\n133\n142.\n1\n0\nNM",
+          "track_distance": "313/133\n142.0 NM",
           "limits_class": "FL 460\nFL 245\nClass D\n4500 FT",
           "lateral_limits": "10 NM",
           "direction_odd": "↑",
@@ -6441,18 +6441,18 @@
           "remarks": "See remarks below"
         },
         {
-          "track_distance": "041/221\n48\n46\n.\n3\n8\nNM",
+          "track_distance": "041/221\n46.8 NM",
           "limits_class": "FL 460\nFL 260\nClass D\n4300 FT",
           "lateral_limits": "10 NM",
           "direction_odd": "↓",
           "direction_even": "↑"
         },
         {
-          "waypoint_name": "SUSMA",
-          "coordinates": "BIDAR DVOR\nDVOR/DME (BDR)\n175523N\n175418N\n0773005E\n0772856E"
+          "waypoint_name": "BIDAR DVOR",
+          "coordinates": "DVOR/DME (BDR)\n175418N \n0772856E"
         },
         {
-          "track_distance": "025/205\n69\n70\n.\n1\n4\nNM",
+          "track_distance": "025/205\n70.4 NM",
           "limits_class": "FL 460\nFL 260\nClass D\n3500 FT",
           "lateral_limits": "10 NM",
           "direction_odd": "↓",
@@ -7036,7 +7036,7 @@
         },
         {
           "waypoint_name": "TIRUCHIRAPPALLI  DVOR",
-          "coordinates": "DVOR/DME (TTR)\n104607N\n0784329E\n0784331E"
+          "coordinates": "DVOR/DME (TTR)\n104607N   0784331E"
         }
       ],
       "remarks": "REMARKS\n1. Chennai ACC:\n• 118.900 MHz\n• 134.250 MHz\n• 125.300 MHz\n• 120.750 MHz"
@@ -7059,7 +7059,7 @@
         },
         {
           "waypoint_name": "TIRUCHIRAPPALLI  DVOR",
-          "coordinates": "DVOR/DME (TTR)\n104607N\n0784329E\n0784331E"
+          "coordinates": "DVOR/DME (TTR)\n104607N   0784331E"
         }
       ],
       "remarks": "REMARKS\n1. Thiruvananthapuram ACC: 125.950 MHz, 120.900MHz\n2. Chennai ACC : 132.500MHz, 125.300 MHz, 120.750MHz"
@@ -7219,7 +7219,7 @@
           "coordinates": "115605N   0715958E"
         }
       ],
-      "remarks": "REMARKS\n1. 10 minutes longitudinal separation\nminima based on Mach Number\nTechnique applicable.\n2. ATC Frequencies\nCalicut APP:\n• 122.950 MHz\n• 122.950 MHz 119.150MHz (BACKUP)\nCochin ACC:\n• 128.300 MHz\n• 133.150 MHz\nChennai ACC:\n• 134.425 MHz\n• 132.500 MHz\nMangalore ACC:\n• 127.550 MHz"
+      "remarks": "REMARKS\n1. 10 minutes longitudinal separation\nminima based on Mach Number\nTechnique applicable.\n2. ATC Frequencies\nCalicut APP:\n• 122.950 MHz 119.150MHz (BACKUP)\nCochin ACC:\n• 128.300 MHz\n• 133.150 MHz\nChennai ACC:\n• 134.425 MHz\n• 132.500 MHz\nMangalore ACC:\n• 127.550 MHz"
     },
     {
       "route_id": "T8",
@@ -7604,7 +7604,7 @@
           "coordinates": "DVOR/DME (PKT)\n321339N   0753808E"
         }
       ],
-      "remarks": "REMARKS\n1. Available as CDR2. Availability of the route as CDR2 will be notified through AUP / UUP by AMC. Time/vertical limit restriction mentioned in AUP/UUP is applicable to route segment between DARMO and UGISO. Route segment between BBB VOR and UGISO available H24.\n2. Route also available as CDR3 on opportunity basis.\n3. Aircraft requirements: RNP 2 & ADS-B OUT.\n4. Surveillance Required.\n5. Minimum 50NM longitudinal separation applicable.\n6. ATC Frequencies\ni. VIR 149 (Bhatinda)\n:\n: 128.600 MHz\n128.600 MHz\nSirsa - 130.100 MHz\nii. VIR 164 (Nal):\n121.600 MHz\niii.VIR 156 (Jodhpur)\n:\n: 122.400 MHz\n122.400 MHz\niv.Delhi ACC:\n124.550 MHz\niv.Delhi ACC: 124.550 MHz\n132.500 MHz\nv. Ahmedabad ACC:\nv. Ahmedabad ACC: 123.750 MHz\n134.200 MHz\nvi.Mumbai ACC:\nvi.Mumbai ACC:\n132.700\nMHz 133.300\nMHz\n133.300 MHz\n7. Aircraft landing at Ahmedabad, Indore and Vadodara expect FL340 or below unless specifically coordinated."
+      "remarks": "REMARKS\n1. Available as CDR2. Availability of the route as CDR2 will be notified through AUP / UUP by AMC. Time/vertical limit restriction mentioned in AUP/UUP is applicable to route segment between DARMO and UGISO. Route segment between BBB VOR and UGISO available H24.\n2. Route also available as CDR3 on opportunity basis.\n3. Aircraft requirements: RNP 2 & ADS-B OUT.\n4. Surveillance Required.\n5. Minimum 50NM longitudinal separation applicable.\n6. ATC Frequencies\ni. VIR 149 (Bhatinda): 128.600 MHz\nSirsa - 130.100 MHz\nii. VIR 164 (Nal): 121.600 MHz\niii.VIR 156 (Jodhpur): 122.400 MHz\niv.Delhi ACC: 124.550 MHz 132.500 MHz\nv. Ahmedabad ACC: 123.750 MHz 134.200 MHz\nvi.Mumbai ACC: 132.700 MHz 133.300 MHz\n7. Aircraft landing at Ahmedabad, Indore and Vadodara expect FL340 or below unless specifically coordinated."
     },
     {
       "route_id": "Z10",
@@ -7713,7 +7713,7 @@
           "coordinates": "205503N   0891216E"
         }
       ],
-      "remarks": "REMARKS\n1. Conditional route (CDR2). Availability of the route as CDR2 will be notified through AUP/UUP by AMC.\n2. Route also available as CDR3 on opportunity basis.\n3. Aircraft requirements: GNSS & ADS-B OUT.\n4. Surveillance Required.\n5. All aircraft on route Z12 within VER81 (Kalaikunda) shall contact Kalaikunda ATC.\n6. Minimum Longitudinal Separation 50NM.\n7. ATC Frequencies\na) Kolkata ACC: 132.250 MHz (UKW), 120.575 MHz (UKE)\nb)\nJamshedpur TWR\nKalaikunda APP\n:\n122\n121\n.\n100 MHz, 123.500\n600\nMHz\nc) Kalaikunda\nAPP\nTWR\n:\n121\n122\n.\n600\n350\nMHz"
+      "remarks": "REMARKS\n1. Conditional route (CDR2). Availability of the route as CDR2 will be notified through AUP/UUP by AMC.\n2. Route also available as CDR3 on opportunity basis.\n3. Aircraft requirements: GNSS & ADS-B OUT.\n4. Surveillance Required.\n5. All aircraft on route Z12 within VER81 (Kalaikunda) shall contact Kalaikunda ATC.\n6. Minimum Longitudinal Separation 50NM.\n7. ATC Frequencies\na) Kolkata ACC: 132.250 MHz (UKW), 120.575 MHz (UKE)\nb) Kalaikunda APP: 121.600 MHz\nc) Kalaikunda TWR: 122.350 MHz"
     },
     {
       "route_id": "Z13",
@@ -8311,7 +8311,7 @@
       "waypoints": [
         {
           "waypoint_name": "AHMEDABAD DVOR",
-          "coordinates": "DVOR/DME (AAE)\n230406N\n230407N\n0723745E\n0723744E",
+          "coordinates": "DVOR/DME (AAE)\n230407N  0723744E",
           "remarks": "See remarks below"
         },
         {

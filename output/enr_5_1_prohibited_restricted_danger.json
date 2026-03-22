@@ -2,7 +2,7 @@
   "metadata": {
     "section": "ENR 5.1",
     "title": "PROHIBITED, RESTRICTED AND DANGER AREAS",
-    "extracted_at": "2026-03-16T17:36:10.032914+05:30",
+    "extracted_at": "2026-03-18T23:54:49.680469+05:30",
     "airac_base_url": "https://aim-india.aai.aero/eaip/eaip-v2-01-2026/index-en-GB.html"
   },
   "source_url": "https://aim-india.aai.aero/eaip/eaip-v2-01-2026/eAIP/IN-ENR%205.1-en-GB.html",
@@ -1757,7 +1757,7 @@
         "lateral_limits": "Area bounded by lines joining points 201903N 0734457E; 210603N 0740657E; 215202N 0751157E; 202503N 0751357E; 195303N 0735057E then along the clockwise arc of a circle of 15NM radius centred on 200703N 0735457E  to point of origin.",
         "upper_limit": "UNL",
         "lower_limit": "GND",
-        "remarks": "1. HAL test flying area.\n2. Controlling authority Ozar ATC.\n3. Watch hours as notified in NOTAM.\n4. Any aircraft intending to transit the airspace shall  contact Ozar tower frequency\n123\n122\n.\n5\n7\n/120.6 MHz before\nentering the airspace."
+        "remarks": "1. HAL test flying area.\n2. Controlling authority Ozar ATC.\n3. Watch hours as notified in NOTAM.\n4. Any aircraft intending to transit the airspace shall  contact Ozar tower frequency 122.7/120.6 MHz before\nentering the airspace."
       },
       {
         "identification": "VAR 35",
@@ -1765,7 +1765,7 @@
         "lateral_limits": "Area bounded by lines joining points 210603N 0740657E; 220202N 0743357E; 215202N 0751157E to point of origin.",
         "upper_limit": "UNL",
         "lower_limit": "20000 FT",
-        "remarks": "1. HAL test flying area.\n2. Controlling authority Ozar ATC.\n3. Watch hours as notified in NOTAM.\n4. Any aircraft intending to transit the airspace shall\ncontact Ozar tower frequency\n123\n122\n.\n5\n7\n/120.6 MHz before\nentering the airspace."
+        "remarks": "1. HAL test flying area.\n2. Controlling authority Ozar ATC.\n3. Watch hours as notified in NOTAM.\n4. Any aircraft intending to transit the airspace shall\ncontact Ozar tower frequency 122.7/120.6 MHz before\nentering the airspace."
       },
       {
         "identification": "VAR 36",
@@ -1773,7 +1773,7 @@
         "lateral_limits": "Area bounded by lines joining points 215202N 0751157E; 210303N 0754756E; 202503N 0751357E to point of origin.",
         "upper_limit": "UNL",
         "lower_limit": "20000 FT",
-        "remarks": "1. HAL test flying area.\n2. Controlling authority Ozar ATC.\n3. Watch hours as notified in NOTAM.\n4. Any aircraft intending to transit the airspace shall\ncontact Ozar tower frequency\n123\n122\n.\n5\n7\n/120.6 MHz before\nentering the airspace."
+        "remarks": "1. HAL test flying area.\n2. Controlling authority Ozar ATC.\n3. Watch hours as notified in NOTAM.\n4. Any aircraft intending to transit the airspace shall\ncontact Ozar tower frequency 122.7/120.6 MHz before\nentering the airspace."
       },
       {
         "identification": "VAR 38",

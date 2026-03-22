@@ -2,7 +2,7 @@
   "metadata": {
     "section": "ENR 2.1",
     "title": "FIR, UIR, TMA AND CTA",
-    "extracted_at": "2026-03-16T17:36:09.825984+05:30",
+    "extracted_at": "2026-03-18T23:54:49.817239+05:30",
     "airac_base_url": "https://aim-india.aai.aero/eaip/eaip-v2-01-2026/index-en-GB.html"
   },
   "source_url": "https://aim-india.aai.aero/eaip/eaip-v2-01-2026/eAIP/IN-ENR%202.1-en-GB.html",
@@ -1179,15 +1179,15 @@
       "name_and_limits": "Lower Area Amritsar- LAR\nArea Bounded by:\n320659N 0751556E; then along a counterclockwise\narc of 20 NM radius centred at\n321426N 0753759E to\n315648N 0752648E;\n314359N 0753956E;\n320000N 0760000E;\n320000N 0765431E;\n295800N 0755633E;\n295518N 0754714E;\n294425N 0750824E;\n290932N 0730036E then northwards along the nternational border of India-Pakistan to the point\nof origin.\nFL 255 / FL 155\nFL 255 / FL 155\nD",
       "services": [
         {
-          "unit_providing_service": "Delhi ACC\nAmritsar APP",
-          "callsign_language_hours": "Delhi Control/ Delhi Radar (RSR)\nAmritsar Control\nEnglish\nH24",
-          "frequency": "124\n125\n.\n55\n05\nMHZ\n134\n128\n.\n075\n725\nMHZ",
-          "remarks": "1. The area excludes SUA structures when with Defence Agencies.\n2. Operational Hours of Lower Area\nAmritsar\n(LAR)\nAmritsar will be notified through NOTAM.\nis BTN 0400-1000 UTC daily.\n3. Beyond Operational Hours of Lower Area (LAR) Amritsar, the airspace will be under the jurisdiction of Delhi ACC.\n4.All Aircraft transiting through this airspace shall address FPLs to VIARZRZX."
+          "unit_providing_service": "Amritsar APP",
+          "callsign_language_hours": "Amritsar Control\nEnglish\nH24",
+          "frequency": "125.05 MHZ\n128.725 MHZ",
+          "remarks": "1. The area excludes SUA structures when with Defence Agencies.\n2. Operational Hours of Lower Area Amritsar (LAR)  is BTN 0400-1000 UTC daily.\n3. Beyond Operational Hours of Lower Area (LAR) Amritsar, the airspace will be under the jurisdiction of Delhi ACC.\n4.All Aircraft transiting through this airspace shall address FPLs to VIARZRZX."
         },
         {
-          "unit_providing_service": "Amritsar APP\nDelhi ACC",
-          "callsign_language_hours": "Amritsar Control\nDelhi Control/ Delhi Radar (RSR)\nEnglish\nH24",
-          "frequency": "125\n124\n.\n05\n55\nMHZ\n128\n134\n.\n725\n075\nMHZ",
+          "unit_providing_service": "Delhi ACC",
+          "callsign_language_hours": "Delhi Control/ Delhi Radar (RSR)\nEnglish\nH24",
+          "frequency": "124.55 MHZ\n134.075 MHZ",
           "remarks": ""
         }
       ]
@@ -1326,18 +1326,18 @@
       ]
     },
     {
-      "name_and_limits": "Mumbai Control Area-\nArea bounded by lines joining points 211131N 0720523E;\n212012N 0721235E; then along the counterclockwise arc of a\ncircle of 25NM radius centred at 214516N 0721126E to\n213020N 0723307E; 212126N 0731451E;\n213134N 0731852E; 212103N 0740857E;\n201203N 0733657E; 194503N 0733957E;\n201803N 0751457E; 210000N 0760000E;\n191900N 0760000E; 191400N 0760000E;\n192103N 0745957E; 191603N 0741857E;\n190047N 0733852E; then along the counterclockwise arc of a                                     circle of 30NM radius centred at 183448N 0735451E to\n183435N 0732316E; 171604N 0741457E;\n163416N 0751437E; 162600N 0741100E;\n162200N 0733400E; 161700N 0730000E;\n175804N 0692559E; 175050N 0685128E;\n211236N 0685128E; 210552N 0694635E;\n205703N 0701559E; 204603N 0710859E;\n204803N 0712758E to the Point of origin.\nFL 460/1100 FT AMSL up to 25NM centred at\n190530N 0725158E, excluding the airspace\ncontained within Common CTR for Mumbai and Navi\nMumbai (Common CTR for Mumbai and Navi Mumbai\nArea bounded by\n184851.48N 0725835.19E to 185346.14N 0724833.45E then\nalong a clockwise arc of radius 12 NM centred at 190530N 0725158E\nto 191601.52N 0725753.92E to 191034.92N 0730933.74E\nthen along a clockwise arc of radius 12 NM centred at\n185939.79N 0730412.96E to the point of origin, excluding airspace of TSA 509.)\nFL 460/2500 FT from 184258.82N 0724009.15E\nto 183656.33N 0725302.33E then along the counterclockwise\narc\narc\nof 25 NM centred at 185939.79N 0730412.96E\nto 192252.25N 0731412.90E to 192701.31N 0730547.29E\nthen along the clockwise arc of 25 NM centred at 190530N 0725158E to\n184258.82N0724009.15E except for the airspace with 30 NM arc centred at\n183504.40N 0735444.75E\n.\n.\n• FL 460/FL 65 between 25NM to 60NM centred at 190530N 0725158E excluding\n184258.82N 0724009.15E to 183656.33N 0725302.33E\nthen along the counterclockwise arc of 25 NM centred at\n185939.79N 0730412.96E to 192252.25N 0731412.90E\nto 192701.31N 0730547.29E then along the clockwise arc of 25 NM\ncentred at 190530N 0725158E to 184258.82N0724009.15E\nexcept for the airspace with 30 NM arc centred at 183504.40N 0735444.75E\n• FL460/FL095 between 60NM to 100NM centred at 190530N 0725158E,\n• FL460/FL145 between 100NM to 150NM centred at 190530N 0725158E and\nthe area bound by\n201659N 0751152E; 201803N 0751457E;\n210000N 0760000E; 191900N 0760000E;\n191400N 0760000E; 191732N 0752956E; then along counterclockwise arc of 150NM\ncentred at 190530N 0725158E to 201659N 0751152E.\n• FL460/FL195 beyond 150NM centred at 190530N 0725158E.\nAirspace is classified as Class D excluding the airspace classified as Class\nC given below:\nArea bounded by Coordinates 184258.82N 0724009.15E to\n183656.33N 0725302.33E then along the counterclockwise arc\nof 25 NM centred at  185939.79N 0730412.96E to\n192252.25N 0731412.90E to 192701.31N 073 0547.29E then\nalong the counterclockwise arc of 25 NM centred at\n190530N 0725158E to Point of origin, except for the airspace with\n30 NM arc centred at 183504.40N 0735444.75E\n• FL 145/4000 FT AMSL.\nAirspace between circles of 25 NM and 40 NM radii centred at 190530N 0725158E:\n• FL145/FL065.\nFL 460 / 1100FT AMSL\nD",
+      "name_and_limits": "Mumbai Control Area-\nArea bounded by lines joining points 211131N 0720523E;\n212012N 0721235E; then along the counterclockwise arc of a\ncircle of 25NM radius centred at 214516N 0721126E to\n213020N 0723307E; 212126N 0731451E;\n213134N 0731852E; 212103N 0740857E;\n201203N 0733657E; 194503N 0733957E;\n201803N 0751457E; 210000N 0760000E;\n191900N 0760000E; 191400N 0760000E;\n192103N 0745957E; 191603N 0741857E;\n190047N 0733852E; then along the counterclockwise arc of a                                     circle of 30NM radius centred at 183448N 0735451E to\n183435N 0732316E; 171604N 0741457E;\n163416N 0751437E; 162600N 0741100E;\n162200N 0733400E; 161700N 0730000E;\n175804N 0692559E; 175050N 0685128E;\n211236N 0685128E; 210552N 0694635E;\n205703N 0701559E; 204603N 0710859E;\n204803N 0712758E to the Point of origin.\nFL 460/1100 FT AMSL up to 25NM centred at\n190530N 0725158E, excluding the airspace\ncontained within Common CTR for Mumbai and Navi\nMumbai (Common CTR for Mumbai and Navi Mumbai\nArea bounded by\n184851.48N 0725835.19E to 185346.14N 0724833.45E then\nalong a clockwise arc of radius 12 NM centred at 190530N 0725158E\nto 191601.52N 0725753.92E to 191034.92N 0730933.74E\nthen along a clockwise arc of radius 12 NM centred at\n185939.79N 0730412.96E to the point of origin, excluding airspace of TSA 509.)\nFL 460/2500 FT from 184258.82N 0724009.15E\nto 183656.33N 0725302.33E then along the counterclockwise arc\nof 25 NM centred at 185939.79N 0730412.96E\nto 192252.25N 0731412.90E to 192701.31N 0730547.29E\nthen along the clockwise arc of 25 NM centred at 190530N 0725158E to\n184258.82N0724009.15E except for the airspace with 30 NM arc centred at\n183504.40N 0735444.75E.\n• FL 460/FL 65 between 25NM to 60NM centred at 190530N 0725158E excluding\n184258.82N 0724009.15E to 183656.33N 0725302.33E\nthen along the counterclockwise arc of 25 NM centred at\n185939.79N 0730412.96E to 192252.25N 0731412.90E\nto 192701.31N 0730547.29E then along the clockwise arc of 25 NM\ncentred at 190530N 0725158E to 184258.82N0724009.15E\nexcept for the airspace with 30 NM arc centred at 183504.40N 0735444.75E\n• FL460/FL095 between 60NM to 100NM centred at 190530N 0725158E,\n• FL460/FL145 between 100NM to 150NM centred at 190530N 0725158E and\nthe area bound by\n201659N 0751152E; 201803N 0751457E;\n210000N 0760000E; 191900N 0760000E;\n191400N 0760000E; 191732N 0752956E; then along counterclockwise arc of 150NM\ncentred at 190530N 0725158E to 201659N 0751152E.\n• FL460/FL195 beyond 150NM centred at 190530N 0725158E.\nAirspace is classified as Class D excluding the airspace classified as Class\nC given below:\nArea bounded by Coordinates 184258.82N 0724009.15E to\n183656.33N 0725302.33E then along the counterclockwise arc\nof 25 NM centred at  185939.79N 0730412.96E to\n192252.25N 0731412.90E to 192701.31N 073 0547.29E then\nalong the counterclockwise arc of 25 NM centred at\n190530N 0725158E to Point of origin, except for the airspace with\n30 NM arc centred at 183504.40N 0735444.75E\n• FL 145/4000 FT AMSL.\nAirspace between circles of 25 NM and 40 NM radii centred at 190530N 0725158E:\n• FL145/FL065.\nFL 460 / 1100FT AMSL\nD",
       "services": [
         {
-          "unit_providing_service": "Mumbai\nAPP\nACC",
-          "callsign_language_hours": "Mumbai\nApproach\nControl\n/ Mumbai Radar\nEnglish\nH24",
-          "frequency": "119\n120\n.\n3\n5\nMHZ\n120\n125\n.35 MHZ\n127\n132\n.\n9\n7\nMHZ\n133.3 MHZ\n133.85 MHZ",
+          "unit_providing_service": "Mumbai ACC",
+          "callsign_language_hours": "Mumbai Control / Mumbai Radar\nEnglish\nH24",
+          "frequency": "120.5 MHZ\n125.35 MHZ\n132.7 MHZ\n133.3 MHZ\n133.85 MHZ",
           "remarks": "Aircraft below 1100 ft AMSLbetween 12 NM and25 NM from ARP of\nMumbai Airport may contact Mumbai APP for traffic information.\nApproach Control Service for Navi Mumbai will be provided by Mumbai APP."
         },
         {
-          "unit_providing_service": "Mumbai\nACC\nAPP",
-          "callsign_language_hours": "Mumbai\nControl\nApproach\n/ Mumbai Radar\nEnglish\nH24",
-          "frequency": "120\n119\n.\n5\n3\nMHZ\n125\n120\n.35 MHZ\n132\n127\n.\n7\n9\nMHZ",
+          "unit_providing_service": "Mumbai APP",
+          "callsign_language_hours": "Mumbai Approach/ Mumbai Radar\nEnglish\nH24",
+          "frequency": "119.3 MHZ\n120.35 MHZ\n127.9 MHZ",
           "remarks": ""
         },
         {
@@ -1363,15 +1363,15 @@
       "name_and_limits": "Nagpur Control Area - Sector A\nNagpur Control Area - A\nArea bounded by coordinates\n224000N 0764956E; 224000N 0783240E;\n222850N 0802116E; 213009N 0803537E;\n203108N 0810523E; 190253N 0802330E;\n194303N 0770956E; 193603N 0764956E;\nto 224000N 0764956E:\n• FL 460 / 2100 ft AMSL up to 25 NM centred at 210530N 0790254E\nexcluding the airspace contained within Nagpur CTR\n• FL 460 / FL55 between 25 to 50NM centred at 210530N 0790254E\n• FL 460 / FL95 beyond 50NM centred at 210530N 0790254E\n• Airspace classified as Class D.\nFL 460 / FL 95\nD",
       "services": [
         {
-          "unit_providing_service": "Nagpur\nAPP\nACC",
-          "callsign_language_hours": "Nagpur Approach/ Nagpur Radar\nNagpur Control\nNagpur Radar (RSR)\nEnglish\nH24",
-          "frequency": "120\n123\n.\n4\n9\nMHZ\n121\n132\n.\n9\n3\nMHZ\n133.65 MHZ",
+          "unit_providing_service": "Nagpur ACC",
+          "callsign_language_hours": "Nagpur Control\nNagpur Radar (RSR)\nEnglish\nH24",
+          "frequency": "123.9 MHZ\n132.3 MHZ\n133.65 MHZ",
           "remarks": "1. Aircraft below 2100 ft. AMSL between 15 NM and 25 NM from\nNagpur ARP may contact Nagpur APP for traffic information.\n2. Dynamic Sectorisation of ACC may be resorted on operational requirement     as follows:\ni. Sector North: Above line joining COORD 211433N 0760000E, 214539N       0790319E, 221324N 0802503E FREQ VHF 123.9.\nii. Sector South: Below line joining COORD 211433N 0760000E,214539N        0790319E,221324N 0802503E FREQ: VHF 133.65."
         },
         {
-          "unit_providing_service": "Nagpur\nACC\nAPP",
-          "callsign_language_hours": "Nagpur Control\nNagpur Radar (RSR)\nNagpur Approach/ Nagpur Radar\nEnglish\nH24",
-          "frequency": "123\n120\n.\n9\n4\nMHZ\n132\n121\n.\n3\n9\nMHZ",
+          "unit_providing_service": "Nagpur APP",
+          "callsign_language_hours": "Nagpur Approach/ Nagpur Radar\nEnglish\nH24",
+          "frequency": "120.4 MHZ\n121.9 MHZ",
           "remarks": ""
         }
       ]
@@ -1600,15 +1600,15 @@
       "name_and_limits": "Varanasi Control Area- Sector Lower Varanasi (LBN)\nArea bounded by -231049N 0800334E;\n250001N 0790455E; 250801N 0785955E;\n253601N 0793554E; 251701N 0794954E;\n255358N 0800131E; 252555N 0802744E;\n263014N 0811717E; 264718N 0812436E;\n273424N 0824443E then along the border of\nNepal and India to 265355N 0850030E;\n253132N 0835507E; 244431N 0845638E;\n241232N 0842722E; 225817N 0840745E;\n223024N 0820000E; 231049N 0800334E.\nFL 255 / FL 105\nD",
       "services": [
         {
-          "unit_providing_service": "Varanasi\nACC\nAPP",
-          "callsign_language_hours": "Varanasi\nControl\nApproach\nVaranasi Radar (RSR)\nEnglish\nH24",
-          "frequency": "118\n123\n.\n95\n875\nMHZ",
+          "unit_providing_service": "Varanasi APP",
+          "callsign_language_hours": "Varanasi Approach\nEnglish\nH24",
+          "frequency": "123.875 MHZ",
           "remarks": ""
         },
         {
-          "unit_providing_service": "Varanasi\nAPP\nACC",
-          "callsign_language_hours": "Varanasi Approach\nVaranasi Control\nVaranasi Radar (RSR)\nEnglish\nH24",
-          "frequency": "123\n118\n.\n875\n95\nMHZ\n128.15 MHZ",
+          "unit_providing_service": "Varanasi ACC",
+          "callsign_language_hours": "Varanasi Control\nVaranasi Radar (RSR)\nEnglish\nH24",
+          "frequency": "118.95 MHZ\n128.15 MHZ",
           "remarks": ""
         }
       ]
