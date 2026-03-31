@@ -99,7 +99,8 @@ def scrape_latest_notam_links() -> list[str]:
             if key in latest:
                 max_year = latest[key][1][0]
                 if year == max_year and month == 1:
-                    january_links.append(link)
+                    if key[0] != "Delhi":
+                        january_links.append(link)
 
     result_urls = set(url for _, (url, _) in latest.items())
     result_urls.update(january_links)

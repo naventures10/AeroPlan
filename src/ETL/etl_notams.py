@@ -539,6 +539,372 @@ class DelhiLlamaParser(BaseNotamParser):
         return self.records
 
 
+class KolkataLlamaParser(BaseNotamParser):
+    """
+    Parser bespoke to Kolkata Series A/C formats from LlamaParse Markdown.
+    Uses BeautifulSoup to extract logical NOTAM blocks from HTML tables,
+    and supports capturing descriptions spanning multiple rows inside tables.
+    """
+
+    def extract_from_md(self, file_path: Path):
+        print(f"  [*] Parsing Kolkata Markdown: {file_path.name}...")
+
+        match = re.search(r"([A-Za-z]+)_([A-Z])_(\d{4})_(\d{2})", file_path.name)
+        if match:
+            fir_raw = match.group(1).upper()
+            self.current_fir = "VECF" if fir_raw == "KOLKATA" else fir_raw
+            self.series = match.group(2).upper()
+        else:
+            self.current_fir = "VECF"
+            self.series = "A" if "_A_" in file_path.name else "C"
+            
+        self.default_fir = self.current_fir
+
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        
+        current_notam = None
+
+        def commit_notam():
+            nonlocal current_notam
+            if current_notam and current_notam.get("valid_from_raw"):
+                current_notam["description"] = re.sub(r"\n{3,}", "\n\n", current_notam["description"]).strip()
+                s = current_notam["series"]
+                current_notam["scope"] = (
+                    "INT_L" if s == "A" else
+                    "INT_S" if s == "B" else
+                    "DOM" if s == "C" else
+                    "MIL_DOM" if s == "D" else
+                    "GEN" if s == "G" else
+                    "SNOWTAM" if s.startswith("SW") else "UNKNOWN"
+                )
+                current_notam["is_permanent"] = "PERM" in (current_notam.get("valid_to_raw") or "").upper()
+                current_notam["is_estimated"] = "EST" in (current_notam.get("valid_to_raw") or "").upper()
+                current_notam["valid_from"] = self.parse_notam_time(current_notam["valid_from_raw"])
+                current_notam["valid_to"] = self.parse_notam_time(current_notam["valid_to_raw"])
+                current_notam["duration_category"] = self.calculate_duration_category(current_notam)
+                current_notam["raw_json"] = {"source": file_path.name}
+                self.records.append(current_notam)
+            current_notam = None
+
+        blocks = []
+        segments = re.split(r"(<table.*?>.*?</table>)", content, flags=re.DOTALL)
+        for seg in segments:
+            seg = seg.strip()
+            if not seg:
+                continue
+                
+            if seg.startswith("<table"):
+                table_soup = BeautifulSoup(seg, "html.parser")
+                for row in table_soup.find_all("tr"):
+                    cells = row.find_all(["td", "th"])
+                    row_texts = []
+                    for c in cells:
+                        for br in c.find_all("br"):
+                            br.replace_with("\n")
+                        txt = c.get_text(separator="\n").strip()
+                        row_texts.append(txt)
+                    if row_texts:
+                        blocks.append({"type": "table_row", "data": row_texts})
+            else:
+                for line in seg.split("\n"):
+                    line = line.strip()
+                    if line:
+                        blocks.append({"type": "text", "data": line})
+
+        STATE_SEEKING_HEADER = 0
+        STATE_SEEKING_NOTAM = 1
+        STATE_BUILDING_NOTAM = 2
+
+        state = STATE_SEEKING_HEADER
+        passed_checklist = False
+
+        for block in blocks:
+            if block["type"] == "text":
+                raw_text = block["data"]
+                clean_text = re.sub(r"^[>\*\-#]+\s*", "", raw_text).strip()
+                unformatted_text = re.sub(r"\*+", "", clean_text).strip()
+            else:
+                raw_text = " | ".join(cell.replace("\n", " ") for cell in block["data"])
+                clean_text = " ".join(block["data"])
+                unformatted_text = clean_text
+
+            upper_text = unformatted_text.upper()
+            
+            if "LATEST PUBLICATIONS" in upper_text or "AIP SUP CHECKLIST AS ON" in upper_text or "AIP AIRAC AMDT" in upper_text or "NOTE: FOR TEXT OF NOTAM PERTAINING" in upper_text:
+                if "NOTE: FOR TEXT OF NOTAM PERTAINING" in upper_text and not passed_checklist:
+                     pass
+                elif "LATEST PUBLICATIONS" in upper_text or "AIP SUP CHECKLIST AS ON" in upper_text or "AIP AIRAC AMDT" in upper_text:
+                    break
+                
+            if not passed_checklist:
+                if "CHECKLIST" in upper_text and "AIP" not in upper_text:
+                    continue
+                htype, icaos = self._classify_header(unformatted_text)
+                if htype or "AGARTALA" in upper_text or "ANDAMAN" in upper_text:
+                    passed_checklist = True
+                else:
+                    continue
+
+            htype, icaos = self._classify_header(unformatted_text)
+            if htype and not NOTAM_ID_PATTERN.search(unformatted_text):
+                commit_notam()
+                if htype == "fir":
+                    self.current_fir = "/".join(icaos) if icaos else self.current_fir
+                    self.current_airport = None
+                elif htype == "airport":
+                    self.current_airport = icaos[0] if icaos else None
+                    self.current_fir = self.default_fir
+                state = STATE_SEEKING_NOTAM
+                continue
+
+            found_ids = NOTAM_ID_PATTERN.findall(unformatted_text)
+            if found_ids:
+                commit_notam()
+                primary_id = found_ids[0]
+                current_notam = {
+                    "notam_id": primary_id, "series": self.series,
+                    "fir": self.current_fir, "airport_icao": self.current_airport,
+                    "valid_from_raw": None, "valid_to_raw": None, "description": ""
+                }
+                state = STATE_BUILDING_NOTAM
+                
+                if block["type"] == "table_row" and len(block["data"]) >= 2:
+                    cell_0 = block["data"][0]
+                    cell_1 = block["data"][1]
+                    if primary_id in cell_0:
+                        v_match = VALIDITY_PATTERN.search(cell_1)
+                        if v_match:
+                            current_notam["valid_from_raw"] = v_match.group(1)
+                            current_notam["valid_to_raw"] = v_match.group(2)
+                            desc = cell_1[v_match.end():].strip()
+                            if desc:
+                                current_notam["description"] += desc + "\n"
+                        else:
+                            current_notam["description"] += cell_1 + "\n"
+                        
+                        if len(block["data"]) > 2:
+                            current_notam["description"] += " ".join(cell for cell in block["data"][2:] if cell.strip()) + "\n"
+                        continue
+
+                remainder = clean_text.replace(primary_id, "").strip()
+                if remainder:
+                    v_match = VALIDITY_PATTERN.search(remainder)
+                    if v_match:
+                        current_notam["valid_from_raw"] = v_match.group(1)
+                        current_notam["valid_to_raw"] = v_match.group(2)
+                        desc = remainder[v_match.end():].strip()
+                        if desc:
+                            current_notam["description"] += desc + "\n"
+                    else:
+                        current_notam["description"] += remainder + "\n"
+                continue
+
+            if state == STATE_BUILDING_NOTAM:
+                if not current_notam.get("valid_from_raw"):
+                    v_match = VALIDITY_PATTERN.search(unformatted_text)
+                    if v_match:
+                        current_notam["valid_from_raw"] = v_match.group(1)
+                        current_notam["valid_to_raw"] = v_match.group(2)
+                        desc = clean_text[v_match.end():].strip()
+                        if desc:
+                            current_notam["description"] += desc + "\n"
+                        continue
+                
+                if block["type"] == "text":
+                    current_notam["description"] += clean_text + "\n"
+                else:
+                    non_empty = [c for c in block["data"] if c.strip()]
+                    if non_empty:
+                        current_notam["description"] += " ".join(non_empty) + "\n"
+
+        commit_notam()
+        return self.records
+
+
+class MumbaiLlamaParser(BaseNotamParser):
+    """
+    Parser bespoke to Mumbai Series A/C formats from LlamaParse Markdown.
+    Follows a similar extraction paradigm to Kolkata but implemented modularly
+    for isolated future updates.
+    """
+
+    def extract_from_md(self, file_path: Path):
+        print(f"  [*] Parsing Mumbai Markdown: {file_path.name}...")
+
+        match = re.search(r"([A-Za-z]+)_([A-Z])_(\d{4})_(\d{2})", file_path.name)
+        if match:
+            fir_raw = match.group(1).upper()
+            self.current_fir = "VABF" if fir_raw == "MUMBAI" else fir_raw
+            self.series = match.group(2).upper()
+        else:
+            self.current_fir = "VABF"
+            self.series = "A" if "_A_" in file_path.name else "C"
+            
+        self.default_fir = self.current_fir
+
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        
+        current_notam = None
+
+        def commit_notam():
+            nonlocal current_notam
+            if current_notam and current_notam.get("valid_from_raw"):
+                current_notam["description"] = re.sub(r"\n{3,}", "\n\n", current_notam["description"]).strip()
+                s = current_notam["series"]
+                current_notam["scope"] = (
+                    "INT_L" if s == "A" else
+                    "INT_S" if s == "B" else
+                    "DOM" if s == "C" else
+                    "MIL_DOM" if s == "D" else
+                    "GEN" if s == "G" else
+                    "SNOWTAM" if s.startswith("SW") else "UNKNOWN"
+                )
+                current_notam["is_permanent"] = "PERM" in (current_notam.get("valid_to_raw") or "").upper()
+                current_notam["is_estimated"] = "EST" in (current_notam.get("valid_to_raw") or "").upper()
+                current_notam["valid_from"] = self.parse_notam_time(current_notam["valid_from_raw"])
+                current_notam["valid_to"] = self.parse_notam_time(current_notam["valid_to_raw"])
+                current_notam["duration_category"] = self.calculate_duration_category(current_notam)
+                current_notam["raw_json"] = {"source": file_path.name}
+                self.records.append(current_notam)
+            current_notam = None
+
+        blocks = []
+        segments = re.split(r"(<table.*?>.*?</table>)", content, flags=re.DOTALL)
+        for seg in segments:
+            seg = seg.strip()
+            if not seg:
+                continue
+                
+            if seg.startswith("<table"):
+                table_soup = BeautifulSoup(seg, "html.parser")
+                for row in table_soup.find_all("tr"):
+                    cells = row.find_all(["td", "th"])
+                    row_texts = []
+                    for c in cells:
+                        for br in c.find_all("br"):
+                            br.replace_with("\n")
+                        txt = c.get_text(separator="\n").strip()
+                        row_texts.append(txt)
+                    if row_texts:
+                        blocks.append({"type": "table_row", "data": row_texts})
+            else:
+                for line in seg.split("\n"):
+                    line = line.strip()
+                    if line:
+                        blocks.append({"type": "text", "data": line})
+
+        STATE_SEEKING_HEADER = 0
+        STATE_SEEKING_NOTAM = 1
+        STATE_BUILDING_NOTAM = 2
+
+        state = STATE_SEEKING_HEADER
+        passed_checklist = False
+
+        for block in blocks:
+            if block["type"] == "text":
+                raw_text = block["data"]
+                clean_text = re.sub(r"^[>\*\-#]+\s*", "", raw_text).strip()
+                unformatted_text = re.sub(r"\*+", "", clean_text).strip()
+            else:
+                raw_text = " | ".join(cell.replace("\n", " ") for cell in block["data"])
+                clean_text = " ".join(block["data"])
+                unformatted_text = clean_text
+
+            upper_text = unformatted_text.upper()
+            
+            if "LATEST PUBLICATIONS" in upper_text or "AIP SUP CHECKLIST AS ON" in upper_text or "AIP AIRAC AMDT" in upper_text or "NOTE: FOR TEXT OF NOTAM PERTAINING" in upper_text:
+                if "NOTE: FOR TEXT OF NOTAM PERTAINING" in upper_text and not passed_checklist:
+                     pass
+                elif "LATEST PUBLICATIONS" in upper_text or "AIP SUP CHECKLIST AS ON" in upper_text or "AIP AIRAC AMDT" in upper_text:
+                    break
+                
+            if not passed_checklist:
+                if "CHECKLIST" in upper_text and "AIP" not in upper_text:
+                    continue
+                htype, icaos = self._classify_header(unformatted_text)
+                if htype or "AHMEDABAD" in upper_text or "MUMBAI" in upper_text:
+                    passed_checklist = True
+                else:
+                    continue
+
+            htype, icaos = self._classify_header(unformatted_text)
+            if htype and not NOTAM_ID_PATTERN.search(unformatted_text):
+                commit_notam()
+                if htype == "fir":
+                    self.current_fir = "/".join(icaos) if icaos else self.current_fir
+                    self.current_airport = None
+                elif htype == "airport":
+                    self.current_airport = icaos[0] if icaos else None
+                    self.current_fir = self.default_fir
+                state = STATE_SEEKING_NOTAM
+                continue
+
+            found_ids = NOTAM_ID_PATTERN.findall(unformatted_text)
+            if found_ids:
+                commit_notam()
+                primary_id = found_ids[0]
+                current_notam = {
+                    "notam_id": primary_id, "series": self.series,
+                    "fir": self.current_fir, "airport_icao": self.current_airport,
+                    "valid_from_raw": None, "valid_to_raw": None, "description": ""
+                }
+                state = STATE_BUILDING_NOTAM
+                
+                if block["type"] == "table_row" and len(block["data"]) >= 2:
+                    cell_0 = block["data"][0]
+                    cell_1 = block["data"][1]
+                    if primary_id in cell_0:
+                        v_match = VALIDITY_PATTERN.search(cell_1)
+                        if v_match:
+                            current_notam["valid_from_raw"] = v_match.group(1)
+                            current_notam["valid_to_raw"] = v_match.group(2)
+                            desc = cell_1[v_match.end():].strip()
+                            if desc:
+                                current_notam["description"] += desc + "\n"
+                        else:
+                            current_notam["description"] += cell_1 + "\n"
+                        
+                        if len(block["data"]) > 2:
+                            current_notam["description"] += " ".join(cell for cell in block["data"][2:] if cell.strip()) + "\n"
+                        continue
+
+                remainder = clean_text.replace(primary_id, "").strip()
+                if remainder:
+                    v_match = VALIDITY_PATTERN.search(remainder)
+                    if v_match:
+                        current_notam["valid_from_raw"] = v_match.group(1)
+                        current_notam["valid_to_raw"] = v_match.group(2)
+                        desc = remainder[v_match.end():].strip()
+                        if desc:
+                            current_notam["description"] += desc + "\n"
+                    else:
+                        current_notam["description"] += remainder + "\n"
+                continue
+
+            if state == STATE_BUILDING_NOTAM:
+                if not current_notam.get("valid_from_raw"):
+                    v_match = VALIDITY_PATTERN.search(unformatted_text)
+                    if v_match:
+                        current_notam["valid_from_raw"] = v_match.group(1)
+                        current_notam["valid_to_raw"] = v_match.group(2)
+                        desc = clean_text[v_match.end():].strip()
+                        if desc:
+                            current_notam["description"] += desc + "\n"
+                        continue
+                
+                if block["type"] == "text":
+                    current_notam["description"] += clean_text + "\n"
+                else:
+                    non_empty = [c for c in block["data"] if c.strip()]
+                    if non_empty:
+                        current_notam["description"] += " ".join(non_empty) + "\n"
+
+        commit_notam()
+        return self.records
+
+
 class NOTAMETL:
     def __init__(self, db_url):
         self.engine = create_engine(db_url)
@@ -549,6 +915,10 @@ class NOTAMETL:
             return ChennaiLlamaParser()
         if "delhi" in name:
             return DelhiLlamaParser()
+        if "kolkata" in name:
+            return KolkataLlamaParser()
+        if "mumbai" in name:
+            return MumbaiLlamaParser()
         # Pending classes for other FIRs
         return BaseNotamParser()
 
@@ -565,13 +935,33 @@ class NOTAMETL:
             return
 
         all_records = []
+        description_cache = {}
+
         for md_file in all_markdowns:
-            # We will process Chennai and Delhi
-            if "chennai" not in md_file.name.lower() and "delhi" not in md_file.name.lower():
+            # We will process Chennai, Delhi, Kolkata, and Mumbai
+            if not any(fir in md_file.name.lower() for fir in ["chennai", "delhi", "kolkata", "mumbai"]):
+                continue
+
+            # Skip Delhi January files as their active NOTAMs are carried forward
+            match = re.search(r"([A-Za-z]+)_([A-Z])_(\d{4})_(\d{2})", md_file.name)
+            if match and match.group(1).lower() == "delhi" and match.group(4) == "01":
                 continue
 
             parser = self.select_parser(md_file)
             recs = parser.extract_from_md(md_file)
+
+            # Apply Description Caching Logic
+            for r in recs:
+                notam_id = r.get("notam_id")
+                desc = r.get("description", "").strip()
+                # Stripping asterisks and whitespace to ensure it's truly a description
+                import re as core_re
+                clean_desc = core_re.sub(r"[\*\s\|]+", "", desc).upper()
+                if clean_desc and clean_desc not in ("EST", "PERM"):
+                    description_cache[notam_id] = desc
+                else:
+                    r["description"] = description_cache.get(notam_id, "")
+
             print(f"  [+] Extracted {len(recs)} NOTAMs.")
             all_records.extend(recs)
 
