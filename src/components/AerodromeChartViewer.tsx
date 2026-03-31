@@ -30,29 +30,13 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
   const [currentPage, setCurrentPage] = useState(1);
   const [pdfScale, setPdfScale] = useState(1.2);
   const [isLoading, setIsLoading] = useState(false);
-  const [prefetchedUrls, setPrefetchedUrls] = useState<Record<string, string>>({});
   const { isOpen, onOpen, onClose } = useDisclosure();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const prefetchedUrlsRef = useRef<Record<string, string>>({});
-
-  // Sync ref with state for use in cleanup without triggering it on every update
-  useEffect(() => {
-    prefetchedUrlsRef.current = prefetchedUrls;
-  }, [prefetchedUrls]);
-
-  // Cleanup Blob URLs on unmount or icaoCode change
-  useEffect(() => {
-    return () => {
-      // Revoke all URLs from the ref (which contains the current set)
-      Object.values(prefetchedUrlsRef.current).forEach(url => URL.revokeObjectURL(url));
-    };
-  }, [icaoCode]); // ONLY on airport change or unmount
 
   // Fetch charts when icaoCode changes
   useEffect(() => {
     if (!icaoCode) {
       setCharts([]);
-      setPrefetchedUrls({});
       return;
     }
     
@@ -62,21 +46,6 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
       .then(data => {
         const chartList = Array.isArray(data) ? data : [];
         setCharts(chartList);
-        
-        // --- BACKGROUND PRE-FETCHING ---
-        chartList.forEach(chart => {
-          const proxyUrl = `/api/proxy-pdf?url=${encodeURIComponent(chart.chart_url)}`;
-          fetch(proxyUrl)
-            .then(res => res.blob())
-            .then(blob => {
-              const blobUrl = URL.createObjectURL(blob);
-              setPrefetchedUrls(prev => ({
-                ...prev,
-                [chart.chart_url]: blobUrl
-              }));
-            })
-            .catch(err => console.error(`Failed to pre-fetch chart: ${chart.chart_index}`, err));
-        });
       })
       .catch(err => {
         console.error('Failed to fetch aerodrome charts:', err);
@@ -114,9 +83,9 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
     });
   }, []);
 
-  // Use pre-fetched blob URL if available, otherwise fallback to proxy URL
+  // Use proxy URL directly for on-demand fetching via react-pdf
   const pdfUrl = selectedChart
-    ? prefetchedUrls[selectedChart.chart_url] || `/api/proxy-pdf?url=${encodeURIComponent(selectedChart.chart_url)}`
+    ? `/api/proxy-pdf?url=${encodeURIComponent(selectedChart.chart_url)}`
     : '';
 
   if (!icaoCode) return null;
@@ -153,8 +122,8 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
               }}
             >
               {/* Title bar */}
-              <div className="px-4 pt-3 pb-1">
-                <span className="text-[10px] font-bold tracking-[0.2em] text-zinc-500 uppercase">
+              <div className="px-4 pt-2 pb-0.5">
+                <span className="text-[9px] font-bold tracking-[0.25em] text-zinc-500 uppercase">
                   Aerodrome Charts
                 </span>
               </div>
@@ -162,8 +131,8 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
               {/* Scrollable row */}
               <div
                 ref={scrollRef}
-                className="flex gap-3 px-4 pb-3 pt-1 overflow-x-auto chart-scroll"
-                style={{ maxWidth: '520px' }}
+                className="flex gap-2.5 px-4 pb-2.5 pt-0.5 overflow-x-auto chart-scroll"
+                style={{ maxWidth: '820px' }}
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center w-full py-6 px-8">
@@ -181,15 +150,15 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: idx * 0.05, duration: 0.2 }}
                       onClick={() => handleChartClick(chart)}
-                      className="group shrink-0 flex flex-col items-center gap-2 p-3 rounded-xl border border-zinc-800/50 hover:border-indigo-500/40 bg-zinc-900/40 hover:bg-indigo-500/10 transition-all duration-200 cursor-pointer w-[90px]"
+                      className="group shrink-0 flex flex-col items-center gap-1.5 p-2 rounded-xl border border-zinc-800/50 hover:border-indigo-500/40 bg-zinc-900/40 hover:bg-indigo-500/10 transition-all duration-200 cursor-pointer w-[82px]"
                       title={chart.chart_title}
                     >
                       {/* Chart Icon */}
-                      <div className="w-12 h-14 rounded-lg bg-gradient-to-br from-teal-400/20 to-cyan-500/20 border border-teal-500/30 group-hover:border-teal-400/50 flex items-center justify-center transition-colors">
-                        <FileText size={22} className="text-teal-400 group-hover:text-teal-300 transition-colors" />
+                      <div className="w-10 h-11 rounded-lg bg-gradient-to-br from-teal-400/20 to-cyan-500/20 border border-teal-500/30 group-hover:border-teal-400/50 flex items-center justify-center transition-colors">
+                        <FileText size={18} className="text-teal-400 group-hover:text-teal-300 transition-colors" />
                       </div>
                       {/* Title */}
-                      <span className="text-[9px] font-semibold text-zinc-400 group-hover:text-zinc-200 text-center leading-tight tracking-wide uppercase line-clamp-2 transition-colors w-full">
+                      <span className="text-[8px] font-bold text-zinc-500 group-hover:text-zinc-200 text-center leading-tight tracking-wider uppercase line-clamp-1 transition-colors w-full">
                         {chart.chart_title || chart.chart_index}
                       </span>
                     </motion.button>

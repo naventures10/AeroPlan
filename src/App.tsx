@@ -4,11 +4,12 @@ import { Search, Building2, Map as MapIcon, Navigation, Radio, Target, X, Route,
 import AerodromeInfoDropdown from './components/AerodromeInfoDropdown';
 import AerodromeChartViewer from './components/AerodromeChartViewer';
 import SectionModal from './components/SectionModal';
+import TerminalDashboard from './components/TerminalDashboard';
 import { motion, AnimatePresence } from 'framer-motion';
 import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer, TextLayer } from '@deck.gl/layers';
 import { MVTLayer } from '@deck.gl/geo-layers';
-import Map, { NavigationControl, Source, Layer } from 'react-map-gl/maplibre';
+import Map, { Source, Layer } from 'react-map-gl/maplibre';
 import type { MapRef } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useMapStore } from './store/useMapStore';
@@ -138,13 +139,17 @@ export default function App() {
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === 'Escape' && (viewMode === 'TERMINAL' || activeAirport)) {
-        returnToEnroute();
+      if (e.key === 'Escape') {
+        if (sectionModalOpen) {
+          setSectionModalOpen(false);
+        } else if (viewMode === 'TERMINAL' || activeAirport) {
+          returnToEnroute();
+        }
       }
     };
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [viewMode, activeAirport, returnToEnroute]);
+  }, [viewMode, activeAirport, returnToEnroute, sectionModalOpen]);
 
   // === VIEW CHANGE HANDLER ===
   const onViewStateChange = useCallback(({ viewState: vs, interactionState }: any) => {
@@ -727,7 +732,6 @@ export default function App() {
                 <Layer id="mvt-points" type="circle" source-layer="spatial_features" filter={['==', ['geometry-type'], 'Point']} paint={POINT_PAINT as any} />
               </Source>
             )}
-            <NavigationControl position="top-right" />
           </Map>
         </DeckGL>
       </div>
@@ -743,9 +747,16 @@ export default function App() {
           </div>
         )}
 
+        {/* Terminal Dashboard — TERMINAL view only */}
+        {activeAirport && (viewMode === 'TERMINAL' || viewState.pitch > 0) && (
+          <div className="absolute top-24 right-6 pointer-events-auto z-40">
+            <TerminalDashboard icaoCode={activeAirport} />
+          </div>
+        )}
+
         {/* Aerodrome Charts Carousel — visible when airport active */}
         {activeAirport && (
-          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 pointer-events-auto z-40">
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-auto z-40 scale-110">
             <AerodromeChartViewer icaoCode={activeAirport} />
           </div>
         )}
