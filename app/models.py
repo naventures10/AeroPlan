@@ -1,5 +1,5 @@
 from geoalchemy2 import Geometry
-from sqlalchemy import BIGINT, Boolean, Column, DateTime, Integer, Numeric, String, Text
+from sqlalchemy import BIGINT, Boolean, Column, Date, DateTime, Integer, Numeric, String, Text, Time
 from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
@@ -115,3 +115,40 @@ class AtsRouteWaypoint(Base):
     raw_coordinates = Column(String(60))
     navaid_info = Column(String(50))
     geom = Column(Geometry("GEOMETRY", srid=4326))
+
+
+class Notam(Base):
+    __tablename__ = "notams"
+
+    notam_id = Column(String, primary_key=True)
+    source_file = Column(String, primary_key=True)
+    series = Column(String)
+    scope = Column(String)
+    fir = Column(String)
+    combined_fir = Column(String)
+    airport_icao = Column(String, index=True)
+    valid_from = Column(DateTime)
+    valid_to = Column(DateTime)
+    is_permanent = Column(Boolean)
+    is_estimated = Column(Boolean)
+    duration_category = Column(String)
+    description = Column(Text)
+    raw_json = Column(JSONB)
+    updated_at = Column(DateTime, server_default=func.now())
+
+
+class DaylightTime(Base):
+    __tablename__ = "daylight_times"
+
+    id = Column(Integer, primary_key=True)
+    airport_icao = Column(String, nullable=False, index=True)
+    airport_name = Column(String, nullable=False)
+    coordinates = Column(Geometry("POINT", srid=4326))
+    date = Column(Date, nullable=False)
+    twilight_from = Column(Time)
+    sunrise = Column(Time)
+    sunset = Column(Time)
+    twilight_to = Column(Time)
+    year = Column(Integer, nullable=False)
+    updated_at = Column(DateTime, server_default=func.now())
+

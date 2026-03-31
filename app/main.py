@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# --- IMPORT YOUR NEW ROUTER ---
-from app.routers import features
+from app.routers import daylight, features, notams, weather
 
 app = FastAPI(title="Aero Plan API", version="0.1.0")
 
@@ -25,5 +24,8 @@ async def health_check():
     return {"status": "online"}
 
 
-# --- REGISTER THE ROUTER ---
+# --- REGISTER ROUTERS ---
 app.include_router(features.router)
+app.include_router(weather.router)
+app.include_router(notams.router)
+app.include_router(daylight.router)
