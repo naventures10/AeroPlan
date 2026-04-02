@@ -9,8 +9,6 @@
 !.gitignore
 !Makefile
 !README.md
-!.env.example
-
 # Allow the three packages
 !/frontend/
 !/backend/
