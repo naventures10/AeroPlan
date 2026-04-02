@@ -1,0 +1,630 @@
+{
+  "metadata": {
+    "section": "ENR 5.2",
+    "title": "MILITARY EXERCISE AND TRAINING AREAS AND AIR DEFENCE IDENTIFICATION ZONE (ADIZ)",
+    "extracted_at": "2026-03-18T23:54:49.967189+05:30",
+    "airac_base_url": "https://aim-india.aai.aero/eaip/eaip-v2-01-2026/index-en-GB.html"
+  },
+  "source_url": "https://aim-india.aai.aero/eaip/eaip-v2-01-2026/eAIP/IN-ENR%205.2-en-GB.html",
+  "military_exercise_and_training_areas": [
+    {
+      "name_and_lateral_limits": "TRA501 [Bhuj] | Area bounded by lines joining points 232200N 0700100E; 233900N 0694400E; 235200N 0694500E; 235300N 0703800E; 233400N 0703900E; 233200N 0702200E to point of origin.",
+      "upper_lower_limits_and_system": "6000 FT AGL/ 200 FT AGL",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Bhuj ATC 123.50 MHz. | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and IAF established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Bhuj ATC before entering active TRA. | 7. TRA valid until 14 AUGUST 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA502(A) [NAGPUR] | Area bounded by lines joining points 220502N 0785455E; 220602N 0793355E; 214803N 0801054E; 212147N 0792315E then along the counter clockwise arc of a circle of 25NM radius centred on ARP VANP (210530N 0790254E) to 213031N 0790505E to point of origin.",
+      "upper_lower_limits_and_system": "FL 255 / 5000 FT AMSL",
+      "remarks_and_time_of_act": "1. Controlling Authority: Nagpur ATC. | 2. Controlling ATS Unit: Nagpur ATC: | i. TWR: 118.100 MHz | ii. APP: 120.400 MHz | iii. ACC: 123.900 MHz | 3. Activation of TRAs will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRAs shall be governed by the SOP established for the purpose. | 5. All ATS routes transiting through the TRAs are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Nagpur ATC before entering active TRA. | 7. TRA valid until 02 November 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA502(B) [NAGPUR] | Area bounded by lines joining points 220502N 0785455E; 220602N 0793355E; 214803N 0801054E; 212147N 0792315E then along the counter clockwise arc of a circle of 25NM radius centred on ARP VANP (210530N 0790254E) to 213031N 0790505E to point of origin.",
+      "upper_lower_limits_and_system": "FL 400 / FL 255",
+      "remarks_and_time_of_act": "1. Controlling Authority: Nagpur ATC. | 2. Controlling ATS Unit: Nagpur ATC: | i. TWR: 118.100 MHz | ii. APP: 120.400 MHz | iii. ACC: 123.900 MHz | 3. Activation of TRAs will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRAs shall be governed by the SOP established for the purpose. | 5. All ATS routes transiting through the TRAs are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Nagpur ATC before entering active TRA. | 7. TRA valid until 02 November 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA503(A) [PUNE] | Area bounded by lines joining points 184003N 0732958E; 190003N 0734957E; 192003N 0745957E; 191603N 0753157E; 173552N 0762947E; 174028N 0755956E; 175532N 0742307E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Pune ATC. | 3. Pune ATC: 123.500 MHz, 118.800 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the | LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning for all flights. | 7. Aircraft shall obtain positive clearance from Pune ATC before entering active TRA. | 8. TRA valid until 31 January 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA503(B) [PUNE] | Area bounded by lines joining points 173552N 0762947E; 172004N 0763856E; 170004N 0763956E; 165004N 0753957E; 175532N 0742307E; 174028N 0755956E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Pune ATC. | 3. Pune ATC: 123.500 MHz, 118.800 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the | LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning for all flights. | 7. Aircraft shall obtain positive clearance from Pune ATC before entering active TRA. | 8. TRA valid until 31 January 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA504 [BHUJ] | Area bounded by lines joining points 224932N 0692059E; 225002N 0710459E; 231502N 0704459E; 234002N 0691500E; 233032N 0691659E then along the counter clockwise arc of a circle of 25NM radius centred on 231630N 0694001E  to 230002N 0691959E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Bhuj ATC. | 3. Bhuj ATC: 120.600 MHz, 121.450 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose | between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning for all flights. | 7. Aircraft shall obtain positive clearance from Bhuj ATC before entering active TRA. | 8. TRA valid until 31 January 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA505 [NALIYA] | Area bounded by lines joining points 224932N 0692059E; 224702N 0691300E; 231002N 0683700E; 233002N 0682000E; 234202N 0683300E; 234002N 0691500E; 233032N 0691659E then along the counter clockwise arc of a circle of 25NM radius centred on 231630N 0694001E  to 230002N 0691959E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Naliya ATC. | 3. Naliya ATC: 121.300 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning for all flights. | 7. Aircraft shall obtain positive clearance from Naliya ATC before entering active TRA. | 8. TRA valid until 31 January 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA506(A) [JAMNAGAR] | Area bounded by lines joining points 224702N 0694025E then along the counter clockwise arc of a circle of 27.5NM radius centred on 222937N 0700329E  to 221636N 0702939E then along the counter clockwise arc of a circle of 16NM radius centred on 221834N 0704646E  to 220243N 0704359E; 204803N 0712758E; 204603N 0710859E; 211640N 0703723E; 211903N 0703959E; 213202N 0703459E; 213902N 0700459E; 215202N 0695759E; 215002N 0693459E; 214502N 0692659E; 221402N 0685500E; 222802N 0690500E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Jamnagar ATC. | 3. Jamnagar ATC: 127.500 MHz, 120.200 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning for all flights. | 7. Aircraft shall obtain positive clearance from Jamnagar ATC before entering active TRA. | 8. TRA valid until 31 January 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA506(B) [JAMNAGAR] | Area bounded by lines joining points 214502N 0692659E; 215002N 0693459E; 215202N 0695759E; 213902N 0700459E; 213202N 0703459E; 211903N 0703959E; 205703N 0701559E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Jamnagar ATC. | 3. Jamnagar ATC: 127.500 MHz, 120.200 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose | between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning for all flights. | 7. Aircraft shall obtain positive clearance from Jamnagar ATC before entering active TRA. | 8. TRA valid until 31 January 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA508A [SHIKRA] | Area bounded by lines joining points 185800N 0725100E; 185800N 0725600E; 185600N 0725600E; 185600N 0725100E to point of origin.",
+      "upper_lower_limits_and_system": "700 FT AMSL/ MSL",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian navy | 2. Controlling ATS Unit: Shikra ATC 126.8MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LOA between INDIAN NAVY and AAI established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. TRA valid until 25 January 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA508B [SHIKRA] | Area bounded by lines joining points 185104N 0724031E; 185257N 0725932E; 183849N 0730751E then along the clockwise arc of a circle of 30NM radius centred on 190510N 0725229E  to 184149N 0723233E to point of origin.",
+      "upper_lower_limits_and_system": "1500 FT AMSL/ MSL",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian navy | 2. Controlling ATS Unit: Shikra ATC 126.8MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LOA between INDIAN NAVY and AAI established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. TRA valid until 25 January 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA508C [SHIKRA] | Area bounded by lines joining points 184149N 0723233E then along the counter clockwise arc of a circle of 30NM radius centred on 190510N 0725229E  to 183527N 0725731E; 181542N 0730105E then along the clockwise arc of a circle of 50NM radius centred on 190510N 0725229E  to 182609N 0721932E to point of origin.",
+      "upper_lower_limits_and_system": "3000 FT AMSL/ MSL",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian navy | 2. Controlling ATS Unit: Shikra ATC 126.8MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LOA between INDIAN NAVY and AAI established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. TRA valid until 25 January 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA601(A) [Panagarh] | Area bounded by the smaller arc of | radius 20 NM centred at ARP of | Panagarh with limits of 231530N | 0871000E to the south west and | 232800N 0874630E to the east",
+      "upper_lower_limits_and_system": "4000 FT AMSL/ GND",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Panagarh TWR: 124.0 MHz | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and IAF established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Panagarh TWR before entering active TRA. | 7. TRA valid until 31 JULY 2027."
+    },
+    {
+      "name_and_lateral_limits": "TRA601(B) [Panagarh] | Area bounded by lines joining points 231500N 0870900E; 234900N 0862600E; 241100N 0864000E; 241100N 0875000E; 234705N 0875000E; 234706N 0873340E then along the clockwise arc of a circle of 20NM radius centred on 233728N 0871433E  to 232816N 0873353E; 232824N 0872547E to point of origin.",
+      "upper_lower_limits_and_system": "FL 105 / GND",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit:                                                         Panagarh ATC:  TWR:  124.000 MHz | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the Standard Operating Procedure between Airports Authority of India and Indian Air Force established for the purpose.                                                                     5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Panagarh TWR before entering active TRA. | 7. TRA valid till 31st July 2027."
+    },
+    {
+      "name_and_lateral_limits": "TRA601(C) [Panagarh] | Area bounded by lines joining points 234900N 0862600E; 241000N 0860000E; 250000N 0860000E; 250000N 0875000E; 241100N 0875000E; 241100N 0864000E to point of origin.",
+      "upper_lower_limits_and_system": "FL 105 / GND",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit:                                                         Panagarh ATC:  TWR:  124.000 MHz | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the Standard Operating Procedure between Airports Authority of India and Indian Air Force established for the purpose.                                                                     5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Panagarh TWR before entering active TRA. | 7. TRA valid till 31st July 2027."
+    },
+    {
+      "name_and_lateral_limits": "TRA603(A) [PURNEA] | Area bounded by lines joining points 261539N 0862430E; 254545N 0864034E; 254537N 0870044E; 260004N 0870417E; 261254N 0870756E to point of origin.",
+      "upper_lower_limits_and_system": "FL 280 / GND",
+      "remarks_and_time_of_act": "1. Controlling authority: IAF - Bagdogra | 2. Controlling ATS Unit: Bagdogra TWR: 122.3/131.2 MHz. | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. ATS routes transiting through the airspace within the lateral limits of the TRAs are available for flight planning and operation for all flights as follows: | a) all levels on ATS routes R344/A467/Q18 when the TRAs are not active. | b) all levels on ATS routes R344/A467 when TRAs are active. | c) at or above FL290 on ATS route Q18 when TRAs are active. Climb and descend of aircraft on Q18 from and to Bagdogra will be accommodated by Bagdogra ATC through the TRAs. | 5. All aircraft shall obtain positive clearance from Bagdogra ATC before entering active TRAs. | 6. Eastbound aircraft via R344 shall contact both Kolkata ACC and Bagdogra ATC at least 5 minutes before BIRAT. | 7. Activation, use and deactivation of TRAs shall be governed by the SOP between AAI and IAF established for the purpose. | 8. TRA is valid until 05 OCT 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA603(B) [PURNEA] | Area bounded by lines joining points 261254N 0870756E; 260004N 0870417E; 254537N 0870044E; 254514N 0872653E; 261345N 0874715E to point of origin.",
+      "upper_lower_limits_and_system": "FL 260 / GND",
+      "remarks_and_time_of_act": "1. Controlling authority: IAF - Bagdogra | 2. Controlling ATS Unit: Bagdogra TWR: 122.3/131.2 MHz. | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. ATS routes transiting through the airspace within the lateral limits of the TRAs are available for flight planning and operation for all flights as follows: | a) all levels on ATS routes R344/A467/Q18 when the TRAs are not active. | b) all levels on ATS routes R344/A467 when TRAs are active. | c) at or above FL290 on ATS route Q18 when TRAs are active. Climb and descend of aircraft on Q18 from and to Bagdogra will be accommodated by Bagdogra ATC through the TRAs. | 5. All aircraft shall obtain positive clearance from Bagdogra ATC before entering active TRAs. | 6. Eastbound aircraft via R344 shall contact both Kolkata ACC and Bagdogra ATC at least 5 minutes before BIRAT. | 7. Activation, use and deactivation of TRAs shall be governed by the SOP between AAI and IAF established for the purpose. | 8. TRA is valid until 05 OCT 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA604 [TEZPUR] | Area bounded by lines joining points 264000N 0930000E; 265200N 0925800E; 270430N 0931746E then along the clockwise arc of a circle of 35NM radius centred on 264302N 0924648E  to 265509N 0932331E; 271312N 0934939E then along the counter clockwise arc of a circle of 15NM radius centred on 271726N 0940549E  to 270246N 0940209E; 265504N 0935913E; 264800N 0932100E to point of origin.",
+      "upper_lower_limits_and_system": "FL 460 / FL 130",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Tezpur ATC: 122.650 MHz,118.100 MHz. | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and IAF established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Tezpur ATC before entering active TRA. | 7. TRA valid until 14 AUG 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA606 [PRAYAGRAJ] | Area bounded by lines joining points 252002N 0821053E then along the clockwise arc of a circle of 25NM radius centred on 252601N 0814353E  to 254801N 0813053E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority:Indian Air Force. | 2. Controlling ATS Unit: Prayagraj ATC 120.700 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Prayagraj ATC before entering active TRA. | 7. TRA valid until 02 November 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA607(A) [CHABUA] | Area bounded by lines joining points 272900N 0941900E; 275200N 0940000E; 283000N 0940000E; 290300N 0943700E; 285200N 0952700E; 291000N 0960000E; 281600N 0961200E; 281400N 0965000E; 280800N 0970600E; 274800N 0964500E; 274000N 0964000E; 273102N 0961946E; 271702N 0955447E; 275102N 0952947E; 275302N 0945947E; 274402N 0943247E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit:Chabua ATC: 121.600 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Chabua ATC before entering active TRA. | 7. TRA valid until 31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA607(B) [CHABUA] | Area bounded by lines joining points 274031N 0951147E; 275153N 0951657E; 275102N 0952947E; 271702N 0955447E; 270932N 0954147E; 273302N 0952947E; 264702N 0945947E; 265502N 0945217E; 271504N 0950732E then along the counter clockwise arc of a circle of 15NM radius centred on 272856N 0950101E  to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit:Chabua ATC: 121.600 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Chabua ATC before entering active TRA. | 7. TRA valid until 31 December 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA607(C) [CHABUA] | Area bounded by lines joining points 273806N 0942721E; 274402N 0943247E; 274922N 0944847E; 274208N 0945255E then along the counter clockwise arc of a circle of 15NM radius centred on 272856N 0950101E  to 273341N 0944501E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit:Chabua ATC: 121.600 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Chabua ATC before entering active TRA. | 7. TRA valid until 31 December 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA608 [GORAKHPUR] | Area bounded by lines joining points 263701N 0815953E; 264301N 0825853E then along the clockwise arc of a circle of 25NM radius centred on 264401N 0832652E  to 264401N 0835452E; 265201N 0843652E; 260301N 0843952E; 255201N 0841952E; 254501N 0835352E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Gorakhpur ATC: 128.200 MHz, 131.000 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Gorakhpur ATC before entering active TRA. | 7. TRA valid until 31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA609(A) [HASHIMARA] | Area bounded by lines joining points 261502N 0894750E; 260602N 0903949E; 254602N 0903949E; 252506N 0900000E; 255300N 0900200E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Hashimara ATC: 130.400 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Hashimara ATC before entering active TRA. | 7. TRA valid until 31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA609(B) [HASHIMARA] | Area bounded by lines joining points 264302N 0895249E  then along   India - Bhutan Border up to 264702N 0903949E; 262702N 0903949E; 263702N 0895149E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Hashimara ATC: 130.400 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Hashimara ATC before entering active TRA. | 7. TRA valid until 31 December 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA610 [GUWAHATI] | Area bounded by 264702N 0903949E; then along Indo-Bhutan border to | 264713N 0911749E; 262702N 0911749E; 262702N 0903949E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Guwahati ATC. | 2. Controlling ATS Unit: Guwahati APP: 123.900 MHz, Guwahati ACC: 120.500 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the SOP established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Guwahati ATC before entering active TRA. | 7. TRA valid until 31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA611(A) [KALAIKUNDA] | Area bounded by lines joining points 222203N 0875651E; 215203N 0874451E; 214307N 0873608E; 222908N 0862229E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: | Kalaikunda ATC: 121.600 MHz, 122.350 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Kalaikunda ATC before entering active TRA. | 7. TRA valid until31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA611(B) [KALAIKUNDA] | Area bounded by lines joining points 203703N 0863151E; 205503N 0853952E; 223003N 0860851E; 222908N 0862229E; 214307N 0873608E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: | Kalaikunda ATC: 121.600 MHz, 122.350 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Kalaikunda ATC before entering active TRA. | 7. TRA valid until 31 December 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA611(C) [KALAIKUNDA] | Area bounded by lines joining points 205503N 0853952E; 205103N 0853652E; 215503N 0842952E; 223003N 0860851E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: | Kalaikunda ATC: 121.600 MHz, 122.350 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Kalaikunda ATC before entering active TRA. | 7. TRA valid until 31 December 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA612(A) [TEZPUR] | Area bounded by 264713N 0911749E; then along Indo-Bhutan border to 265102N 0920448E; 262702N | 0921448E; 262702N 0911749E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Tezpur ATS Unit | 3. Tezpur ATC: 121.650 MHz, 118.100 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 7. Aircraft shall obtain positive clearance from Tezpur ATC before entering active TRA. | 8. TRA valid until31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA612(B) [TEZPUR] | Area bounded by lines joining points 271202N 0930848E; 274502N 0933848E; 274902N 0935547E; 273402N 0941947E; 265509N 0932331E then along the counter clockwise arc of a circle of 35NM radius centred on 264302N 0924648E  to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Tezpur ATS Unit | 3. Tezpur ATC: 121.650 MHz, 118.100 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 7. Aircraft shall obtain positive clearance from Tezpur ATC before entering active TRA. | 8. TRA valid until 31 December 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA612(C) [TEZPUR] | Area bounded by lines joining points 260715N 0922155E; 262953N 0940134E; 260902N 0940948E; 254502N 0935948E; 253002N 0932948E; 252202N 0924448E; 254720N 0921620E to point of origin.",
+      "upper_lower_limits_and_system": "FL 460 / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Tezpur ATS Unit | 3. Tezpur ATC: 121.650 MHz, 118.100 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 7. Aircraft shall obtain positive clearance from Tezpur ATC before entering active TRA. | 8. TRA valid until 31 December 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA613  [KANPUR] | Area bounded by lines joining points 264501N 0800854E; 260801N 0795454E; 255701N 0793254E; 245702N 0802954E; 243502N 0803254E; 243202N 0805054E; 252501N 0810754E; 254801N 0811954E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: | Kanpur(Chakeri) ATC | 3. Kanpur (Chakeri) ATC: | 123.500 MHz | 122.700 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning for all flights. | 7. Aircraft shall obtain positive clearance from Kanpur (Chakeri) | ATC before entering active TRA. | 8. TRA valid until 31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA702(A) [SRINAGAR] | Area bounded by: | 342000.00N 0740500.00E, | 342000.00N 0741300.00E, | 343000.00N 0742000.00E, | 341900.00N 0752900.00E, | 333800.00N 0752700.00E, | then along clockwise arc of 40 NM | radius centred at Srinagar ARP | (335917.50N 0744630.90E) to | 334649.00N 0740052.00E, then | along the Line of Control (LOC), to | 340045.00N 0735826.00E, then | along clockwise arc of 40 NM | radius centred at Srinagar ARP | (335917.50N 0744630.90E) to | 342000.0N 0740500.0E",
+      "upper_lower_limits_and_system": "FL 460 / FL 170",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Srinagar ATC: 128.600 MHz, 119. 500 MHz. | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and IAF established for the purpose. | 5. All ATS routes transiting through and airspace within the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Srinagar ATC before entering active TRA. | 7. TRA valid until 07 September 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA702(B) [SRINAGAR] | Area bounded by lines joining points 341900N 0752900E; 340800N 0762900E; 334300N 0763300E; 333800N 0752700E to point of origin.",
+      "upper_lower_limits_and_system": "FL 460 / GND",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Srinagar ATC: 128.600 MHz, 119. 500 MHz. | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and IAF established for the purpose. | 5. All ATS routes transiting through and airspace within the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Srinagar ATC before entering active TRA. | 7. TRA valid until 07 September 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA703(A) [PATHANKOT] | Area bounded by lines joining points 323329N 0754156E; 331059N 0752956E; 332758N 0755156E; 330359N 0762556E; 325959N 0762556E; 320759N 0762856E; 320159N 0755656E then along the counter clockwise arc of a circle of 20NM radius centred on 321359N 0753756E  to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Pathankot ATC 130.100 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Pathankot ATC before entering active TRA. | 7. TRA valid until 02 November 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA703(B) [PATHANKOT] | Area bounded by lines joining points 325959N 0762556E; 325959N 0772955E; 333558N 0765955E; 333558N 0755956E; 332758N 0755156E; 330359N 0762556E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Pathankot ATC 130.100 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Pathankot ATC before entering active TRA. | 7. TRA valid until 02 November 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA704(A) [CHANDIGARH] | Area bounded by lines joining points 304229N 0762456E; 303929N 0762256E; 305429N 0755156E; 305759N 0754956E; 305759N 0763056E; 314259N 0771255E; 313359N 0775955E; 303000N 0775955E; 302700N 0773655E; 301100N 0772155E; 302300N 0770055E then along the clockwise arc of a circle of 20NM radius centred on 303959N 0764756E  to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Chandigarh ATC: 118.300/122.650 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Chandigarh ATC before entering active TRA. | 7. TRA valid until 02 November 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA704(B) [CHANDIGARH] | Area bounded by lines joining points 311959N 0773555E; 313459N 0773555E; 313459N 0781455E; 303400N 0781455E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Chandigarh ATC: 118.300/122.650 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Chandigarh ATC before entering active TRA. | 7. TRA valid until 02 November 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA705 [AMBALA] | Area bounded by lines joining points 304200N 0761200E; 303200N 0764600E; 301700N 0770300E; 295900N 0771400E; 291500N 0765900E; 293800N 0761200E; 294800N 0762300E; 302000N 0761736E to point of origin.",
+      "upper_lower_limits_and_system": "FL 600 / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Ambala | ATC 122.700 MHz, 119.5MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LOA between IAF and AAI established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Ambala ATC | before entering active TRA. | 7. TRA valid until 03 November 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA706(A) [GWALIOR] | Area bounded by lines joining points 262005N 0775734E; 261401N 0770756E; 255301N 0764456E; 255101N 0763156E; 251001N 0761356E; 243402N 0761056E; 242202N 0764556E; 243102N 0764556E; 242802N 0773055E; 252501N 0773755E; 260805N 0780029E then along the clockwise arc of a circle of 15NM radius centred on 261701N 0781355E  to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Gwalior ATC | 3. Gwalior ATC: | 122.700 MHz | 127.500 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the | LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning | for all flights. | 7. Aircraft shall obtain positive clearance from Gwalior ATC before entering active TRA. | 8. TRA valid until 31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA706(B) [GWALIOR] | Area bounded by lines joining points 260201N 0781355E; 253901N 0782855E; 254301N 0784455E; 260001N 0790955E; 261101N 0794454E; 265101N 0800354E; 271301N 0791654E; 273001N 0782855E; 262958N 0782227E then along the clockwise arc of a circle of 15NM radius centred on 261701N 0781355E  to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Gwalior ATC | 3. Gwalior ATC: | 122.700 MHz | 127.500 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the | LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning | for all flights. | 7. Aircraft shall obtain positive clearance from Gwalior ATC before entering active TRA. | 8. TRA valid until 31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA706(C) [GWALIOR] | Area bounded by lines joining points 263401N 0782255E; 273001N 0782855E; 273501N 0780855E; 264201N 0781555E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Gwalior ATC | 3. Gwalior ATC: | 122.700 MHz | 127.500 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the | LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning | for all flights. | 7. Aircraft shall obtain positive clearance from Gwalior ATC before entering active TRA. | 8. TRA valid until31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA708(A) [HINDON] | Area bounded by 290604N 0773304E; | then along the clockwise arc of circle 25 | NM radius centered at 284300N | 0772155E; 283404N 0774827E; | 283700N 0772955E; 283700N | 0771555E; then along the east bank of | River Yamuna to 285600N 0771155E to | point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: | Indian Air Force. | 2. Controlling ATS Unit: | Hindon ATC. | 3. Hindon ATC: | 130.100 MHz | 4. Activation of TRA will be notified | through AUP/UUP by AMC. | 5. Activation, use and deactivation of | the TRA shall be governed by the | LoA established for the purpose | between IAF and AAI. | 6. ATS routes transiting through the | TRA are available for flight planning | for all flights. | 7. Area bounded by 283700N | 0772225E to 284832N 0771311E | then along the east bank of River | Yamuna to 283700N 0771555E to | point of origin is available for use by | civil flights from FL325 to FL460, | even when TRA708(A) is active. | 8. Aircraft shall obtain positive | clearance from Hindon ATC before | entering active TRA. | 9. TRA valid until 31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA708(B) [HINDON] | Area bounded by lines joining points 283702N 0774931E then along the counter clockwise arc of a circle of 25NM radius centred on 284300N 0772155E  to 290216N 0774008E; 293246N 0780526E; 285442N 0783849E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Hindon ATC. | 3. Hindon ATC: 130.100 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning | for all flights. | 7. Aircraft shall obtain positive clearance from Hindon ATC before entering active TRA. | 8. TRA valid until 31 December 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA708(C) [HINDON] | Area bounded by lines joining points 293246N 0780526E; 294300N 0781355E; 292200N 0790945E; 290330N 0790325E; 285442N 0783849E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Hindon ATC. | 3. Hindon ATC: 130.100 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning for all flights. | 7. Aircraft shall obtain positive clearance from Hindon ATC before entering active TRA. | 8. TRA valid until 31 December 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA709(A) [JODHPUR] | Area bounded by lines joining points 251101N 0735557E; 255801N 0732157E; 261535N 0742326E; 252714N 0740944E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Jodhpur ATC. | 3. Jodhpur ATC: | 122.400 MHz | 121.800 MHz | 4. Activation of TRA will be notified | through AUP/UUP by AMC. | 5. Activation, use and deactivation of | the TRA shall be governed by the | LoA established for the purpose | between IAF and AAI. | 6. ATS routes transiting through the | TRA are available for flight planning | for all flights. | 7. Aircraft shall obtain positive | clearance from Jodhpur ATC before | entering active TRA. | 8. TRA valid until 31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA709(B) [JODHPUR] | Area bounded by lines joining points 261535N 0742326E; 262201N 0744557E; 261101N 0744657E; 252714N 0740944E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Jodhpur ATC. | 3. Jodhpur ATC: | 122.400 MHz | 121.800 MHz | 4. Activation of TRA will be notified | through AUP/UUP by AMC. | 5. Activation, use and deactivation of | the TRA shall be governed by the | LoA established for the purpose | between IAF and AAI. | 6. ATS routes transiting through the | TRA are available for flight planning | for all flights. | 7. Aircraft shall obtain positive | clearance from Jodhpur ATC before | entering active TRA. | 8. TRA valid until 31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA709(C) [JODHPUR] | Area bounded by lines joining points 245701N 0732557E; 251701N 0715958E; 255301N 0720258E; 255501N 0725958E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Jodhpur ATC. | 3. Jodhpur ATC: | 122.400 MHz | 121.800 MHz | 4. Activation of TRA will be notified | through AUP/UUP by AMC. | 5. Activation, use and deactivation of | the TRA shall be governed by the | LoA established for the purpose | between IAF and AAI. | 6. ATS routes transiting through the | TRA are available for flight planning | for all flights. | 7. Aircraft shall obtain positive | clearance from Jodhpur ATC before | entering active TRA. | 8. TRA valid until 31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA709(D) [JODHPUR] | Area bounded by lines joining points 263201N 0725858E; 263601N 0731658E; 272501N 0743357E; 272501N 0733157E; 270801N 0722158E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Jodhpur ATC. | 3. Jodhpur ATC: | 122.400 MHz | 121.800 MHz | 4. Activation of TRA will be notified | through AUP/UUP by AMC. | 5. Activation, use and deactivation of | the TRA shall be governed by the | LoA established for the purpose | between IAF and AAI. | 6. ATS routes transiting through the | TRA are available for flight planning | for all flights. | 7. Aircraft shall obtain positive | clearance from Jodhpur ATC before | entering active TRA. | 8. TRA valid until 31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA710(A) [NAL] | Area bounded by lines joining points 280100N 0734057E; 280330N 0744857E; 273400N 0744857E; 273000N 0744857E; 273000N 0725958E; 275700N 0720600E; 281400N 0721830E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority:Indian Air Force. | 2. Controlling ATS Unit: Nal ATC. | 3. Nal ATC: | 121.600 MHz | 118.300 MHz | 4. Activation of TRA will be notified | through AUP/UUP by AMC. | 5. Activation, use and deactivation of | the TRA shall be governed by the | LoA established for the purpose | between IAF and AAI. | 6. ATS routes transiting through the | TRA are available for flight planning | for all flights. | 7. Aircraft shall obtain positive | clearance from Nal ATC before | entering active TRA. | 8. TRA valid until 31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA710(B) [NAL] | Area bounded by lines joining points 280330N 0744857E; 280500N 0752956E; 280000N 0752956E; 273400N 0744857E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority:Indian Air Force. | 2. Controlling ATS Unit: Nal ATC. | 3. Nal ATC: | 121.600 MHz | 118.300 MHz | 4. Activation of TRA will be notified | through AUP/UUP by AMC. | 5. Activation, use and deactivation of | the TRA shall be governed by the | LoA established for the purpose | between IAF and AAI. | 6. ATS routes transiting through the | TRA are available for flight planning | for all flights. | 7. Aircraft shall obtain positive | clearance from Nal ATC before | entering active TRA. | 8. TRA valid until 31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA711(A) [AGRA] | Area bounded by lines joining points 255301N 0764456E; 261101N 0762056E; 265301N 0762956E; 271101N 0765556E; 271230N 0772051E; 262206N 0772323E; 261401N 0770756E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Agra ATC. | 3. Agra ATC: 125.000 MHz, 127.900 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning | for all flights. | 7. Aircraft shall obtain positive clearance from Agra ATC before entering active TRA. | 8. TRA valid until 31 January 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA711(B) [AGRA] | Area bounded by lines joining points 271230N 0772051E; 271301N 0772955E; 263801N 0775355E; 262206N 0772323E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Agra ATC. | 3. Agra ATC: 125.000 MHz, 127.900 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning | for all flights. | 7. Aircraft shall obtain positive clearance from Agra ATC before entering active TRA. | 8. TRA valid until 31 January 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA712(A) [BATHINDA] | Area bounded by 304459N 0745327E; | 304300N 0744100E; 295932N | 0745019E; 295800N 0743500E; | 293630N 0742000E; 295500N | 0741000E; 300500N 0735000E then | along Indo- Pakistan International border | to 310159N 0743457E to point of origin.",
+      "upper_lower_limits_and_system": "FL 600 / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Bathinda ATC: 128.6 MHz. | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA between IAF and AAI established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Bathinda ATC before | entering active TRA. | 7. TRA valid until 15 June 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA712(B) [SURATGARH] | Area bounded by 285300N 0741500E; | 285300N 0733857E; 284600N | 0733857E; 284300N 0721958E then | along Indo Pakistan International border | to 300500N 0735000E; 295500N | 0741000E; 293630N 0742000E; | 291500N 0742400E to point of origin.",
+      "upper_lower_limits_and_system": "FL 600 / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Suratgarh ATC: 127.8 MHz. | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the | LoA between IAF and AAI established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Suratgarh ATC before entering active TRA. | 7. TRA valid until 15 June 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA712(C) [SIRSA] | Area bounded by lines joining points 295932N 0745019E; 285345N 0750435E; 285300N 0741500E; 291500N 0742400E; 293630N 0742000E; 295800N 0743500E to point of origin.",
+      "upper_lower_limits_and_system": "FL 600 / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Sirsa ATC: 130.1 MHz. | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LOA between IAF and AAI established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Sirsa ATC before entering active TRA. | 8. TRA valid until 15 June 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA713[ADAMPUR] | Area bounded by lines joining points 320459N 0762956E; 322959N 0762956E; 322959N 0773955E; 315959N 0773955E; 315959N 0772350E then along the counter clockwise arc of a circle of 15NM radius centred on 315159N 0770855E  to 315959N 0765400E; 315959N 0764456E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Admapur ATC. | 3. Adampur ATC: 122.700 MHz, 119.500 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning for all flights. | 7. Aircraft shall obtain positive clearance from Adampur ATC before entering active TRA. | 8. TRA valid until 31 January 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA714 [SARSAWA] | Area bounded by lines joining points 295600N 0771255E; 302500N 0773855E; 301900N 0780155E; 300300N 0781455E; 293200N 0775955E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Chandigarh ATC. | 3. Chandigarh ATC: 118.300 MHz, 120.700 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the | LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning | for all flights. | 7. Aircraft shall obtain positive clearance from Chandigarh ATC before entering active TRA. | 8. TRA valid until 31 January 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA715 [JAISELMER] | Area bounded by lines joining points 265356N 0710307E; 265400N 0715400E; 262400N 0715400E; 261200N 0711500E; 263031N 0710417E then along the clockwise arc of a circle of 25NM radius centred on 265301N 0705159E  to 262810N 0704819E; 262311N 0704736E then along the clockwise arc of a circle of 30NM radius centred on 265301N 0705159E  to 264343N 0702006E; 264516N 0702524E then along the clockwise arc of a circle of 25NM radius centred on 265301N 0705159E  to 271746N 0704729E; 272243N 0704636E then along the clockwise arc of a circle of 30NM radius centred on 265301N 0705159E  to 271317N 0711649E; 265732N 0710158E then along the clockwise arc of a circle of 10NM radius centred on 265301N 0705159E  to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Jaiselmer ATC. | 3. Jaiselmer ATC: 121.800 MHz, 119.700 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning for all flights. | 7. Aircraft shall obtain positive clearance from Jaiselmer ATC before | entering active TRA. | 8. TRA valid until 31 January 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA716(A) [BAREILLY] | Area bounded by lines joining points 283700N 0790155E; 290000N 0790355E; 290000N 0791709E then along the counter clockwise arc of a circle of 10NM radius centred on 290156N 0792821E  to 290000N 0793932E; 281001N 0805354E; 273919N 0804322E; 281023N 0794954E; 283941N 0794954E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Bareilly ATC. | 3. Bareilly ATC: 122.900 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning | for all flights. | 7. Aircraft shall obtain positive clearance from Bareilly ATC before entering active TRA. | 8. TRA valid until 31 December 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA716(B) [BAREILLY] | Area bounded by lines joining points 280044N 0793355E; 282000N 0785855E then along the clockwise arc of a circle of 25NM radius centred on 282500N 0792654E  to 283700N 0790155E; 283941N 0794954E; 281023N 0794954E then along the clockwise arc of a circle of 25NM radius centred on 282500N 0792654E  to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Bareilly ATC. | 3. Bareilly ATC: 122.900 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning for all flights. | 7. Aircraft shall obtain positive clearance from Bareilly ATC before entering active TRA. | 8. TRA valid until 31 December 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA716(C) [BAREILLY] | Area bounded by lines joining points 273919N 0804322E; 273501N 0804154E; 272401N 0803154E; 280044N 0793355E then along the counter clockwise arc of a circle of 25NM radius centred on 282500N 0792654E  to 281023N 0794954E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Bareilly ATC. | 3. Bareilly ATC: 122.900 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning | for all flights. | 7. Aircraft shall obtain positive clearance from Bareilly ATC before entering active TRA. | 8. TRA valid until 31 December 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA716(D) [BAREILLY] | Area bounded by lines joining points 293000N 0784455E; 300600N 0781855E; 304859N 0781455E; 310659N 0790454E; 301200N 0801554E; 292500N 0795954E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Bareilly ATC | 3. Bareilly ATC: | 122.900 MHz | 4. Activation of TRA will be notified | through AUP/UUP by AMC. | 5. Activation, use and deactivation of | the TRA shall be governed by the | LoA established for the purpose | between IAF and AAI. | 6. ATS routes transiting through the | TRA are available for flight planning | for all flights. | 7. Aircraft shall obtain positive | clearance from Bareilly ATC before | entering active TRA. | 8. TRA valid until 31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA718(A) [BAKSHI-KA-TALAB] | Area bounded by lines joining points 273713N 0804828E; 280901N 0805854E; 274101N 0815753E; 273001N 0822953E; 272115N 0820245E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Bakshi-Ka-Talab ATC. | 3. Baksi-ka-Talab ATC: 131.000 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning for all flights. | 7. Aircraft shall obtain positive clearance from Bakshi-Ka-Talab ATC before entering active TRA. | 8. TRA valid until 31 JAN 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA718(B) [BAKSHI-KA-TALAB] | Area bounded by lines joining points 265901N 0805354E; 271101N 0803954E; 273713N 0804828E; 272115N 0820245E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Bakshi-Ka-Talab ATC. | 3. Baksi-ka-Talab ATC: 131.000 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning for all flights. | 7. Aircraft shall obtain positive clearance from Bakshi-Ka-Talab ATC before entering active TRA. | 8. TRA valid until 31 JAN 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA719 [UTTERLAI] | Area bounded by lines joining points 261200N 0711500E; 260901N 0715658E; 253401N 0715458E; 251101N 0715458E; 251301N 0712558E; 252001N 0710459E; 252901N 0710859E; 260601N 0710059E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Utterlai ATC. | 3. Utterlai ATC: 123.200 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning for all flights. | 7. Aircraft shall obtain positive clearance from Uttarlai ATC before | entering active TRA. | 8. TRA valid until 31 JAN 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA720(A) [UDHAMPUR] | Area bounded by lines joining points 330900N 0745100E; 330900N 0745800E; 325200N 0745800E; 325200N 0745100E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: NACC. | 3. NACC: 121.600 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning for all flights. | 7. Aircraft shall obtain positive clearance from Udhampur ATC | before entering active TRA. | 8. TRA valid until 31 JAN 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA720(B) [UDHAMPUR] | Area bounded by lines joining points 325500N 0745800E; 330000N 0743500E; 331500N 0741600E; 332200N 0742500E; 332500N 0744500E; 332000N 0750000E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: NACC. | 3. NACC: 121.600 MHz | 4. Activation of TRA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 6. ATS routes transiting through the TRA are available for flight planning for all flights. | 7. Aircraft shall obtain positive clearance from Udhampur ATC before entering active TRA. | 8. TRA valid until 31 JAN 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA723 [HALWARA] | Area bounded by lines joining points 304200N 0761200E; 302000N 0761736E; 294800N 0762300E; 293800N 0761200E; 295630N 0754641E; 302543N 0753236E; 304824N 0752225E; 304746N 0752845E; 305144N 0754445E to point of origin.",
+      "upper_lower_limits_and_system": "FL 600 / FL 325",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Halwara ATC 130.100 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LOA between IAF and AAI established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Halwara ATC | before entering active TRA. | 7. TRA valid until 03 November 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA724 [Phalodi] | Area bounded by lines joining points 275602N 0720755E; 272135N 0731632E; 270801N 0722158E; 265706N 0715139E; 273751N 0711527E to point of origin.",
+      "upper_lower_limits_and_system": "FL 280 / GND",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air force. | 2. Controlling ATS Unit: Phalodi ATC | 3. Phalodi Tower: 130.500 MHz | 4. Phalodi Approach: 119.600 MHz | 5. Activation of TRA will be notified through AUP/UUP by AMC. | 6. Activation, use and deactivation of the TRA shall be governed by the LOA between INDIAN AIR FORCE and | AAI established for the purpose. | 7. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 8. Aircraft shall obtain positive clearance from Phalodi ATC before entering active TRA. | 9. TRA valid until 18th May, 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA804(A)  [Thanjavur] | Area bounded by lines joining points 105042N 0790750E then along the clockwise arc of a circle of 25NM radius centred on 104556N 0784254E  to 103722N 0790646E; 102849N 0792958E then along the counter clockwise arc of a circle of 50NM radius centred on 104556N 0784254E  to 110710N 0792736E to point of origin.",
+      "upper_lower_limits_and_system": "4000 FT AMSL/ 1300 FT AMSL",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Thanjavur ATC:                                                                                    TWR: 119.200 MHz                                                                                     APP: 129.700 MHz | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and IAF established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Thanjavur ATC before entering active TRA. | 7. TRA valid till 24 JAN 2027."
+    },
+    {
+      "name_and_lateral_limits": "TRA804(B) [Thanjavur] | Area bounded by lines joining points 105502N 0791302E; 105345N 0795314E; 112854N 0795341E to point of origin.",
+      "upper_lower_limits_and_system": "FL 280 / FL 070",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: | Thanjavur ATC: | TWR: 119.200 MHz | APP:   129.700 MHz | 3. TRA will be activated at ASM Level-3 (Tactical) only on need basis under | dynamic coordination and specific approval from Tiruchirappalli ATC. | 4. Transit of aircraft from Jaffna to Chennai shall be accommodated. | 5. Flight Crew may obtain the current status of activity in the TRAs on RT     from Chennai /Tiruchirappalli TWR. | 6. Slot allocation for TRA 804B in coordination with Chennai ATC for | the next day of operations shall be governed by SOP between Indian Air | Force Thanjavur, Chennai ATC and Tiruchirappalli ATC. | 7. TRA 804C will be activated sparingly with prior coordination and notice. | 8. Activation, use and deactivation of the TRA shall be dynamically     governed by the Standard Operating Procedure between Airports    Authority of India and Indian Air Force established for the purpose. | 9. All ATS routes transiting through the TRA are available for flight planning     for civil flights. | 10. Aircraft shall obtain positive clearance from Thanjavur ATC before       entering active TRA. | 11. TRA valid till 24th January 2027."
+    },
+    {
+      "name_and_lateral_limits": "TRA804(C) [Thanjavur] | Area bounded by lines joining points 105042N 0790750E then along the clockwise arc of a circle of 25NM radius centred on 104556N 0784254E  to 102829N 0790110E; 101125N 0791924E then along the counter clockwise arc of a circle of 50NM radius centred on 104556N 0784254E  to 101906N 0792519E; 101718N 0795246E; 112854N 0795341E to point of origin.",
+      "upper_lower_limits_and_system": "FL 360 / GND",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: | Thanjavur ATC: | TWR: 119.200 MHz | APP:   129.700 MHz | 3. TRA will be activated at ASM Level-3 (Tactical) only on need basis under | dynamic coordination and specific approval from Tiruchirappalli ATC. | 4. Transit of aircraft from Jaffna to Chennai shall be accommodated. | 5. Flight Crew may obtain the current status of activity in the TRAs on RT     from Chennai /Tiruchirappalli TWR. | 6. Slot allocation for TRA 804B in coordination with Chennai ATC for | the next day of operations shall be governed by SOP between Indian Air | Force Thanjavur, Chennai ATC and Tiruchirappalli ATC. | 7. TRA 804C will be activated sparingly with prior coordination and notice. | 8. Activation, use and deactivation of the TRA shall be dynamically     governed by the Standard Operating Procedure between Airports    Authority of India and Indian Air Force established for the purpose. | 9. All ATS routes transiting through the TRA are available for flight planning     for civil flights. | 10. Aircraft shall obtain positive clearance from Thanjavur ATC before       entering active TRA. | 11. TRA valid till 24th January 2027."
+    },
+    {
+      "name_and_lateral_limits": "TRA805(A) [Vishakhapatnam] | Area bounded by lines joining points 171520N 0840140E; 162550N 0853015E then along the clockwise arc of a circle of 150NM radius centred on 174004N 0831510E  to 152325N 0842110E; 165440N 0833750E then along the counter clockwise arc of a circle of 50NM radius centred on 174004N 0831510E  to point of origin.",
+      "upper_lower_limits_and_system": "FL 230 / FL 145",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Navy. | 2. Controlling ATS Unit: Visakhapatnam ATC: 119.700 MHz (APP), 123.500 MHz (TWR). | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and Indian Navy established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Visakhapatnam ATC before entering active TRA. | 7. TRA valid until 18 MAR 2027."
+    },
+    {
+      "name_and_lateral_limits": "TRA805(B) [Vishakhapatnam] | Airspace between 25 and 50 NM from 174004N 0831510E.",
+      "upper_lower_limits_and_system": "5500 FT AGL/ GND",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Navy. | 2. Controlling ATS Unit: Visakhapatnam ATC: 119.700 MHz (APP), 123.500 MHz (TWR). | 3. TRA active H24. | 4. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 5. Aircraft shall obtain positive clearance from Visakhapatnam ATC before entering active TRA. | 6. TRA valid until 18 MAR 2027."
+    },
+    {
+      "name_and_lateral_limits": "TRA806(A) [Cochin] | Area bounded by lines joining points 114000N 0744658E; 114000N 0751000E; 102827N 0753027E; 103559N 0744452E to point of origin.",
+      "upper_lower_limits_and_system": "6000 FT AMSL/ 6000 FT AMSL",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Navy. | 2. Controlling ATS Unit: Garuda ATC: 123.5 MHz (TWR)/ 124.7 MHz (APP) | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and Indian Navy established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Garuda ATC before entering active TRA. | 7. TRA valid until 07 September 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA806(B) [Cochin] | Area bounded by lines joining points 114000N 0740000E; 114000N 0744658E; 103559N 0744452E; 104317N 0740000E to point of origin.",
+      "upper_lower_limits_and_system": "FL 170 / FL 060",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Navy. | 2. Controlling ATS Unit: Garuda ATC: 123.5 MHz (TWR) / 124.7 MHz (APP) | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and Indian Navy established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Garuda ATC before entering active TRA. | 7. TRA valid until 07 September 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA806(C) [Cochin] | Area bounded by lines joining points 103921N 0742414E; 103559N 0744452E; 101435N 0744444E; 101757N 0742414E to point of origin.",
+      "upper_lower_limits_and_system": "FL 170 / FL 150",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Navy. | 2. Controlling ATS Unit: Garuda ATC: 123.5 MHz (TWR)/ 124.7 MHz (APP) | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and Indian Navy established for the purpose. | 5. TRA shall be used only as a corridor for transiting between northern and southern TRAs. | 6. All ATS routes transiting through the TRA are available or flight planning for civil flights. | 7. Aircraft shall obtain positive clearance from Garuda ATC before entering active TRA. | 8. TRA valid until 07 September 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA806(D) [Cochin] | Area bounded by lines joining points 101026N 0751000E; 100726N 0752753E; 090110N 0754435E; 090110N 0753129E to point of origin.",
+      "upper_lower_limits_and_system": "FL 130 / FL 060",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Navy. | 2. Controlling ATS Unit: Garuda ATC: 123.5 MHz (TWR)/ 124.7 MHz (APP) | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and Indian Navy established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Garuda ATC before entering active TRA. | 7. TRA valid until 07 September 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA806(E) [Cochin] | Area bounded by lines joining points 101026N 0751000E; 090110N 0753129E; 090110N 0731230E; 102014N 0741011E to point of origin.",
+      "upper_lower_limits_and_system": "FL 170 / FL 060",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Navy. | 2. Controlling ATS Unit: Garuda ATC: 123.5 MHz (TWR) / 124.7 MHz (APP) | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and Indian Navy established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Garuda ATC before entering active TRA. | 7. TRA valid until 07 September 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA806(F) [Cochin] | Area bounded by lines joining points 090110N 0753129E; 090110N 0754435E; 080000N 0760000E; 080000N 0755030E to point of origin.",
+      "upper_lower_limits_and_system": "FL 130 / FL 060",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Navy. | 2. Controlling ATS Unit: Garuda ATC: 123.5 MHz (TWR) / 124.7 MHz (APP) | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and Indian Navy established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Garuda ATC before entering active TRA. | 7. TRA valid until 07 September 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA806(G) [Cochin] | Area bounded by lines joining points 090110N 0753129E; 080000N 0755030E; 080000N 0734800E; 090110N 0731230E to point of origin.",
+      "upper_lower_limits_and_system": "FL 170 / FL 060",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Navy. | 2. Controlling ATS Unit: Garuda ATC: 123.5 MHz (TWR)/ 124.7 MHz (APP) | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and Indian Navy established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Garuda ATC before entering active TRA. | 7. TRA valid until 07 September 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA807(A) [SULUR] | Area bounded by lines joining points 103905N 0771259E; 101058N 0771142E; 100554N 0773929E; 101345N 0774445E; 101824N 0775532E; 105210N 0772621E; 104214N 0772003E to point of origin.",
+      "upper_lower_limits_and_system": "9000 FT AMSL/ GND",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Sulur ATC: 126.9 MHz. | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and IAF established for the purpose. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Sulur ATC before entering active TRA. | 7. TRA valid until 02 NOVEMBER 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA807(B) [SULUR] | Area bounded by lines joining points 103905N 0771259E; 100554N 0773929E; 101345N 0774445E; 101824N 0775532E; 105210N 0772621E; 104214N 0772003E to point of origin.",
+      "upper_lower_limits_and_system": "FL 240 / 9000 FT AMSL",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Sulur ATC: 126.9 MHz. | 3. TRA will be activated at ASM Level-3 (Tactical) only on need basis under dynamic coordination and specific approval from Coimbatore ATC. | 4. General NOTAM regarding activity in the TRAs will be initiated by Sulur ATC at least 7 days in advance. | 5. Flight Crew may obtain the current status of activity in the TRAs on RT from Chennai / Cochin / Trivandrum ACC or Madurai TWR. | 6. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and IAF established for the purpose. | 7. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 8. Aircraft shall obtain positive clearance from Sulur ATC before entering active TRA. | 9. TRA valid until 02 NOVEMBER 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA807(C) [SULUR] | Area bounded by lines joining points 103905N 0771259E; 101058N 0771142E; 100554N 0773929E to point of origin.",
+      "upper_lower_limits_and_system": "FL 180 / 9000 FT AMSL",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Sulur ATC: 126.9 MHz. | 3. TRA will be activated at ASM Level-3 (Tactical) only on need basis under dynamic coordination and specific approval from Coimbatore ATC. | 4. General NOTAM regarding activity in the TRAs will be initiated by Sulur ATC at least 7 days in advance. | 5. Flight Crew may obtain the current status of activity in the TRAs on RT from Chennai / Cochin / Trivandrum ACC or Madurai TWR. | 6. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and IAF established for the purpose. | 7. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 8. Aircraft shall obtain positive clearance from Sulur ATC before entering active TRA. | 9. TRA valid until 02 NOVEMBER 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA807(D) [SULUR] | Area bounded by lines joining points 105826N 0772805E; 105210N 0772621E; 101824N 0775532E; 102923N 0781528E; 104904N 0780950E; 110008N 0781539E; 111037N 0780627E to point of origin.",
+      "upper_lower_limits_and_system": "FL 460 / FL 275",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Sulur ATC 126.900/118.600 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Sulur TWR before entering active TRA. | 7. TRA valid until 02 NOVEMBER 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA808(A) [Vishakhapatnam] | Area bounded by lines joining points 171029N 0823256E then along the clockwise arc of a circle of 50NM radius centred on 174004N 0831510E  to 180136N 0840234E; 174004N 0831510E to point of origin.",
+      "upper_lower_limits_and_system": "FL 230 / FL 145",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Navy. | 2. Controlling ATS Unit: Visakhapatnam ATC: 119.700 MHz (APP), 123.500 MHz (TWR). | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. TRA808(A) can be activated only between 0100 to 1400 UTC on MON and FRI and between 0100 to 1700 UTC on TUE, WED and THU. | 5. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and Indian Navy established for the purpose. | 6. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 7. Aircraft shall obtain positive clearance from Visakhapatnam ATC before entering active TRA. | 8. TRA valid until 18 MAR 2027."
+    },
+    {
+      "name_and_lateral_limits": "TRA808(B) [Vishakhapatnam] | Area bounded by lines joining points 171029N 0823256E; 174004N 0831510E; 180136N 0840234E then along the clockwise arc of a circle of 50NM radius centred on 174004N 0831510E  to point of origin.",
+      "upper_lower_limits_and_system": "FL 230 / FL 145",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Navy. | 2. Controlling ATS Unit: Visakhapatnam ATC: 119.700 MHz (APP), 123.500 MHz (TWR). | 3. Availability of TRA will be notified through AUP/UUP by AMC. | 4. TRA808(B) can be activated only between 0100 to 1400 UTC on MON and FRI and between 0100 to 1700 UTC on TUE, WED and THU. | 5. Activation, use and deactivation of the TRA shall be governed by the SOP between AAI and Indian Navy established for the purpose. | 6. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 7. Aircraft shall obtain positive clearance from Visakhapatnam ATC before entering active TRA. | 8. TRA valid until 18 MAR 2027."
+    },
+    {
+      "name_and_lateral_limits": "TRA809 [BENGALURU] | Area bounded by lines joining points 130000N 0782500E; 125500N 0784217E then along the clockwise arc of a circle of 60NM radius centred on 125659N 0774052E  to 123911N 0783930E; 124500N 0782500E to point of origin.",
+      "upper_lower_limits_and_system": "FL 400 / GND",
+      "remarks_and_time_of_act": "1. Controlling authority: HAL, Bengaluru. | 2. Controlling ATS unit: HAL APP: 127.700 MHZ. | 3. TRA may be activated at ASM level-3 (tactical) between 0330 and 1130 UTC only on need basis under dynamic coordination and specific approval from Chennai ACC. | 4. Activation, use and deactivation of the TRA shall be governed by the LOA between HAL and AAI established for the purpose. | 5. ATS routes transiting through the TRA are available for flight planning for all flights. | 6. Aircraft shall obtain positive clearance from HAL APP before entering active TRA. | 7. TRA valid until 31 DECEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TRA810 [CAR NICOBAR] | Area bounded by lines joining points 084007N 0921949E; 094006N 0921949E; 094006N 0931949E; 084007N 0931949E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / FL 255",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Car Nicobar ATC 121.800 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Car Nicobar ATC before entering active TRA. | 7. TRA valid until 02 November 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA811(A) [TAMBARAM] | Area bounded by lines joining points 125705N 0801555E; 125605N 0800555E; 115305N 0792655E; 114605N 0794855E to point of origin.",
+      "upper_lower_limits_and_system": "FL 460 / FL 255",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Tambaram ATC 125.100/122.700 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Tambaram ATC before entering active TRA. | 7. TRA valid until 02 November 2028."
+    },
+    {
+      "name_and_lateral_limits": "TRA811(B) [TAMBARAM] | Area bounded by lines joining points 125305N 0792955E; 124205N 0795755E; 115305N 0792655E to point of origin.",
+      "upper_lower_limits_and_system": "FL 460 / FL 255",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Tambaram ATC: 125.100/122.700 MHz | 3. Activation of TRA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TRA shall be governed by the LoA established for the purpose between IAF and AAI. | 5. All ATS routes transiting through the TRA are available for flight planning for civil flights. | 6. Aircraft shall obtain positive clearance from Tambaram ATC before entering active TRA. | 7. TRA valid until 02 November 2028."
+    },
+    {
+      "name_and_lateral_limits": "TSA509 [NAVAL DOCKYARD] | Circular area centered on 185536N 0725021E within a .5NM radius.",
+      "upper_lower_limits_and_system": "1500 FT AMSL/ MSL",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian navy. | 2. Controlling ATS Unit: : Shikra ATC 126.8MHz | 3. Availability of TSA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TSA shall be governed by the SOP between AAI and Indian Navy established for the purpose. | 5. TSA valid until 25 January, 2026."
+    },
+    {
+      "name_and_lateral_limits": "TSA510 [CHHOTAJAM] | Area bounded by lines joining points 222300N 0754000E; 222300N 0754800E; 221800N 0754800E; 221800N 0754000E to point of origin.",
+      "upper_lower_limits_and_system": "9000 FT AMSL/ GND",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Army. | 2. Controlling ATS Unit: | Range Officer/GSO-1 (Training), The Infantry School, Mhow (MP) | Email ID: hemaschool@nic.in | 3. Availability of TSA will be notified through AUP/UUP by AMC. | Approved Agency will be Indore ATC. | 4. Activation, use and deactivation of the TSA shall be governed by the Standard Operating Procedure between Airports Authority of India and Infantry School established for the purpose. | 5. Any aircraft entering active TSA510 due to any conntingency/exigency shall relay its position to Indore ATC on the designated frequency. | 6. TSA valid till 12th June 2027."
+    },
+    {
+      "name_and_lateral_limits": "TSA602 [Dudhkundi] | Area bounded by lines joining points 221830N 0870700E; 221740N 0870700E; 221630N 0870600E; 221545N 0870602E; 221400N 0870645E; 221445N 0870830E; 221650N 0870800E to point of origin.",
+      "upper_lower_limits_and_system": "FL 215 / GND",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Kalaikunda APP: 121.6 MHz. | 3. Availability of TSA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TSA shall be governed by the SOP between AAI and IAF established for the purpose. | 5. TSA valid till 14 AUGUST 2026."
+    },
+    {
+      "name_and_lateral_limits": "TSA605 [NYISHI] | Circular area centered on 273455N 0931837E within a 25KM radius.",
+      "upper_lower_limits_and_system": "FL 460 / GND",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Tezpur ATC 122.650 MHz,, 118.100 MHz. | 3. High Altitude Field Firing Range. No non-participating aircraft shall enter the TSA when active. | 4. Availability of TSA will be notified through AUP/UUP by AMC. | 5. Activation, use and deactivation of the TSA shall be governed by the SOP between AAI and IAF established for the purpose. | 6. TSA valid till 16 MAR 2028."
+    },
+    {
+      "name_and_lateral_limits": "TSA614 [DIGARU] | Circular area centered on 260810N 0915835E within a 2KM radius.",
+      "upper_lower_limits_and_system": "2500 FT AMSL/ MSL",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling Unit: SAS&IO, IAF (Digaru). | 3. Contact detail: AF Digaru Civil Exchange: 0361-2786449 FAX: 0361-2786680 | 4. Active: H24 | 5. TSA valid until 24 March 2027."
+    },
+    {
+      "name_and_lateral_limits": "TSA701(A) [Adampur] | Area bounded by lines joining points 314359N 0753956E; 315100N 0754830E then along the clockwise arc of a circle of 25NM radius centred on ARP VIAX (312602N 0754527E) to 310700N 0760400E; 311230N 0754645E to point of origin.",
+      "upper_lower_limits_and_system": "FL 280 / FL 145",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Adampur TWR: 122.7 MHz. | 3. Availability of TSA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TSA shall be governed by the SOP between AAI and IAF established for the purpose. | 5. TSA valid till 14 AUGUST 2026."
+    },
+    {
+      "name_and_lateral_limits": "TSA701(B) [Adampur] | Area bounded by lines joining points 315100N 0754830E then along the clockwise arc of a circle of 25NM radius centred on ARP VIAX (312602N 0754527E) to 310700N 0760400E; 311230N 0754645E; 310600N 0754800E; 310100N 0760500E; 310000N 0763300E; 312000N 0764700E; 315800N 0764400E; 320300N 0762900E; 315600N 0755500E to point of origin.",
+      "upper_lower_limits_and_system": "FL 280 / GND",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: Adampur TWR: 122.7 MHz. | 3. Availability of TSA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TSA shall be governed by the SOP between AAI and IAF established for the purpose. | 5. TSA valid till 14 AUGUST 2026."
+    },
+    {
+      "name_and_lateral_limits": "TSA707 [Mandalthang] | Area bounded by lines joining points 344752N 0780353E; 344444N 0781002E; 343910N 0781142E; 343829N 0781125E; 343704N 0780437E; 344153N 0780030E; 344542N 0780020E to point of origin.",
+      "upper_lower_limits_and_system": "FL 530 / GND",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Army. Controlling from: Stn HQ Tanges/3 Inf Div Controlling officer: SSO2 | Contact number: 9711220235 | Email ID: akumar.122a@gov.in | 2. Field Firing Range. Non-participating aircraft shall NOT enter the TSA when     active. | 3. Activation of TSA will be notified through a NOTAM at least SEVEN days in     advance. | 4. Activation, use and deactivation of the TSA shall be governed by the SOP     established for the purpose between Delhi ACC, Indian Army and IAF. | 5. TSA valid until 10th August, 2028."
+    },
+    {
+      "name_and_lateral_limits": "TSA717 [Kharonala] | Area bounded by lines joining points 342448N 0753645E; 342610N 0753620E; 342916N 0753031E; 342838N 0752359E; 342314N 0752332E; 341908N 0752742E; 341857N 0752900E; 341759N 0752859E; 341940N 0753334E; 342028N 0753338E; 342026N 0753413E; 342122N 0753457E; 342124N 0753430E; 342308N 0753439E; 342305N 0753522E; 342331N 0753528E; 342405N 0753554E; 342418N 0753643E to point of origin.",
+      "upper_lower_limits_and_system": "FL 520 / GND",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Army. | Controlling from: 8 Mtn Arty Bde/8 Mtn Div | Controlling officer: GSO2 | Contact details: 8755768302 Email ID:topgunknffr@gmail.com | 2. Field Firing Range. Non-participating aircraft shall NOT enter the TSA when active. | 3. Activation of TSA will be notified through a NOTAM at least SEVEN days in advance. | 4. Activation, use and deactivation of the TSA shall be governed by the SOP established for the purpose between Delhi ACC, Indian Army and IAF. | 5. TSA valid until 10th August, 2028."
+    },
+    {
+      "name_and_lateral_limits": "TSA721 [Mundota] | Area bounded by lines joining points 270030N 0753400E; 270019N 0753332E; 270038N 0753321E; 270049N 0753400E to point of origin.",
+      "upper_lower_limits_and_system": "2300 FT AMSL/ GND",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Army. | 2. Controlling Unit: HQ 45 Inf Bde and HQ 322 Inf Bde. | 3. Contact detail:Bde GSO-1, (HQ 45 Inf Bde) | 4. Activation of TSA will be DAILY between                 0030-1130 and 1230-1630 UTC. | 5. Activation, use and deactivation of the TSA shall be governed by the SOP between Indian Army and AAI established for the purpose. | 6. TSA valid until 19th April, 2026."
+    },
+    {
+      "name_and_lateral_limits": "TSA722 [GRASS BIR-13] | Area bounded by lines joining points 260524N 0782508E; 255436N 0782508E; 255436N 0784348E; 255805N 0784348E; 261012N 0783332E; 261012N 0782848E to point of origin.",
+      "upper_lower_limits_and_system": "FL 400 / GND",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Airforce. | 2. Controlling ATS Unit: Gwalior ATC | Gwalior Tower: 122.700 MHz | Gwalior Approach: 127.500 MHz | 3. Availability of TSA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TSA shall be governed by the SOP between AAI and IAF established for the purpose. | 5. Any aircraft entering active TSA 722 due to any contingency/exigency shall relay its position to Gwalior ATC on the designated frequency. | 6. TSA valid until 12th July 2026."
+    },
+    {
+      "name_and_lateral_limits": "TSA725 [KHANADUMTI FFR] | Area bounded by lines joining points 311729N 0783824E; 311706N 0783955E; 311455N 0784159E; 311352N 0784428E; 311119N 0784356E; 311151N 0784050E; 311415N 0784000E to point of origin.",
+      "upper_lower_limits_and_system": "UNL / GND",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Army. | 2. Field Firing Range. | 3. Controlling Unit:  871 Fd Regt  (SHINGO) | Tel.: +91-9545135645 | 4. Activation of TSA725 will be DAILY between: | a. 01 Apr to 30 Sep: 0330 to 0930 UTC and 1230 to 1530 UTC | b. 01 Oct to 31 Mar: 0430 to 0830 UTC and 1230 to 1530 UTC. | 5. Activation, use and deactivation of the TSA shall be governed by the SOP between AAI and Indian Army established for the purpose. | 6. TSA valid until 05th Aug 2027."
+    },
+    {
+      "name_and_lateral_limits": "TSA801(A) [Thanjavur] | Area bounded by lines joining points 103722N 0790646E then along the clockwise arc of a circle of 25NM radius centred on 104556N 0784254E  to 102829N 0790110E; 101125N 0791924E then along the counter clockwise arc of a circle of 50NM radius centred on 104556N 0784254E  to 102849N 0792958E to point of origin.",
+      "upper_lower_limits_and_system": "FL 140 / GND",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: | Thanjavur ATC: | TWR: 119.200 MHz | APP:  129.700 MHz | 3. Availability of TSA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TSA shall be governed by the SOP between AAI and     IAF established for the purpose. | 5. TSA valid till 24 JAN 2027."
+    },
+    {
+      "name_and_lateral_limits": "TSA801(B) [Thanjavur] | Area bounded by lines joining points 101000N 0801700E; 101000N 0814800E; 111000N 0814800E; 111000N 0801700E to point of origin.",
+      "upper_lower_limits_and_system": "FL 135 / MSL",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: | Thanjavur ATC: | TWR: 119.200 MHz | APP:  129.700 MHz | 3. Availability of TSA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TSA shall be governed by the SOP between AAI and     IAF established for the purpose. | 5. TSA valid till 24 JAN 2027."
+    },
+    {
+      "name_and_lateral_limits": "TSA801(C) [Thanjavur] | Area bounded by lines joining points 101125N 0791924E; 094425N 0793520E; 095000N 0794330E; 100404N 0795019E; 102829N 0793943E; 102849N 0792958E then along the clockwise arc of a circle of 50NM radius centred on 104556N 0784254E  to point of origin.",
+      "upper_lower_limits_and_system": "FL 280 / FL 130",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Air Force. | 2. Controlling ATS Unit: | Thanjavur ATC: | TWR: 119.200 MHz | APP:  129.700 MHz | 3. Availability of TSA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TSA shall be governed by the SOP between AAI and     IAF established for the purpose. | 5. TSA valid till 24 JAN 2027."
+    },
+    {
+      "name_and_lateral_limits": "TSA802(A) [Ramnad] | Area bounded by lines joining points 092820N 0790240E; 095342N 0791931E; 094151N 0793135E; 092500N 0790700E to point of origin.",
+      "upper_lower_limits_and_system": "FL 100 / FL 060",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Navy. | 2. Controlling ATS Unit: Ramnad TWR 123.5 MHz, 118.1 MHz. | 3. Availability of TSA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TSA shall be governed by the SOP between AAI and Indian Navy established for the purpose. | 5. TSA valid until 02 NOVEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TSA802(B) [Ramnad] | Area bounded by lines joining points 091200N 0785100E; 090930N 0785545E; 083900N 0784730E; 083516N 0784244E; 085228N 0783114E to point of origin.",
+      "upper_lower_limits_and_system": "FL 100 / FL 060",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Navy. | 2. Controlling ATS Unit: Ramnad TWR 123.5 MHz, 118.1 MHz. | 3. Availability of TSA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TSA shall be governed by the SOP between AAI and Indian Navy established for the purpose. | 5. TSA valid until 02 NOVEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TSA802(C) [Ramnad] | Area bounded by lines joining points 095342N 0791931E; 101930N 0793630E; 100404N 0795019E; 095000N 0794330E; 094151N 0793135E to point of origin.",
+      "upper_lower_limits_and_system": "FL 120 / FL 090",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Navy. | 2. Controlling ATS Unit: Ramnad TWR 123.5 MHz, 118.1 MHz. | 3. Availability of TSA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TSA shall be governed by the SOP between AAI and Indian Navy established for the purpose. | 5. TSA valid until 02 NOVEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TSA802(D) [Ramnad] | Area bounded by lines joining points 082900N 0780730E; 085228N 0783114E; 083516N 0784244E; 081800N 0782045E to point of origin.",
+      "upper_lower_limits_and_system": "FL 120 / FL 090",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Navy. | 2. Controlling ATS Unit: Ramnad TWR 123.5 MHz, 118.1 MHz. | 3. Availability of TSA will be notified through AUP/UUP by AMC. | 4. Activation, use and deactivation of the TSA shall be governed by the SOP between AAI and Indian Navy established for the purpose. | 5. TSA valid until 02 NOVEMBER 2026."
+    },
+    {
+      "name_and_lateral_limits": "TSA803(A) [Vishakhapatnam] | Area bounded by lines joining points 175712N 0840530E; 183110N 0854135E then along the clockwise arc of a circle of 150NM radius centred on 174004N 0831510E  to 162550N 0853015E; 171520N 0840140E then along the counter clockwise arc of a circle of 50NM radius centred on 174004N 0831510E  to point of origin.",
+      "upper_lower_limits_and_system": "FL 230 / MSL",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Navy. | 2. Controlling ATS Unit: Visakhapatnam ATC: 119.700 MHz (APP), 123.500 MHz (TWR). | 3. Availability of TSA will be notified through AUP/UUP by AMC. | 4. All ATS routes transiting through the areas are available for flight planning for civil flights. Vishakhapatnam ATC shall ensure smooth transit of civil flights through the TSA. | 5. Activation, use and deactivation of the TSA shall be governed by the SOP between AAI and Indian Navy established for the purpose. | 6. TSA valid until 18 MAR 2027."
+    },
+    {
+      "name_and_lateral_limits": "TSA803(B) [Vishakhapatnam] | Area bounded by lines joining points 171520N 0840140E; 162550N 0853015E then along the clockwise arc of a circle of 150NM radius centred on 174004N 0831510E  to 152325N 0842110E; 165440N 0833750E then along the counter clockwise arc of a circle of 50NM radius centred on 174004N 0831510E  to point of origin.",
+      "upper_lower_limits_and_system": "FL 145 / MSL",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Navy. | 2. Controlling ATS Unit: Visakhapatnam ATC: 119.700 MHz (APP), 123.500 MHz (TWR). | 3. Availability of TSA will be notified through AUP/UUP by AMC. | 4. All ATS routes transiting through the areas are available for flight planning for civil flights. Vishakhapatnam ATC shall ensure smooth transit of civil flights through the TSA. | 5. Activation, use and deactivation of the TSA shall be governed by the SOP between AAI and Indian Navy established for the purpose. | 6. TSA valid until 18 MAR 2027"
+    },
+    {
+      "name_and_lateral_limits": "TSA803(C) [Vishakhapatnam] | Area bounded by lines joining points 165440N 0833750E; 152325N 0842110E then along the clockwise arc of a circle of 150NM radius centred on 174004N 0831510E  to 151130N 0824805E; 165030N 0830550E then along the counter clockwise arc of a circle of 50NM radius centred on 174004N 0831510E  to point of origin.",
+      "upper_lower_limits_and_system": "FL 230 / MSL",
+      "remarks_and_time_of_act": "1. Controlling Authority: Indian Navy. | 2. Controlling ATS Unit: Visakhapatnam ATC: 119.700 MHz (APP), 123.500 MHz (TWR). | 3. Availability of TSA will be notified through AUP/UUP by AMC. | 4. All ATS routes transiting through the areas are available for flight planning for civil flights. Vishakhapatnam ATC shall ensure smooth transit of civil flights through the TSA. | 5. Activation, use and deactivation of the TSA shall be governed by the SOP between AAI and Indian Navy established for the purpose. | 6. TSA valid until 18 MAR 2027."
+    }
+  ],
+  "air_defence_identification_zones_adiz": [
+    {
+      "zone_name": "ADIZ Central",
+      "zone_coordinates": "The entire airspace over the area bounded by coordinates | 311959.3N 0785954.3E, 283000.3N 0785954.5E, 273000.5N 0765955.5E, 273000.5N 0755956.0E, 192003.1N 0755956.3E, 192003.4N 0845952.1E, 240002.0N 0845951.9E, 240002.1N 0855951.4E, 264001.2N 0855951.2E (A point over the International border with Nepal) and then line along the Indo-Nepal boundary and Line of Actual Control with China up to 311959.3N 0785954.3E.",
+      "raw_data": "ADIZ Central | The entire airspace over the area bounded by coordinates | 311959.3N 0785954.3E, 283000.3N 0785954.5E, 273000.5N 0765955.5E, 273000.5N 0755956.0E, 192003.1N 0755956.3E, 192003.4N 0845952.1E, 240002.0N 0845951.9E, 240002.1N 0855951.4E, 264001.2N 0855951.2E (A point over the International border with Nepal) and then line along the Indo-Nepal boundary and Line of Actual Control with China up to 311959.3N 0785954.3E."
+    },
+    {
+      "zone_name": "ADIZ East",
+      "zone_coordinates": "The entire airspace over the area East of line joining the coordinates | 264001.2N 0855951.2E, 240002.1N 0855951.4E, 240002.0N 0845951.9E, 192003.4N 0845952.1E, 192003.5N 0855951.7E, 204003.3N 0891450.1E, 214003.0N 0890950.1E and along the borders of India in the East excluding the airspace covered by territories of Bangladesh, Bhutan and part of Nepal up to 264001.2N 0855951.2E.",
+      "raw_data": "ADIZ East | The entire airspace over the area East of line joining the coordinates | 264001.2N 0855951.2E, 240002.1N 0855951.4E, 240002.0N 0845951.9E, 192003.4N 0845952.1E, 192003.5N 0855951.7E, 204003.3N 0891450.1E, 214003.0N 0890950.1E and along the borders of India in the East excluding the airspace covered by territories of Bangladesh, Bhutan and part of Nepal up to 264001.2N 0855951.2E."
+    },
+    {
+      "zone_name": "ADIZ North",
+      "zone_coordinates": "The entire airspace over the area bounded by coordinates 311959.3N 0785954.3E, 283000.3N 0785954.5E, 273000.5N 0765955.5E, 273000.4N 0725957.6E, 280300.2N 0715458.1E (Over the International Border) then along the International Border / Line of Control with Pakistan and Line of Actual Control with China till 311959.3N 0785954.3E.",
+      "raw_data": "ADIZ North | The entire airspace over the area bounded by coordinates 311959.3N 0785954.3E, 283000.3N 0785954.5E, 273000.5N 0765955.5E, 273000.4N 0725957.6E, 280300.2N 0715458.1E (Over the International Border) then along the International Border / Line of Control with Pakistan and Line of Actual Control with China till 311959.3N 0785954.3E."
+    },
+    {
+      "zone_name": "ADIZ South",
+      "zone_coordinates": "The entire airspace over the area bounded by coordinates | 192003.1N 0755956.3E, 150004.4N 0755956.4E, 150004.4N 0715958.2E, 074006.5N 0762456.3E, 073506.5N 0784455.3E, 100005.9N 0795454.7E, 192003.5N 0855951.7E, 192003.1N 0755956.3E. A.D.I.Z South also includes airspace over and up to the territorial waters of Lakshadweep Islands.",
+      "raw_data": "ADIZ South | The entire airspace over the area bounded by coordinates | 192003.1N 0755956.3E, 150004.4N 0755956.4E, 150004.4N 0715958.2E, 074006.5N 0762456.3E, 073506.5N 0784455.3E, 100005.9N 0795454.7E, 192003.5N 0855951.7E, 192003.1N 0755956.3E. A.D.I.Z South also includes airspace over and up to the territorial waters of Lakshadweep Islands."
+    },
+    {
+      "zone_name": "ADIZ West",
+      "zone_coordinates": "The entire airspace over the area bounded by coordinates | 280300.2N 0715458.1E, 273000.4N 0725957.6E, 273000.5N 0755956.0E, 150004.4N 0755956.4E, 150004.4N 0715957.3E, 211502.5N 0680700.0E, 233601.7N 0680700.0E then along the International Border with Pakistan up to 280300.2N 0715458.1E.",
+      "raw_data": "ADIZ West | The entire airspace over the area bounded by coordinates | 280300.2N 0715458.1E, 273000.4N 0725957.6E, 273000.5N 0755956.0E, 150004.4N 0755956.4E, 150004.4N 0715957.3E, 211502.5N 0680700.0E, 233601.7N 0680700.0E then along the International Border with Pakistan up to 280300.2N 0715458.1E."
+    },
+    {
+      "zone_name": "Sub ADIZ South-East:",
+      "zone_coordinates": "The entire airspace over the area bounded by coordinates | 060007.1N 0915949.6E, 060007.1N 0942448.6E, 133005.4N 0942448.3E, 140005.2N 0915949.3E, 060007.1N 0915949.6E. | It would be sub-ordinate organisations under ADIZ South.",
+      "raw_data": "Sub ADIZ South-East: | The entire airspace over the area bounded by coordinates | 060007.1N 0915949.6E, 060007.1N 0942448.6E, 133005.4N 0942448.3E, 140005.2N 0915949.3E, 060007.1N 0915949.6E. | It would be sub-ordinate organisations under ADIZ South."
+    }
+  ],
+  "charts": [
+    {
+      "chart_name": "ENR 5.2 ADIZ_MAP.pdf",
+      "pdf_url": "https://aim-india.aai.aero/eaip/eaip-v2-01-2026/eAIP/ENR%205.2%20ADIZ_MAP.pdf",
+      "source_iframe": "ENR 5.2_BChart.html"
+    }
+  ],
+  "summary": {
+    "total_military_areas": 115,
+    "total_adiz_zones": 6,
+    "total_charts": 1
+  }
+}

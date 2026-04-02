@@ -1,0 +1,174 @@
+{
+  "metadata": {
+    "section": "ENR 2.2",
+    "title": "OTHER REGULATED AIRSPACE",
+    "extracted_at": "2026-03-18T23:54:49.608236+05:30",
+    "airac_base_url": "https://aim-india.aai.aero/eaip/eaip-v2-01-2026/index-en-GB.html"
+  },
+  "source_url": "https://aim-india.aai.aero/eaip/eaip-v2-01-2026/eAIP/IN-ENR%202.2-en-GB.html",
+  "regulated_airspace": [
+    {
+      "aerodrome": "RAMSINGPURA",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Circular area centered on 272004N 0760512E within a 5NM radius.",
+      "upper_limit": "2500 FT AMSL",
+      "language": "English",
+      "remarks": "1. ATZ\n2. Airspace classified as Class \"D\""
+    },
+    {
+      "aerodrome": "AMRAVATI AIRPORT, AMRAVATI",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Circular area centered on 204853N 0774304E within a 15NM radius.",
+      "upper_limit": "FL 075",
+      "language": "English",
+      "remarks": "1. Airspace classified as Class D\n2. Beyond operational hours the airspace classification\nis Class G.\n3. ATC Frequencies:\ni. Amravati TWR/APP:\n124.475 MHz\n118.650 MHz (Backup)"
+    },
+    {
+      "aerodrome": "CHITRAKOOT AIRPORT, CHITRAKOOT",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Circular area centered on 250929N 0805527E within a 10NM radius.",
+      "upper_limit": "FL 055",
+      "language": "English",
+      "remarks": "1. CTR available only during published watch hrs.\n2. Airspace classified as Class D.\n3. Beyond Watch Hours airspace Classification is Class G.\n4. ATC Frequencies:\ni. Chitrakoot TWR\n118.500 MHz\n122.250 MH"
+    },
+    {
+      "aerodrome": "DATIA AIRPORT, DATIA",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Circular area centered on 253925N 0783034E within a 5NM radius.",
+      "upper_limit": "3000 FT AMSL",
+      "language": "English",
+      "remarks": "1. ATZ\n2. Airspace classified as Class D\n3. ATC Frequencies:\ni. Datia TWR/APP: 119.950 MHz                                                              119.225 MHz (Backup)"
+    },
+    {
+      "aerodrome": "DIU",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Area bounded by lines joining points 210446N 0704224E; 204036N 0710654E; 204209N 0712201E then along the clockwise arc of a circle of 25NM radius centred on 204250N 0705522E  to point of origin.",
+      "upper_limit": "FL 075",
+      "language": "English",
+      "remarks": "1. Class D Airspace.\n2. ATC FREQ: 122.900MHz."
+    },
+    {
+      "aerodrome": "GOPALPUR",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Semi circle of radius 05 NM around 1918N08452E (semi-circle extending towards only west of Gopalpur airstrip).",
+      "upper_limit": "2000 FT AMSL",
+      "language": "English",
+      "remarks": "1. ATZ\n2. Airspace classified as Class \"D\""
+    },
+    {
+      "aerodrome": "JEYPORE",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Circular area centered on 185250N 0823313E within a 15NM radius.",
+      "upper_limit": "FL 075",
+      "language": "English",
+      "remarks": "1. CTR available only during published watch hrs.\n2. Airspace classified as Class ‘D’\n3. Beyond Watch hrs airspace Classification is Class G."
+    },
+    {
+      "aerodrome": "KALYAN",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Circular area centered on 191103N 0730758E within a 2NM radius.",
+      "upper_limit": "1700 FT AMSL",
+      "language": "English",
+      "remarks": "1. ATZ                                                                                                 2. Airspace classified as Class \"D\""
+    },
+    {
+      "aerodrome": "KOLKATA [BEHALA]",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Circular area centered on 223003N 0881750E within a 1NM radius.",
+      "upper_limit": "1000 FT AMSL",
+      "language": "English",
+      "remarks": "1. ATZ\n2. Airspace classified as Class \"D\""
+    },
+    {
+      "aerodrome": "KOTA",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Circular area centered on 250936N 0755052E within a 15NM radius.",
+      "upper_limit": "FL 065",
+      "language": "English",
+      "remarks": "1. Airspace classified as Class' D\n2. ATC Frequencies:\ni. Kota TWR: 119.000 MHZ 118.700 MHZ (BACKUP)"
+    },
+    {
+      "aerodrome": "MAA MAHAMAYA AIRPORT, AMBIKAPUR",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Circular area centered on 225936N 0831134E within a 25NM radius.",
+      "upper_limit": "FL 075",
+      "language": "English",
+      "remarks": "1. CTR available only during published watch hrs.\n2. Airspace classified as Class ‘D’\n3. Beyond Watch hrs airspace Classification is Class G."
+    },
+    {
+      "aerodrome": "MUIRPUR (KORBA)",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Circular area centered on 240734N 0830236E within a 20NM radius.",
+      "upper_limit": "FL 065",
+      "language": "English",
+      "remarks": "1. CTR available only during published watch hrs.\n2. Airspace classified as Class ‘D’\n3. Beyond Watch hrs airspace Classification is Class G."
+    },
+    {
+      "aerodrome": "RATNAGIRI",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Circular area centered on 170048N 0731944E within a 20NM radius.",
+      "upper_limit": "6500 FT AMSL",
+      "language": "English",
+      "remarks": "1. Airspace classified as Class D\n2. ATC Frequencies:\ni. Ratnagiri ATC: 126.800 MHz."
+    },
+    {
+      "aerodrome": "REWA AIRPORT, REWA",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Circular area centered on 243013N 0811323E within a 10NM radius.",
+      "upper_limit": "FL 065",
+      "language": "English",
+      "remarks": "1. Airspace classified as Class D\n2. ATC Frequencies:\ni. Rewa TWR/APP: 120.800 MHz                                                            119.775 MHz (Backup)"
+    },
+    {
+      "aerodrome": "SHRAVASTI",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Circular area centered on 273006N 0820149E within a 5NM radius.",
+      "upper_limit": "2000 FT AMSL",
+      "language": "English",
+      "remarks": "1. ATZ available only during published watch hrs.\n2. Airspace classified as Class D.\n3. Beyond Watch Hours airspace Classification is Class G.\n4. ATC Frequencies:\ni. Shravasti TWR\n118.200 MHz\n118.350 MHz"
+    },
+    {
+      "aerodrome": "SHRI GURU GOBIND SINGH JI AIRPORT, NANDED",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Circular area centered on 191052N 0771921E within a 10NM radius.",
+      "upper_limit": "FL 065",
+      "language": "English",
+      "remarks": "1. CTR only during published operational hours.\n2. Airspace classified as Class ‘D’\n3. Beyond Operational Hours airspace Classification is Class G."
+    },
+    {
+      "aerodrome": "SOLAPUR AIRPORT, SOLAPUR",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Circular area centered on 173740N 0755603E within a 10NM radius.",
+      "upper_limit": "FL 055",
+      "language": "English",
+      "remarks": "1. Airspace classified as Class D\n2. Beyond operational hours airspace classification is\nClass G.\n3. ATC Frequencies:\ni. Solapur TWR:\n118.600 MHz\n124.300 MHz (Backup)\nii. Pune ATC:\n118.800 MHz\n123.500 MHz\n121.300 MHz"
+    },
+    {
+      "aerodrome": "UTKELA",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Circular area centered on 200552N 0831101E within a 25NM radius.",
+      "upper_limit": "FL 075",
+      "language": "English",
+      "remarks": "1. CTR available only during published watch hrs.\n2. Airspace classified as Class ‘D’\n3. Beyond Watch hrs airspace Classification is Class G."
+    },
+    {
+      "aerodrome": "VELLORE",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Circular area centered on 125429N 0790402E within a 12NM radius.",
+      "upper_limit": "FL 065",
+      "language": "English",
+      "remarks": "1. Airspace classified as class D.\n2. ATC Frequencies:\ni. Vellore TWR:\n118.500 MHz\n118.700 MHZ (Backup)"
+    },
+    {
+      "aerodrome": "VIJAYAPURA",
+      "hours_of_ops": "HO",
+      "lateral_limits": "Area bounded by lines joining points 165556N 0753301E; 165004N 0753956E; 165035N 0754303E then along the clockwise arc of a circle of 5NM radius centred on 165151N 0754805E  to 165227N 0755315E; 165400N 0760334E then along the clockwise arc of a circle of 15NM radius centred on 165151N 0754805E  to point of origin.",
+      "upper_limit": "FL 055",
+      "language": "English",
+      "remarks": "1. Airspace classified as Class D\n2. Beyond operational hours airspace classification is\nClass G.\n3. ATC Frequencies:\ni. Vijayapura\nTWR/APP:\n125.425 MHz\n120.875 MHz (Backup)\nii. Pune ATC:\n123.500 MHz\n118.800 MHz"
+    }
+  ],
+  "charts": [],
+  "total_count": 20,
+  "total_charts": 0
+}
