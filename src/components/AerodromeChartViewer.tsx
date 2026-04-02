@@ -128,7 +128,6 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                 </span>
               </div>
 
-              {/* Scrollable row */}
               <div
                 ref={scrollRef}
                 className="flex gap-2.5 px-4 pb-2.5 pt-0.5 overflow-x-auto chart-scroll"

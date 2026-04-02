@@ -191,7 +191,7 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
       }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       exit={{ x: 500, opacity: 0 }}
-      className="h-fit max-h-[70vh] flex pointer-events-none"
+      className="h-fit max-h-[calc(100vh-22rem)] flex pointer-events-none"
     >
       {/* SIDEBAR TABS / TOGGLE HANDLE */}
       <motion.div 

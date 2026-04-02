@@ -749,14 +749,14 @@ export default function App() {
 
         {/* Terminal Dashboard — TERMINAL view only */}
         {activeAirport && (viewMode === 'TERMINAL' || viewState.pitch > 0) && (
-          <div className="absolute top-24 right-6 pointer-events-auto z-40">
+          <div className="absolute top-6 right-6 pointer-events-auto z-40">
             <TerminalDashboard icaoCode={activeAirport} />
           </div>
         )}
 
         {/* Aerodrome Charts Carousel — visible when airport active */}
         {activeAirport && (
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-auto z-40 scale-110">
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-auto z-40 scale-110 origin-bottom">
             <AerodromeChartViewer icaoCode={activeAirport} />
           </div>
         )}
