@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import daylight, features, notams, weather
+from app.routers import aerodromes, charts, daylight, notams, search, spatial, weather
 
 app = FastAPI(title="Aero Plan API", version="0.1.0")
 
@@ -25,7 +25,10 @@ async def health_check():
 
 
 # --- REGISTER ROUTERS ---
-app.include_router(features.router)
+app.include_router(aerodromes.router)
+app.include_router(search.router)
+app.include_router(charts.router)
+app.include_router(spatial.router)
 app.include_router(weather.router)
 app.include_router(notams.router)
 app.include_router(daylight.router)

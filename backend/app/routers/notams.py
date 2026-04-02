@@ -7,6 +7,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.schemas.notam import serialize_notam
 
 router = APIRouter(prefix="/api", tags=["NOTAMs"])
 
@@ -17,48 +18,20 @@ async def get_notams_by_airport(
     active_only: bool = Query(False, description="If true, return only currently active NOTAMs"),
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    Returns all NOTAMs for a specific airport ICAO code, ordered by valid_from DESC.
-    """
+    """Returns all NOTAMs for a specific airport ICAO code, ordered by valid_from DESC."""
     icao = icao_code.upper()
+    active_filter = "AND (valid_to IS NULL OR valid_to > NOW())" if active_only else ""
 
-    if active_only:
-        query = text("""
-            SELECT notam_id, source_file, series, scope, fir, combined_fir, airport_icao, valid_from, valid_to, is_permanent, is_estimated, duration_category, description
-            FROM notams
-            WHERE airport_icao = :icao
-              AND (valid_to IS NULL OR valid_to > NOW())
-            ORDER BY valid_from DESC;
-        """)
-    else:
-        query = text("""
-            SELECT notam_id, source_file, series, scope, fir, combined_fir, airport_icao, valid_from, valid_to, is_permanent, is_estimated, duration_category, description
-            FROM notams
-            WHERE airport_icao = :icao
-            ORDER BY valid_from DESC;
-        """)
+    query = text(f"""
+        SELECT notam_id, source_file, series, scope, fir, combined_fir, airport_icao,
+               valid_from, valid_to, is_permanent, is_estimated, duration_category, description
+        FROM notams
+        WHERE airport_icao = :icao {active_filter}
+        ORDER BY valid_from DESC;
+    """)
 
     result = await db.execute(query, {"icao": icao})
-    rows = result.fetchall()
-
-    return [
-        {
-            "notam_id": r.notam_id,
-            "source_file": r.source_file,
-            "series": r.series,
-            "scope": r.scope,
-            "fir": r.fir,
-            "combined_fir": r.combined_fir,
-            "airport_icao": r.airport_icao,
-            "valid_from": r.valid_from.isoformat() if r.valid_from else None,
-            "valid_to": r.valid_to.isoformat() if r.valid_to else None,
-            "is_permanent": r.is_permanent,
-            "is_estimated": r.is_estimated,
-            "duration_category": r.duration_category,
-            "description": r.description,
-        }
-        for r in rows
-    ]
+    return [serialize_notam(r) for r in result.fetchall()]
 
 
 @router.get("/notams")
@@ -67,9 +40,7 @@ async def get_all_notams(
     active_only: bool = Query(False, description="If true, return only currently active NOTAMs"),
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    Returns NOTAMs with optional filters. Without params, returns all NOTAMs.
-    """
+    """Returns NOTAMs with optional filters. Without params, returns all NOTAMs."""
     conditions = []
     params: dict = {}
 
@@ -83,33 +54,15 @@ async def get_all_notams(
     where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
 
     query = text(f"""
-        SELECT notam_id, source_file, series, scope, fir, combined_fir, airport_icao, valid_from, valid_to, is_permanent, is_estimated, duration_category, description
+        SELECT notam_id, source_file, series, scope, fir, combined_fir, airport_icao,
+               valid_from, valid_to, is_permanent, is_estimated, duration_category, description
         FROM notams
         {where_clause}
         ORDER BY valid_from DESC;
     """)
 
     result = await db.execute(query, params)
-    rows = result.fetchall()
-
-    return [
-        {
-            "notam_id": r.notam_id,
-            "source_file": r.source_file,
-            "series": r.series,
-            "scope": r.scope,
-            "fir": r.fir,
-            "combined_fir": r.combined_fir,
-            "airport_icao": r.airport_icao,
-            "valid_from": r.valid_from.isoformat() if r.valid_from else None,
-            "valid_to": r.valid_to.isoformat() if r.valid_to else None,
-            "is_permanent": r.is_permanent,
-            "is_estimated": r.is_estimated,
-            "duration_category": r.duration_category,
-            "description": r.description,
-        }
-        for r in rows
-    ]
+    return [serialize_notam(r) for r in result.fetchall()]
 
 
 @router.get("/notams/fir/{fir_code}")
@@ -118,47 +71,17 @@ async def get_notams_by_fir(
     active_only: bool = Query(False, description="If true, return only currently active NOTAMs"),
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    Returns all NOTAMs for a specific FIR (e.g., VOMF, VABF),
-    useful for the enroute view.
-    """
-    fir = fir_code.upper()
-    fir_pattern = f"%{fir}%"
+    """Returns all NOTAMs for a specific FIR (e.g., VOMF, VABF)."""
+    fir_pattern = f"%{fir_code.upper()}%"
+    active_filter = "AND (valid_to IS NULL OR valid_to > NOW())" if active_only else ""
 
-    if active_only:
-        query = text("""
-            SELECT notam_id, source_file, series, scope, fir, combined_fir, airport_icao, valid_from, valid_to, is_permanent, is_estimated, duration_category, description
-            FROM notams
-            WHERE fir ILIKE :fir_pattern
-              AND (valid_to IS NULL OR valid_to > NOW())
-            ORDER BY valid_from DESC;
-        """)
-    else:
-        query = text("""
-            SELECT notam_id, source_file, series, scope, fir, combined_fir, airport_icao, valid_from, valid_to, is_permanent, is_estimated, duration_category, description
-            FROM notams
-            WHERE fir ILIKE :fir_pattern
-            ORDER BY valid_from DESC;
-        """)
+    query = text(f"""
+        SELECT notam_id, source_file, series, scope, fir, combined_fir, airport_icao,
+               valid_from, valid_to, is_permanent, is_estimated, duration_category, description
+        FROM notams
+        WHERE fir ILIKE :fir_pattern {active_filter}
+        ORDER BY valid_from DESC;
+    """)
 
     result = await db.execute(query, {"fir_pattern": fir_pattern})
-    rows = result.fetchall()
-
-    return [
-        {
-            "notam_id": r.notam_id,
-            "source_file": r.source_file,
-            "series": r.series,
-            "scope": r.scope,
-            "fir": r.fir,
-            "combined_fir": r.combined_fir,
-            "airport_icao": r.airport_icao,
-            "valid_from": r.valid_from.isoformat() if r.valid_from else None,
-            "valid_to": r.valid_to.isoformat() if r.valid_to else None,
-            "is_permanent": r.is_permanent,
-            "is_estimated": r.is_estimated,
-            "duration_category": r.duration_category,
-            "description": r.description,
-        }
-        for r in rows
-    ]
+    return [serialize_notam(r) for r in result.fetchall()]
