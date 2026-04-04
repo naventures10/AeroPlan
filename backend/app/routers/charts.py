@@ -3,7 +3,8 @@ Charts Router — Aerodrome chart listing and PDF proxy.
 """
 
 import httpx
-from fastapi import APIRouter, Depends, Query
+from urllib.parse import urlparse
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +13,18 @@ from app.database import get_db
 
 router = APIRouter(prefix="/api", tags=["Charts"])
 
+ALLOWED_PDF_DOMAINS = [
+    "aim-india.aai.aero",
+    "www.aai.aero",
+    "eaip.aai.aero",
+]
+
+def _validate_proxy_url(url: str) -> None:
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise HTTPException(status_code=400, detail="Only HTTP(S) URLs are allowed")
+    if parsed.hostname not in ALLOWED_PDF_DOMAINS:
+        raise HTTPException(status_code=403, detail=f"Domain '{parsed.hostname}' is not in the allow-list")
 
 @router.get("/aerodromes/{icao_code}/charts")
 async def get_aerodrome_charts(icao_code: str, db: AsyncSession = Depends(get_db)):
@@ -41,12 +54,15 @@ async def proxy_pdf(url: str = Query(..., description="Remote PDF URL to proxy")
     Proxies a remote PDF through the backend so the frontend can render it
     in an iframe without CORS issues.
     """
+    _validate_proxy_url(url)
+    
+    from app.config import settings
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
     }
     try:
         async with httpx.AsyncClient(
-            follow_redirects=True, timeout=30.0, verify=False
+            follow_redirects=True, timeout=30.0, verify=settings.SSL_VERIFY
         ) as client:
             resp = await client.get(url, headers=headers)
         if resp.status_code != 200:

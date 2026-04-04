@@ -1,5 +1,6 @@
 import TableRenderer from './TableRenderer';
 import ObjectRenderer from './ObjectRenderer';
+import { sanitizeHtml } from '../../../utils/sanitize';
 
 interface HybridRendererProps {
   data: any;
@@ -56,7 +57,7 @@ function RawTableRenderer({ rows }: { rows: any[][] }) {
                   key={cellIdx}
                   className="px-4 py-3 text-zinc-200 text-[13px] leading-relaxed align-top"
                   dangerouslySetInnerHTML={{
-                    __html: String(cell ?? '—').replace(/\\n/g, '<br/>').replace(/\n/g, '<br/>'),
+                    __html: sanitizeHtml(String(cell ?? '—').replace(/\\n/g, '<br/>').replace(/\n/g, '<br/>')),
                   }}
                 />
               ))}

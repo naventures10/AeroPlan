@@ -17,7 +17,7 @@ class Settings(BaseSettings):
 
     # ── PostgreSQL ───────────────────────────────────────────────────────
     POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_PASSWORD: str
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5432
     POSTGRES_DB: str = "aeronautical_information_system"
@@ -31,8 +31,11 @@ class Settings(BaseSettings):
 
     # ── MinIO / S3 ───────────────────────────────────────────────────────
     MINIO_ENDPOINT: str = "http://localhost:9000"
-    MINIO_ACCESS_KEY: str = "minioadmin"
-    MINIO_SECRET_KEY: str = "minioadmin"
+    MINIO_ACCESS_KEY: str
+    MINIO_SECRET_KEY: str
+
+    # ── Security ─────────────────────────────────────────────────────────
+    SSL_VERIFY: bool = True
 
 
 settings = Settings()
