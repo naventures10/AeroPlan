@@ -1,5 +1,6 @@
 import type { ArrayColumnDef } from '../sectionConfig';
 import { extractDisplayValue } from '../sectionConfig';
+import { sanitizeHtml } from '../../../utils/sanitize';
 
 interface TableRendererProps {
   data: any;
@@ -87,10 +88,10 @@ export default function TableRenderer({ data, columnConfig }: TableRendererProps
                       isSticky && rowIdx % 2 === 0 ? 'bg-zinc-950' : isSticky ? 'bg-zinc-950' : ''
                     }`}
                     dangerouslySetInnerHTML={{
-                      __html: cellValue
+                      __html: sanitizeHtml(cellValue
                         .replace(/\\n/g, '<br/>')
                         .replace(/\n/g, '<br/>')
-                        .replace(/\s*\|\s*/g, '<br/>'),
+                        .replace(/\s*\|\s*/g, '<br/>')),
                     }}
                   />
                 );

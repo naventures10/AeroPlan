@@ -1,5 +1,6 @@
 import type { ObjectColumnDef } from '../sectionConfig';
 import { extractDisplayValue } from '../sectionConfig';
+import { sanitizeHtml } from '../../../utils/sanitize';
 
 interface ObjectRendererProps {
   data: any;
@@ -93,10 +94,10 @@ export default function ObjectRenderer({ data, columnConfig }: ObjectRendererPro
                   className="px-4 py-3 text-zinc-200 text-[13px] leading-relaxed align-top"
                   style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
                   dangerouslySetInnerHTML={{
-                    __html: displayValue
+                    __html: sanitizeHtml(displayValue
                       .replace(/\\n/g, '<br/>')
                       .replace(/\n/g, '<br/>')
-                      .replace(/\s*\|\s*/g, '<br/>'),
+                      .replace(/\s*\|\s*/g, '<br/>')),
                   }}
                 />
               </tr>

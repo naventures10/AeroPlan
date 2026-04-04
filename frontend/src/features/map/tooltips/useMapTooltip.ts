@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import type { MapRef } from 'react-map-gl/maplibre';
 import { tooltipStyle } from './tooltipStyles';
 import { useMapStore } from '../../../store/useMapStore';
+import { sanitizeHtml } from '../../../utils/sanitize';
 
 /**
  * The massive tooltip callback for DeckGL + MapLibre features.
@@ -76,7 +77,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
             : '';
 
         return {
-          html: `<div style="display:flex;flex-direction:column;gap:4px;max-width:300px;">
+          html: sanitizeHtml(`<div style="display:flex;flex-direction:column;gap:4px;max-width:300px;">
             <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">${p.name || p.icao_code}</span>
             <span style="color:#a1a1aa;font-size:10px;font-weight:500;">
               ICAO: <span style="color:#6366f1;font-weight:700;">${p.icao_code}</span> | ELEV: <span style="color:#6366f1;font-weight:700;">${enrouteElev ? enrouteElev + ' FT' : 'N/A'}</span>
@@ -85,7 +86,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
               CLICK TO ENTER TERMINAL VIEW
             </span>
             ${extraInfo}
-          </div>`,
+          </div>`),
           style: tooltipStyle,
         };
       } else if (object && layer?.id === 'waypoints-layer') {
@@ -99,12 +100,12 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
             : '';
 
         return {
-          html: `<div style="display:flex;flex-direction:column;gap:4px;max-width:250px;">
+          html: sanitizeHtml(`<div style="display:flex;flex-direction:column;gap:4px;max-width:250px;">
               <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">${p.waypoint_name || 'WAYPOINT'}</span>
               <span style="color:#a1a1aa;font-size:10px;font-weight:600;letter-spacing:.1em;">SIGNIFICANT POINT</span>
               <span style="color:#a1a1aa;font-size:9px;font-family:monospace;margin-top:2px;">${p.raw_coordinates?.replace(/\\\\n/g, '') || ''}</span>
               ${routesDisplay}
-            </div>`,
+            </div>`),
           style: tooltipStyle,
         };
       } else if (object && layer?.id === 'navaids-layer') {
@@ -119,7 +120,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
             : '';
 
         return {
-          html: `<div style="display:flex;flex-direction:column;gap:4px;max-width:260px;">
+          html: sanitizeHtml(`<div style="display:flex;flex-direction:column;gap:4px;max-width:260px;">
               <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">${p.station_name || ''} <span style="color:#a1a1aa;">${p.aid_type || ''}</span></span>
               <div style="display:flex;align-items:center;margin-top:2px;">
                   <span style="color:#a1a1aa;font-size:10px;font-weight:600;background:#065f46;color:#6ee7b7;padding:2px 6px;border-radius:4px;margin-right:8px;">${p.ident || 'UNK'}</span>
@@ -127,18 +128,18 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
               </div>
               <span style="color:#a1a1aa;font-size:9px;font-family:monospace;margin-top:2px;">${p.raw_coordinates?.replace(/\\\\n/g, '') || ''}${elev}</span>
               ${hours}
-            </div>`,
+            </div>`),
           style: tooltipStyle,
         };
       } else if (object && layer?.id === 'atsRoutes-geom-layer') {
         const p = object.properties ?? {};
         return {
-          html: `<div style="display:flex;flex-direction:column;gap:4px;max-width:250px;">
+          html: sanitizeHtml(`<div style="display:flex;flex-direction:column;gap:4px;max-width:250px;">
               <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">ROUTE ${p.route_designator || p.route_id || 'UNKNOWN'}</span>
               <span style="color:#a1a1aa;font-size:10px;font-weight:600;letter-spacing:.1em;color:#22d3ee;">${p.route_type || 'AIRWAY'}</span>
               <span style="color:#a1a1aa;font-size:9px;margin-top:2px;">WAYPOINTS: ${p.waypoint_count || '?'}</span>
               ${p.remarks && p.remarks !== 'None' ? `<span style="color:#a1a1aa;font-size:9px;">${p.remarks}</span>` : ''}
-            </div>`,
+            </div>`),
           style: tooltipStyle,
         };
       } else if (object && layer?.id === 'atsRoutes-waypoints-layer') {
@@ -147,10 +148,10 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
           ? String(p.route_ids).replace(/[{"'}]/g, '').split(',')
           : [];
         return {
-          html: `<div style="display:flex;flex-direction:column;gap:4px;max-width:250px;">
+          html: sanitizeHtml(`<div style="display:flex;flex-direction:column;gap:4px;max-width:250px;">
               <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">${p.waypoint_name || 'WAYPOINT'}</span>
               <span style="color:#a1a1aa;font-size:10px;font-weight:600;letter-spacing:.1em;color:#22d3ee;">INTERSECTING: ${routes.join(', ')}</span>
-            </div>`,
+            </div>`),
           style: tooltipStyle,
         };
       }
@@ -313,7 +314,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
             }
 
             return {
-              html: `<div style="max-height: 400px; overflow-y: auto; max-width:300px; padding-right: 4px;">${htmlContent}</div>`,
+              html: sanitizeHtml(`<div style="max-height: 400px; overflow-y: auto; max-width:300px; padding-right: 4px;">${htmlContent}</div>`),
               style: tooltipStyle,
             };
           }
