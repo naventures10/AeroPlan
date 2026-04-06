@@ -21,6 +21,7 @@ export function useSearch() {
     setActiveAirport,
     setActiveAerodromeMetadata,
     setSelectedRouteIds,
+    setSelectedFeature,
   } = useMapStore();
 
   const [searchInput, setSearchInput] = useState('');
@@ -94,6 +95,12 @@ export function useSearch() {
       }
 
       // 2. Map layer & state injection
+      if (['ATS_ROUTE', 'NAVAID', 'WAYPOINT'].includes(item.type) && item.properties) {
+        setSelectedFeature({ type: item.type as any, data: item.properties });
+      } else {
+        setSelectedFeature(null);
+      }
+      
       switch (item.type) {
         case 'AERODROME':
           if (!activeLayers.aerodromes) toggleLayer('aerodromes');
@@ -109,7 +116,6 @@ export function useSearch() {
           if (!activeLayers.waypoints) toggleLayer('waypoints');
           break;
         case 'ATS_ROUTE':
-          if (!activeLayers.atsRoutes) toggleLayer('atsRoutes');
           setSelectedRouteIds([item.id], item.route_type);
           break;
       }
@@ -124,6 +130,7 @@ export function useSearch() {
       fitBounds,
       setSelectedRouteIds,
       setActiveAerodromeMetadata,
+      setSelectedFeature,
       resetSearchState,
     ],
   );

@@ -11,7 +11,7 @@ import { sanitizeHtml } from '../../../utils/sanitize';
  * main component while preserving every tooltip branch.
  */
 export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
-  const { activeAerodromeMetadata } = useMapStore();
+  const { activeAerodromeMetadata, activeLayers, selectedRouteIds } = useMapStore();
 
   const getTooltip = useCallback(
     ({ object, layer, x, y }: any) => {
@@ -133,6 +133,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
         };
       } else if (object && layer?.id === 'atsRoutes-geom-layer') {
         const p = object.properties ?? {};
+        if (!activeLayers.atsRoutes && !selectedRouteIds.includes(p.route_id)) return null;
         const isOneWay = p.direction_odd === 'O' || p.direction_even === 'E';
         const directionStr = isOneWay ? (p.direction_odd === 'O' ? '→ ODD ONLY' : '← EVEN ONLY') : '↔ TWO-WAY';
         const meainfo = p.mea && p.mea !== 'None' ? `<span style="color:#a1a1aa;font-size:10px;font-weight:600;color:#22c55e;">MEA: <span style="color:#f4f4f5;">${p.mea}</span></span>` : '';
@@ -159,6 +160,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
         const routes = p.route_ids
           ? String(p.route_ids).replace(/[{"'}]/g, '').split(',')
           : [];
+        if (!activeLayers.atsRoutes && !routes.some((r: string) => selectedRouteIds.includes(r))) return null;
         return {
           html: sanitizeHtml(`<div style="display:flex;flex-direction:column;gap:4px;max-width:250px;">
               <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">${p.waypoint_name || 'WAYPOINT'}</span>
@@ -336,7 +338,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
       }
       return null;
     },
-    [activeAerodromeMetadata, mapRef],
+    [activeAerodromeMetadata, activeLayers, selectedRouteIds, mapRef],
   );
 
   return getTooltip;

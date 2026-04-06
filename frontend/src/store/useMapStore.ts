@@ -39,6 +39,9 @@ interface MapState {
     activeAirport: string | null;
     setActiveAirport: (code: string | null) => void;
 
+    selectedFeature: { type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID'; data: any } | null;
+    setSelectedFeature: (feature: { type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID'; data: any } | null) => void;
+
     // Actions (Functions to change the state)
     setViewState: (viewState: any) => void;
     toggleViewMode: () => void;
@@ -86,6 +89,9 @@ export const useMapStore = create<MapState>((set, get) => ({
     selectedRouteType: null,
     setSelectedRouteIds: (routeIds, routeType = null) => set({ selectedRouteIds: routeIds, selectedRouteType: routeType }),
 
+    selectedFeature: null,
+    setSelectedFeature: (feature) => set({ selectedFeature: feature }),
+
     // Basic Setters
     setViewState: (viewState) => set({ viewState }),
     setSearchQuery: (query) => set({ searchQuery: query }),
@@ -114,6 +120,7 @@ export const useMapStore = create<MapState>((set, get) => ({
         set({
             viewMode: 'ENROUTE',
             activeAirport: null,
+            selectedFeature: null,
             viewState: {
                 ...DEFAULT_VIEW,
                 transitionDuration: 2500,
