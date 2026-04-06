@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { GeoJsonLayer, TextLayer } from '@deck.gl/layers';
 import { MVTLayer } from '@deck.gl/geo-layers';
 import { useMapStore } from '../../../store/useMapStore';
@@ -16,8 +16,19 @@ export function useDeckLayers({
   aerodromes: any;
   onAerodromeClick: (icao: string, coords: [number, number]) => void;
 }) {
-  const { viewMode, activeLayers, selectedRouteIds, selectedRouteType, setSelectedRouteIds, setSelectedFeature, viewState } =
+  const { viewMode, activeLayers, selectedRouteIds, selectedRouteType, setSelectedRouteIds, selectedFeature, setSelectedFeature, viewState } =
     useMapStore();
+
+  const [isAtsRendered, setIsAtsRendered] = useState(false);
+
+  useEffect(() => {
+    if (activeLayers.atsRoutes || selectedRouteIds.length > 0) {
+      setIsAtsRendered(true);
+    } else {
+      const timer = setTimeout(() => setIsAtsRendered(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [activeLayers.atsRoutes, selectedRouteIds.length]);
 
   const textData = useMemo(() => {
     if (!aerodromes?.features) return [];
@@ -81,14 +92,26 @@ export function useDeckLayers({
           data: `${window.location.origin}/tiles/significant_points/{z}/{x}/{y}`,
           visible: viewMode === 'ENROUTE',
           pickable: true,
+          autoHighlight: true,
+          highlightColor: [255, 255, 255, 60],
           pointType: 'icon+text',
           iconAtlas: '/WAYPOINT_HOLLOW.svg',
           iconMapping: {
             waypoint: { x: 0, y: 0, width: 100, height: 100, anchorY: 50, mask: true }
           },
           getIcon: () => 'waypoint',
-          getIconColor: [255, 255, 255, 255],
-          getIconSize: 10,
+          getIconColor: (d: any) => {
+            if (selectedFeature?.type === 'WAYPOINT' && selectedFeature.data.waypoint_name === d.properties.waypoint_name) {
+              return [0, 255, 255, 255]; // Neon Cyan
+            }
+            return [255, 255, 255, 255]; // Normal White
+          },
+          getIconSize: (d: any) => {
+            if (selectedFeature?.type === 'WAYPOINT' && selectedFeature.data.waypoint_name === d.properties.waypoint_name) {
+              return 16;
+            }
+            return 10;
+          },
           getText: (d: any) => d.properties.waypoint_name || '',
           getTextSize: (d: any) => {
             if (viewState.zoom <= 7.0) return 0;
@@ -106,7 +129,14 @@ export function useDeckLayers({
             }
           },
           updateTriggers: {
+            getIconColor: [selectedFeature],
+            getIconSize: [selectedFeature],
             getTextSize: [viewState.zoom > 7.0, activeLayers.atsRoutes],
+          },
+          transitions: {
+            getIconColor: 300,
+            getIconSize: 300,
+            getTextColor: 300,
           },
         }),
       );
@@ -119,6 +149,8 @@ export function useDeckLayers({
           data: `${window.location.origin}/tiles/radio_nav_aids/{z}/{x}/{y}`,
           visible: viewMode === 'ENROUTE',
           pickable: true,
+          autoHighlight: true,
+          highlightColor: [255, 255, 255, 60],
           pointType: 'icon+text',
           getIcon: (d: any) => {
             let type = d.properties.aid_type || 'UNKNOWN';
@@ -131,8 +163,14 @@ export function useDeckLayers({
               mask: true
             };
           },
-          getIconSize: 20,
-          getIconColor: [52, 211, 153, 255],
+          getIconSize: (d: any) => {
+            if (selectedFeature?.type === 'NAVAID' && selectedFeature.data.ident === d.properties.ident) return 30;
+            return 20;
+          },
+          getIconColor: (d: any) => {
+            if (selectedFeature?.type === 'NAVAID' && selectedFeature.data.ident === d.properties.ident) return [0, 255, 255, 255]; // Neon Cyan
+            return [52, 211, 153, 255]; // Emerald Green
+          },
           getText: (d: any) => d.properties.ident || '',
           getTextSize: viewState.zoom > 2.5 ? 12 : 0,
           getTextColor: [52, 211, 153, 255],
@@ -145,13 +183,20 @@ export function useDeckLayers({
             }
           },
           updateTriggers: {
+            getIconColor: [selectedFeature],
+            getIconSize: [selectedFeature],
             getTextSize: [viewState.zoom > 2],
+          },
+          transitions: {
+            getIconColor: 300,
+            getIconSize: 300,
+            getTextColor: 300,
           },
         }),
       );
     }
 
-    const shouldShowAtsRoutes = activeLayers.atsRoutes || selectedRouteIds.length > 0;
+    const shouldShowAtsRoutes = isAtsRendered;
     if (shouldShowAtsRoutes) {
       layers.push(
         new MVTLayer({
@@ -191,12 +236,18 @@ export function useDeckLayers({
             getLineColor: [selectedRouteIds, activeLayers.atsRoutes],
             getLineWidth: [selectedRouteIds, activeLayers.atsRoutes],
           },
+          transitions: {
+            getLineColor: 300,
+            getLineWidth: 300,
+          },
         }),
         new MVTLayer({
           id: 'atsRoutes-waypoints-layer',
           data: `${window.location.origin}/tiles/ats_route_waypoints/{z}/{x}/{y}`,
           visible: viewMode === 'ENROUTE',
           pickable: true,
+          autoHighlight: true,
+          highlightColor: [255, 255, 255, 60],
           pointType: 'icon+text',
           iconAtlas: '/WAYPOINT.svg',
           iconMapping: {
@@ -260,6 +311,11 @@ export function useDeckLayers({
             getTextColor: [selectedRouteIds, selectedRouteType, activeLayers.atsRoutes],
             getTextSize: [viewState.zoom > 7.5, selectedRouteIds, activeLayers.atsRoutes],
           },
+          transitions: {
+            getIconColor: 300,
+            getIconSize: 300,
+            getTextColor: 300,
+          },
         }),
       );
     }
@@ -275,7 +331,9 @@ export function useDeckLayers({
     selectedRouteType,
     setSelectedRouteIds,
     setSelectedFeature,
+    selectedFeature,
     viewState.zoom,
+    isAtsRendered,
   ]);
 
   return deckLayers;
