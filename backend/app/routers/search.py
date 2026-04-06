@@ -32,7 +32,11 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)):
                 'AERODROME' AS type,
                 ST_Centroid(sf.geom) AS center_geom,
                 NULL::box2d AS computed_bounds,
-                NULL::VARCHAR AS route_type
+                NULL::VARCHAR AS route_type,
+                jsonb_build_object(
+                    'icao_code', ad.icao_code,
+                    'airport_name', ad.airport_name
+                ) AS properties
             FROM aerodrome_documents ad
             JOIN spatial_features sf ON sf.icao_code = ad.icao_code AND sf.feature_category = 'ARP'
             WHERE ad.icao_code ILIKE :term OR ad.airport_name ILIKE :term
@@ -46,7 +50,17 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)):
                 'NAVAID' AS type,
                 ST_Centroid(geom) AS center_geom,
                 NULL::box2d AS computed_bounds,
-                NULL::VARCHAR AS route_type
+                NULL::VARCHAR AS route_type,
+                jsonb_build_object(
+                    'ident', ident,
+                    'station_name', station_name,
+                    'aid_type', aid_type,
+                    'frequency', frequency,
+                    'hours_of_operation', hours_of_operation,
+                    'elevation', elevation,
+                    'remarks', remarks,
+                    'raw_coordinates', raw_coordinates
+                ) AS properties
             FROM radio_nav_aids
             WHERE ident ILIKE :term OR station_name ILIKE :term
 
@@ -59,7 +73,11 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)):
                 'WAYPOINT' AS type,
                 ST_Centroid(geom) AS center_geom,
                 NULL::box2d AS computed_bounds,
-                NULL::VARCHAR AS route_type
+                NULL::VARCHAR AS route_type,
+                jsonb_build_object(
+                    'waypoint_name', waypoint_name,
+                    'route_ids', route_ids
+                ) AS properties
             FROM ats_waypoints_grouped
             WHERE waypoint_name ILIKE :term
 
@@ -72,11 +90,25 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)):
                 'ATS_ROUTE' AS type,
                 ST_Centroid(ST_Collect(w.geom)) AS center_geom,
                 Box2D(ST_Collect(w.geom)) AS computed_bounds,
-                r.route_type AS route_type
+                r.route_type AS route_type,
+                jsonb_build_object(
+                    'route_id', r.route_id,
+                    'route_designator', r.route_designator,
+                    'route_type', r.route_type,
+                    'remarks', r.remarks,
+                    'direction_odd', (SELECT direction_odd FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1),
+                    'direction_even', (SELECT direction_even FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1),
+                    'track_magnetic', (SELECT track_magnetic FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1),
+                    'distance_nm', (SELECT SUM(distance_nm) FROM ats_route_segments s WHERE s.route_id = r.route_id),
+                    'upper_limit', (SELECT upper_limit FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1),
+                    'lower_limit', (SELECT lower_limit FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1),
+                    'lateral_limits', (SELECT lateral_limits FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1),
+                    'mea', (SELECT mea FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1)
+                ) AS properties
             FROM ats_routes r
             JOIN ats_route_waypoints w ON r.route_id = w.route_id
             WHERE r.route_id ILIKE :term OR r.route_designator ILIKE :term
-            GROUP BY r.route_id, r.route_designator, r.route_type
+            GROUP BY r.route_id, r.route_designator, r.route_type, r.remarks
         )
         SELECT
             id,
@@ -88,7 +120,8 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)):
             ST_YMin(computed_bounds) AS min_lat,
             ST_XMax(computed_bounds) AS max_lng,
             ST_YMax(computed_bounds) AS max_lat,
-            route_type
+            route_type,
+            properties
         FROM search_results
         ORDER BY
             CASE type
@@ -113,7 +146,8 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)):
             "type": r.type,
             "center": [r.lng, r.lat] if r.lng is not None and r.lat is not None else None,
             "bounds": None,
-            "route_type": r.route_type if hasattr(r, 'route_type') else None
+            "route_type": r.route_type if hasattr(r, 'route_type') else None,
+            "properties": r.properties if hasattr(r, 'properties') else {}
         }
         if r.min_lng is not None:
             match["bounds"] = [r.min_lng, r.min_lat, r.max_lng, r.max_lat]

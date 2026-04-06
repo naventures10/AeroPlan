@@ -8,6 +8,7 @@ import { useMapStore } from '../../store/useMapStore';
 import { useDeckLayers } from './layers/useDeckLayers';
 import { useMapTooltip } from './tooltips/useMapTooltip';
 import { POLYGON_PAINT, POINT_PAINT } from './layers/mapStyles';
+import { FeatureInfoCard } from './FeatureInfoCard';
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 const MAP_STYLE = `https://api.maptiler.com/maps/topo-v2-dark/style.json?key=${MAPTILER_KEY}`;
@@ -138,6 +139,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
           )}
         </Map>
       </DeckGL>
+      <FeatureInfoCard />
     </div>
   );
 }

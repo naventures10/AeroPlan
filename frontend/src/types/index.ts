@@ -24,6 +24,7 @@ export interface SearchResult {
   center: [number, number] | null;
   bounds: [number, number, number, number] | null;
   route_type?: string;
+  properties?: Record<string, any>;
 }
 
 // ── Aerodrome Charts ────────────────────────────────────────────────────
