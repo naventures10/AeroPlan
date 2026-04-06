@@ -33,7 +33,8 @@ interface MapState {
     };
 
     selectedRouteIds: string[];
-    setSelectedRouteIds: (routeIds: string[]) => void;
+    selectedRouteType: string | null;
+    setSelectedRouteIds: (routeIds: string[], routeType?: string | null) => void;
 
     activeAirport: string | null;
     setActiveAirport: (code: string | null) => void;
@@ -82,7 +83,8 @@ export const useMapStore = create<MapState>((set, get) => ({
     setActiveAirport: (code) => set({ activeAirport: code }),
 
     selectedRouteIds: [],
-    setSelectedRouteIds: (routeIds) => set({ selectedRouteIds: routeIds }),
+    selectedRouteType: null,
+    setSelectedRouteIds: (routeIds, routeType = null) => set({ selectedRouteIds: routeIds, selectedRouteType: routeType }),
 
     // Basic Setters
     setViewState: (viewState) => set({ viewState }),

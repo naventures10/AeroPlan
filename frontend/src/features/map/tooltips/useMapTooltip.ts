@@ -133,12 +133,24 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
         };
       } else if (object && layer?.id === 'atsRoutes-geom-layer') {
         const p = object.properties ?? {};
+        const isOneWay = p.direction_odd === 'O' || p.direction_even === 'E';
+        const directionStr = isOneWay ? (p.direction_odd === 'O' ? '→ ODD ONLY' : '← EVEN ONLY') : '↔ TWO-WAY';
+        const meainfo = p.mea && p.mea !== 'None' ? `<span style="color:#a1a1aa;font-size:10px;font-weight:600;color:#22c55e;">MEA: <span style="color:#f4f4f5;">${p.mea}</span></span>` : '';
+        const limitStr = (p.upper_limit && p.upper_limit !== 'None') || (p.lower_limit && p.lower_limit !== 'None') 
+                         ? `<span style="color:#a1a1aa;font-size:9px;margin-top:2px;">LIMITS: ${p.lower_limit || 'SFC'} - ${p.upper_limit || 'UNL'}</span>` : '';
+        const trackStr = (p.track_magnetic && p.track_magnetic !== 'None') && (p.distance_nm && p.distance_nm !== 'None')
+                         ? `<span style="color:#a1a1aa;font-size:9px;">SEGMENT: ${p.distance_nm} NM | TR: ${p.track_magnetic}</span>` : '';
+
         return {
           html: sanitizeHtml(`<div style="display:flex;flex-direction:column;gap:4px;max-width:250px;">
               <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">ROUTE ${p.route_designator || p.route_id || 'UNKNOWN'}</span>
-              <span style="color:#a1a1aa;font-size:10px;font-weight:600;letter-spacing:.1em;color:#22d3ee;">${p.route_type || 'AIRWAY'}</span>
-              <span style="color:#a1a1aa;font-size:9px;margin-top:2px;">WAYPOINTS: ${p.waypoint_count || '?'}</span>
-              ${p.remarks && p.remarks !== 'None' ? `<span style="color:#a1a1aa;font-size:9px;">${p.remarks}</span>` : ''}
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="color:#a1a1aa;font-size:10px;font-weight:600;letter-spacing:.1em;color:#22d3ee;">${p.route_type || 'AIRWAY'}</span>
+                  <span style="color:#a1a1aa;font-size:9px;font-weight:700;">${directionStr}</span>
+              </div>
+              ${meainfo}
+              ${limitStr}
+              ${trackStr}
             </div>`),
           style: tooltipStyle,
         };

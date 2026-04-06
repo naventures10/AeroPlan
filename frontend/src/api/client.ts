@@ -11,8 +11,8 @@ const API_BASE = '/api';
 
 // ── Generic helpers ─────────────────────────────────────────────────────
 
-async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`);
+async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, { signal });
   if (!res.ok) throw new Error(`API ${res.status}: ${path}`);
   return res.json();
 }
@@ -60,11 +60,12 @@ export async function fetchCharts(icao: string): Promise<ChartItem[]> {
 
 // ── Global Search ───────────────────────────────────────────────────────
 
-export async function searchAll(query: string): Promise<SearchResult[]> {
+export async function searchAll(query: string, signal?: AbortSignal): Promise<SearchResult[]> {
   try {
-    const data = await get<SearchResult[]>(`/search?q=${encodeURIComponent(query)}`);
+    const data = await get<SearchResult[]>(`/search?q=${encodeURIComponent(query)}`, signal);
     return data || [];
-  } catch {
+  } catch (err: any) {
+    if (err.name === 'AbortError') throw err;
     return [];
   }
 }

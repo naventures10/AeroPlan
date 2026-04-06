@@ -16,7 +16,7 @@ export function useDeckLayers({
   aerodromes: any;
   onAerodromeClick: (icao: string, coords: [number, number]) => void;
 }) {
-  const { viewMode, activeLayers, selectedRouteIds, setSelectedRouteIds } =
+  const { viewMode, activeLayers, selectedRouteIds, selectedRouteType, setSelectedRouteIds, viewState } =
     useMapStore();
 
   const textData = useMemo(() => {
@@ -81,13 +81,28 @@ export function useDeckLayers({
           data: `${window.location.origin}/tiles/significant_points/{z}/{x}/{y}`,
           visible: viewMode === 'ENROUTE',
           pickable: true,
-          pointType: 'circle',
-          getFillColor: [167, 139, 250, 200],
-          getLineColor: [255, 255, 255, 220],
-          getLineWidth: 1,
-          lineWidthMinPixels: 1,
-          getPointRadius: 3,
-          pointRadiusMinPixels: 2.5,
+          pointType: 'icon+text',
+          iconAtlas: '/WAYPOINT_HOLLOW.svg',
+          iconMapping: {
+            waypoint: { x: 0, y: 0, width: 100, height: 100, anchorY: 50, mask: true }
+          },
+          getIcon: () => 'waypoint',
+          getIconColor: [255, 255, 255, 255],
+          getIconSize: 10,
+          getText: (d: any) => d.properties.waypoint_name || '',
+          getTextSize: (d: any) => {
+            if (viewState.zoom <= 7.5) return 0;
+            const hasRoutes = d.properties.routes && d.properties.routes !== 'None' && d.properties.routes !== '{}';
+            if (activeLayers.atsRoutes && hasRoutes) return 0;
+            return 11;
+          },
+          getTextColor: [220, 220, 220, 255],
+          getTextPixelOffset: [0, -15],
+          textFontFamily: 'Inter, sans-serif',
+          textFontWeight: 600,
+          updateTriggers: {
+            getTextSize: [viewState.zoom > 7.5, activeLayers.atsRoutes],
+          },
         }),
       );
     }
@@ -114,21 +129,25 @@ export function useDeckLayers({
       layers.push(
         new MVTLayer({
           id: 'atsRoutes-geom-layer',
-          data: `${window.location.origin}/tiles/ats_routes_geom/{z}/{x}/{y}`,
+          data: `${window.location.origin}/tiles/ats_route_segments/{z}/{x}/{y}`,
           visible: viewMode === 'ENROUTE',
           pickable: true,
-          getLineColor: (d: any) =>
-            selectedRouteIds.includes(d.properties.route_id)
-              ? [34, 197, 94, 255]
-              : [34, 211, 238, 100],
+          autoHighlight: true,
+          highlightColor: [255, 255, 255, 150],
+          getLineColor: (d: any) => {
+            if (selectedRouteIds.includes(d.properties.route_id)) return [255, 255, 255, 255]; // Selected: White
+            return d.properties.route_type === 'RNAV' ? [50, 205, 50, 220] : [34, 211, 238, 150]; // Lime Green vs Cyan
+          },
           getLineWidth: (d: any) =>
             selectedRouteIds.includes(d.properties.route_id) ? 4 : 2,
           lineWidthMinPixels: 1.5,
           onClick: (info: any) => {
             if (info.object && info.object.properties.route_id) {
               const rId = info.object.properties.route_id;
+              const rType = info.object.properties.route_type;
               setSelectedRouteIds(
                 selectedRouteIds.includes(rId) ? [] : [rId],
+                selectedRouteIds.includes(rId) ? null : rType
               );
             } else {
               setSelectedRouteIds([]);
@@ -144,62 +163,52 @@ export function useDeckLayers({
           data: `${window.location.origin}/tiles/ats_route_waypoints/{z}/{x}/{y}`,
           visible: viewMode === 'ENROUTE',
           pickable: true,
-          pointType: 'circle',
-          getFillColor: [255, 255, 255, 255],
-          getLineColor: (d: any) => {
-            const routes = d.properties.route_ids
-              ? String(d.properties.route_ids)
-                  .replace(/[{"'}]/g, '')
-                  .split(',')
-              : [];
-            return routes.some((r: string) => selectedRouteIds.includes(r))
-              ? [34, 197, 94, 255]
-              : [34, 211, 238, 200];
+          pointType: 'icon+text',
+          iconAtlas: '/WAYPOINT.svg',
+          iconMapping: {
+            waypoint: { x: 0, y: 0, width: 100, height: 100, anchorY: 50, mask: true }
           },
-          getLineWidth: (d: any) => {
-            const routes = d.properties.route_ids
-              ? String(d.properties.route_ids)
-                  .replace(/[{"'}]/g, '')
-                  .split(',')
-              : [];
-            return routes.some((r: string) => selectedRouteIds.includes(r))
-              ? 2
-              : 1;
+          getIcon: () => 'waypoint',
+          getIconColor: (d: any) => {
+            const routes = d.properties.route_ids ? String(d.properties.route_ids).replace(/[{"'}]/g, '').split(',') : [];
+            if (routes.some((r: string) => selectedRouteIds.includes(r))) {
+              if (selectedRouteType === 'WAYPOINT') return [192, 132, 252, 255]; // Soft Neon Purple
+              return selectedRouteType === 'RNAV' ? [50, 205, 50, 255] : [0, 255, 255, 255]; // Lime Green for RNAV, Cyan for Conventional
+            }
+            return [255, 255, 255, 220];
           },
-          lineWidthMinPixels: 1,
-          getPointRadius: (d: any) => {
-            const routes = d.properties.route_ids
-              ? String(d.properties.route_ids)
-                  .replace(/[{"'}]/g, '')
-                  .split(',')
-              : [];
-            return routes.some((r: string) => selectedRouteIds.includes(r))
-              ? 3
-              : 2;
+          getIconSize: (d: any) => {
+            const routes = d.properties.route_ids ? String(d.properties.route_ids).replace(/[{"'}]/g, '').split(',') : [];
+            return routes.some((r: string) => selectedRouteIds.includes(r)) ? 15 : 12;
           },
-          pointRadiusMinPixels: 1.5,
+          getText: (d: any) => d.properties.waypoint_name || '',
+          getTextSize: viewState.zoom > 7.5 ? 12 : 0,
+          getTextColor: (d: any) => {
+            const routes = d.properties.route_ids ? String(d.properties.route_ids).replace(/[{"'}]/g, '').split(',') : [];
+            if (routes.some((r: string) => selectedRouteIds.includes(r))) {
+              if (selectedRouteType === 'WAYPOINT') return [192, 132, 252, 255];
+              return selectedRouteType === 'RNAV' ? [50, 205, 50, 255] : [0, 255, 255, 255];
+            }
+            return [200, 200, 200, 255];
+          },
+          getTextPixelOffset: [0, -18],
+          textFontFamily: 'Inter, sans-serif',
+          textFontWeight: 600,
           onClick: (info: any) => {
             if (info.object && info.object.properties.route_ids) {
-              const routes = String(info.object.properties.route_ids)
-                .replace(/[{"'}]/g, '')
-                .split(',');
-              const isAlreadySelected =
-                routes.length > 0 &&
-                selectedRouteIds.length === routes.length &&
-                routes.every((r: string) => selectedRouteIds.includes(r));
-              if (isAlreadySelected) {
-                setSelectedRouteIds([]);
-              } else if (routes.length > 0) {
-                setSelectedRouteIds(routes);
-              }
+              const routes = String(info.object.properties.route_ids).replace(/[{"'}]/g, '').split(',');
+              const isAlreadySelected = routes.length > 0 && selectedRouteIds.length === routes.length && routes.every((r: string) => selectedRouteIds.includes(r));
+              if (isAlreadySelected) setSelectedRouteIds([]);
+              else if (routes.length > 0) setSelectedRouteIds(routes, 'WAYPOINT');
             } else {
               setSelectedRouteIds([]);
             }
           },
           updateTriggers: {
-            getLineColor: [selectedRouteIds],
-            getLineWidth: [selectedRouteIds],
-            getPointRadius: [selectedRouteIds],
+            getIconColor: [selectedRouteIds, selectedRouteType],
+            getIconSize: [selectedRouteIds],
+            getTextColor: [selectedRouteIds, selectedRouteType],
+            getTextSize: [viewState.zoom > 7.5, selectedRouteIds],
           },
         }),
       );
@@ -213,7 +222,9 @@ export function useDeckLayers({
     onAerodromeClick,
     activeLayers,
     selectedRouteIds,
+    selectedRouteType,
     setSelectedRouteIds,
+    viewState.zoom,
   ]);
 
   return deckLayers;
