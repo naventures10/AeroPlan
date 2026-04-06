@@ -234,6 +234,21 @@ class RouteLoader:
                     VALUES %s
                 """, all_segments)
 
+            # 4. Synthesize Segment Geometry
+            print("[*] Synthesizing LineStrings for segment geometries from waypoints...")
+            cur.execute("""
+                UPDATE ats_route_segments s
+                SET geom = ST_MakeLine(w1.geom, w2.geom)
+                FROM ats_route_waypoints w1
+                JOIN ats_route_waypoints w2 
+                  ON w1.route_id = w2.route_id 
+                  AND w2.sequence_number = w1.sequence_number + 1
+                WHERE s.route_id = w1.route_id 
+                  AND s.sequence_number = w1.sequence_number
+                  AND w1.geom IS NOT NULL 
+                  AND w2.geom IS NOT NULL;
+            """)
+
             self.conn.commit()
 
         print(f"[+] Successfully loaded {len(all_routes)} routes into the database!")

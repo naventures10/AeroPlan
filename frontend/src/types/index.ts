@@ -23,6 +23,7 @@ export interface SearchResult {
   type: 'AERODROME' | 'NAVAID' | 'WAYPOINT' | 'ATS_ROUTE';
   center: [number, number] | null;
   bounds: [number, number, number, number] | null;
+  route_type?: string;
 }
 
 // ── Aerodrome Charts ────────────────────────────────────────────────────

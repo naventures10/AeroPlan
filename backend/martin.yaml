@@ -59,17 +59,25 @@ postgres:
         route_ids: "text[]"
         waypoint_name: "varchar"
 
-    ats_routes_geom:
+    ats_route_segments:
       schema: public
-      table: ats_routes_geom
+      table: v_ats_route_segments
+      id_column: id
       geometry_column: geom
       srid: 4326
       properties:
         route_id: "varchar"
-        route_designator: "varchar"
         route_type: "varchar"
-        remarks: "text"
-        waypoint_count: "int8"
+        route_designator: "varchar"
+        sequence_number: "int4"
+        track_magnetic: "varchar"
+        distance_nm: "numeric"
+        upper_limit: "varchar"
+        lower_limit: "varchar"
+        airspace_class: "varchar"
+        mea: "varchar"
+        direction_odd: "varchar"
+        direction_even: "varchar"
 
 mbtiles:
   sources:

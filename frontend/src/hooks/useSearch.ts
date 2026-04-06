@@ -4,6 +4,8 @@ import { searchAll } from '../api/client';
 import { useMapStore } from '../store/useMapStore';
 import { fetchAerodromeMetadata } from '../api/client';
 
+const searchCache = new Map<string, SearchResult[]>();
+
 /**
  * Encapsulates the entire global search flow:
  *  - Input value, suggestions, focus, keyboard navigation
@@ -25,6 +27,7 @@ export function useSearch() {
   const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchSelectedIndex, setSearchSelectedIndex] = useState(-1);
+  const [isLoading, setIsLoading] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Debounced fetch
@@ -32,14 +35,43 @@ export function useSearch() {
     const query = searchInput.trim();
     if (query.length < 2) {
       setSuggestions([]);
+      setIsLoading(false);
       return;
     }
 
+    // Check cache first for instant results
+    const cachedQuery = query.toLowerCase();
+    if (searchCache.has(cachedQuery)) {
+      setSuggestions(searchCache.get(cachedQuery) || []);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    const controller = new AbortController();
+
     const timer = setTimeout(() => {
-      searchAll(query).then(setSuggestions);
+      searchAll(query, controller.signal)
+        .then((data) => {
+          searchCache.set(cachedQuery, data);
+          setSuggestions(data);
+        })
+        .catch((err) => {
+          if (err.name !== 'AbortError') {
+            setSuggestions([]);
+          }
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) {
+            setIsLoading(false);
+          }
+        });
     }, 250);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [searchInput]);
 
   // Reset keyboard index when input changes
@@ -78,7 +110,7 @@ export function useSearch() {
           break;
         case 'ATS_ROUTE':
           if (!activeLayers.atsRoutes) toggleLayer('atsRoutes');
-          setSelectedRouteIds([item.id]);
+          setSelectedRouteIds([item.id], item.route_type);
           break;
       }
 
@@ -130,6 +162,7 @@ export function useSearch() {
     searchSelectedIndex,
     setSearchSelectedIndex,
     searchInputRef,
+    isLoading,
     handleGlobalSearchSelect,
     handleSearchKeyDown,
   };

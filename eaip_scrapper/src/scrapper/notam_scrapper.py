@@ -1,7 +1,6 @@
 import os
 import requests
 import re
-import tempfile
 import urllib3
 import asyncio
 from pathlib import Path
@@ -21,6 +20,7 @@ PDF_LINK_PATTERN = re.compile(
     r"/sites/default/files/notam_files/.*\.pdf$", re.IGNORECASE
 )
 OUTPUT_DIR = Path(__file__).resolve().parent.parent.parent / "output"
+RAW_PDF_DIR = OUTPUT_DIR / "raw_pdfs"
 
 
 def scrape_latest_notam_links() -> list[str]:
@@ -143,14 +143,10 @@ def download_pdf(pdf_url: str, dest_path: Path) -> Path:
     return dest_path
 
 
-async def convert_pdf_to_md_with_llama(pdf_path: Path, output_path: Path) -> None:
+async def convert_pdf_to_md_with_llama(pdf_path: Path, output_path: Path, api_key: str) -> None:
     """
     Use LlamaParse (LlamaCloud) to convert a PDF to high-fidelity Markdown.
-    Requires LLAMA_CLOUD_API_KEY in .env.
     """
-    api_key = os.getenv("LLAMA_CLOUD_API_KEY")
-    if not api_key:
-        raise ValueError("LLAMA_CLOUD_API_KEY not found in environment")
 
     print(f"  Parsing with LlamaParse: {pdf_path.name}")
     client = AsyncLlamaCloud(api_key=api_key)
@@ -182,6 +178,19 @@ def openai_file_upload_stream(path: Path):
 
 async def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    RAW_PDF_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Load all LLAMA_CLOUD_API_KEY_* variables
+    llama_keys = [v for k, v in os.environ.items() if k.startswith("LLAMA_CLOUD_API_KEY_") and v.strip()]
+    if not llama_keys:
+        legacy_key = os.getenv("LLAMA_CLOUD_API_KEY")
+        if legacy_key:
+            llama_keys = [legacy_key]
+        else:
+            print("No LLAMA_CLOUD_API_KEY_* found in environment. Exiting.")
+            return
+
+    print(f"Loaded {len(llama_keys)} LlamaParse API keys for concurrent extraction.")
 
     latest_links = scrape_latest_notam_links()
 
@@ -189,38 +198,87 @@ async def main():
         print("No NOTAM PDFs found. Exiting.")
         return
 
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        tmp_path = Path(tmp_dir)
+    # Extract target filenames for the cleanup phase
+    target_pdf_names = set()
+    target_md_names = set()
+    for link in latest_links:
+        fname = link.rsplit("/", 1)[-1]
+        target_pdf_names.add(fname)
+        target_md_names.add(fname.replace(".pdf", ".md"))
 
-        for i, pdf_url in enumerate(latest_links):
-            pdf_filename = pdf_url.rsplit("/", 1)[-1]  # e.g. Chennai_A_2026_03.pdf
-            md_filename = pdf_filename.replace(".pdf", ".md")
-            output_md_path = OUTPUT_DIR / md_filename
+    # Cleanup phase: remove older NOTAM PDFs and MDs not in the target list
+    print("\nCleaning up obsolete files from previous months...")
+    notam_pattern = re.compile(r"[A-Za-z]+_[A-Z]_\d{4}_\d{2}\.(pdf|md)", re.IGNORECASE)
 
-            if output_md_path.exists():
-                print(f"\nSkipping {pdf_filename} (already exists: {md_filename})")
-                continue
+    # 1. Clean RAW_PDF_DIR
+    for pdf_file in RAW_PDF_DIR.glob("*.pdf"):
+        if notam_pattern.match(pdf_file.name) and pdf_file.name not in target_pdf_names:
+            print(f"  Removing obsolete PDF: {pdf_file.name}")
+            pdf_file.unlink()
 
-            print(f"\nProcessing {pdf_filename} ({i+1}/{len(latest_links)})...")
+    # 2. Clean OUTPUT_DIR (only NOTAM markdown files)
+    for md_file in OUTPUT_DIR.glob("*.md"):
+        if notam_pattern.match(md_file.name) and md_file.name not in target_md_names:
+            print(f"  Removing obsolete MD: {md_file.name}")
+            md_file.unlink()
 
-            try:
-                # Step 1: Download the PDF locally
-                local_pdf = download_pdf(pdf_url, tmp_path / pdf_filename)
+    # Pass 1: Download all required PDFs sequentially
+    print("\n--- PASSS 1: Downloading PDFs ---")
+    conversion_tasks = []
+    
+    for i, pdf_url in enumerate(latest_links):
+        pdf_filename = pdf_url.rsplit("/", 1)[-1]  # e.g. Chennai_A_2026_03.pdf
+        md_filename = pdf_filename.replace(".pdf", ".md")
+        output_md_path = OUTPUT_DIR / md_filename
+        local_pdf = RAW_PDF_DIR / pdf_filename
 
-                # Step 2: Convert with LlamaParse
-                await convert_pdf_to_md_with_llama(local_pdf, output_md_path)
+        if output_md_path.exists() and local_pdf.exists():
+            print(f"Skipping {pdf_filename} (both MD and downloaded RAW PDF exist)")
+            continue
+
+        # Explicitly skip Delhi January NOTAM PDFs
+        match = re.search(r"([A-Za-z]+)_[A-Z]_\d{4}_(\d{2})\.pdf", pdf_filename, re.IGNORECASE)
+        if match and match.group(1).lower() == "delhi" and match.group(2) == "01":
+            print(f"Skipping {pdf_filename} (Delhi January NOTAMs are handled via carry-forward).")
+            continue
+
+        try:
+            if not local_pdf.exists():
+                print(f"Downloading {pdf_filename} ({i+1}/{len(latest_links)})...")
+                download_pdf(pdf_url, local_pdf)
+            else:
+                print(f"Using cached PDF: {local_pdf.name}")
                 
-                # Rate limit mitigation: 2-minute delay after each file
-                if i < len(latest_links) - 1:
-                    print("  ⏳ Resting for 2 minutes to respect LlamaParse rate limits...")
-                    await asyncio.sleep(120)
-            except Exception as e:
-                print(f"  FAILED to process {pdf_filename}: {e}")
-                # Optional: Even on failure, we might want to wait before retrying the next file
-                if i < len(latest_links) - 1:
-                    await asyncio.sleep(60) # Shorter sleep on failure? or same?
+            if not output_md_path.exists():
+                conversion_tasks.append((local_pdf, output_md_path))
+        except Exception as e:
+            print(f"  FAILED to process {pdf_filename}: {e}")
 
-    print(f"\nDone! All NOTAM PDFs converted and saved to {OUTPUT_DIR}")
+    # Pass 2: Concurrent Markdown Conversion
+    if conversion_tasks:
+        print(f"\n--- PASS 2: Concurrent LlamaParse Processing ({len(conversion_tasks)} files) ---")
+        
+        async def run_conversion(pdf_path, md_path, api_key):
+            try:
+                await convert_pdf_to_md_with_llama(pdf_path, md_path, api_key)
+            except Exception as e:
+                print(f"  [!] LlamaParse FAILED for {pdf_path.name}: {e}")
+
+        # Limit concurrency to 1 active request per API key to respect general rate limits
+        semaphore = asyncio.Semaphore(len(llama_keys))
+
+        async def worker(pdf_path, md_path, api_key):
+            async with semaphore:
+                await run_conversion(pdf_path, md_path, api_key)
+
+        tasks = []
+        for i, (p_pdf, p_md) in enumerate(conversion_tasks):
+            assigned_key = llama_keys[i % len(llama_keys)]
+            tasks.append(worker(p_pdf, p_md, assigned_key))
+            
+        await asyncio.gather(*tasks)
+
+    print(f"\nDone! All NOTAM PDFs downloaded to {RAW_PDF_DIR} and MDs saved to {OUTPUT_DIR}")
 
 
 if __name__ == "__main__":

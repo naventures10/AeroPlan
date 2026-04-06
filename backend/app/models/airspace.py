@@ -1,5 +1,5 @@
 from geoalchemy2 import Geometry
-from sqlalchemy import BIGINT, Column, DateTime, Integer, Numeric, String, Text
+from sqlalchemy import Column, DateTime, Integer, Numeric, String, Text
 from sqlalchemy.sql import func
 
 from app.database import Base
@@ -31,6 +31,7 @@ class AtsRouteSegment(Base):
     lateral_limits = Column(String(20))
     direction_odd = Column(String(5))
     direction_even = Column(String(5))
+    geom = Column(Geometry("GEOMETRY", srid=4326))
 
 
 class AtsRouteWaypoint(Base):
@@ -42,15 +43,4 @@ class AtsRouteWaypoint(Base):
     waypoint_name = Column(String(50))
     raw_coordinates = Column(String(60))
     navaid_info = Column(String(50))
-    geom = Column(Geometry("GEOMETRY", srid=4326))
-
-
-class AtsRoutesGeom(Base):
-    __tablename__ = "ats_routes_geom"
-
-    route_id = Column(String(20), primary_key=True, index=True)
-    route_designator = Column(String(100))
-    route_type = Column(String(20))
-    remarks = Column(Text)
-    waypoint_count = Column(BIGINT)
     geom = Column(Geometry("GEOMETRY", srid=4326))

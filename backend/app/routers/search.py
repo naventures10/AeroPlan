@@ -31,7 +31,8 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)):
                 ad.airport_name AS name,
                 'AERODROME' AS type,
                 ST_Centroid(sf.geom) AS center_geom,
-                NULL::box2d AS computed_bounds
+                NULL::box2d AS computed_bounds,
+                NULL::VARCHAR AS route_type
             FROM aerodrome_documents ad
             JOIN spatial_features sf ON sf.icao_code = ad.icao_code AND sf.feature_category = 'ARP'
             WHERE ad.icao_code ILIKE :term OR ad.airport_name ILIKE :term
@@ -44,7 +45,8 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)):
                 station_name AS name,
                 'NAVAID' AS type,
                 ST_Centroid(geom) AS center_geom,
-                NULL::box2d AS computed_bounds
+                NULL::box2d AS computed_bounds,
+                NULL::VARCHAR AS route_type
             FROM radio_nav_aids
             WHERE ident ILIKE :term OR station_name ILIKE :term
 
@@ -56,7 +58,8 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)):
                 waypoint_name AS name,
                 'WAYPOINT' AS type,
                 ST_Centroid(geom) AS center_geom,
-                NULL::box2d AS computed_bounds
+                NULL::box2d AS computed_bounds,
+                NULL::VARCHAR AS route_type
             FROM ats_waypoints_grouped
             WHERE waypoint_name ILIKE :term
 
@@ -64,13 +67,16 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)):
 
             -- 4. ATS Routes (Airways)
             SELECT
-                route_id AS id,
-                COALESCE(route_designator, route_id) AS name,
+                r.route_id AS id,
+                COALESCE(r.route_designator, r.route_id) AS name,
                 'ATS_ROUTE' AS type,
-                ST_Centroid(geom) AS center_geom,
-                Box2D(geom) AS computed_bounds
-            FROM ats_routes_geom
-            WHERE route_id ILIKE :term OR route_designator ILIKE :term
+                ST_Centroid(ST_Collect(w.geom)) AS center_geom,
+                Box2D(ST_Collect(w.geom)) AS computed_bounds,
+                r.route_type AS route_type
+            FROM ats_routes r
+            JOIN ats_route_waypoints w ON r.route_id = w.route_id
+            WHERE r.route_id ILIKE :term OR r.route_designator ILIKE :term
+            GROUP BY r.route_id, r.route_designator, r.route_type
         )
         SELECT
             id,
@@ -81,8 +87,18 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)):
             ST_XMin(computed_bounds) AS min_lng,
             ST_YMin(computed_bounds) AS min_lat,
             ST_XMax(computed_bounds) AS max_lng,
-            ST_YMax(computed_bounds) AS max_lat
+            ST_YMax(computed_bounds) AS max_lat,
+            route_type
         FROM search_results
+        ORDER BY
+            CASE type
+                WHEN 'AERODROME' THEN 1
+                WHEN 'NAVAID' THEN 2
+                WHEN 'WAYPOINT' THEN 3
+                WHEN 'ATS_ROUTE' THEN 4
+                ELSE 5
+            END,
+            name ASC
         LIMIT 20;
     """)
 
@@ -97,6 +113,7 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)):
             "type": r.type,
             "center": [r.lng, r.lat] if r.lng is not None and r.lat is not None else None,
             "bounds": None,
+            "route_type": r.route_type if hasattr(r, 'route_type') else None
         }
         if r.min_lng is not None:
             match["bounds"] = [r.min_lng, r.min_lat, r.max_lng, r.max_lat]

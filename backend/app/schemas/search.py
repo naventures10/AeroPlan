@@ -7,3 +7,4 @@ class SearchResultResponse(BaseModel):
     type: str
     center: list[float] | None = None
     bounds: list[float] | None = None
+    route_type: str | None = None
