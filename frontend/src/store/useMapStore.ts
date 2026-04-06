@@ -47,7 +47,7 @@ interface MapState {
     toggleViewMode: () => void;
     setSearchQuery: (query: string) => void;
     toggleLayer: (layer: keyof MapState['activeLayers']) => void;
-    flyToLocation: (lng: number, lat: number, zoom?: number, pitch?: number) => void;
+    flyToLocation: (lng: number, lat: number, zoom?: number, pitch?: number, forceViewMode?: 'ENROUTE' | 'TERMINAL') => void;
     fitBounds: (bounds: [number, number, number, number]) => void;
     returnToEnroute: () => void;
 }
@@ -130,9 +130,9 @@ export const useMapStore = create<MapState>((set, get) => ({
     },
 
     // The "Search & Fly" Logic
-    flyToLocation: (lng, lat, zoom = 14, pitch = 45) => {
+    flyToLocation: (lng, lat, zoom = 14, pitch = 0, forceViewMode) => {
         set({
-            viewMode: pitch > 0 ? 'TERMINAL' : 'ENROUTE',
+            viewMode: forceViewMode || (pitch > 0 ? 'TERMINAL' : 'ENROUTE'),
             viewState: {
                 longitude: lng,
                 latitude: lat,
@@ -140,8 +140,8 @@ export const useMapStore = create<MapState>((set, get) => ({
                 pitch: pitch,
                 bearing: 0,
                 maxPitch: 85,
-                transitionDuration: 2500, // 2.5 seconds for a long-distance flight
-                transitionInterpolator: new FlyToInterpolator(),
+                transitionDuration: 1200, // Cinematic 1.2s rapid movement
+                transitionInterpolator: new FlyToInterpolator({ speed: 1.5 }),
             }
         });
     },
@@ -154,7 +154,7 @@ export const useMapStore = create<MapState>((set, get) => ({
             const vp = new WebMercatorViewport({ width: window.innerWidth || 1024, height: window.innerHeight || 768 });
             const { longitude, latitude, zoom } = vp.fitBounds(
                 [[bounds[0], bounds[1]], [bounds[2], bounds[3]]],
-                { padding: 100 }
+                { padding: 150 }
             );
 
             set({
@@ -164,10 +164,10 @@ export const useMapStore = create<MapState>((set, get) => ({
                     longitude,
                     latitude,
                     zoom,
-                    pitch: 0,
+                    pitch: 0, // Request from user to reset tilt
                     bearing: 0,
-                    transitionDuration: 2000,
-                    transitionInterpolator: new FlyToInterpolator(),
+                    transitionDuration: 1200,
+                    transitionInterpolator: new FlyToInterpolator({ speed: 1.5 }),
                 }
             });
         } catch (e) {

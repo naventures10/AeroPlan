@@ -90,8 +90,9 @@ export function useSearch() {
       if (item.type === 'ATS_ROUTE' && item.bounds) {
         fitBounds(item.bounds);
       } else if (item.center) {
-        const targetPitch = item.type === 'AERODROME' ? 60 : 0;
-        flyToLocation(item.center[0], item.center[1], 15, targetPitch);
+        const isAero = item.type === 'AERODROME';
+        const targetPitch = isAero ? 60 : 0;
+        flyToLocation(item.center[0], item.center[1], 15, targetPitch, isAero ? 'TERMINAL' : 'ENROUTE');
       }
 
       // 2. Map layer & state injection
