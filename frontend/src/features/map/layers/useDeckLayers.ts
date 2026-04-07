@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
-import { GeoJsonLayer, TextLayer } from '@deck.gl/layers';
+import { GeoJsonLayer, TextLayer, IconLayer } from '@deck.gl/layers';
 import { MVTLayer } from '@deck.gl/geo-layers';
+import { CollisionFilterExtension } from '@deck.gl/extensions';
 import { useMapStore } from '../../../store/useMapStore';
 
 /**
@@ -16,7 +17,7 @@ export function useDeckLayers({
   aerodromes: any;
   onAerodromeClick: (icao: string, coords: [number, number]) => void;
 }) {
-  const { viewMode, activeLayers, selectedRouteIds, selectedRouteType, setSelectedRouteIds, selectedFeature, setSelectedFeature, viewState } =
+  const { viewMode, activeLayers, selectedRouteIds, selectedRouteType, setSelectedRouteIds, selectedFeature, setSelectedFeature, viewState, atsRouteLabels } =
     useMapStore();
 
   const [isAtsRendered, setIsAtsRendered] = useState(false);
@@ -91,7 +92,8 @@ export function useDeckLayers({
           id: 'waypoints-layer',
           data: `${window.location.origin}/tiles/significant_points/{z}/{x}/{y}`,
           visible: viewMode === 'ENROUTE',
-          pickable: true,
+          // Disable picking when ATS routes are active to avoid selecting waypoints while viewing routes
+          pickable: !activeLayers.atsRoutes,
           autoHighlight: true,
           highlightColor: [255, 255, 255, 60],
           pointType: 'icon+text',
@@ -212,9 +214,10 @@ export function useDeckLayers({
             return d.properties.route_type === 'RNAV' ? [50, 205, 50, 60] : [34, 211, 238, 60]; // Dim unselected
           },
           getLineWidth: (d: any) => {
-            if (selectedRouteIds.includes(d.properties.route_id)) return 4;
-            if (!activeLayers.atsRoutes) return 0;
-            return 1;
+            if (!activeLayers.atsRoutes && !selectedRouteIds.includes(d.properties.route_id)) return 0;
+            const limit = parseInt(d.properties.lateral_limits) || 10;
+            const width = Math.max(1.5, limit / 4); // Scale actual airway boundaries to visual thickness
+            return selectedRouteIds.includes(d.properties.route_id) ? width + 2 : width;
           },
           lineWidthMinPixels: 1,
           onClick: (info: any) => {
@@ -241,6 +244,101 @@ export function useDeckLayers({
             getLineWidth: 300,
           },
         }),
+      );
+
+      // ── ATS Route Segment Labels (Stable Midpoints from Backend) ──
+      if (atsRouteLabels?.features) {
+        const labelFeatures = atsRouteLabels.features.filter((f: any) => {
+          const isSelected = selectedRouteIds.includes(f.properties.route_id);
+          return activeLayers.atsRoutes || isSelected;
+        });
+
+        layers.push(
+          new IconLayer({
+            id: 'ats-route-labels-bg-layer',
+            data: labelFeatures,
+            visible: viewMode === 'ENROUTE',
+            iconAtlas: '/ROUTE_HEXAGON_FILL.svg',
+            iconMapping: {
+              hex: { x: 0, y: 0, width: 140, height: 50, anchorY: 25, mask: true }
+            },
+            getIcon: () => 'hex',
+            getPosition: (d: any) => d.geometry.coordinates,
+            getAngle: (d: any) => d.properties.bearing, // Parallel to route
+            getSize: 12000,
+            getColor: (): [number, number, number, number] => [0, 0, 0, 255], // Fully opaque mask
+            sizeUnits: 'meters',
+            sizeMaxPixels: 18,
+            extensions: [new CollisionFilterExtension()],
+            collisionGroup: 'ats-labels',
+            collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
+            updateTriggers: {
+              getSize: [selectedRouteIds],
+            },
+            parameters: {
+              depthTest: false,
+              blend: true,
+              blendFunc: [0, 771] // [GL.ZERO, GL.ONE_MINUS_SRC_ALPHA] punches a transparent hole
+            },
+          }),
+          new IconLayer({
+            id: 'ats-route-labels-hex-layer',
+            data: labelFeatures,
+            visible: viewMode === 'ENROUTE',
+            iconAtlas: '/ROUTE_HEXAGON.svg',
+            iconMapping: {
+              hex: { x: 0, y: 0, width: 140, height: 50, anchorY: 25, mask: true }
+            },
+            getIcon: () => 'hex',
+            getPosition: (d: any) => d.geometry.coordinates,
+            getAngle: (d: any) => d.properties.bearing, // Parallel to route
+            getSize: 12000,
+            getColor: (d: any): [number, number, number, number] => {
+              const isSelected = selectedRouteIds.includes(d.properties.route_id);
+              const color = d.properties.route_type === 'RNAV' ? [50, 205, 50] : [34, 211, 238];
+              return [color[0], color[1], color[2], isSelected ? 255 : 140];
+            },
+            sizeUnits: 'meters',
+            sizeMaxPixels: 18,
+            extensions: [new CollisionFilterExtension()],
+            collisionGroup: 'ats-labels',
+            collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
+            updateTriggers: {
+              getSize: [selectedRouteIds],
+              getColor: [selectedRouteIds],
+            },
+            parameters: { depthTest: false },
+          }),
+          new TextLayer({
+            id: 'ats-route-labels-text-layer',
+            data: labelFeatures,
+            visible: viewMode === 'ENROUTE',
+            getPosition: (d: any) => d.geometry.coordinates,
+            getText: (d: any) => d.properties.route_id,
+            getAngle: (d: any) => d.properties.bearing, // Parallel to route
+            getSize: 7000,
+            sizeUnits: 'meters',
+            sizeMaxPixels: 11,
+            getColor: (d: any) => {
+              const isSelected = selectedRouteIds.includes(d.properties.route_id);
+              if (isSelected) return [255, 255, 255, 255];
+              return d.properties.route_type === 'RNAV' ? [50, 205, 50, 140] : [34, 211, 238, 140];
+            },
+            fontFamily: 'Inter, sans-serif',
+            fontWeight: 700,
+            extensions: [new CollisionFilterExtension()],
+            collisionGroup: 'ats-labels',
+            collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
+            updateTriggers: {
+              getSize: [selectedRouteIds],
+              getColor: [selectedRouteIds],
+            },
+            parameters: { depthTest: false },
+          }),
+        );
+      }
+
+      layers.push(
         new MVTLayer({
           id: 'atsRoutes-waypoints-layer',
           data: `${window.location.origin}/tiles/ats_route_waypoints/{z}/{x}/{y}`,
@@ -334,6 +432,7 @@ export function useDeckLayers({
     selectedFeature,
     viewState.zoom,
     isAtsRendered,
+    atsRouteLabels,
   ]);
 
   return deckLayers;

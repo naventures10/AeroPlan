@@ -71,6 +71,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
         layers={deckLayers}
         onViewStateChange={onViewStateChange}
         getTooltip={getTooltip}
+        pickingRadius={20}
       >
         <Map
           ref={mapRef}
