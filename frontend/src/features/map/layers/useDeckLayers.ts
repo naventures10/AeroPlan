@@ -265,10 +265,10 @@ export function useDeckLayers({
             getIcon: () => 'hex',
             getPosition: (d: any) => d.geometry.coordinates,
             getAngle: (d: any) => d.properties.bearing, // Parallel to route
-            getSize: 12000,
+            getSize: 6000,
             getColor: (): [number, number, number, number] => [0, 0, 0, 255], // Fully opaque mask
             sizeUnits: 'meters',
-            sizeMaxPixels: 18,
+            sizeMaxPixels: 10,
             extensions: [new CollisionFilterExtension()],
             collisionGroup: 'ats-labels',
             collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
@@ -292,14 +292,14 @@ export function useDeckLayers({
             getIcon: () => 'hex',
             getPosition: (d: any) => d.geometry.coordinates,
             getAngle: (d: any) => d.properties.bearing, // Parallel to route
-            getSize: 12000,
+            getSize: 6000,
             getColor: (d: any): [number, number, number, number] => {
               const isSelected = selectedRouteIds.includes(d.properties.route_id);
               const color = d.properties.route_type === 'RNAV' ? [50, 205, 50] : [34, 211, 238];
               return [color[0], color[1], color[2], isSelected ? 255 : 140];
             },
             sizeUnits: 'meters',
-            sizeMaxPixels: 18,
+            sizeMaxPixels: 10,
             extensions: [new CollisionFilterExtension()],
             collisionGroup: 'ats-labels',
             collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
@@ -316,9 +316,9 @@ export function useDeckLayers({
             getPosition: (d: any) => d.geometry.coordinates,
             getText: (d: any) => d.properties.route_id,
             getAngle: (d: any) => d.properties.bearing, // Parallel to route
-            getSize: 7000,
+            getSize: 4000,
             sizeUnits: 'meters',
-            sizeMaxPixels: 11,
+            sizeMaxPixels: 7,
             getColor: (d: any) => {
               const isSelected = selectedRouteIds.includes(d.properties.route_id);
               if (isSelected) return [255, 255, 255, 255];

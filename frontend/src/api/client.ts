@@ -92,3 +92,9 @@ export async function fetchDaylight(
   const data = await getOrNull<any>(`/daylight/${icao}?date=${date}`);
   return data?.records?.[0] || null;
 }
+
+// ── ATS Routes ──────────────────────────────────────────────────────────
+
+export async function fetchAtsRouteLabels(): Promise<any> {
+  return get('/ats-route-labels');
+}

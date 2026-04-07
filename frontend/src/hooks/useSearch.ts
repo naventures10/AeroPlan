@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import type { SearchResult } from '../types';
 import { searchAll } from '../api/client';
 import { useMapStore } from '../store/useMapStore';
@@ -30,6 +30,13 @@ export function useSearch() {
   const [searchSelectedIndex, setSearchSelectedIndex] = useState(-1);
   const [isLoading, setIsLoading] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  // Ref to track the deferred post-animation selection timer
+  const selectionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup on unmount
+  useLayoutEffect(() => () => {
+    if (selectionTimerRef.current) clearTimeout(selectionTimerRef.current);
+  }, []);
 
   // Debounced fetch
   useEffect(() => {
@@ -86,7 +93,10 @@ export function useSearch() {
 
   const handleGlobalSearchSelect = useCallback(
     (item: SearchResult) => {
-      // 1. Zoom / Pan
+      // Clear any pending deferred selection
+      if (selectionTimerRef.current) clearTimeout(selectionTimerRef.current);
+
+      // 1. Kick off the camera animation immediately
       if (item.type === 'ATS_ROUTE' && item.bounds) {
         fitBounds(item.bounds);
       } else if (item.center) {
@@ -95,33 +105,36 @@ export function useSearch() {
         flyToLocation(item.center[0], item.center[1], 15, targetPitch, isAero ? 'TERMINAL' : 'ENROUTE');
       }
 
-      // 2. Map layer & state injection
-      if (['ATS_ROUTE', 'NAVAID', 'WAYPOINT'].includes(item.type) && item.properties) {
-        setSelectedFeature({ type: item.type as any, data: item.properties });
-      } else {
-        setSelectedFeature(null);
-      }
-      
-      switch (item.type) {
-        case 'AERODROME':
-          if (!activeLayers.aerodromes) toggleLayer('aerodromes');
-          setActiveAirport(item.id);
-          fetchAerodromeMetadata(item.id).then((data) => {
-            setActiveAerodromeMetadata(data);
-          });
-          break;
-        case 'NAVAID':
-          if (!activeLayers.navaids) toggleLayer('navaids');
-          break;
-        case 'WAYPOINT':
-          if (!activeLayers.waypoints) toggleLayer('waypoints');
-          break;
-        case 'ATS_ROUTE':
-          setSelectedRouteIds([item.id], item.route_type);
-          break;
+      // Aerodrome layer activations happen immediately (different view mode)
+      if (item.type === 'AERODROME') {
+        if (!activeLayers.aerodromes) toggleLayer('aerodromes');
+        setActiveAirport(item.id);
+        fetchAerodromeMetadata(item.id).then((data) => {
+          setActiveAerodromeMetadata(data);
+        });
       }
 
       resetSearchState();
+
+      // 2. Defer the visual highlight injection until after the flyTo animation (1200ms)
+      selectionTimerRef.current = setTimeout(() => {
+        // Activate layer if needed (do it just before showing highlight)
+        switch (item.type) {
+          case 'NAVAID':
+            if (!activeLayers.navaids) toggleLayer('navaids');
+            break;
+          case 'WAYPOINT':
+            if (!activeLayers.waypoints) toggleLayer('waypoints');
+            break;
+          case 'ATS_ROUTE':
+            setSelectedRouteIds([item.id], item.route_type);
+            break;
+        }
+
+        if (['ATS_ROUTE', 'NAVAID', 'WAYPOINT'].includes(item.type) && item.properties) {
+          setSelectedFeature({ type: item.type as any, data: item.properties });
+        }
+      }, 1200);
     },
     [
       activeLayers,
@@ -173,5 +186,8 @@ export function useSearch() {
     isLoading,
     handleGlobalSearchSelect,
     handleSearchKeyDown,
+    cancelPendingSelection: () => {
+      if (selectionTimerRef.current) clearTimeout(selectionTimerRef.current);
+    },
   };
 }

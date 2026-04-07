@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import aerodromes, charts, daylight, notams, search, spatial, weather
+from app.routers import aerodromes, charts, daylight, notams, search, spatial, weather, ats_routes
 
 app = FastAPI(title="Aero Plan API", version="0.1.0")
 
@@ -32,3 +32,4 @@ app.include_router(spatial.router)
 app.include_router(weather.router)
 app.include_router(notams.router)
 app.include_router(daylight.router)
+app.include_router(ats_routes.router)
