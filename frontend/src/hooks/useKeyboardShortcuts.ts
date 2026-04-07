@@ -10,9 +10,11 @@ import { useMapStore } from '../store/useMapStore';
 export function useKeyboardShortcuts({
   sectionModalOpen,
   onCloseSectionModal,
+  cancelPendingSelection,
 }: {
   sectionModalOpen: boolean;
   onCloseSectionModal: () => void;
+  cancelPendingSelection: () => void;
 }) {
   const { viewMode, activeAirport, returnToEnroute, selectedRouteIds, setSelectedRouteIds, selectedFeature, setSelectedFeature } = useMapStore();
 
@@ -30,6 +32,7 @@ export function useKeyboardShortcuts({
         } else if (viewMode === 'TERMINAL' || activeAirport) {
           returnToEnroute();
         } else if (selectedRouteIds?.length > 0 || selectedFeature) {
+          cancelPendingSelection();
           setSelectedRouteIds([]);
           setSelectedFeature(null);
         }
@@ -38,5 +41,5 @@ export function useKeyboardShortcuts({
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [viewMode, activeAirport, returnToEnroute, sectionModalOpen, onCloseSectionModal, selectedRouteIds, setSelectedRouteIds, selectedFeature, setSelectedFeature]);
+  }, [viewMode, activeAirport, returnToEnroute, sectionModalOpen, onCloseSectionModal, selectedRouteIds, setSelectedRouteIds, selectedFeature, setSelectedFeature, cancelPendingSelection]);
 }

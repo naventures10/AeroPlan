@@ -41,6 +41,7 @@ export default function App() {
   useKeyboardShortcuts({
     sectionModalOpen,
     onCloseSectionModal: closeSectionModal,
+    cancelPendingSelection: search.cancelPendingSelection,
   });
 
   // ── Render ─────────────────────────────────────────────────────────

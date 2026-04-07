@@ -42,6 +42,9 @@ interface MapState {
     selectedFeature: { type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID'; data: any } | null;
     setSelectedFeature: (feature: { type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID'; data: any } | null) => void;
 
+    atsRouteLabels: any | null;
+    setAtsRouteLabels: (data: any) => void;
+
     // Actions (Functions to change the state)
     setViewState: (viewState: any) => void;
     toggleViewMode: () => void;
@@ -91,6 +94,9 @@ export const useMapStore = create<MapState>((set, get) => ({
 
     selectedFeature: null,
     setSelectedFeature: (feature) => set({ selectedFeature: feature }),
+
+    atsRouteLabels: null,
+    setAtsRouteLabels: (data) => set({ atsRouteLabels: data }),
 
     // Basic Setters
     setViewState: (viewState) => set({ viewState }),

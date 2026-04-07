@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchAerodromes, fetchAerodromeMetadata, fetchAerodromeSection } from '../api/client';
+import { fetchAerodromes, fetchAerodromeMetadata, fetchAerodromeSection, fetchAtsRouteLabels } from '../api/client';
 import { useMapStore } from '../store/useMapStore';
 
 /**
@@ -14,6 +14,7 @@ export function useAerodromeData() {
     setActiveAirport,
     setActiveAerodromeMetadata,
     activeAirport,
+    setAtsRouteLabels,
   } = useMapStore();
 
   const [aerodromes, setAerodromes] = useState<any>(null);
@@ -26,12 +27,16 @@ export function useAerodromeData() {
   const [sectionDataType, setSectionDataType] = useState('object');
   const [sectionLoading, setSectionLoading] = useState(false);
 
-  // Fetch all aerodromes once
+  // Fetch initial global data once
   useEffect(() => {
     fetchAerodromes()
       .then(setAerodromes)
       .catch((err) => console.error('Failed to fetch aerodromes', err));
-  }, []);
+
+    fetchAtsRouteLabels()
+      .then(setAtsRouteLabels)
+      .catch((err) => console.error('Failed to fetch ATS labels', err));
+  }, [setAtsRouteLabels]);
 
   // Handle clicking an aerodrome on the map
   const handleAerodromeClick = useCallback(
