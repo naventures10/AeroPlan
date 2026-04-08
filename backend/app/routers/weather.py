@@ -13,7 +13,7 @@ as fallback. Results are cached in-memory for CACHE_TTL_SECONDS (default 300s).
 import asyncio
 import re
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 import structlog
@@ -42,7 +42,7 @@ def _is_cache_fresh(icao: str) -> bool:
     entry = _weather_cache.get(icao)
     if not entry:
         return False
-    return (time.time() - entry["fetched_at"]) < CACHE_TTL_SECONDS
+    return (time.time() - float(entry["fetched_at"])) < CACHE_TTL_SECONDS
 
 
 def _parse_weather_html(html: str, icao: str) -> dict:
@@ -172,7 +172,7 @@ async def _fetch_weather(icao: str) -> dict:
 
     return {
         **{k: v for k, v in best.items() if k != "_metar_time"},
-        "fetched_at": datetime.fromtimestamp(now, tz=timezone.utc).isoformat(),
+        "fetched_at": datetime.fromtimestamp(now, tz=UTC).isoformat(),
         "sources_available": sources_used,
     }
 
@@ -191,15 +191,15 @@ async def get_weather(icao_code: str) -> WeatherResponse:
 
     if _is_cache_fresh(icao):
         entry = _weather_cache[icao]
-        return {
+        return WeatherResponse(
             **entry["data"],
-            "fetched_at": datetime.fromtimestamp(
-                entry["fetched_at"], tz=timezone.utc
+            fetched_at=datetime.fromtimestamp(
+                entry["fetched_at"], tz=UTC
             ).isoformat(),
-            "sources_available": entry.get("sources_used", []),
-            "cached": True,
-        }
+            sources_available=entry.get("sources_used", []),
+            cached=True,
+        )
 
     result = await _fetch_weather(icao)
     result["cached"] = False
-    return result
+    return WeatherResponse(**result)

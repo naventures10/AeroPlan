@@ -28,19 +28,19 @@ class NotamResponse(BaseModel):
 
 
 def serialize_notam(row: Any) -> NotamResponse:
-    """Convert a SQLAlchemy row to a plain dict matching NotamResponse."""
-    return {
-        "notam_id": row.notam_id,
-        "source_file": row.source_file,
-        "series": row.series,
-        "scope": row.scope,
-        "fir": row.fir,
-        "combined_fir": row.combined_fir,
-        "airport_icao": row.airport_icao,
-        "valid_from": row.valid_from.isoformat() if row.valid_from else None,
-        "valid_to": row.valid_to.isoformat() if row.valid_to else None,
-        "is_permanent": row.is_permanent,
-        "is_estimated": row.is_estimated,
-        "duration_category": row.duration_category,
-        "description": row.description,
-    }
+    """Convert a SQLAlchemy row to a NotamResponse model."""
+    return NotamResponse(
+        notam_id=row.notam_id,
+        source_file=row.source_file,
+        series=row.series,
+        scope=row.scope,
+        fir=row.fir,
+        combined_fir=row.combined_fir,
+        airport_icao=row.airport_icao,
+        valid_from=row.valid_from.isoformat() if row.valid_from else None,
+        valid_to=row.valid_to.isoformat() if row.valid_to else None,
+        is_permanent=row.is_permanent,
+        is_estimated=row.is_estimated,
+        duration_category=row.duration_category,
+        description=row.description,
+    )

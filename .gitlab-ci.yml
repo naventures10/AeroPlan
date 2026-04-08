@@ -1,0 +1,65 @@
+stages:
+  - lint
+  - test
+  - build
+
+variables:
+  FRONTEND_DIR: "frontend"
+  BACKEND_DIR: "backend"
+
+# --- Frontend Jobs ---
+.frontend-base:
+  image: node:20-alpine
+  before_script:
+    - cd $FRONTEND_DIR
+    - npm ci
+
+frontend:lint:
+  extends: .frontend-base
+  stage: lint
+  script:
+    - npm run lint
+
+frontend:test:
+  extends: .frontend-base
+  stage: test
+  script:
+    - npm run test
+
+frontend:build:
+  extends: .frontend-base
+  stage: build
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - $FRONTEND_DIR/dist/
+    expire_in: 1 week
+
+# --- Backend Jobs ---
+.backend-base:
+  image: ghcr.io/astral-sh/uv:python3.14-bookworm-slim
+  before_script:
+    - cd $BACKEND_DIR
+    - uv sync --dev
+
+backend:lint:
+  extends: .backend-base
+  stage: lint
+  script:
+    - uv run ruff check .
+    - uv run mypy .
+
+backend:test:
+  extends: .backend-base
+  stage: test
+  services:
+    - name: postgis/postgis:15-3.3
+      alias: db
+  variables:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: password
+    POSTGRES_DB: test_aeronautical_information_system
+    DATABASE_URL: postgresql+asyncpg://postgres:password@db:5432/test_aeronautical_information_system
+  script:
+    - uv run pytest tests/

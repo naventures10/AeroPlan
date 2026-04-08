@@ -3,7 +3,7 @@ from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_get_weather_success(api_client: AsyncClient):
+async def test_get_weather_success(api_client: AsyncClient) -> None:
     """Test retrieving weather for a valid ICAO code."""
     # We mock the internal httpx.AsyncClient.get call used by the weather endpoint
     # to avoid making real network requests to external servers during testing.

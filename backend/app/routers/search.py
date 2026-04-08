@@ -154,4 +154,4 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)) -> list[Sear
             match["bounds"] = [r.min_lng, r.min_lat, r.max_lng, r.max_lat]
         output.append(match)
 
-    return output
+    return [SearchResultResponse(**m) for m in output]

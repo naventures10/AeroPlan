@@ -77,8 +77,8 @@ async def get_all_aerodromes(db: AsyncSession = Depends(get_db)) -> GeoJsonFeatu
     result = await db.execute(query)
     row = result.fetchone()
     if row and row[0]:
-        return row[0]
-    return {"type": "FeatureCollection", "features": []}
+        return GeoJsonFeatureCollection(**row[0])
+    return GeoJsonFeatureCollection(type="FeatureCollection", features=[])
 
 
 @router.get("/aerodromes/{icao_code}/metadata", response_model=dict[str, Any])
@@ -92,7 +92,7 @@ async def get_aerodrome_metadata(icao_code: str, db: AsyncSession = Depends(get_
     result = await db.execute(query, {"icao": icao_code.upper()})
     row = result.fetchone()
     if row and row[0]:
-        return row[0]
+        return row[0] if isinstance(row[0], dict) else {}
     return {}
 
 
@@ -124,9 +124,9 @@ async def get_aerodrome_section(
             detail=f"No data found for {icao_code.upper()} section {section_id_upper}",
         )
 
-    return {
-        "section_id": section_id_upper,
-        "title": section_meta["title"],
-        "data_type": section_meta["data_type"],
-        "data": row[0],
-    }
+    return AerodromeSectionResponse(
+        section_id=section_id_upper,
+        title=section_meta["title"],
+        data_type=section_meta["data_type"],
+        data=row[0],
+    )
