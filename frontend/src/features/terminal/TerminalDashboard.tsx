@@ -61,9 +61,9 @@ function parseMetar(metar: string | null): ParsedMetar {
     // Wind: 32010KT, VRB05KT, 27015G25KT
     const windMatch = part.match(/^(\d{3}|VRB)(\d{2,3})(?:G\d{2,3})?(KT|MPS|KMH)$/i);
     if (windMatch) {
-      result.windDir = windMatch[1];
-      result.windSpeed = windMatch[2];
-      result.windUnit = windMatch[3];
+      result.windDir = windMatch[1] ?? '';
+      result.windSpeed = windMatch[2] ?? '';
+      result.windUnit = windMatch[3] ?? '';
       continue;
     }
     
@@ -71,7 +71,7 @@ function parseMetar(metar: string | null): ParsedMetar {
     const tempMatch = part.match(/^(M?\d{2})\/(M?\d{2})?$/);
     if (tempMatch) {
       const parseTemp = (t: string) => t.startsWith('M') ? -parseInt(t.substring(1)) : parseInt(t);
-      result.temp = parseTemp(tempMatch[1]);
+      result.temp = parseTemp(tempMatch[1] ?? '');
       if (tempMatch[2]) result.dew = parseTemp(tempMatch[2]);
       continue;
     }
@@ -102,7 +102,7 @@ function parseMetar(metar: string | null): ParsedMetar {
     // Clouds: FEW010, SCT020, BKN030, OVC040, NSC, NCD
     const cloudMatch = part.match(/^(FEW|SCT|BKN|OVC|NSC|NCD|VV)(\d{3})?(CB|TCU)?$/);
     if (cloudMatch) {
-      let desc = cloudMatch[1];
+      let desc = cloudMatch[1] ?? '';
       const map: Record<string, string> = { FEW: 'Few', SCT: 'Scattered', BKN: 'Broken', OVC: 'Overcast', NSC: 'No Sig Clouds', NCD: 'No Clouds', VV: 'Vertical Vis' };
       desc = map[desc] || desc;
       if (cloudMatch[2]) desc += ` at ${parseInt(cloudMatch[2]) * 100} ft`;
@@ -142,8 +142,8 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
     // Fetch independently instead of waiting for Promise.allSettled
     // This allows the dashboard to open immediately and populate as data arrives
     fetch(`/api/weather/${icaoCode}`).then(r => r.ok ? r.json() : null).then(w => w && setWeather(w));
-    fetch(`/api/notams/${icaoCode}?active_only=true`).then(r => r.ok ? r.json() : []).then(n => setNotams(n));
-    fetch(`/api/daylight/${icaoCode}?date=${todayStr}`).then(r => r.ok ? r.json() : null).then(d => setDaylight(d?.records?.[0] || null));
+    fetch(`/api/notams/${icaoCode}?active_only=true`).then(r => r.ok ? r.json() : []).then(n => { setNotams(n); });
+    fetch(`/api/daylight/${icaoCode}?date=${todayStr}`).then(r => r.ok ? r.json() : null).then(d => { setDaylight(d?.records?.[0] || null); });
     
     setLoading(false); // Remove global blocker
   }, [icaoCode, todayStr]);
@@ -159,7 +159,7 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
       }
     };
     window.addEventListener('keydown', handleKeyDown, true);
-    return () => window.removeEventListener('keydown', handleKeyDown, true);
+    return () => { window.removeEventListener('keydown', handleKeyDown, true); };
   }, [isCollapsed]);
 
   // Handle Outside Click to collapse if expanded
@@ -171,7 +171,7 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => { document.removeEventListener('mousedown', handleClickOutside); };
   }, [isCollapsed]);
 
   const tabs: Array<{ id: 'CONDITIONS' | 'METAR' | 'TAF' | 'NOTAM', icon: any, label: string, badge?: number }> = [
@@ -201,7 +201,7 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
       >
         {/* The Toggle Handle Wrapper */}
         <button 
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={() => { setIsCollapsed(!isCollapsed); }}
           className={`absolute top-0 bottom-0 left-0 w-full group/handle flex flex-col items-center justify-center transition-colors ${isCollapsed ? 'hover:bg-cyan-500/5 cursor-pointer' : 'pointer-events-none'}`}
           title={isCollapsed ? "Expand Dashboard" : ""}
         >
@@ -223,7 +223,7 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
           return (
             <div 
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => { setActiveTab(tab.id); }}
               className={`relative flex flex-col items-center justify-center w-full py-4 cursor-pointer transition-all duration-300 ${isActive ? 'text-cyan-400 border-l-2 border-cyan-400 bg-cyan-500/10' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/30'}`}
             >
               <tab.icon size={22} strokeWidth={isActive ? 2.5 : 2} />

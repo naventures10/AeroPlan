@@ -109,7 +109,7 @@ export function FeatureInfoCard() {
             isIconOnly
             size="sm"
             variant="light"
-            onClick={() => setSelectedFeature(null)}
+            onClick={() => { setSelectedFeature(null); }}
             className="text-default-400 hover:text-white"
           >
             <X size={18} />

@@ -42,9 +42,9 @@ export default function SearchBar({
             className="flex-1 bg-transparent border-none outline-none shadow-none text-zinc-100 font-semibold text-sm placeholder-zinc-500 uppercase tracking-[0.1em] px-3 h-full w-full"
             placeholder="SEARCH AIRPORT OR ICAO..."
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onFocus={() => setIsSearchFocused(true)}
-            onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+            onChange={(e) => { setSearchInput(e.target.value); }}
+            onFocus={() => { setIsSearchFocused(true); }}
+            onBlur={() => setTimeout(() => { setIsSearchFocused(false); }, 200)}
             onKeyDown={handleSearchKeyDown}
           />
           <AnimatePresence>
@@ -60,7 +60,7 @@ export default function SearchBar({
                   size="sm"
                   variant="light"
                   radius="full"
-                  onPress={() => setSearchInput('')}
+                  onPress={() => { setSearchInput(''); }}
                   className="text-zinc-400 hover:text-zinc-200"
                 >
                   <X size={16} />
@@ -94,8 +94,8 @@ export default function SearchBar({
                           ? 'border-b border-zinc-800/50'
                           : ''
                       }`}
-                      onClick={() => handleGlobalSearchSelect(item)}
-                      onMouseEnter={() => setSearchSelectedIndex(index)}
+                      onClick={() => { handleGlobalSearchSelect(item); }}
+                      onMouseEnter={() => { setSearchSelectedIndex(index); }}
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-zinc-800/80 flex items-center justify-center">

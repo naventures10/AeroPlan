@@ -40,6 +40,6 @@ export function useKeyboardShortcuts({
     };
 
     window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    return () => { window.removeEventListener('keydown', handleGlobalKeyDown); };
   }, [viewMode, activeAirport, returnToEnroute, sectionModalOpen, onCloseSectionModal, selectedRouteIds, setSelectedRouteIds, selectedFeature, setSelectedFeature, cancelPendingSelection]);
 }

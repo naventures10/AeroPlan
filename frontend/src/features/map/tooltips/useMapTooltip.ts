@@ -174,8 +174,13 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
       const map = mapRef.current?.getMap();
       if (map && x !== undefined && y !== undefined) {
         try {
+          const currentLayers = map.getStyle()?.layers?.map((l: any) => l.id) || [];
+          const safeLayers = ['mvt-points', 'mvt-polygons'].filter(l => currentLayers.includes(l));
+          
+          if (safeLayers.length === 0) return null;
+
           const features = map.queryRenderedFeatures([x, y], {
-            layers: ['mvt-points', 'mvt-polygons'],
+            layers: safeLayers,
           });
           if (features && features.length > 0) {
             let htmlContent = '';
@@ -183,6 +188,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
 
             for (let k = 0; k < maxFeatures; k++) {
               const feature = features[k];
+              if (!feature) continue;
               const p = feature.properties ?? {};
               const name = p.name || p.feature_name || 'FEATURE';
               const category = p.category || p.feature_category || 'UNKNOWN';

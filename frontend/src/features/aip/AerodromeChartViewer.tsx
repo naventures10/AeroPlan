@@ -51,7 +51,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
         console.error('Failed to fetch aerodrome charts:', err);
         setCharts([]);
       })
-      .finally(() => setIsLoading(false));
+      .finally(() => { setIsLoading(false); });
   }, [icaoCode]);
 
   const handleChartClick = useCallback((chart: ChartItem) => {
@@ -105,7 +105,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
             {/* Scroll Left */}
             {charts.length > 3 && (
               <button
-                onClick={() => scroll('left')}
+                onClick={() => { scroll('left'); }}
                 className="shrink-0 w-8 h-8 rounded-full bg-zinc-800/60 hover:bg-zinc-700/60 border border-zinc-700/40 flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors backdrop-blur-xl"
               >
                 <ChevronLeft size={16} />
@@ -148,7 +148,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: idx * 0.05, duration: 0.2 }}
-                      onClick={() => handleChartClick(chart)}
+                      onClick={() => { handleChartClick(chart); }}
                       className="group shrink-0 flex flex-col items-center gap-1.5 p-2 rounded-xl border border-zinc-800/50 hover:border-indigo-500/40 bg-zinc-900/40 hover:bg-indigo-500/10 transition-all duration-200 cursor-pointer w-[82px]"
                       title={chart.chart_title}
                     >
@@ -169,7 +169,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
             {/* Scroll Right */}
             {charts.length > 3 && (
               <button
-                onClick={() => scroll('right')}
+                onClick={() => { scroll('right'); }}
                 className="shrink-0 w-8 h-8 rounded-full bg-zinc-800/60 hover:bg-zinc-700/60 border border-zinc-700/40 flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors backdrop-blur-xl"
               >
                 <ChevronRight size={16} />
@@ -206,13 +206,13 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
               <div className="absolute top-6 left-6 z-50 flex flex-col gap-2">
                 <div className="flex flex-col bg-zinc-900/80 backdrop-blur-xl border border-zinc-700/50 rounded-2xl overflow-hidden shadow-2xl">
                   <button
-                    onClick={() => setPdfScale(s => Math.min(4, s + 0.2))}
+                    onClick={() => { setPdfScale(s => Math.min(4, s + 0.2)); }}
                     className="p-3 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors border-b border-zinc-800/50"
                   >
                     <ZoomIn size={18} />
                   </button>
                   <button
-                    onClick={() => setPdfScale(s => Math.max(0.5, s - 0.2))}
+                    onClick={() => { setPdfScale(s => Math.max(0.5, s - 0.2)); }}
                     className="p-3 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
                   >
                     <ZoomOut size={18} />
@@ -229,7 +229,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
               <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
                 <div className="flex items-center gap-1 p-1 bg-zinc-900/80 backdrop-blur-xl border border-zinc-700/50 rounded-2xl shadow-2xl">
                   <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); }}
                     disabled={currentPage <= 1}
                     className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
                   >
@@ -241,7 +241,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                     </span>
                   </div>
                   <button
-                    onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))}
+                    onClick={() => { setCurrentPage(p => Math.min(numPages, p + 1)); }}
                     disabled={currentPage >= numPages}
                     className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
                   >

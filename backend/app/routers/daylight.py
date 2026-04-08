@@ -9,11 +9,12 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.schemas.daylight import DaylightResponse
 
 router = APIRouter(prefix="/api", tags=["Daylight"])
 
 
-@router.get("/daylight/{icao_code}")
+@router.get("/daylight/{icao_code}", response_model=DaylightResponse)
 async def get_daylight(
     icao_code: str,
     month: int | None = Query(None, ge=1, le=12, description="Filter by month (1-12). Defaults to current month."),
@@ -34,7 +35,7 @@ async def get_daylight(
         try:
             target_date = date.fromisoformat(date_str)
         except ValueError:
-            raise HTTPException(status_code=400, detail=f"Invalid date format: {date_str}. Use YYYY-MM-DD.")
+            raise HTTPException(status_code=400, detail=f"Invalid date format: {date_str}. Use YYYY-MM-DD.") from None
 
         query = text("""
             SELECT airport_icao, airport_name, date, twilight_from, sunrise, sunset, twilight_to

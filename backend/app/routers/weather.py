@@ -11,16 +11,18 @@ as fallback. Results are cached in-memory for CACHE_TTL_SECONDS (default 300s).
 """
 
 import asyncio
-import logging
 import re
 import time
 from datetime import datetime, timezone
 
 import httpx
+import structlog
 from bs4 import BeautifulSoup
 from fastapi import APIRouter, HTTPException
 
-logger = logging.getLogger(__name__)
+from app.schemas.weather import WeatherResponse
+
+logger = structlog.get_logger()
 
 router = APIRouter(prefix="/api", tags=["Weather"])
 
@@ -49,7 +51,7 @@ def _parse_weather_html(html: str, icao: str) -> dict:
     data: dict = {"icao": icao, "metar": None, "taf": []}
 
     # Extract METAR
-    metar_b = soup.find("b", string=re.compile(r"^\s*METAR\s*$", re.IGNORECASE))
+    metar_b = soup.find("b", string=re.compile(r"^\s*METAR\s*$", re.IGNORECASE))  # type: ignore
     if metar_b:
         metar_text = ""
         current = metar_b.next_sibling
@@ -62,7 +64,7 @@ def _parse_weather_html(html: str, icao: str) -> dict:
             data["metar"] = cleaned
 
     # Extract all TAFs
-    taf_bs = soup.find_all("b", string=re.compile(r"^\s*TAF\s*$", re.IGNORECASE))
+    taf_bs = soup.find_all("b", string=re.compile(r"^\s*TAF\s*$", re.IGNORECASE))  # type: ignore
     for taf_b in taf_bs:
         taf_text = ""
         current = taf_b.next_sibling
@@ -99,7 +101,7 @@ async def _fetch_from_source(source_name: str, url: str) -> dict | None:
             resp.raise_for_status()
         return {"source": source_name, "html": resp.text}
     except Exception as exc:
-        logger.warning("Weather source '%s' failed: %s", source_name, exc)
+        logger.warning("weather_source_failed", source=source_name, error=str(exc))
         return None
 
 
@@ -116,7 +118,7 @@ async def _fetch_weather(icao: str) -> dict:
         for name, url in SOURCES.items()
     }
     results = await asyncio.gather(*tasks.values())
-    source_results = dict(zip(tasks.keys(), results))
+    source_results = dict(zip(tasks.keys(), results, strict=False))
 
     # Parse successful responses
     parsed: list[dict] = []
@@ -149,8 +151,10 @@ async def _fetch_weather(icao: str) -> dict:
         times = {p["source"]: p["_metar_time"] for p in parsed}
         metars_match = parsed[0].get("metar") == parsed[1].get("metar")
         logger.info(
-            "Weather comparison for %s — METAR times: %s, match: %s",
-            icao_upper, times, metars_match,
+            "weather_comparison",
+            icao=icao_upper,
+            metar_times=times,
+            metars_match=metars_match,
         )
 
         # Clean up internal field
@@ -174,8 +178,8 @@ async def _fetch_weather(icao: str) -> dict:
 
 
 # ── Endpoint ─────────────────────────────────────────────────────────────────
-@router.get("/weather/{icao_code}")
-async def get_weather(icao_code: str):
+@router.get("/weather/{icao_code}", response_model=WeatherResponse)
+async def get_weather(icao_code: str) -> WeatherResponse:
     """
     Returns live METAR and TAF for a given ICAO airport code.
 
