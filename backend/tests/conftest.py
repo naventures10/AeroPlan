@@ -5,6 +5,7 @@ Pytest configuration and shared fixtures for backend testing.
 import os
 
 import pytest
+import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -35,7 +36,7 @@ async def override_get_db():
 app.dependency_overrides[get_db] = override_get_db
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_test_db():
     """Create all tables in the test database before the test session starts."""
     async with test_engine.begin() as conn:

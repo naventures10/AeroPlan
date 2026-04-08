@@ -49,6 +49,7 @@ def setup_logging(*, json_format: bool = False) -> None:
     )
 
     formatter = structlog.stdlib.ProcessorFormatter(
+        foreign_pre_chain=shared_processors,
         processors=[
             structlog.stdlib.ProcessorFormatter.remove_processors_meta,
             renderer,

@@ -71,7 +71,7 @@ function parseMetar(metar: string | null): ParsedMetar {
     const tempMatch = part.match(/^(M?\d{2})\/(M?\d{2})?$/);
     if (tempMatch) {
       const parseTemp = (t: string) => t.startsWith('M') ? -parseInt(t.substring(1)) : parseInt(t);
-      result.temp = parseTemp(tempMatch[1] ?? '');
+      if (tempMatch[1]) result.temp = parseTemp(tempMatch[1]);
       if (tempMatch[2]) result.dew = parseTemp(tempMatch[2]);
       continue;
     }
