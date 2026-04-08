@@ -61,5 +61,5 @@ async def get_ats_route_labels(db: AsyncSession = Depends(get_db)) -> GeoJsonFea
     result = await db.execute(query)
     row = result.fetchone()
     if row and row[0]:
-        return row[0]
-    return {"type": "FeatureCollection", "features": []}
+        return GeoJsonFeatureCollection(**row[0])
+    return GeoJsonFeatureCollection(type="FeatureCollection", features=[])

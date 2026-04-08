@@ -42,5 +42,5 @@ async def get_aerodrome_features(icao_code: str, db: AsyncSession = Depends(get_
     result = await db.execute(query, {"icao": icao_code.upper()})
     row = result.fetchone()
     if row and row[0]:
-        return row[0]
-    return {"type": "FeatureCollection", "features": []}
+        return GeoJsonFeatureCollection(**row[0])
+    return GeoJsonFeatureCollection(type="FeatureCollection", features=[])

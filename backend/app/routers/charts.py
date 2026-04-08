@@ -40,12 +40,12 @@ async def get_aerodrome_charts(icao_code: str, db: AsyncSession = Depends(get_db
     result = await db.execute(query, {"icao": icao_code.upper()})
     rows = result.fetchall()
     return [
-        {
-            "chart_id": r.chart_id,
-            "chart_title": r.chart_title,
-            "chart_index": r.chart_index,
-            "chart_url": r.chart_url,
-        }
+        ChartResponse(
+            chart_id=r.chart_id,
+            chart_title=r.chart_title,
+            chart_index=r.chart_index,
+            chart_url=r.chart_url,
+        )
         for r in rows
     ]
 

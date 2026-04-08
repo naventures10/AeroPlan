@@ -20,7 +20,7 @@ async def get_daylight(
     month: int | None = Query(None, ge=1, le=12, description="Filter by month (1-12). Defaults to current month."),
     date_str: str | None = Query(None, alias="date", description="Filter by specific date (YYYY-MM-DD)"),
     db: AsyncSession = Depends(get_db),
-):
+) -> DaylightResponse:
     """
     Returns daylight/twilight data for a given airport.
 
@@ -63,10 +63,10 @@ async def get_daylight(
             detail=f"No daylight data found for {icao}",
         )
 
-    return {
-        "airport_icao": rows[0].airport_icao,
-        "airport_name": rows[0].airport_name,
-        "records": [
+    return DaylightResponse(
+        airport_icao=rows[0].airport_icao,
+        airport_name=rows[0].airport_name,
+        records=[
             {
                 "date": r.date.isoformat(),
                 "twilight_from": r.twilight_from.strftime("%H:%M") if r.twilight_from else None,
@@ -76,4 +76,4 @@ async def get_daylight(
             }
             for r in rows
         ],
-    }
+    )
