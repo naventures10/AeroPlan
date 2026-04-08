@@ -50,7 +50,7 @@ export default function LayerToolbar() {
             isIconOnly
             radius="full"
             variant="flat"
-            onPress={() => toggleLayer(id)}
+            onPress={() => { toggleLayer(id); }}
             title={`Toggle ${id}`}
             className={`backdrop-blur-2xl shadow-xl transition-all duration-300 ${
               isActive

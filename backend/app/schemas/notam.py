@@ -5,7 +5,8 @@ The ``serialize_notam`` function replaces the 17-line dict literal that was
 previously copy-pasted three times across notams.py.
 """
 
-from datetime import datetime
+
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -26,7 +27,7 @@ class NotamResponse(BaseModel):
     description: str | None = None
 
 
-def serialize_notam(row) -> dict:
+def serialize_notam(row: Any) -> NotamResponse:
     """Convert a SQLAlchemy row to a plain dict matching NotamResponse."""
     return {
         "notam_id": row.notam_id,

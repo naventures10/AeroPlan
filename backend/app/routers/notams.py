@@ -7,17 +7,17 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.schemas.notam import serialize_notam
+from app.schemas.notam import NotamResponse, serialize_notam
 
 router = APIRouter(prefix="/api", tags=["NOTAMs"])
 
 
-@router.get("/notams/{icao_code}")
+@router.get("/notams/{icao_code}", response_model=list[NotamResponse])
 async def get_notams_by_airport(
     icao_code: str,
     active_only: bool = Query(False, description="If true, return only currently active NOTAMs"),
     db: AsyncSession = Depends(get_db),
-):
+) -> list[NotamResponse]:
     """Returns all NOTAMs for a specific airport ICAO code, ordered by valid_from DESC."""
     icao = icao_code.upper()
     active_filter = "AND (valid_to IS NULL OR valid_to > NOW())" if active_only else ""
@@ -34,12 +34,12 @@ async def get_notams_by_airport(
     return [serialize_notam(r) for r in result.fetchall()]
 
 
-@router.get("/notams")
+@router.get("/notams", response_model=list[NotamResponse])
 async def get_all_notams(
     icao: str | None = Query(None, description="Filter by airport ICAO code"),
     active_only: bool = Query(False, description="If true, return only currently active NOTAMs"),
     db: AsyncSession = Depends(get_db),
-):
+) -> list[NotamResponse]:
     """Returns NOTAMs with optional filters. Without params, returns all NOTAMs."""
     conditions = []
     params: dict = {}
@@ -65,12 +65,12 @@ async def get_all_notams(
     return [serialize_notam(r) for r in result.fetchall()]
 
 
-@router.get("/notams/fir/{fir_code}")
+@router.get("/notams/fir/{fir_code}", response_model=list[NotamResponse])
 async def get_notams_by_fir(
     fir_code: str,
     active_only: bool = Query(False, description="If true, return only currently active NOTAMs"),
     db: AsyncSession = Depends(get_db),
-):
+) -> list[NotamResponse]:
     """Returns all NOTAMs for a specific FIR (e.g., VOMF, VABF)."""
     fir_pattern = f"%{fir_code.upper()}%"
     active_filter = "AND (valid_to IS NULL OR valid_to > NOW())" if active_only else ""

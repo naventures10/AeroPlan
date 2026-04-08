@@ -83,7 +83,7 @@ export function useSearch() {
   }, [searchInput]);
 
   // Reset keyboard index when input changes
-  useEffect(() => setSearchSelectedIndex(-1), [searchInput]);
+  useEffect(() => { setSearchSelectedIndex(-1); }, [searchInput]);
 
   const resetSearchState = useCallback(() => {
     setIsSearchFocused(false);
@@ -97,9 +97,9 @@ export function useSearch() {
       if (selectionTimerRef.current) clearTimeout(selectionTimerRef.current);
 
       // 1. Kick off the camera animation immediately
-      if (item.type === 'ATS_ROUTE' && item.bounds) {
-        fitBounds(item.bounds);
-      } else if (item.center) {
+      if (item.type === 'ATS_ROUTE' && item.bounds && item.bounds.length === 4) {
+        fitBounds(item.bounds as [number, number, number, number]);
+      } else if (item.center && item.center.length >= 2 && item.center[0] !== undefined && item.center[1] !== undefined) {
         const isAero = item.type === 'AERODROME';
         const targetPitch = isAero ? 60 : 0;
         flyToLocation(item.center[0], item.center[1], 15, targetPitch, isAero ? 'TERMINAL' : 'ENROUTE');
@@ -162,9 +162,11 @@ export function useSearch() {
       } else if (e.key === 'Enter') {
         e.preventDefault();
         if (searchSelectedIndex >= 0 && searchSelectedIndex < suggestions.length) {
-          handleGlobalSearchSelect(suggestions[searchSelectedIndex]);
+          const selectedItem = suggestions[searchSelectedIndex];
+          if (selectedItem) handleGlobalSearchSelect(selectedItem);
         } else if (suggestions.length > 0) {
-          handleGlobalSearchSelect(suggestions[0]);
+          const firstItem = suggestions[0];
+          if (firstItem) handleGlobalSearchSelect(firstItem);
         }
       } else if (e.key === 'Escape') {
         setIsSearchFocused(false);

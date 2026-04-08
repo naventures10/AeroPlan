@@ -34,7 +34,7 @@ function RawTableRenderer({ rows }: { rows: any[][] }) {
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
-            {headers.map((h: any, i: number) => (
+            {headers?.map((h: any, i: number) => (
               <th
                 key={i}
                 className="text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-zinc-400 bg-zinc-900/80 border-b border-zinc-700/50 whitespace-nowrap"

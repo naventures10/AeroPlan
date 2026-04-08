@@ -7,12 +7,13 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.schemas.geojson import GeoJsonFeatureCollection
 
 router = APIRouter(prefix="/api", tags=["ATS Routes"])
 
 
-@router.get("/ats-route-labels")
-async def get_ats_route_labels(db: AsyncSession = Depends(get_db)):
+@router.get("/ats-route-labels", response_model=GeoJsonFeatureCollection)
+async def get_ats_route_labels(db: AsyncSession = Depends(get_db)) -> GeoJsonFeatureCollection:
     """
     Returns the midpoints of all ATS route segments as GeoJSON points.
     Includes route_id, route_type, and the segment bearing for labeling.
@@ -26,7 +27,7 @@ async def get_ats_route_labels(db: AsyncSession = Depends(get_db)):
                         'type',       'Feature',
                         'geometry',   ST_AsGeoJSON(
                             ST_Transform(
-                                ST_LineInterpolatePoint(ST_Transform(geom, 3857), 0.5), 
+                                ST_LineInterpolatePoint(ST_Transform(geom, 3857), 0.5),
                             4326)
                         )::jsonb,
                         'properties', jsonb_build_object(
@@ -34,11 +35,11 @@ async def get_ats_route_labels(db: AsyncSession = Depends(get_db)):
                             'route_id', route_id,
                             'route_type', route_type,
                             'bearing', (
-                                CASE 
+                                CASE
                                     WHEN (90 - degrees(ST_Azimuth(
                                         ST_Transform(ST_LineInterpolatePoint(ST_Transform(geom, 3857), 0.49), 4326),
                                         ST_Transform(ST_LineInterpolatePoint(ST_Transform(geom, 3857), 0.51), 4326)
-                                    ))) < -90 
+                                    ))) < -90
                                     THEN (90 - degrees(ST_Azimuth(
                                         ST_Transform(ST_LineInterpolatePoint(ST_Transform(geom, 3857), 0.49), 4326),
                                         ST_Transform(ST_LineInterpolatePoint(ST_Transform(geom, 3857), 0.51), 4326)

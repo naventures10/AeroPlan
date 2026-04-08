@@ -4,6 +4,9 @@ import { MVTLayer } from '@deck.gl/geo-layers';
 import { CollisionFilterExtension } from '@deck.gl/extensions';
 import { useMapStore } from '../../../store/useMapStore';
 
+const COLLISION_FILTER_EXTENSION = new CollisionFilterExtension();
+const EXTENSIONS = [COLLISION_FILTER_EXTENSION];
+
 /**
  * Builds the memoised DeckGL layer array.
  *
@@ -26,8 +29,8 @@ export function useDeckLayers({
     if (activeLayers.atsRoutes || selectedRouteIds.length > 0) {
       setIsAtsRendered(true);
     } else {
-      const timer = setTimeout(() => setIsAtsRendered(false), 300);
-      return () => clearTimeout(timer);
+      const timer = setTimeout(() => { setIsAtsRendered(false); }, 300);
+      return () => { clearTimeout(timer); };
     }
   }, [activeLayers.atsRoutes, selectedRouteIds.length]);
 
@@ -82,6 +85,7 @@ export function useDeckLayers({
           fontWeight: 700,
           outlineWidth: 2,
           outlineColor: [0, 0, 0, 180],
+          fontSettings: { sdf: true },
         }),
       );
     }
@@ -268,7 +272,7 @@ export function useDeckLayers({
             getSize: 5000,
             getColor: (): [number, number, number, number] => [0, 0, 0, 255], // Fully opaque mask
             sizeUnits: 'meters',
-            extensions: [new CollisionFilterExtension()],
+            extensions: EXTENSIONS,
             collisionGroup: 'ats-labels',
             collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
             updateTriggers: {
@@ -294,11 +298,11 @@ export function useDeckLayers({
             getSize: 5000,
             getColor: (d: any): [number, number, number, number] => {
               const isSelected = selectedRouteIds.includes(d.properties.route_id);
-              const color = d.properties.route_type === 'RNAV' ? [50, 205, 50] : [34, 211, 238];
+              const color = (d.properties.route_type === 'RNAV' ? [50, 205, 50] : [34, 211, 238]) as [number, number, number];
               return [color[0], color[1], color[2], isSelected ? 255 : 140];
             },
             sizeUnits: 'meters',
-            extensions: [new CollisionFilterExtension()],
+            extensions: EXTENSIONS,
             collisionGroup: 'ats-labels',
             collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
             updateTriggers: {
@@ -323,7 +327,7 @@ export function useDeckLayers({
             },
             fontFamily: 'Inter, sans-serif',
             fontWeight: 700,
-            extensions: [new CollisionFilterExtension()],
+            extensions: EXTENSIONS,
             collisionGroup: 'ats-labels',
             collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
             updateTriggers: {

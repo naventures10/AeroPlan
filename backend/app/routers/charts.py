@@ -2,14 +2,16 @@
 Charts Router — Aerodrome chart listing and PDF proxy.
 """
 
-import httpx
 from urllib.parse import urlparse
+
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.schemas.aerodrome import ChartResponse
 
 router = APIRouter(prefix="/api", tags=["Charts"])
 
@@ -26,8 +28,8 @@ def _validate_proxy_url(url: str) -> None:
     if parsed.hostname not in ALLOWED_PDF_DOMAINS:
         raise HTTPException(status_code=403, detail=f"Domain '{parsed.hostname}' is not in the allow-list")
 
-@router.get("/aerodromes/{icao_code}/charts")
-async def get_aerodrome_charts(icao_code: str, db: AsyncSession = Depends(get_db)):
+@router.get("/aerodromes/{icao_code}/charts", response_model=list[ChartResponse])
+async def get_aerodrome_charts(icao_code: str, db: AsyncSession = Depends(get_db)) -> list[ChartResponse]:
     """Returns the list of available aerodrome charts for a given ICAO code."""
     query = text("""
         SELECT chart_id, chart_title, chart_index, chart_url
@@ -49,13 +51,13 @@ async def get_aerodrome_charts(icao_code: str, db: AsyncSession = Depends(get_db
 
 
 @router.get("/proxy-pdf")
-async def proxy_pdf(url: str = Query(..., description="Remote PDF URL to proxy")):
+async def proxy_pdf(url: str = Query(..., description="Remote PDF URL to proxy")) -> Response:
     """
     Proxies a remote PDF through the backend so the frontend can render it
     in an iframe without CORS issues.
     """
     _validate_proxy_url(url)
-    
+
     from app.config import settings
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",

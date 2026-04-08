@@ -54,7 +54,7 @@ export default function AerodromeInfoDropdown({
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => { document.removeEventListener('mousedown', handleClickOutside); };
   }, []);
 
   if (!activeAirport) return null;
@@ -63,7 +63,7 @@ export default function AerodromeInfoDropdown({
     <div ref={dropdownRef} className="relative z-50">
       {/* Trigger Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => { setIsOpen(!isOpen); }}
         className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl backdrop-blur-2xl shadow-xl transition-all duration-300 focus:outline-none border ${
           isOpen
             ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300 shadow-[0_0_20px_rgba(99,102,241,0.15)]'

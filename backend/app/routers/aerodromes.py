@@ -2,11 +2,15 @@
 Aerodromes Router — Aerodrome data, metadata, and AIP section lookups.
 """
 
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.schemas.aerodrome import AerodromeSectionResponse
+from app.schemas.geojson import GeoJsonFeatureCollection
 
 router = APIRouter(prefix="/api", tags=["Aerodromes"])
 
@@ -39,8 +43,8 @@ SECTION_MAP: dict[str, dict] = {
 }
 
 
-@router.get("/aerodromes")
-async def get_all_aerodromes(db: AsyncSession = Depends(get_db)):
+@router.get("/aerodromes", response_model=GeoJsonFeatureCollection)
+async def get_all_aerodromes(db: AsyncSession = Depends(get_db)) -> GeoJsonFeatureCollection:
     """
     Fetches all Aerodrome Reference Points (ARP) from spatial_features and aerodrome_documents.
     Returns a GeoJSON FeatureCollection natively from PostGIS.
@@ -77,8 +81,8 @@ async def get_all_aerodromes(db: AsyncSession = Depends(get_db)):
     return {"type": "FeatureCollection", "features": []}
 
 
-@router.get("/aerodromes/{icao_code}/metadata")
-async def get_aerodrome_metadata(icao_code: str, db: AsyncSession = Depends(get_db)):
+@router.get("/aerodromes/{icao_code}/metadata", response_model=dict[str, Any])
+async def get_aerodrome_metadata(icao_code: str, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
     """Fetches the JSONB AIP document metadata for a specific aerodrome."""
     query = text("""
         SELECT aip_document
@@ -92,12 +96,12 @@ async def get_aerodrome_metadata(icao_code: str, db: AsyncSession = Depends(get_
     return {}
 
 
-@router.get("/aerodromes/{icao_code}/section/{section_id}")
+@router.get("/aerodromes/{icao_code}/section/{section_id}", response_model=AerodromeSectionResponse)
 async def get_aerodrome_section(
     icao_code: str,
     section_id: str,
     db: AsyncSession = Depends(get_db),
-):
+) -> AerodromeSectionResponse:
     """Returns a specific AIP sub-section for an aerodrome."""
     section_id_upper = section_id.upper()
     section_meta = SECTION_MAP.get(section_id_upper)

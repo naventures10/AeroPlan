@@ -7,12 +7,13 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.schemas.search import SearchResultResponse
 
 router = APIRouter(prefix="/api", tags=["Search"])
 
 
-@router.get("/search")
-async def global_search(q: str, db: AsyncSession = Depends(get_db)):
+@router.get("/search", response_model=list[SearchResultResponse])
+async def global_search(q: str, db: AsyncSession = Depends(get_db)) -> list[SearchResultResponse]:
     """
     Searches across Aerodromes, NavAids, Waypoints, and ATS Routes.
     Calculates geographic center and bounding boxes for LineStrings

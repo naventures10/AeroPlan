@@ -31,11 +31,11 @@ export function useAerodromeData() {
   useEffect(() => {
     fetchAerodromes()
       .then(setAerodromes)
-      .catch((err) => console.error('Failed to fetch aerodromes', err));
+      .catch((err) => { console.error('Failed to fetch aerodromes', err); });
 
     fetchAtsRouteLabels()
       .then(setAtsRouteLabels)
-      .catch((err) => console.error('Failed to fetch ATS labels', err));
+      .catch((err) => { console.error('Failed to fetch ATS labels', err); });
   }, [setAtsRouteLabels]);
 
   // Handle clicking an aerodrome on the map
@@ -45,8 +45,8 @@ export function useAerodromeData() {
       flyToLocation(coords[0], coords[1], 15, 60);
 
       fetchAerodromeMetadata(icao)
-        .then((data) => setActiveAerodromeMetadata(data))
-        .catch((err) => console.error('Failed to fetch metadata', err));
+        .then((data) => { setActiveAerodromeMetadata(data); })
+        .catch((err) => { console.error('Failed to fetch metadata', err); });
     },
     [flyToLocation, setActiveAirport, setActiveAerodromeMetadata],
   );
@@ -73,12 +73,12 @@ export function useAerodromeData() {
           setSectionData(null);
           setSectionTitle('Error loading section');
         })
-        .finally(() => setSectionLoading(false));
+        .finally(() => { setSectionLoading(false); });
     },
     [activeAirport],
   );
 
-  const closeSectionModal = useCallback(() => setSectionModalOpen(false), []);
+  const closeSectionModal = useCallback(() => { setSectionModalOpen(false); }, []);
 
   return {
     aerodromes,

@@ -7,12 +7,13 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.schemas.geojson import GeoJsonFeatureCollection
 
 router = APIRouter(prefix="/api", tags=["Spatial"])
 
 
-@router.get("/features/{icao_code}")
-async def get_aerodrome_features(icao_code: str, db: AsyncSession = Depends(get_db)):
+@router.get("/features/{icao_code}", response_model=GeoJsonFeatureCollection)
+async def get_aerodrome_features(icao_code: str, db: AsyncSession = Depends(get_db)) -> GeoJsonFeatureCollection:
     """
     Fetches 3D spatial features (obstacles, buildings) for a specific aerodrome.
     Returns a GeoJSON FeatureCollection natively from PostGIS.

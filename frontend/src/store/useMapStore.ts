@@ -70,10 +70,10 @@ export const useMapStore = create<MapState>((set, get) => ({
     viewState: DEFAULT_VIEW,
 
     viewMode: 'ENROUTE',
-    setViewMode: (mode) => set({ viewMode: mode }),
+    setViewMode: (mode) => { set({ viewMode: mode }); },
 
     activeAerodromeMetadata: null,
-    setActiveAerodromeMetadata: (data) => set({ activeAerodromeMetadata: data }),
+    setActiveAerodromeMetadata: (data) => { set({ activeAerodromeMetadata: data }); },
 
     searchQuery: '',
     activeLayers: {
@@ -86,25 +86,25 @@ export const useMapStore = create<MapState>((set, get) => ({
 
     // 3. NEW: Active Airport State
     activeAirport: null,
-    setActiveAirport: (code) => set({ activeAirport: code }),
+    setActiveAirport: (code) => { set({ activeAirport: code }); },
 
     selectedRouteIds: [],
     selectedRouteType: null,
-    setSelectedRouteIds: (routeIds, routeType = null) => set({ selectedRouteIds: routeIds, selectedRouteType: routeType }),
+    setSelectedRouteIds: (routeIds, routeType = null) => { set({ selectedRouteIds: routeIds, selectedRouteType: routeType }); },
 
     selectedFeature: null,
-    setSelectedFeature: (feature) => set({ selectedFeature: feature }),
+    setSelectedFeature: (feature) => { set({ selectedFeature: feature }); },
 
     atsRouteLabels: null,
-    setAtsRouteLabels: (data) => set({ atsRouteLabels: data }),
+    setAtsRouteLabels: (data) => { set({ atsRouteLabels: data }); },
 
     // Basic Setters
-    setViewState: (viewState) => set({ viewState }),
-    setSearchQuery: (query) => set({ searchQuery: query }),
+    setViewState: (viewState) => { set({ viewState }); },
+    setSearchQuery: (query) => { set({ searchQuery: query }); },
     toggleLayer: (layer) =>
-        set((state) => ({
+        { set((state) => ({
             activeLayers: { ...state.activeLayers, [layer]: !state.activeLayers[layer] }
-        })),
+        })); },
 
     // The Enroute <-> Terminal Toggle Logic
     toggleViewMode: () => {
