@@ -1,3 +1,4 @@
+import React, { useEffect, useRef } from 'react';
 import { Button } from '@heroui/react';
 import { Search, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,6 +33,14 @@ export default function SearchBar({
   handleGlobalSearchSelect,
   handleSearchKeyDown,
 }: SearchBarProps) {
+  const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
+    };
+  }, []);
+
   return (
     <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-[28rem] max-w-[90vw] pointer-events-auto z-50">
       <div className="relative rounded-full shadow-2xl">
@@ -44,7 +53,10 @@ export default function SearchBar({
             value={searchInput}
             onChange={(e) => { setSearchInput(e.target.value); }}
             onFocus={() => { setIsSearchFocused(true); }}
-            onBlur={() => setTimeout(() => { setIsSearchFocused(false); }, 200)}
+            onBlur={() => {
+              if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
+              blurTimeoutRef.current = setTimeout(() => { setIsSearchFocused(false); }, 200);
+            }}
             onKeyDown={handleSearchKeyDown}
           />
           <AnimatePresence>

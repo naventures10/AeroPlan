@@ -92,7 +92,7 @@ async def health_check() -> dict:
             await session.execute(text("SELECT 1"))
         db_status = "connected"
     except Exception as exc:
-        db_status = f"error: {exc}"
+        db_status = "error"
         logger.warning("health_check_db_failed", error=str(exc))
 
     return {"status": "online", "database": db_status}
