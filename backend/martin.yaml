@@ -76,7 +76,7 @@ postgres:
         upper_limit: "varchar"
         lower_limit: "varchar"
         airspace_class: "varchar"
-        mea: "varchar"
+        moca: "varchar"
         lateral_limits: "varchar"
         direction_odd: "varchar"
         direction_even: "varchar"

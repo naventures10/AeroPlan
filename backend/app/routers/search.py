@@ -104,7 +104,7 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)) -> list[Sear
                     'upper_limit', (SELECT upper_limit FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1),
                     'lower_limit', (SELECT lower_limit FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1),
                     'lateral_limits', (SELECT lateral_limits FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1),
-                    'mea', (SELECT mea FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1)
+                    'moca', (SELECT moca FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1)
                 ) AS properties
             FROM ats_routes r
             JOIN ats_route_waypoints w ON r.route_id = w.route_id
