@@ -139,15 +139,15 @@ export function FeatureInfoCard() {
             </span>
             <div className="flex gap-4">
               {dirOdd && (
-                <div className="flex items-center gap-2">
-                  <span className="text-base leading-none">{dirOdd}</span>
-                  <span className="text-[11px] font-medium text-zinc-300">ODD FLs</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-base font-bold text-zinc-200 leading-none">{dirOdd}</span>
+                  <span className="text-[10px] font-medium text-zinc-400 tracking-wide">ODD FLs</span>
                 </div>
               )}
               {dirEven && (
-                <div className="flex items-center gap-2">
-                  <span className="text-base leading-none">{dirEven}</span>
-                  <span className="text-[11px] font-medium text-zinc-300">EVEN FLs</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-base font-bold text-zinc-200 leading-none">{dirEven}</span>
+                  <span className="text-[10px] font-medium text-zinc-400 tracking-wide">EVEN FLs</span>
                 </div>
               )}
             </div>
