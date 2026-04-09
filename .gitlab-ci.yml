@@ -60,6 +60,7 @@ backend:test:
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: password
     POSTGRES_DB: test_aeronautical_information_system
+    POSTGRES_HOST: db
     DATABASE_URL: postgresql+asyncpg://postgres:password@db:5432/test_aeronautical_information_system
   script:
     - uv run pytest tests/

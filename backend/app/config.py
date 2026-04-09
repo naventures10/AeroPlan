@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     )
 
     # ── PostgreSQL ───────────────────────────────────────────────────────
+    DATABASE_URL: str | None = None
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str
     POSTGRES_HOST: str = "localhost"
@@ -24,6 +25,8 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
+        if self.DATABASE_URL:
+            return self.DATABASE_URL
         return (
             f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
