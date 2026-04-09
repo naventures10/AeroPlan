@@ -73,8 +73,8 @@ export function FeatureInfoCard() {
   const LabelVal = ({ label, val }: { label: string; val: React.ReactNode }) => {
     if (!val || val === 'None' || val === '{}') return null;
     return (
-      <div className="flex flex-col mb-2">
-        <span className="text-[10px] font-bold text-default-400 tracking-wider uppercase">
+      <div className="flex flex-col mb-1.5">
+        <span className="text-[9px] font-bold text-default-400 tracking-wider uppercase">
           {label}
         </span>
         <span className="text-xs font-medium text-white">{val}</span>
@@ -156,8 +156,8 @@ export function FeatureInfoCard() {
 
         {/* ── Segment Table ── */}
         <div className="rounded-lg border border-white/10 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[600px]">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left border-collapse min-w-[500px]">
               <thead>
                 <tr className="bg-white/[0.06]">
                   <th className="route-th">Fix</th>
@@ -371,8 +371,8 @@ export function FeatureInfoCard() {
 
   // Use wider card for ATS routes to fit the table
   const isRoute = type === 'ATS_ROUTE';
-  const cardWidth = isRoute ? 'w-[680px] max-w-[92vw]' : 'w-80';
-  const cardPosition = isRoute ? 'bottom-6 left-1/2 -translate-x-1/2' : 'bottom-6 left-24';
+  const cardWidth = isRoute ? 'w-[560px] max-w-[92vw]' : 'w-72';
+  const cardPosition = 'top-6 right-6';
 
   const routeTypeBadge = isRoute && routeDetails?.route_type ? (
     <span className={`ml-2 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider ${
@@ -388,22 +388,22 @@ export function FeatureInfoCard() {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 50, opacity: 0 }}
+          initial={{ x: 50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: 50, opacity: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
           className={`absolute ${cardPosition} z-50 ${cardWidth}`}
         >
-          <Card className="bg-black/50 backdrop-blur-2xl backdrop-saturate-150 border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)]">
-        <CardHeader className="flex justify-between items-center pb-2 pt-4 px-4">
+          <Card className="bg-black/60 backdrop-blur-2xl backdrop-saturate-200 border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.6)] max-h-[calc(100vh-180px)] flex flex-col">
+        <CardHeader className="flex justify-between items-center pb-1.5 pt-3 px-3">
           <div className="flex flex-col">
             <div className="flex items-center gap-1">
-              <span className="text-[10px] text-primary-500 font-bold tracking-widest uppercase mb-1">
+              <span className="text-[9px] text-primary-500 font-bold tracking-widest uppercase mb-0.5">
                 {type.replace('_', ' ')}
               </span>
               {routeTypeBadge}
             </div>
-            <h3 className="text-base font-bold text-white tracking-wide">
+            <h3 className="text-sm font-bold text-white tracking-wide">
               {title}
             </h3>
           </div>
@@ -417,8 +417,8 @@ export function FeatureInfoCard() {
             <X size={18} />
           </Button>
         </CardHeader>
-        <Divider className="bg-white/10 mx-4 w-auto" />
-        <CardBody className="px-4 py-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+        <Divider className="bg-white/10 mx-3 w-auto" />
+        <CardBody className="px-3 py-2.5 max-h-[60vh] overflow-y-auto custom-scrollbar">
           {type === 'ATS_ROUTE' && renderRouteDetails()}
           {type === 'NAVAID' && renderNavaidDetails()}
           {type === 'WAYPOINT' && renderWaypointDetails()}
@@ -430,30 +430,31 @@ export function FeatureInfoCard() {
       <style dangerouslySetInnerHTML={{
         __html: `
         .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
+          width: 3px;
+          height: 3px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
           background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 4px;
+          background: rgba(255, 255, 255, 0.08);
+          border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.4);
+          background: rgba(255, 255, 255, 0.2);
         }
         .route-th {
-          padding: 6px 10px;
-          font-size: 9px;
+          padding: 4px 8px;
+          font-size: 8px;
           font-weight: 700;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.1em;
           text-transform: uppercase;
           color: rgba(161, 161, 170, 0.8);
           white-space: nowrap;
           border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
         .route-td {
-          padding: 6px 10px;
+          padding: 4px 8px;
           white-space: nowrap;
           vertical-align: middle;
         }
