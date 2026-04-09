@@ -142,3 +142,43 @@ export async function fetchDaylight(
 export async function fetchAtsRouteLabels(): Promise<GeoJsonFeatureCollection> {
   return get<GeoJsonFeatureCollection>('/ats-route-labels');
 }
+
+export async function fetchAtsRouteDetails(routeId: string): Promise<AtsRouteDetails | null> {
+  return getOrNull<AtsRouteDetails>(`/ats-routes/${encodeURIComponent(routeId)}/details`);
+}
+
+// ── ATS Route Detail Types ──────────────────────────────────────────────
+
+export interface AtsRouteWaypoint {
+  sequence_number: number;
+  waypoint_name: string;
+  raw_coordinates: string | null;
+  navaid_info: string | null;
+}
+
+export interface AtsRouteSegment {
+  sequence_number: number;
+  from_waypoint: string;
+  to_waypoint: string;
+  from_coordinates: string | null;
+  to_coordinates: string | null;
+  track_magnetic: string | null;
+  distance_nm: number | null;
+  upper_limit: string | null;
+  lower_limit: string | null;
+  airspace_class: string | null;
+  moca: string | null;
+  lateral_limits: string | null;
+  direction_odd: string | null;
+  direction_even: string | null;
+}
+
+export interface AtsRouteDetails {
+  route_id: string;
+  route_designator: string | null;
+  route_type: string;
+  remarks: string | null;
+  total_distance_nm: number;
+  waypoints: AtsRouteWaypoint[];
+  segments: AtsRouteSegment[];
+}
