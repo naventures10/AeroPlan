@@ -4,6 +4,9 @@
 
 set -e
 
+# Support Homebrew and local binary paths for non-standard shells
+export PATH="/opt/homebrew/bin:/usr/local/bin:/Users/naveendevapalan/.local/bin:$PATH"
+
 echo "======================================"
 echo "    eAIP System Reliability Check"
 echo "======================================"

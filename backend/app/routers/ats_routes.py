@@ -154,4 +154,3 @@ async def get_ats_route_details(route_id: str, db: AsyncSession = Depends(get_db
         "waypoints": waypoints,
         "segments": segments,
     }
-

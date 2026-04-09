@@ -147,6 +147,12 @@ export async function fetchAtsRouteDetails(routeId: string): Promise<AtsRouteDet
   return getOrNull<AtsRouteDetails>(`/ats-routes/${encodeURIComponent(routeId)}/details`);
 }
 
+// ── Navaids ─────────────────────────────────────────────────────────────
+
+export async function fetchNavaidDetails(ident: string): Promise<NavAidDetails | null> {
+  return getOrNull<NavAidDetails>(`/navaids/${encodeURIComponent(ident)}`);
+}
+
 // ── ATS Route Detail Types ──────────────────────────────────────────────
 
 export interface AtsRouteWaypoint {
@@ -181,4 +187,15 @@ export interface AtsRouteDetails {
   total_distance_nm: number;
   waypoints: AtsRouteWaypoint[];
   segments: AtsRouteSegment[];
+}
+
+export interface NavAidDetails {
+  station_name: string;
+  ident: string;
+  aid_type: string | null;
+  frequency: string | null;
+  hours_of_operation: string | null;
+  elevation: string | null;
+  remarks: string | null;
+  raw_coordinates: string | null;
 }

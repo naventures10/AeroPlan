@@ -147,8 +147,8 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)) -> list[Sear
             "type": r.type,
             "center": [r.lng, r.lat] if r.lng is not None and r.lat is not None else None,
             "bounds": None,
-            "route_type": r.route_type if hasattr(r, 'route_type') else None,
-            "properties": r.properties if hasattr(r, 'properties') else {}
+            "route_type": r.route_type if hasattr(r, "route_type") else None,
+            "properties": r.properties if hasattr(r, "properties") else {},
         }
         if r.min_lng is not None:
             match["bounds"] = [r.min_lng, r.min_lat, r.max_lng, r.max_lat]

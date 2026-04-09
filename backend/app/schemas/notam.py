@@ -5,7 +5,6 @@ The ``serialize_notam`` function replaces the 17-line dict literal that was
 previously copy-pasted three times across notams.py.
 """
 
-
 from typing import Any
 
 from pydantic import BaseModel

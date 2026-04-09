@@ -42,6 +42,7 @@ postgres:
         frequency: "varchar"
         hours_of_operation: "varchar"
         elevation: "varchar"
+        remarks: "text"
         raw_coordinates: "varchar"
 
     fir_airspaces:

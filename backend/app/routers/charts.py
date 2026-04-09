@@ -21,15 +21,21 @@ ALLOWED_PDF_DOMAINS = [
     "eaip.aai.aero",
 ]
 
+
 def _validate_proxy_url(url: str) -> None:
     parsed = urlparse(url)
     if parsed.scheme not in ("http", "https"):
         raise HTTPException(status_code=400, detail="Only HTTP(S) URLs are allowed")
     if parsed.hostname not in ALLOWED_PDF_DOMAINS:
-        raise HTTPException(status_code=403, detail=f"Domain '{parsed.hostname}' is not in the allow-list")
+        raise HTTPException(
+            status_code=403, detail=f"Domain '{parsed.hostname}' is not in the allow-list"
+        )
+
 
 @router.get("/aerodromes/{icao_code}/charts", response_model=list[ChartResponse])
-async def get_aerodrome_charts(icao_code: str, db: AsyncSession = Depends(get_db)) -> list[ChartResponse]:
+async def get_aerodrome_charts(
+    icao_code: str, db: AsyncSession = Depends(get_db)
+) -> list[ChartResponse]:
     """Returns the list of available aerodrome charts for a given ICAO code."""
     query = text("""
         SELECT chart_id, chart_title, chart_index, chart_url
@@ -59,6 +65,7 @@ async def proxy_pdf(url: str = Query(..., description="Remote PDF URL to proxy")
     _validate_proxy_url(url)
 
     from app.config import settings
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
     }
