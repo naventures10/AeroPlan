@@ -12,7 +12,7 @@ echo "======================================"
 echo "➜ Starting CodeRabbit Autonomous Review (Live Progress)..."
 
 # Use 'tee /dev/tty' to show live output while capturing for parsing
-CODERABBIT_OUT=$(coderabbit review --agent -t uncommitted 2>&1 | tee /dev/tty)
+CODERABBIT_OUT=$(coderabbit review --agent --base main 2>&1 | tee /dev/tty)
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -ne 0 ]; then
