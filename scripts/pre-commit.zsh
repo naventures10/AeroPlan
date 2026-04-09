@@ -8,22 +8,43 @@ echo "======================================"
 echo "    eAIP System Reliability Check"
 echo "======================================"
 
-# 1. Frontend Checks
-echo "[1/3] Running Frontend Checks..."
+# 1. Static Analysis (Fastest)
+echo "[1/3] Phase 1: Static Analysis..."
+
+# Frontend Lint
+echo "➜ Running Frontend Lint..."
 cd frontend
 npm run lint || { echo "❌ Frontend Lint failed"; exit 1; }
 cd ..
 
-# 2. Backend Checks
-echo "[2/3] Running Backend Checks..."
+# Backend Lint & Typing
+echo "➜ Running Backend Static Analysis..."
 cd backend
 uv run ruff check . || { echo "❌ Ruff Lint failed"; exit 1; }
 uv run mypy . || { echo "❌ Mypy Typing failed"; exit 1; }
 cd ..
 
-# 3. CodeRabbit Local AI Review
-echo "[3/3] Running CodeRabbit AI SAST..."
-CODERABBIT_OUT=$(coderabbit review --agent -t uncommitted 2>&1)
+# 2. Automated Testing
+echo "[2/3] Phase 2: Automated Testing..."
+
+# Frontend Tests
+echo "➜ Running Frontend Test Suite..."
+cd frontend
+npm test || { echo "❌ Frontend Tests failed"; exit 1; }
+cd ..
+
+# Backend Tests
+echo "➜ Running Backend Test Suite (Requires DB)..."
+cd backend
+uv run pytest || { echo "❌ Backend Tests failed. Ensure Postgres container is running."; exit 1; }
+cd ..
+
+# 3. CodeRabbit AI Review (Slowest)
+echo "[3/3] Phase 3: CodeRabbit AI SAST..."
+echo "➜ Starting Autonomous Review (Live Progress)..."
+
+# Use 'tee /dev/tty' to show live output while capturing for parsing
+CODERABBIT_OUT=$(coderabbit review --agent -t uncommitted 2>&1 | tee /dev/tty)
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -ne 0 ]; then
@@ -33,7 +54,6 @@ if [ $EXIT_CODE -ne 0 ]; then
     else
         echo "❌ CodeRabbit CLI failure:"
         echo "$CODERABBIT_OUT"
-        # We still fail for other actual CLI errors
         exit 1
     fi
 fi
@@ -47,7 +67,9 @@ fi
 
 if (( FINDINGS > 0 )); then
     echo "❌ CodeRabbit found $FINDINGS unresolved issues!"
-    echo "Please clear these issues by running 'coderabbit review -t uncommitted'."
+    echo "--------------------------------------"
+    echo "$CODERABBIT_OUT"
+    echo "--------------------------------------"
     exit 1
 else
     echo "✅ CodeRabbit Validation Passed!"
