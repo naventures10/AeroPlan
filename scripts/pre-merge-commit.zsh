@@ -2,7 +2,8 @@
 # .git/hooks/pre-merge-commit
 # Enforces CodeRabbit AI review before allowing a merge commit
 
-set -e
+# Support Homebrew and local binary paths for non-standard shells
+export PATH="/opt/homebrew/bin:/usr/local/bin:/Users/naveendevapalan/.local/bin:$PATH"
 
 echo "======================================"
 echo "    eAIP AI Merge Review Check"
@@ -20,7 +21,9 @@ if [ $EXIT_CODE -ne 0 ]; then
         exit 0
     else
         echo "❌ CodeRabbit CLI failure:"
+        echo "------------------------------------------------------------"
         echo "$CODERABBIT_OUT"
+        echo "------------------------------------------------------------"
         exit 1
     fi
 fi
@@ -34,9 +37,9 @@ fi
 
 if (( FINDINGS > 0 )); then
     echo "❌ CodeRabbit found $FINDINGS unresolved issues!"
-    echo "--------------------------------------"
+    echo "------------------------------------------------------------"
     echo "$CODERABBIT_OUT"
-    echo "--------------------------------------"
+    echo "------------------------------------------------------------"
     echo "Please resolve these findings before merging."
     exit 1
 else
