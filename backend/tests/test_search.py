@@ -10,7 +10,9 @@ async def test_global_search_empty_query(api_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="FTS features require materialized views or text search vectors not created by create_all")
+@pytest.mark.skip(
+    reason="FTS features require materialized views or text search vectors not created by create_all"
+)
 async def test_global_search_valid_query(api_client: AsyncClient) -> None:
     """Test a basic global search logic."""
     response = await api_client.get("/api/search?q=VOMF")
