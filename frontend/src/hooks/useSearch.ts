@@ -4,7 +4,18 @@ import { searchAll } from '../api/client';
 import { useMapStore } from '../store/useMapStore';
 import { fetchAerodromeMetadata } from '../api/client';
 
+const MAX_SEARCH_CACHE = 100;
 const searchCache = new Map<string, SearchResult[]>();
+
+/** Evict oldest entries when cache exceeds limit */
+function cacheSet(key: string, value: SearchResult[]) {
+  if (searchCache.size >= MAX_SEARCH_CACHE) {
+    // Map iterates in insertion order — delete the oldest half
+    const keysToDelete = [...searchCache.keys()].slice(0, Math.floor(MAX_SEARCH_CACHE / 2));
+    for (const k of keysToDelete) searchCache.delete(k);
+  }
+  searchCache.set(key, value);
+}
 
 /**
  * Encapsulates the entire global search flow:
@@ -63,7 +74,7 @@ export function useSearch() {
     const timer = setTimeout(() => {
       searchAll(query, controller.signal)
         .then((data) => {
-          searchCache.set(cachedQuery, data);
+          cacheSet(cachedQuery, data);
           setSuggestions(data);
         })
         .catch((err) => {

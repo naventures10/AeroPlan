@@ -42,19 +42,39 @@ export class ApiError extends Error {
 
 // ── Generic helpers ─────────────────────────────────────────────────────
 
+let _fetchId = 0;
+
 async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const id = ++_fetchId;
+  const markName = `api-${id}`;
+  performance.mark(`${markName}-start`);
+
   const res = await fetch(`${API_BASE}${path}`, { signal });
   if (!res.ok) {
     const body = await res.text().catch(() => undefined);
     throw new ApiError(res.status, path, body);
   }
-  return res.json();
+  const data = await res.json();
+
+  performance.mark(`${markName}-end`);
+  performance.measure(`API GET ${path}`, `${markName}-start`, `${markName}-end`);
+
+  return data;
 }
 
 async function getOrNull<T>(path: string): Promise<T | null> {
+  const id = ++_fetchId;
+  const markName = `api-${id}`;
+  performance.mark(`${markName}-start`);
+
   const res = await fetch(`${API_BASE}${path}`);
   if (!res.ok) return null;
-  return res.json();
+  const data = await res.json();
+
+  performance.mark(`${markName}-end`);
+  performance.measure(`API GET ${path}`, `${markName}-start`, `${markName}-end`);
+
+  return data;
 }
 
 // ── Aerodromes ──────────────────────────────────────────────────────────
