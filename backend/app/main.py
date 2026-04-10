@@ -10,7 +10,17 @@ from sqlalchemy import text
 
 from app.database import AsyncSessionLocal
 from app.logging_config import setup_logging
-from app.routers import aerodromes, ats_routes, charts, daylight, notams, search, spatial, weather
+from app.routers import (
+    aerodromes,
+    ats_routes,
+    charts,
+    daylight,
+    navaids,
+    notams,
+    search,
+    spatial,
+    weather,
+)
 from app.schemas.geojson import HealthResponse
 
 # ── Initialise structured logging ────────────────────────────────────────────
@@ -107,3 +117,4 @@ app.include_router(weather.router)
 app.include_router(notams.router)
 app.include_router(daylight.router)
 app.include_router(ats_routes.router)
+app.include_router(navaids.router)

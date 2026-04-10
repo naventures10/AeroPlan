@@ -17,8 +17,12 @@ router = APIRouter(prefix="/api", tags=["Daylight"])
 @router.get("/daylight/{icao_code}", response_model=DaylightResponse)
 async def get_daylight(
     icao_code: str,
-    month: int | None = Query(None, ge=1, le=12, description="Filter by month (1-12). Defaults to current month."),
-    date_str: str | None = Query(None, alias="date", description="Filter by specific date (YYYY-MM-DD)"),
+    month: int | None = Query(
+        None, ge=1, le=12, description="Filter by month (1-12). Defaults to current month."
+    ),
+    date_str: str | None = Query(
+        None, alias="date", description="Filter by specific date (YYYY-MM-DD)"
+    ),
     db: AsyncSession = Depends(get_db),
 ) -> DaylightResponse:
     """
@@ -35,7 +39,9 @@ async def get_daylight(
         try:
             target_date = date.fromisoformat(date_str)
         except ValueError:
-            raise HTTPException(status_code=400, detail=f"Invalid date format: {date_str}. Use YYYY-MM-DD.") from None
+            raise HTTPException(
+                status_code=400, detail=f"Invalid date format: {date_str}. Use YYYY-MM-DD."
+            ) from None
 
         query = text("""
             SELECT airport_icao, airport_name, date, twilight_from, sunrise, sunset, twilight_to

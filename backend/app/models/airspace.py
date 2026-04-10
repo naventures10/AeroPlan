@@ -27,7 +27,7 @@ class AtsRouteSegment(Base):
     upper_limit = Column(String(20))
     lower_limit = Column(String(20))
     airspace_class = Column(String(10))
-    mea = Column(String(20))
+    moca = Column(String(20))
     lateral_limits = Column(String(20))
     direction_odd = Column(String(5))
     direction_even = Column(String(5))

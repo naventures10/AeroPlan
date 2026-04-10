@@ -13,7 +13,9 @@ router = APIRouter(prefix="/api", tags=["Spatial"])
 
 
 @router.get("/features/{icao_code}", response_model=GeoJsonFeatureCollection)
-async def get_aerodrome_features(icao_code: str, db: AsyncSession = Depends(get_db)) -> GeoJsonFeatureCollection:
+async def get_aerodrome_features(
+    icao_code: str, db: AsyncSession = Depends(get_db)
+) -> GeoJsonFeatureCollection:
     """
     Fetches 3D spatial features (obstacles, buildings) for a specific aerodrome.
     Returns a GeoJSON FeatureCollection natively from PostGIS.
