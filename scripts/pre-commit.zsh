@@ -2,45 +2,69 @@
 # .git/hooks/pre-commit
 # Enforces tests and linting before allowing a commit
 
-set -e
+# Support Homebrew and local binary paths for non-standard shells
+export PATH="/opt/homebrew/bin:/usr/local/bin:/Users/naveendevapalan/.local/bin:$PATH"
+
+FAILED_STEPS=()
+TEMP_LOG=$(mktemp)
 
 echo "======================================"
 echo "    eAIP System Reliability Check"
 echo "======================================"
 
-# 1. Static Analysis (Fastest)
-echo "[1/2] Phase 1: Static Analysis..."
+# ── Function to run checks ───────────────────────────────────────────
+run_check() {
+    local step_name=$1
+    local command=$2
+    local dir=$3
 
-# Frontend Lint
-echo "➜ Running Frontend Lint..."
-cd frontend
-npm run lint || { echo "❌ Frontend Lint failed"; exit 1; }
-cd ..
+    echo "➜ Running $step_name..."
+    
+    # Run in subshell to handle directory change safely
+    (
+        if [[ -n "$dir" ]]; then cd "$dir" || exit 1; fi
+        eval "$command" > "$TEMP_LOG" 2>&1
+    )
+    local exit_code=$?
+    
+    if [ $exit_code -ne 0 ]; then
+        echo "❌ $step_name failed:"
+        echo "------------------------------------------------------------"
+        cat "$TEMP_LOG"
+        echo "------------------------------------------------------------"
+        FAILED_STEPS+=("$step_name")
+    else
+        echo "✅ $step_name passed"
+    fi
+}
 
-# Backend Lint & Typing
-echo "➜ Running Backend Static Analysis..."
-cd backend
-uv run ruff check . || { echo "❌ Ruff Lint failed"; exit 1; }
-uv run mypy . || { echo "❌ Mypy Typing failed"; exit 1; }
-cd ..
+# 1. Static Analysis
+echo "\n[1/2] Phase 1: Static Analysis..."
+run_check "Frontend Lint" "npm run lint" "frontend"
+run_check "Backend Ruff" "uv run ruff check ." "backend"
+run_check "Backend Mypy" "uv run mypy ." "backend"
 
 # 2. Automated Testing
-echo "[2/2] Phase 2: Automated Testing..."
+echo "\n[2/2] Phase 2: Automated Testing..."
+run_check "Frontend Tests" "npm test" "frontend"
+run_check "Backend Tests" "uv run pytest" "backend"
 
-# Frontend Tests
-echo "➜ Running Frontend Test Suite..."
-cd frontend
-npm test || { echo "❌ Frontend Tests failed"; exit 1; }
-cd ..
+# ── Final Report ─────────────────────────────────────────────────────
+echo "\n======================================"
 
-# Backend Tests
-echo "➜ Running Backend Test Suite (Requires DB)..."
-cd backend
-uv run pytest || { echo "❌ Backend Tests failed. Ensure Postgres container is running."; exit 1; }
-cd ..
-
-echo "======================================"
-echo "    ✅ Local Validation Passed!"
-echo "       Commit Approved"
-echo "======================================"
-exit 0
+if [ ${#FAILED_STEPS[@]} -eq 0 ]; then
+    echo "    ✅ All Checks Passed!"
+    echo "       Commit Approved"
+    echo "======================================"
+    rm -f "$TEMP_LOG"
+    exit 0
+else
+    echo "    ❌ Reliability Check Failed"
+    echo "    Please fix issues in:"
+    for item in "${FAILED_STEPS[@]}"; do
+        echo "     - $item"
+    done
+    echo "======================================"
+    rm -f "$TEMP_LOG"
+    exit 1
+fi

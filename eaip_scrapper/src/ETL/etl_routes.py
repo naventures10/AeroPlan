@@ -85,7 +85,7 @@ class RouteLoader:
     def parse_segment(entry):
         """
         Parses a segment entry and returns a tuple of parsed fields:
-        (track_magnetic, distance_nm, upper_limit, lower_limit, airspace_class, mea, lateral_limits, dir_odd, dir_even)
+        (track_magnetic, distance_nm, upper_limit, lower_limit, airspace_class, moca, lateral_limits, dir_odd, dir_even)
         """
         # Parse track/distance: "282/102\n47.1 NM"
         td_raw = entry.get('track_distance', '')
@@ -107,20 +107,20 @@ class RouteLoader:
         upper_limit = lc_lines[0] if len(lc_lines) > 0 else None
         lower_limit = lc_lines[1] if len(lc_lines) > 1 else None
         airspace_class = None
-        mea = None
+        moca = None
 
         for line in lc_lines[2:]:
             if line.startswith('Class'):
                 airspace_class = line.replace('Class ', '').strip()
-            elif 'FT' in line or 'M' in line:
-                mea = line.strip()
+            elif re.search(r"\d+\s*(?:FT|M\b)", line, re.IGNORECASE):
+                moca = line.strip()
 
         lateral_limits = entry.get('lateral_limits', '').strip() or None
         dir_odd = entry.get('direction_odd', '').strip() or None
         dir_even = entry.get('direction_even', '').strip() or None
 
         return (track_magnetic, distance_nm, upper_limit, lower_limit,
-                airspace_class, mea, lateral_limits, dir_odd, dir_even)
+                airspace_class, moca, lateral_limits, dir_odd, dir_even)
 
     def process_routes(self, data, route_type):
         """
@@ -230,7 +230,7 @@ class RouteLoader:
                 execute_values(cur, """
                     INSERT INTO ats_route_segments 
                         (route_id, sequence_number, track_magnetic, distance_nm, upper_limit, lower_limit,
-                         airspace_class, mea, lateral_limits, direction_odd, direction_even)
+                         airspace_class, moca, lateral_limits, direction_odd, direction_even)
                     VALUES %s
                 """, all_segments)
 
@@ -247,6 +247,32 @@ class RouteLoader:
                   AND s.sequence_number = w1.sequence_number
                   AND w1.geom IS NOT NULL 
                   AND w2.geom IS NOT NULL;
+            """)
+
+            # 5. Recreate View (Ensures MOCA terminology is reflected)
+            print("[*] Recreating v_ats_route_segments view...")
+            cur.execute("""
+                CREATE OR REPLACE VIEW v_ats_route_segments AS
+                SELECT
+                    s.id,
+                    s.route_id,
+                    r.route_designator,
+                    r.route_type,
+                    r.remarks,
+                    s.sequence_number,
+                    s.track_magnetic,
+                    s.distance_nm,
+                    s.upper_limit,
+                    s.lower_limit,
+                    s.airspace_class,
+                    s.moca,
+                    s.lateral_limits,
+                    s.direction_odd,
+                    s.direction_even,
+                    s.geom
+                FROM ats_route_segments s
+                JOIN ats_routes r ON s.route_id = r.route_id
+                WHERE s.geom IS NOT NULL;
             """)
 
             self.conn.commit()

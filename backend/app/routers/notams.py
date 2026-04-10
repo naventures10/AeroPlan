@@ -85,4 +85,3 @@ async def get_all_notams(
 
     result = await db.execute(query, params)
     return [serialize_notam(r) for r in result.fetchall()]
-

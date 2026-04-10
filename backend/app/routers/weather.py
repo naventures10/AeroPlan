@@ -29,7 +29,7 @@ router = APIRouter(prefix="/api", tags=["Weather"])
 # ── Configuration ────────────────────────────────────────────────────────────
 SOURCES = {
     "chennai": "https://olbs.amsschennai.gov.in/nsweb/FlightBriefing/weathermap/station.php?icao={}",
-    "delhi":   "https://olbs.amssdelhi.gov.in/nsweb/FlightBriefing/weathermap/station.php?icao={}",
+    "delhi": "https://olbs.amssdelhi.gov.in/nsweb/FlightBriefing/weathermap/station.php?icao={}",
 }
 CACHE_TTL_SECONDS = 300  # 5 minutes
 
@@ -95,6 +95,7 @@ def _extract_metar_time(metar: str | None) -> int:
 async def _fetch_from_source(source_name: str, url: str) -> dict | None:
     """Fetch and parse weather from a single source. Returns None on failure."""
     from app.config import settings
+
     try:
         async with httpx.AsyncClient(verify=settings.SSL_VERIFY, timeout=15.0) as client:
             resp = await client.get(url)
@@ -114,8 +115,7 @@ async def _fetch_weather(icao: str) -> dict:
 
     # Fire both requests concurrently
     tasks = {
-        name: _fetch_from_source(name, url.format(icao_upper))
-        for name, url in SOURCES.items()
+        name: _fetch_from_source(name, url.format(icao_upper)) for name, url in SOURCES.items()
     }
     results = await asyncio.gather(*tasks.values())
     source_results = dict(zip(tasks.keys(), results, strict=False))
@@ -193,9 +193,7 @@ async def get_weather(icao_code: str) -> WeatherResponse:
         entry = _weather_cache[icao]
         return WeatherResponse(
             **entry["data"],
-            fetched_at=datetime.fromtimestamp(
-                entry["fetched_at"], tz=UTC
-            ).isoformat(),
+            fetched_at=datetime.fromtimestamp(entry["fetched_at"], tz=UTC).isoformat(),
             sources_available=entry.get("sources_used", []),
             cached=True,
         )
