@@ -9,6 +9,15 @@ echo "======================================"
 echo "    eAIP AI Merge Review Check"
 echo "======================================"
 
+echo "➜ Checking if branch is up-to-date with main..."
+if ! git merge-base --is-ancestor main HEAD; then
+    echo "❌ BRANCH OUTDATED: Your branch is missing recent changes from 'main'."
+    echo "   Please rebase first: git rebase main"
+    exit 1
+fi
+echo "✅ Branch is current."
+
+
 echo "➜ Starting CodeRabbit Autonomous Review (Live Progress)..."
 
 # Use 'tee /dev/tty' to show live output while capturing for parsing
