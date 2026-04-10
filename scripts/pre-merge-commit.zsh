@@ -3,7 +3,7 @@
 # Enforces CodeRabbit AI review before allowing a merge commit
 
 # Support Homebrew and local binary paths for non-standard shells
-export PATH="/opt/homebrew/bin:/usr/local/bin:/Users/naveendevapalan/.local/bin:$PATH"
+export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$PATH"
 
 echo "======================================"
 echo "    eAIP AI Merge Review Check"

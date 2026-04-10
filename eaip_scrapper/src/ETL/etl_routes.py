@@ -85,7 +85,7 @@ class RouteLoader:
     def parse_segment(entry):
         """
         Parses a segment entry and returns a tuple of parsed fields:
-        (track_magnetic, distance_nm, upper_limit, lower_limit, airspace_class, mea, lateral_limits, dir_odd, dir_even)
+        (track_magnetic, distance_nm, upper_limit, lower_limit, airspace_class, moca, lateral_limits, dir_odd, dir_even)
         """
         # Parse track/distance: "282/102\n47.1 NM"
         td_raw = entry.get('track_distance', '')
@@ -112,7 +112,7 @@ class RouteLoader:
         for line in lc_lines[2:]:
             if line.startswith('Class'):
                 airspace_class = line.replace('Class ', '').strip()
-            elif 'FT' in line or 'M' in line:
+            elif re.search(r"\d+\s*(?:FT|M\b)", line, re.IGNORECASE):
                 moca = line.strip()
 
         lateral_limits = entry.get('lateral_limits', '').strip() or None
