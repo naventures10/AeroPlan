@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { GeoJsonLayer, TextLayer, IconLayer } from '@deck.gl/layers';
 import { MVTLayer } from '@deck.gl/geo-layers';
 import { CollisionFilterExtension } from '@deck.gl/extensions';
@@ -41,6 +41,8 @@ export function useDeckLayers({
       text: f.properties.icao_code || 'UNKNOWN',
     }));
   }, [aerodromes]);
+
+  const rebuildCount = useRef(0);
 
   const deckLayers = useMemo(() => {
     const layers: any[] = [];

@@ -275,6 +275,12 @@ class RouteLoader:
                 WHERE s.geom IS NOT NULL;
             """)
 
+            # 6. Refresh Materialized View (pre-computed label midpoints & bearings)
+            print("[*] Refreshing mv_ats_route_labels materialized view...")
+            cur.execute("""
+                REFRESH MATERIALIZED VIEW mv_ats_route_labels;
+            """)
+
             self.conn.commit()
 
         print(f"[+] Successfully loaded {len(all_routes)} routes into the database!")
