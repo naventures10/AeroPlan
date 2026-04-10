@@ -19,10 +19,30 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)) -> list[Sear
     Calculates geographic center and bounding boxes for LineStrings
     so the frontend can frame them on click.
     """
-    if not q or len(q.strip()) < 2:
+    if not q or len(q.strip()) < 1:
         return []
 
-    term = f"%{q.strip().upper()}%"
+    q_clean = q.strip().upper()
+    exact_term = q_clean
+    start_term = f"{q_clean}%"
+    contains_term = f"%{q_clean}%"
+
+    import re
+    # Extract alphanumeric parts for fuzzy matching
+    parts = [p for p in re.split(r'[^A-Z0-9]+', q_clean) if p]
+    if not parts:
+        parts = list(q_clean)
+
+    # Split 'V4' into 'V' and '4' for fuzzier fallback
+    fuzzy_tokens = []
+    for part in parts:
+        fuzzy_tokens.extend(re.findall(r'[A-Z]+|\d+', part))
+
+    tokens = list(set(fuzzy_tokens)) if fuzzy_tokens else list(q_clean)
+
+    # Safe regex for any of the tokens
+    safe_tokens = [re.escape(t) for t in tokens]
+    regex_term = f"({'|'.join(safe_tokens)})" if safe_tokens else q_clean
 
     query = text("""
         WITH search_results AS (
@@ -40,7 +60,7 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)) -> list[Sear
                 ) AS properties
             FROM aerodrome_documents ad
             JOIN spatial_features sf ON sf.icao_code = ad.icao_code AND sf.feature_category = 'ARP'
-            WHERE ad.icao_code ILIKE :term OR ad.airport_name ILIKE :term
+            WHERE ad.icao_code ~* :regex_term OR ad.airport_name ~* :regex_term
 
             UNION ALL
 
@@ -63,7 +83,7 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)) -> list[Sear
                     'raw_coordinates', raw_coordinates
                 ) AS properties
             FROM radio_nav_aids
-            WHERE ident ILIKE :term OR station_name ILIKE :term
+            WHERE ident ~* :regex_term OR station_name ~* :regex_term
 
             UNION ALL
 
@@ -80,7 +100,7 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)) -> list[Sear
                     'route_ids', route_ids
                 ) AS properties
             FROM ats_waypoints_grouped
-            WHERE waypoint_name ILIKE :term
+            WHERE waypoint_name ~* :regex_term
 
             UNION ALL
 
@@ -108,35 +128,54 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)) -> list[Sear
                 ) AS properties
             FROM ats_routes r
             JOIN ats_route_waypoints w ON r.route_id = w.route_id
-            WHERE r.route_id ILIKE :term OR r.route_designator ILIKE :term
+            WHERE r.route_id ~* :regex_term OR r.route_designator ~* :regex_term
             GROUP BY r.route_id, r.route_designator, r.route_type, r.remarks
+        ),
+        final_search AS (
+            SELECT DISTINCT ON (id, type)
+                id,
+                name,
+                type,
+                ST_X(center_geom) AS lng,
+                ST_Y(center_geom) AS lat,
+                ST_XMin(computed_bounds) AS min_lng,
+                ST_YMin(computed_bounds) AS min_lat,
+                ST_XMax(computed_bounds) AS max_lng,
+                ST_YMax(computed_bounds) AS max_lat,
+                route_type,
+                properties,
+                (
+                    CASE WHEN id ILIKE :exact_term THEN 2000 ELSE 0 END +
+                    CASE WHEN COALESCE(name, '') ILIKE :exact_term THEN 2000 ELSE 0 END +
+                    CASE WHEN id ILIKE :start_term THEN 1000 - LEAST(LENGTH(id::text), 500) ELSE 0 END +
+                    CASE WHEN COALESCE(name, '') ILIKE :start_term THEN 1000 - LEAST(LENGTH(COALESCE(name::text, '')), 500) ELSE 0 END +
+                    CASE WHEN id ILIKE :contains_term THEN 500 - LEAST(LENGTH(id::text), 300) ELSE 0 END +
+                    CASE WHEN COALESCE(name, '') ILIKE :contains_term THEN 500 - LEAST(LENGTH(COALESCE(name::text, '')), 300) ELSE 0 END +
+                    CASE WHEN id ~* :regex_term THEN 100 ELSE 0 END +
+                    CASE WHEN COALESCE(name, '') ~* :regex_term THEN 100 ELSE 0 END
+                ) AS relevance
+            FROM search_results
+            ORDER BY
+                id, type,
+                relevance DESC,
+                CASE type
+                    WHEN 'AERODROME' THEN 1
+                    WHEN 'NAVAID' THEN 2
+                    WHEN 'WAYPOINT' THEN 3
+                    WHEN 'ATS_ROUTE' THEN 4
+                    ELSE 5
+                END,
+                name ASC
         )
-        SELECT
-            id,
-            name,
-            type,
-            ST_X(center_geom) AS lng,
-            ST_Y(center_geom) AS lat,
-            ST_XMin(computed_bounds) AS min_lng,
-            ST_YMin(computed_bounds) AS min_lat,
-            ST_XMax(computed_bounds) AS max_lng,
-            ST_YMax(computed_bounds) AS max_lat,
-            route_type,
-            properties
-        FROM search_results
-        ORDER BY
-            CASE type
-                WHEN 'AERODROME' THEN 1
-                WHEN 'NAVAID' THEN 2
-                WHEN 'WAYPOINT' THEN 3
-                WHEN 'ATS_ROUTE' THEN 4
-                ELSE 5
-            END,
-            name ASC
-        LIMIT 20;
+        SELECT * FROM final_search ORDER BY relevance DESC, name ASC LIMIT 20;
     """)
 
-    result = await db.execute(query, {"term": term})
+    result = await db.execute(query, {
+        "exact_term": exact_term,
+        "start_term": start_term,
+        "contains_term": contains_term,
+        "regex_term": regex_term
+    })
     rows = result.fetchall()
 
     output = []
