@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import DeckGL from '@deck.gl/react';
+import { MapController } from '@deck.gl/core';
 import Map, { Source, Layer } from 'react-map-gl/maplibre';
 import type { MapRef } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -12,6 +13,54 @@ import { FeatureInfoCard } from './FeatureInfoCard';
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 const MAP_STYLE = `https://api.maptiler.com/maps/topo-v2-dark/style.json?key=${MAPTILER_KEY}`;
+
+/**
+ * Custom Map Controller to:
+ * 1. Disable Right-Click rotation (allows native browser context menu)
+ * 2. Bind Middle-Mouse button to Rotation/Tilt
+ */
+class CustomMapController extends MapController {
+  /**
+   * Override rotation detection to swap Right-Click for Middle-Click.
+   */
+  // @ts-expect-error - Internal DeckGL method
+  _isRotationEvent(event: any) {
+    const { srcEvent } = event;
+    const isMiddle = event.middleButton || 
+                     (srcEvent && (srcEvent.button === 1 || srcEvent.which === 2 || (srcEvent.buttons & 4)));
+
+    if (isMiddle) return true;
+    
+    // Disable Right-Click rotation
+    if (event.rightButton || (srcEvent && (srcEvent.button === 2 || srcEvent.which === 3))) return false;
+    
+    // @ts-expect-error - Internal DeckGL method
+    return super._isRotationEvent(event);
+  }
+
+  handleEvent(event: any) {
+    const { srcEvent } = event;
+    const isMiddle = event.middleButton || 
+                     (srcEvent && (srcEvent.button === 1 || srcEvent.which === 2 || (srcEvent.buttons & 4)));
+
+    // Suppress Right-Click drags so they don't fall back to panning
+    const isRight = event.rightButton || (srcEvent && (srcEvent.button === 2 || srcEvent.which === 3));
+    if (isRight && event.type && String(event.type).includes('drag')) {
+      return false;
+    }
+
+    if (isMiddle) {
+      event.rightButton = true;
+      // Prevent browser autoscroll
+      if (['mousedown', 'pointerdown', 'touchstart'].includes(String(event.type))) {
+        if (srcEvent && srcEvent.preventDefault) srcEvent.preventDefault();
+      }
+    }
+
+    // @ts-expect-error - Internal DeckGL method
+    return super.handleEvent(event);
+  }
+}
 
 interface MapViewProps {
   aerodromes: any;
@@ -36,6 +85,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     activeAirport,
     setActiveAirport,
     activeLayers,
+    terminalPivot,
   } = useMapStore();
 
   const mapRef = useRef<MapRef>(null);
@@ -44,21 +94,24 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
   const getTooltip = useMapTooltip(mapRef);
 
   const onViewStateChange = useCallback(
-    ({ viewState: vs, interactionState }: any) => {
+    ({ viewState: vs, interactionState }: { viewState: any; interactionState?: any }) => {
+      let nextVs = vs;
+
+      // 1. Zoom-out logic to exit terminal
       if (
         (interactionState?.isZooming || interactionState?.isPanning) &&
-        vs.zoom < 10
+        nextVs.zoom < 10
       ) {
         if (activeAirport) setActiveAirport(null);
-        if (viewMode === 'TERMINAL' || vs.pitch > 0) {
+        if (viewMode === 'TERMINAL' || nextVs.pitch > 0) {
           setViewMode('ENROUTE');
-          const nextVs = { ...vs, pitch: 0 };
+          nextVs = { ...nextVs, pitch: 0 };
           setViewState(nextVs);
           return nextVs;
         }
       }
-      setViewState(vs);
-      return vs;
+      setViewState(nextVs);
+      return nextVs;
     },
     [activeAirport, viewMode, setActiveAirport, setViewMode, setViewState],
   );
@@ -67,7 +120,11 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     <div className="absolute inset-0 z-0">
       <DeckGL
         viewState={viewState}
-        controller={true}
+        controller={{
+          type: CustomMapController,
+          dragRotate: true,
+          touchRotate: true
+        }}
         layers={deckLayers}
         onViewStateChange={onViewStateChange}
         getTooltip={getTooltip}
