@@ -285,7 +285,7 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
                                    <div className="w-2.5 h-2.5 bg-amber-500 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.8)]"></div>
                                  </div>
                               )}
-                              <span className="font-bold text-base text-white">{parsedMetar.windDir || 'VRB'}°</span>
+                               <span className="font-bold text-base text-white">{parsedMetar.windDir === 'VRB' ? 'VRB' : (parsedMetar.windDir ? `${parsedMetar.windDir}°` : '-')}</span>
                            </div>
                         </div>
                       </div>

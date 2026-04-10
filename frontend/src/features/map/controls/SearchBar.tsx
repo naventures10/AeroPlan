@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Button } from '@heroui/react';
-import { Search, X } from 'lucide-react';
+import { Search, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { SearchResult } from '../../../types';
 
@@ -8,6 +8,7 @@ interface SearchBarProps {
   searchInput: string;
   setSearchInput: (value: string) => void;
   suggestions: SearchResult[];
+  isLoading: boolean;
   isSearchFocused: boolean;
   setIsSearchFocused: (value: boolean) => void;
   searchSelectedIndex: number;
@@ -25,6 +26,7 @@ export default function SearchBar({
   searchInput,
   setSearchInput,
   suggestions,
+  isLoading,
   isSearchFocused,
   setIsSearchFocused,
   searchSelectedIndex,
@@ -45,7 +47,31 @@ export default function SearchBar({
     <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-[28rem] max-w-[90vw] pointer-events-auto z-50">
       <div className="relative rounded-full shadow-2xl">
         <div className="flex items-center w-full glass-morphism h-14 px-4 bg-zinc-950/40 hover:bg-zinc-950/60 focus-within:!bg-zinc-950/40 border-zinc-800/60 rounded-full transition-colors duration-300">
-          <Search size={18} strokeWidth={2} className="text-zinc-400 shrink-0" />
+          <div className="relative w-5 h-5 flex items-center justify-center shrink-0">
+            <AnimatePresence mode="wait">
+              {isLoading ? (
+                <motion.div
+                  key="loader"
+                  initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
+                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                  exit={{ opacity: 0, scale: 0.5, rotate: 90 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Loader2 size={18} strokeWidth={2.5} className="text-cyan-400 animate-spin" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="search"
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Search size={18} strokeWidth={2} className="text-zinc-400" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
           <input
             ref={searchInputRef}
             className="flex-1 bg-transparent border-none outline-none shadow-none text-zinc-100 font-semibold text-sm placeholder-zinc-500 uppercase tracking-[0.1em] px-3 h-full w-full"
@@ -92,7 +118,21 @@ export default function SearchBar({
               transition={{ duration: 0.15 }}
               className="absolute top-full left-0 right-0 mt-2 glass-morphism-heavy rounded-2xl overflow-hidden shadow-2xl border border-zinc-800/60"
             >
-              {suggestions.length > 0 ? (
+              {isLoading ? (
+                <div className="px-4 py-8 flex flex-col items-center justify-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-zinc-900/50 flex items-center justify-center border border-zinc-800/50">
+                    <Loader2 size={20} className="text-cyan-500 animate-spin" />
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-zinc-300 text-sm font-semibold tracking-wider font-mono">
+                      ELASTIC SEARCHING...
+                    </span>
+                    <span className="text-zinc-500 text-[10px] uppercase tracking-widest">
+                      FASTER THAN A TURBOPROP
+                    </span>
+                  </div>
+                </div>
+              ) : suggestions.length > 0 ? (
                 <div className="py-2">
                   {suggestions.map((item: SearchResult, index: number) => (
                     <div

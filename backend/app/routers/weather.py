@@ -94,10 +94,11 @@ def _extract_metar_time(metar: str | None) -> int:
 
 async def _fetch_from_source(source_name: str, url: str) -> dict | None:
     """Fetch and parse weather from a single source. Returns None on failure."""
-    from app.config import settings
 
     try:
-        async with httpx.AsyncClient(verify=settings.SSL_VERIFY, timeout=15.0) as client:
+        # We explicitly disable SSL verification (verify=False) for government OLBS sources
+        # as they frequently use self-signed or untrusted certificates.
+        async with httpx.AsyncClient(verify=False, timeout=15.0) as client:
             resp = await client.get(url)
             resp.raise_for_status()
         return {"source": source_name, "html": resp.text}
