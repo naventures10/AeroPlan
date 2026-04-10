@@ -41,7 +41,7 @@ export function useSearch() {
   // Debounced fetch
   useEffect(() => {
     const query = searchInput.trim();
-    if (query.length < 2) {
+    if (query.length < 1) {
       setSuggestions([]);
       setIsLoading(false);
       return;
@@ -55,6 +55,8 @@ export function useSearch() {
       return;
     }
 
+    // Clear stale suggestions and indicate loading if not in cache
+    setSuggestions([]);
     setIsLoading(true);
     const controller = new AbortController();
 

@@ -15,6 +15,7 @@ export function useAerodromeData() {
     setActiveAerodromeMetadata,
     activeAirport,
     setAtsRouteLabels,
+    setTerminalPivot,
   } = useMapStore();
 
   const [aerodromes, setAerodromes] = useState<any>(null);
@@ -42,13 +43,14 @@ export function useAerodromeData() {
   const handleAerodromeClick = useCallback(
     (icao: string, coords: [number, number]) => {
       setActiveAirport(icao);
+      setTerminalPivot(coords);
       flyToLocation(coords[0], coords[1], 15, 60);
 
       fetchAerodromeMetadata(icao)
         .then((data) => { setActiveAerodromeMetadata(data); })
         .catch((err) => { console.error('Failed to fetch metadata', err); });
     },
-    [flyToLocation, setActiveAirport, setActiveAerodromeMetadata],
+    [flyToLocation, setActiveAirport, setActiveAerodromeMetadata, setTerminalPivot],
   );
 
   // Handle selecting an AIP section from the dropdown

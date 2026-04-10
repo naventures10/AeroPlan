@@ -53,6 +53,9 @@ interface MapState {
     flyToLocation: (lng: number, lat: number, zoom?: number, pitch?: number, forceViewMode?: 'ENROUTE' | 'TERMINAL') => void;
     fitBounds: (bounds: [number, number, number, number]) => void;
     returnToEnroute: () => void;
+
+    terminalPivot: [number, number] | null;
+    setTerminalPivot: (coords: [number, number] | null) => void;
 }
 
 export const DEFAULT_VIEW = {
@@ -98,6 +101,9 @@ export const useMapStore = create<MapState>((set, get) => ({
     atsRouteLabels: null,
     setAtsRouteLabels: (data) => { set({ atsRouteLabels: data }); },
 
+    terminalPivot: null,
+    setTerminalPivot: (coords) => { set({ terminalPivot: coords }); },
+
     // Basic Setters
     setViewState: (viewState) => { set({ viewState }); },
     setSearchQuery: (query) => { set({ searchQuery: query }); },
@@ -127,6 +133,7 @@ export const useMapStore = create<MapState>((set, get) => ({
             viewMode: 'ENROUTE',
             activeAirport: null,
             selectedFeature: null,
+            terminalPivot: null,
             viewState: {
                 ...DEFAULT_VIEW,
                 transitionDuration: 2500,
