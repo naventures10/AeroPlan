@@ -12,7 +12,8 @@ frontend: ## Start the Vite dev server (React + TypeScript)
 	cd frontend && npm run dev
 
 backend: ## Start the FastAPI server (uvicorn with hot-reload)
-	cd backend && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+	cd backend && /Users/naveendevapalan/.local/bin/uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
 
 test: ## Run all tests (frontend and backend)
 	$(MAKE) test-backend
