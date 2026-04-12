@@ -1,8 +1,9 @@
 import { useMemo, useState, useEffect } from 'react';
 import { GeoJsonLayer, TextLayer, IconLayer } from '@deck.gl/layers';
-import { MVTLayer } from '@deck.gl/geo-layers';
+import { MVTLayer, TripsLayer } from '@deck.gl/geo-layers';
 import { CollisionFilterExtension } from '@deck.gl/extensions';
 import { useMapStore } from '../../../store/useMapStore';
+import { buildRouteAnimations, getDistanceNm } from '../utils/routeAnimation';
 
 const COLLISION_FILTER_EXTENSION = new CollisionFilterExtension();
 const EXTENSIONS = [COLLISION_FILTER_EXTENSION];
@@ -30,9 +31,94 @@ export function useDeckLayers({
     setSelectedFeature,
     viewState,
     atsRouteLabels,
+    animatedTrips,
+    setAnimatedTrips,
+    animationConfig,
+    setAnimationConfig,
   } = useMapStore();
 
   const [isAtsRendered, setIsAtsRendered] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+
+  // Animation Loop Hook
+  useEffect(() => {
+    let animationFrame: number;
+    let lastTime = 0;
+
+    const animate = (time: number) => {
+      if (!lastTime) lastTime = time;
+      const deltaTime = time - lastTime;
+
+      if (animationConfig?.playing && animationConfig.duration > 0) {
+        // Full sweep over 5000ms (5 seconds) for a slow, cinematic effect
+        const speed = animationConfig.duration / 5000;
+        setCurrentTime((prev) => {
+          const next = prev + deltaTime * speed;
+          // Add a 20% delay buffer after full sweep to let glow fade before looping
+          return next % (animationConfig.duration * 1.2);
+        });
+      }
+      lastTime = time;
+      animationFrame = requestAnimationFrame(animate);
+    };
+
+    if (animationConfig?.playing) {
+      animationFrame = requestAnimationFrame(animate);
+    } else {
+      setCurrentTime(0);
+    }
+
+    return () => {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+    };
+  }, [animationConfig]);
+
+  // Data Fetching Hook
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (
+      (selectedFeature?.type === 'WAYPOINT' || selectedFeature?.type === 'ATS_ROUTE') &&
+      selectedRouteIds.length > 0
+    ) {
+      const fetchRoutes = async () => {
+        try {
+          const promises = selectedRouteIds.map((id) =>
+            fetch(`${window.location.origin}/api/ats-routes/${id}/details`).then((r) => r.json()),
+          );
+          const results = await Promise.all(promises);
+          if (isCancelled) return;
+
+          const allTrips: any[] = [];
+          let globalMax = 0;
+
+          results.forEach((routeData) => {
+            if (!routeData || !routeData.segments) return;
+            const { trips, maxDistance } = buildRouteAnimations(
+              routeData,
+              selectedFeature?.type === 'WAYPOINT' ? selectedFeature.data.waypoint_name : undefined,
+            );
+            allTrips.push(...trips);
+            if (maxDistance > globalMax) globalMax = maxDistance;
+          });
+
+          setAnimatedTrips(allTrips);
+          setAnimationConfig({ playing: true, duration: globalMax });
+        } catch (e) {
+          console.error('Failed to build ATS routes animation', e);
+        }
+      };
+      // adding slight debounce so layer updates prioritize click event handling
+      setTimeout(fetchRoutes, 50);
+    } else {
+      setAnimatedTrips([]);
+      setAnimationConfig(null);
+    }
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedFeature, selectedRouteIds, setAnimatedTrips, setAnimationConfig]);
 
   useEffect(() => {
     if (activeLayers.atsRoutes || selectedRouteIds.length > 0) {
@@ -281,12 +367,66 @@ export function useDeckLayers({
         }),
       );
 
+      // ── ATS Route Radial Trips Animation Overlay ──
+      if (animatedTrips && animatedTrips.length > 0) {
+        layers.push(
+          new TripsLayer({
+            id: 'atsRoutes-trips-layer',
+            data: animatedTrips,
+            getPath: (d: any) => d.path.map((p: any) => [p[0], p[1]]),
+            getTimestamps: (d: any) => d.path.map((p: any) => p[2]),
+            getColor: (d: any) => {
+              if (selectedRouteType === 'WAYPOINT') return [192, 132, 252]; // Soft Neon Purple
+              return d.route_type === 'RNAV' ? [50, 205, 50] : [0, 255, 255];
+            },
+            opacity: 1,
+            widthMinPixels: 4,
+            trailLength: 250, // 250 NM trail length to leave a long glowing trail
+            currentTime: currentTime,
+          }),
+        );
+      }
+
       // ── ATS Route Segment Labels (Stable Midpoints from Backend) ──
       if (atsRouteLabels?.features) {
         const labelFeatures = atsRouteLabels.features.filter((f: any) => {
           const isSelected = selectedRouteIds.includes(f.properties.route_id);
           return activeLayers.atsRoutes || isSelected;
         });
+
+        // ── Helper to calculate animation glow intensity per label ──
+        const getLabelIntensity = (d: any) => {
+          let originCoord = null;
+
+          if (selectedFeature?.type === 'WAYPOINT' && selectedFeature.data.coordinates) {
+            originCoord = selectedFeature.data.coordinates;
+          } else if (selectedFeature?.type === 'ATS_ROUTE' && animatedTrips) {
+            const trip = animatedTrips.find((t: any) => t.route_id === d.properties.route_id);
+            if (trip && trip.path.length > 0) {
+              originCoord = [trip.path[0][0], trip.path[0][1]];
+            }
+          }
+
+          if (!originCoord) return 0;
+
+          const dist = getDistanceNm(
+            originCoord[1],
+            originCoord[0],
+            d.geometry.coordinates[1],
+            d.geometry.coordinates[0],
+          );
+          // Glow matches TripsLayer's 250 NM trail, with a 50 NM lead-in anticipation.
+          // The trail head is at currentTime, and tail is 250 NM behind.
+          if (currentTime >= dist - 50 && currentTime <= dist + 250) {
+            const rawIntens =
+              currentTime <= dist
+                ? 1.0 - (dist - currentTime) / 50
+                : 1.0 - (currentTime - dist) / 250;
+            // Prevent negative rawIntens from emitting NaN from Math.pow
+            return Math.max(0, Math.pow(Math.max(0, rawIntens), 1.2));
+          }
+          return 0;
+        };
 
         layers.push(
           new IconLayer({
@@ -300,7 +440,10 @@ export function useDeckLayers({
             getIcon: () => 'hex',
             getPosition: (d: any) => d.geometry.coordinates,
             getAngle: (d: any) => d.properties.bearing, // Parallel to route
-            getSize: 5000,
+            getSize: (d: any) => {
+              const isSelected = selectedRouteIds.includes(d.properties.route_id);
+              return isSelected ? 5000 + getLabelIntensity(d) * 1500 : 5000;
+            },
             getColor: (): [number, number, number, number] => [0, 0, 0, 255], // Fully opaque mask
             sizeUnits: 'meters',
             extensions: EXTENSIONS,
@@ -308,7 +451,7 @@ export function useDeckLayers({
             collisionPriority: (d: any) =>
               selectedRouteIds.includes(d.properties.route_id) ? 2 : 1,
             updateTriggers: {
-              getSize: [selectedRouteIds],
+              getSize: [selectedRouteIds, currentTime, selectedFeature],
             },
             parameters: {
               depthTest: false,
@@ -330,10 +473,30 @@ export function useDeckLayers({
             getSize: 5000,
             getColor: (d: any): [number, number, number, number] => {
               const isSelected = selectedRouteIds.includes(d.properties.route_id);
-              const color = (
+              const baseColor = (
                 d.properties.route_type === 'RNAV' ? [50, 205, 50] : [34, 211, 238]
               ) as [number, number, number];
-              return [color[0], color[1], color[2], isSelected ? 255 : 140];
+
+              if (!isSelected) {
+                return [baseColor[0], baseColor[1], baseColor[2], 140];
+              }
+
+              const intensity = getLabelIntensity(d);
+
+              // Base selected color remains white natively
+              const selectedBase = [255, 255, 255] as [number, number, number];
+              const neonPurple: [number, number, number] = [192, 132, 252];
+              const targetGlow: [number, number, number] =
+                selectedRouteType === 'WAYPOINT' ? neonPurple : baseColor;
+
+              const gR =
+                selectedBase[0] + Math.round((targetGlow[0] - selectedBase[0]) * intensity);
+              const gG =
+                selectedBase[1] + Math.round((targetGlow[1] - selectedBase[1]) * intensity);
+              const gB =
+                selectedBase[2] + Math.round((targetGlow[2] - selectedBase[2]) * intensity);
+
+              return [gR, gG, gB, 255]; // Fully opaque, no flickering
             },
             sizeUnits: 'meters',
             extensions: EXTENSIONS,
@@ -341,8 +504,7 @@ export function useDeckLayers({
             collisionPriority: (d: any) =>
               selectedRouteIds.includes(d.properties.route_id) ? 2 : 1,
             updateTriggers: {
-              getSize: [selectedRouteIds],
-              getColor: [selectedRouteIds],
+              getColor: [selectedRouteIds, currentTime, selectedFeature],
             },
             parameters: { depthTest: false },
           }),
@@ -357,8 +519,29 @@ export function useDeckLayers({
             sizeUnits: 'meters',
             getColor: (d: any) => {
               const isSelected = selectedRouteIds.includes(d.properties.route_id);
-              if (isSelected) return [255, 255, 255, 255];
-              return d.properties.route_type === 'RNAV' ? [50, 205, 50, 140] : [34, 211, 238, 140];
+              const baseColor = (
+                d.properties.route_type === 'RNAV' ? [50, 205, 50] : [34, 211, 238]
+              ) as [number, number, number];
+
+              if (!isSelected) {
+                return [baseColor[0], baseColor[1], baseColor[2], 140];
+              }
+
+              const intensity = getLabelIntensity(d);
+
+              const selectedBase = [255, 255, 255] as [number, number, number];
+              const neonPurple: [number, number, number] = [192, 132, 252];
+              const targetGlow: [number, number, number] =
+                selectedRouteType === 'WAYPOINT' ? neonPurple : baseColor;
+
+              const gR =
+                selectedBase[0] + Math.round((targetGlow[0] - selectedBase[0]) * intensity);
+              const gG =
+                selectedBase[1] + Math.round((targetGlow[1] - selectedBase[1]) * intensity);
+              const gB =
+                selectedBase[2] + Math.round((targetGlow[2] - selectedBase[2]) * intensity);
+
+              return [gR, gG, gB, 255]; // Fully opaque
             },
             fontFamily: 'Inter, sans-serif',
             fontWeight: 700,
@@ -367,8 +550,7 @@ export function useDeckLayers({
             collisionPriority: (d: any) =>
               selectedRouteIds.includes(d.properties.route_id) ? 2 : 1,
             updateTriggers: {
-              getSize: [selectedRouteIds],
-              getColor: [selectedRouteIds],
+              getColor: [selectedRouteIds, currentTime, selectedFeature],
             },
             parameters: { depthTest: false },
           }),
@@ -458,7 +640,13 @@ export function useDeckLayers({
                 setSelectedFeature(null);
               } else if (routes.length > 0) {
                 setSelectedRouteIds(routes, 'WAYPOINT');
-                setSelectedFeature({ type: 'WAYPOINT', data: info.object.properties });
+                setSelectedFeature({
+                  type: 'WAYPOINT',
+                  data: {
+                    ...info.object.properties,
+                    coordinates: info.object.geometry.coordinates,
+                  },
+                });
               }
             } else {
               setSelectedRouteIds([]);
@@ -497,6 +685,8 @@ export function useDeckLayers({
     isZoomAtsWaypoints,
     isAtsRendered,
     atsRouteLabels,
+    animatedTrips,
+    currentTime,
   ]);
 
   return deckLayers;
