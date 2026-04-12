@@ -3,15 +3,19 @@ import { useSearch } from './hooks/useSearch';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useAerodromeData } from './hooks/useAerodromeData';
 
-import MapView from './features/map/MapView';
-import SearchBar from './features/map/controls/SearchBar';
-import LayerToolbar from './features/map/controls/LayerToolbar';
-import ViewToggle from './features/map/controls/ViewToggle';
+import { lazy, Suspense } from 'react';
+import GlobalLoader from './components/GlobalLoader';
 
-import AerodromeInfoDropdown from './features/aip/AerodromeInfoDropdown';
-import AerodromeChartViewer from './features/aip/AerodromeChartViewer';
-import SectionModal from './features/aip/SectionModal';
-import TerminalDashboard from './features/terminal/TerminalDashboard';
+const MapView = lazy(() => import('./features/map/MapView'));
+const SearchBar = lazy(() => import('./features/map/controls/SearchBar'));
+const LayerToolbar = lazy(() => import('./features/map/controls/LayerToolbar'));
+const ViewToggle = lazy(() => import('./features/map/controls/ViewToggle'));
+
+const AerodromeInfoDropdown = lazy(() => import('./features/aip/AerodromeInfoDropdown'));
+const AerodromeChartViewer = lazy(() => import('./features/aip/AerodromeChartViewer'));
+const SectionModal = lazy(() => import('./features/aip/SectionModal'));
+const TerminalDashboard = lazy(() => import('./features/terminal/TerminalDashboard'));
+
 
 /**
  * Root application shell.
@@ -47,14 +51,17 @@ export default function App() {
   // ── Render ─────────────────────────────────────────────────────────
   return (
     <div className="w-screen h-screen overflow-hidden bg-gray-900 relative font-sans">
-      {/* Map */}
-      <MapView
-        aerodromes={aerodromes}
-        onAerodromeClick={handleAerodromeClick}
-      />
+      {/* Map (Primary Chunk) */}
+      <Suspense fallback={<GlobalLoader />}>
+        <MapView
+          aerodromes={aerodromes}
+          onAerodromeClick={handleAerodromeClick}
+        />
+      </Suspense>
 
-      {/* Overlay Layer */}
-      <div className="absolute inset-0 pointer-events-none z-10">
+      {/* Overlay Layer (Secondary Chunks) */}
+      <Suspense fallback={null}>
+        <div className="absolute inset-0 pointer-events-none z-10">
         {/* AIP Section Dropdown — TERMINAL view only */}
         {(activeAirport || viewMode === 'TERMINAL') && (
           <div className="absolute top-6 left-6 pointer-events-auto z-50">
@@ -85,20 +92,23 @@ export default function App() {
         {/* Layer Toolbar — ENROUTE view only */}
         {viewMode === 'ENROUTE' && <LayerToolbar />}
 
-        {/* View Toggle + Branding */}
-        <ViewToggle />
-      </div>
+          {/* View Toggle + Branding */}
+          <ViewToggle />
+        </div>
+      </Suspense>
 
-      {/* AIP Section Modal */}
-      <SectionModal
-        isOpen={sectionModalOpen}
-        onClose={closeSectionModal}
-        title={sectionTitle}
-        sectionId={sectionId}
-        data={sectionData}
-        dataType={sectionDataType}
-        isLoading={sectionLoading}
-      />
+      {/* AIP Section Modal (Isolated Chunk) */}
+      <Suspense fallback={null}>
+        <SectionModal
+          isOpen={sectionModalOpen}
+          onClose={closeSectionModal}
+          title={sectionTitle}
+          sectionId={sectionId}
+          data={sectionData}
+          dataType={sectionDataType}
+          isLoading={sectionLoading}
+        />
+      </Suspense>
     </div>
   );
 }

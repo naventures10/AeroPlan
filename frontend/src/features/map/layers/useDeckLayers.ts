@@ -42,6 +42,9 @@ export function useDeckLayers({
     }));
   }, [aerodromes]);
 
+  const isZoomWaypoints = viewState.zoom > 7.0;
+  const isZoomAtsWaypoints = viewState.zoom > 7.5;
+  const isZoomNavaids = viewState.zoom > 2.5;
 
   const deckLayers = useMemo(() => {
     const layers: any[] = [];
@@ -121,7 +124,7 @@ export function useDeckLayers({
           },
           getText: (d: any) => d.properties.waypoint_name || '',
           getTextSize: (d: any) => {
-            if (viewState.zoom <= 7.0) return 0;
+            if (!isZoomWaypoints) return 0;
             const hasRoutes = d.properties.routes && d.properties.routes !== 'None' && d.properties.routes !== '{}';
             if (activeLayers.atsRoutes && hasRoutes) return 0;
             return 11;
@@ -138,7 +141,7 @@ export function useDeckLayers({
           updateTriggers: {
             getIconColor: [selectedFeature],
             getIconSize: [selectedFeature],
-            getTextSize: [viewState.zoom > 7.0, activeLayers.atsRoutes],
+            getTextSize: [isZoomWaypoints, activeLayers.atsRoutes],
           },
           transitions: {
             getIconColor: 300,
@@ -179,7 +182,7 @@ export function useDeckLayers({
             return [52, 211, 153, 255]; // Emerald Green
           },
           getText: (d: any) => d.properties.ident || '',
-          getTextSize: viewState.zoom > 2.5 ? 12 : 0,
+          getTextSize: isZoomNavaids ? 12 : 0,
           getTextColor: [52, 211, 153, 255],
           getTextPixelOffset: [0, 20],
           textFontFamily: 'Inter, sans-serif',
@@ -192,7 +195,7 @@ export function useDeckLayers({
           updateTriggers: {
             getIconColor: [selectedFeature],
             getIconSize: [selectedFeature],
-            getTextSize: [viewState.zoom > 2],
+            getTextSize: [isZoomNavaids],
           },
           transitions: {
             getIconColor: 300,
@@ -374,7 +377,7 @@ export function useDeckLayers({
             const routes = d.properties.route_ids ? String(d.properties.route_ids).replace(/[{"'}]/g, '').split(',') : [];
             if (routes.some((r: string) => selectedRouteIds.includes(r))) return 12; // Always visible if selected
             if (!activeLayers.atsRoutes) return 0;
-            return viewState.zoom > 7.5 ? 10 : 0; // Relaxed from 8.5 to 7.5
+            return isZoomAtsWaypoints ? 10 : 0; // Relaxed from 8.5 to 7.5
           },
           getTextColor: (d: any) => {
             const routes = d.properties.route_ids ? String(d.properties.route_ids).replace(/[{"'}]/g, '').split(',') : [];
@@ -409,7 +412,7 @@ export function useDeckLayers({
             getIconColor: [selectedRouteIds, selectedRouteType, activeLayers.atsRoutes],
             getIconSize: [selectedRouteIds, activeLayers.atsRoutes],
             getTextColor: [selectedRouteIds, selectedRouteType, activeLayers.atsRoutes],
-            getTextSize: [viewState.zoom > 7.5, selectedRouteIds, activeLayers.atsRoutes],
+            getTextSize: [isZoomAtsWaypoints, selectedRouteIds, activeLayers.atsRoutes],
           },
           transitions: {
             getIconColor: 300,
@@ -432,7 +435,9 @@ export function useDeckLayers({
     setSelectedRouteIds,
     setSelectedFeature,
     selectedFeature,
-    viewState.zoom,
+    isZoomWaypoints,
+    isZoomNavaids,
+    isZoomAtsWaypoints,
     isAtsRendered,
     atsRouteLabels,
   ]);
