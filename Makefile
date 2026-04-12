@@ -1,5 +1,6 @@
 .PHONY: frontend backend dev test test-frontend test-backend \
-       debug profile-start profile-stop profile-bundle profile-db profile-queries profile-jaeger refresh-mv help
+       debug profile-start profile-stop profile-bundle profile-db profile-queries profile-jaeger \
+       profile-tiles restart-martin refresh-mv help
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -71,3 +72,26 @@ profile-jaeger: ## Start Jaeger + backend with OTLP tracing (UI at :16686)
 	@docker start jaeger 2>/dev/null || docker run -d --name jaeger -p 16686:16686 -p 4318:4318 jaegertracing/jaeger:latest
 	@echo "\033[36mJaeger UI:\033[0m http://localhost:16686"
 	cd backend && OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+refresh-mv: ## Refresh the ATS route labels materialized view
+	@docker exec eaip-postgres psql -U postgres -d aeronautical_information_system -c \
+		"REFRESH MATERIALIZED VIEW mv_ats_route_labels;" && echo "\033[32m✓ Materialized view refreshed\033[0m"
+
+restart-martin: ## Pulls latest Martin and restarts with metrics enabled
+	@docker pull ghcr.io/maplibre/martin:latest
+	@docker stop martin || true && docker rm martin || true
+	@docker run -d --name martin \
+		-p 3000:3000 -p 9091:9091 \
+		-v $(PWD)/backend/martin.yaml:/config/martin.yaml \
+		-v $(PWD)/backend/data:/data \
+		ghcr.io/maplibre/martin:latest --config /config/martin.yaml
+
+profile-tiles: ## Start Prometheus to monitor Martin (UI at :9090)
+	@echo "\n\033[36m━━━ Starting Prometheus ━━━\033[0m"
+	@docker stop prometheus || true
+	@docker rm prometheus || true
+	@docker run -d --name prometheus \
+		-p 9090:9090 \
+		-v $(PWD)/backend/prometheus.yml:/etc/prometheus/prometheus.yml \
+		prom/prometheus:latest
+	@echo "\033[36mPrometheus UI:\033[0m http://localhost:9090"

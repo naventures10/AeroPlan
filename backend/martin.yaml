@@ -85,3 +85,9 @@ postgres:
 mbtiles:
   sources:
     wac_india: /data/wac_india.mbtiles
+
+observability:
+  metrics:
+    listen_address: "0.0.0.0:9091"
+    add_labels:
+      env: development
