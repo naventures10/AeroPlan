@@ -22,10 +22,14 @@ from app.routers import (
     weather,
 )
 from app.schemas.geojson import HealthResponse
+from app.telemetry import setup_tracing
 
 # ── Initialise structured logging ────────────────────────────────────────────
 setup_logging(json_format=os.getenv("LOG_FORMAT", "").lower() == "json")
 logger = structlog.get_logger()
+
+# ── Initialise OpenTelemetry tracing ─────────────────────────────────────────
+setup_tracing()
 
 # ── Application ──────────────────────────────────────────────────────────────
 app = FastAPI(title="Aero Plan API", version="0.1.0")
@@ -118,3 +122,9 @@ app.include_router(notams.router)
 app.include_router(daylight.router)
 app.include_router(ats_routes.router)
 app.include_router(navaids.router)
+
+# ── Dev-only: Async profiling endpoints (yappi) ──────────────────────────────
+if os.getenv("DEBUG", "").lower() in ("1", "true"):
+    from app.profiling import profiling_router
+    app.include_router(profiling_router)
+    logger.info("profiling_endpoints_enabled")

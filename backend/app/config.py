@@ -37,7 +37,10 @@ class Settings(BaseSettings):
     MINIO_ACCESS_KEY: str
     MINIO_SECRET_KEY: str
 
-    # ── Security ─────────────────────────────────────────────────────────
+    # ── Dev / Debug ────────────────────────────────────────────────────
+    DEBUG: bool = False
+
+    # ── Security ─────────────────────────────────────────────────────
     SSL_VERIFY: bool = True
 
 

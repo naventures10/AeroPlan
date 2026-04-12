@@ -23,6 +23,7 @@ frontend/node_modules/
 frontend/dist/
 frontend/dist-ssr/
 frontend/*.local
+frontend/stats.html
 
 # ============================================================
 # Python – common artifacts (applies to backend & scrapper)
