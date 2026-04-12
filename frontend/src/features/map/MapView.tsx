@@ -1,6 +1,11 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect, useMemo } from 'react';
 import DeckGL from '@deck.gl/react';
-import { MapController } from '@deck.gl/core';
+import {
+  MapController,
+  FlyToInterpolator,
+  LinearInterpolator,
+  WebMercatorViewport,
+} from '@deck.gl/core';
 import Map, { Source, Layer } from 'react-map-gl/maplibre';
 import type { MapRef } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -87,6 +92,8 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     activeAirport,
     setActiveAirport,
     activeLayers,
+    boundsToFit,
+    fitBounds,
   } = useMapStore();
 
   const mapRef = useRef<MapRef>(null);
@@ -114,10 +121,59 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     [activeAirport, viewMode, setActiveAirport, setViewMode, setViewState],
   );
 
+  // 2. Logic to map transitionType (string) to Actual DeckGL Interpolator objects
+  const processedViewState = useMemo(() => {
+    const { transitionType, ...rest } = viewState;
+    if (!transitionType) return rest;
+
+    return {
+      ...rest,
+      transitionInterpolator:
+        transitionType === 'FLY'
+          ? new FlyToInterpolator({ speed: 1.5 })
+          : new LinearInterpolator(['pitch']),
+    };
+  }, [viewState]);
+
+  // 3. fitBounds watcher (triggered by intent in global store)
+  useEffect(() => {
+    if (boundsToFit && boundsToFit.length === 4) {
+      try {
+        const vp = new WebMercatorViewport({
+          width: window.innerWidth || 1024,
+          height: window.innerHeight || 768,
+        });
+        const { longitude, latitude, zoom } = vp.fitBounds(
+          [
+            [boundsToFit[0], boundsToFit[1]],
+            [boundsToFit[2], boundsToFit[3]],
+          ],
+          { padding: 150 },
+        );
+
+        setViewState({
+          ...viewState,
+          longitude,
+          latitude,
+          zoom,
+          pitch: 0,
+          bearing: 0,
+          transitionDuration: 1200,
+          transitionType: 'FLY',
+        });
+
+        // Reset the intent so it doesn't re-trigger
+        fitBounds(null);
+      } catch (e) {
+        console.error('Failed to calculate fitBounds', e);
+      }
+    }
+  }, [boundsToFit, setViewState, viewState, fitBounds]);
+
   return (
     <div className="absolute inset-0 z-0">
       <DeckGL
-        viewState={viewState}
+        viewState={processedViewState}
         controller={{
           type: CustomMapController,
           dragRotate: true,

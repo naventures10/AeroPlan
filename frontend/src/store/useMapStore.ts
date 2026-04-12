@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { FlyToInterpolator, LinearInterpolator, WebMercatorViewport } from '@deck.gl/core';
 
 // 1. Define the TypeScript Blueprint
 interface MapState {
@@ -12,7 +11,7 @@ interface MapState {
     bearing: number;
     maxPitch: number;
     transitionDuration?: number | 'auto';
-    transitionInterpolator?: any;
+    transitionType?: 'FLY' | 'LINEAR';
   };
 
   // UI & App State
@@ -47,6 +46,9 @@ interface MapState {
   atsRouteLabels: any | null;
   setAtsRouteLabels: (data: any) => void;
 
+  boundsToFit: [number, number, number, number] | null;
+  fitBounds: (bounds: [number, number, number, number] | null) => void;
+
   // Actions (Functions to change the state)
   setViewState: (viewState: any) => void;
   toggleViewMode: () => void;
@@ -59,7 +61,6 @@ interface MapState {
     pitch?: number,
     forceViewMode?: 'ENROUTE' | 'TERMINAL',
   ) => void;
-  fitBounds: (bounds: [number, number, number, number]) => void;
   returnToEnroute: () => void;
 
   terminalPivot: [number, number] | null;
@@ -81,44 +82,52 @@ export const useMapStore = create<MapState>((set, get) => ({
   viewState: DEFAULT_VIEW,
 
   viewMode: 'ENROUTE',
-  setViewMode: (mode) => {
-    set({ viewMode: mode });
-  },
+  setViewMode: (mode) => set({ viewMode: mode }),
 
   activeAerodromeMetadata: null,
-  setActiveAerodromeMetadata: (data) => {
-    set({ activeAerodromeMetadata: data });
-  },
+  setActiveAerodromeMetadata: (data) => set({ activeAerodromeMetadata: data }),
 
   searchQuery: '',
+  setSearchQuery: (query) => set({ searchQuery: query }),
+
   activeLayers: {
     aerodromes: true,
-    waypoints: false,
-    navaids: false,
-    atsRoutes: false,
+    waypoints: true,
+    navaids: true,
+    atsRoutes: true,
     wacMap: false,
   },
 
-  // 3. NEW: Active Airport State
-  activeAirport: null,
-  setActiveAirport: (code) => {
-    set({ activeAirport: code });
-  },
+  toggleLayer: (layer) =>
+    set((state) => ({
+      activeLayers: {
+        ...state.activeLayers,
+        [layer]: !state.activeLayers[layer],
+      },
+    })),
 
   selectedRouteIds: [],
   selectedRouteType: null,
-  setSelectedRouteIds: (routeIds, routeType = null) => {
-    set({ selectedRouteIds: routeIds, selectedRouteType: routeType });
-  },
+  setSelectedRouteIds: (routeIds, routeType = null) =>
+    set({
+      selectedRouteIds: routeIds,
+      selectedRouteType: routeType,
+    }),
+
+  activeAirport: null,
+  setActiveAirport: (code) => set({ activeAirport: code }),
 
   selectedFeature: null,
-  setSelectedFeature: (feature) => {
-    set({ selectedFeature: feature });
-  },
+  setSelectedFeature: (feature) => set({ selectedFeature: feature }),
 
   atsRouteLabels: null,
   setAtsRouteLabels: (data) => {
     set({ atsRouteLabels: data });
+  },
+
+  boundsToFit: null,
+  fitBounds: (bounds) => {
+    set({ boundsToFit: bounds });
   },
 
   terminalPivot: null,
@@ -127,30 +136,18 @@ export const useMapStore = create<MapState>((set, get) => ({
   },
 
   // Basic Setters
-  setViewState: (viewState) => {
-    set({ viewState });
-  },
-  setSearchQuery: (query) => {
-    set({ searchQuery: query });
-  },
-  toggleLayer: (layer) => {
-    set((state) => ({
-      activeLayers: { ...state.activeLayers, [layer]: !state.activeLayers[layer] },
-    }));
-  },
+  setViewState: (viewState) => set({ viewState }),
 
-  // The Enroute <-> Terminal Toggle Logic
   toggleViewMode: () => {
     const { viewMode, viewState } = get();
     const newMode = viewMode === 'ENROUTE' ? 'TERMINAL' : 'ENROUTE';
-
     set({
       viewMode: newMode,
       viewState: {
         ...viewState,
-        pitch: newMode === 'TERMINAL' ? 45 : 0, // Tilt to 45 if Terminal, 0 if Enroute
+        pitch: newMode === 'TERMINAL' ? 45 : 0,
         transitionDuration: 1000,
-        transitionInterpolator: new LinearInterpolator(['pitch']),
+        transitionType: 'LINEAR',
       },
     });
   },
@@ -164,7 +161,7 @@ export const useMapStore = create<MapState>((set, get) => ({
       viewState: {
         ...DEFAULT_VIEW,
         transitionDuration: 2500,
-        transitionInterpolator: new FlyToInterpolator(),
+        transitionType: 'FLY',
       },
     });
   },
@@ -180,44 +177,9 @@ export const useMapStore = create<MapState>((set, get) => ({
         pitch: pitch,
         bearing: 0,
         maxPitch: 85,
-        transitionDuration: 1200, // Cinematic 1.2s rapid movement
-        transitionInterpolator: new FlyToInterpolator({ speed: 1.5 }),
+        transitionDuration: 1200,
+        transitionType: 'FLY',
       },
     });
-  },
-
-  fitBounds: (bounds) => {
-    // bounds array [minX, minY, maxX, maxY]
-    const { viewState } = get();
-    try {
-      // Using typical viewport dimensions, 100px padding to keep the airway fully visible
-      const vp = new WebMercatorViewport({
-        width: window.innerWidth || 1024,
-        height: window.innerHeight || 768,
-      });
-      const { longitude, latitude, zoom } = vp.fitBounds(
-        [
-          [bounds[0], bounds[1]],
-          [bounds[2], bounds[3]],
-        ],
-        { padding: 150 },
-      );
-
-      set({
-        viewMode: 'ENROUTE', // Always lock to 2D Enroute map mode to see airway
-        viewState: {
-          ...viewState,
-          longitude,
-          latitude,
-          zoom,
-          pitch: 0, // Request from user to reset tilt
-          bearing: 0,
-          transitionDuration: 1200,
-          transitionInterpolator: new FlyToInterpolator({ speed: 1.5 }),
-        },
-      });
-    } catch (e) {
-      console.error('Failed to calculate fitBounds', e);
-    }
   },
 }));
