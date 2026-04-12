@@ -31,15 +31,16 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)) -> list[Sear
     contains_term = f"%{q_clean}%"
 
     import re
+
     # Extract alphanumeric parts for fuzzy matching
-    parts = [p for p in re.split(r'[^A-Z0-9]+', q_clean) if p]
+    parts = [p for p in re.split(r"[^A-Z0-9]+", q_clean) if p]
     if not parts:
         parts = list(q_clean)
 
     # Split 'V4' into 'V' and '4' for fuzzier fallback
     fuzzy_tokens = []
     for part in parts:
-        fuzzy_tokens.extend(re.findall(r'[A-Z]+|\d+', part))
+        fuzzy_tokens.extend(re.findall(r"[A-Z]+|\d+", part))
 
     tokens = list(set(fuzzy_tokens)) if fuzzy_tokens else list(q_clean)
 
@@ -197,12 +198,15 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)) -> list[Sear
         "search.execute",
         attributes={"search.query": q_clean, "search.token_count": len(tokens)},
     ) as span:
-        result = await db.execute(query, {
-            "exact_term": exact_term,
-            "start_term": start_term,
-            "contains_term": contains_term,
-            "regex_term": regex_term
-        })
+        result = await db.execute(
+            query,
+            {
+                "exact_term": exact_term,
+                "start_term": start_term,
+                "contains_term": contains_term,
+                "regex_term": regex_term,
+            },
+        )
         rows = result.fetchall()
         span.set_attribute("search.result_count", len(rows))
 

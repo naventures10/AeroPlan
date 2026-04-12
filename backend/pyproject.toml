@@ -28,11 +28,10 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "mypy>=1.15.0",
+    "pyrefly",
     "pytest>=8.3.5",
     "pytest-asyncio>=0.25.3",
     "ruff>=0.9.10",
-    "sqlalchemy[mypy]>=2.0.48",
     "yappi>=1.7.6",
 ]
 
@@ -49,19 +48,5 @@ target-version = "py314"
 select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "RUF"]
 ignore = ["B008", "RUF012", "E501"]
 
-[tool.mypy]
-strict = true
-disallow_untyped_defs = false
-disallow_any_generics = false
-exclude = ["venv", ".venv", "env"]
-plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
 
-[[tool.mypy.overrides]]
-module = [
-    "boto3.*",
-    "botocore.*",
-    "geoalchemy2.*",
-    "bs4.*",
-]
-ignore_missing_imports = true
 

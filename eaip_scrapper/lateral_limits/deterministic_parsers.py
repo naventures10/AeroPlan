@@ -29,6 +29,7 @@ from .models import (
 # Pattern detection helpers
 # ---------------------------------------------------------------------------
 
+
 def _has_arc_language(text: str) -> bool:
     """Check if text contains arc/curve language requiring LLM."""
     arc_patterns = [
@@ -64,8 +65,13 @@ def _has_topological_language(text: str) -> bool:
 
 def _has_exclusion_language(text: str) -> bool:
     """Check if text excludes sub-areas requiring complex handling."""
-    return bool(re.search(r"exclud(?:ing|ed)\s+(?:the\s+)?(?:airspace|portions?|area)",
-                          text, re.IGNORECASE))
+    return bool(
+        re.search(
+            r"exclud(?:ing|ed)\s+(?:the\s+)?(?:airspace|portions?|area)",
+            text,
+            re.IGNORECASE,
+        )
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -109,7 +115,11 @@ def parse_circle(text: str) -> Optional[CircularAirspace]:
     if _has_arc_language(text) or _has_topological_language(text):
         return None
 
-    for pattern in [_CIRCLE_BOUNDED_BY, _CIRCLE_RADIUS_CENTER, _CIRCLE_BOUNDED_CENTER_RADIUS]:
+    for pattern in [
+        _CIRCLE_BOUNDED_BY,
+        _CIRCLE_RADIUS_CENTER,
+        _CIRCLE_BOUNDED_CENTER_RADIUS,
+    ]:
         m = pattern.search(text)
         if m:
             groups = m.groups()
@@ -251,6 +261,7 @@ def parse_annular_ring(text: str) -> Optional[AnnularRingAirspace]:
 # Pattern: SIMPLE POLYGON
 # ---------------------------------------------------------------------------
 
+
 def parse_simple_polygon(text: str) -> Optional[SimplePolygonAirspace]:
     """Try to parse a simple polygon (only straight-line edges)."""
     if _has_arc_language(text) or _has_topological_language(text):
@@ -270,6 +281,7 @@ def parse_simple_polygon(text: str) -> Optional[SimplePolygonAirspace]:
 # ---------------------------------------------------------------------------
 # Classifier
 # ---------------------------------------------------------------------------
+
 
 def classify_and_parse(text: str) -> tuple[str, Optional[AirspaceGeometry]]:
     """Classify a lateral_limits text and attempt deterministic parsing."""

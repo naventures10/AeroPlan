@@ -28,6 +28,7 @@ from .models import (
 @dataclass
 class ValidationResult:
     """Result of validating a parsed geometry."""
+
     is_valid: bool = True
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
@@ -120,9 +121,7 @@ def validate_geometry(
         for i, seg in enumerate(geometry.boundaries):
             warn = _check_india_region(seg.end_coordinate)
             if warn:
-                result.warnings.append(
-                    f"{prefix}Segment {i} endpoint: {warn}"
-                )
+                result.warnings.append(f"{prefix}Segment {i} endpoint: {warn}")
 
             if seg.segment_type == "arc":
                 max_r = 500 if seg.radius_unit == "NM" else 1000

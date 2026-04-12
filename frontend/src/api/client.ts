@@ -83,7 +83,9 @@ export async function fetchAerodromes(): Promise<GeoJsonFeatureCollection> {
   return get<GeoJsonFeatureCollection>('/aerodromes');
 }
 
-export async function fetchAerodromeMetadata(icao: string): Promise<Record<string, unknown> | null> {
+export async function fetchAerodromeMetadata(
+  icao: string,
+): Promise<Record<string, unknown> | null> {
   const data = await getOrNull<Record<string, unknown>>(`/aerodromes/${icao}/metadata`);
   if (!data) return null;
   if (data.aip_document) return data.aip_document as Record<string, unknown>;
@@ -97,7 +99,12 @@ export async function fetchAerodromeSection(
 ): Promise<AerodromeSectionResponse> {
   const res = await fetch(`${API_BASE}/aerodromes/${icao}/section/${sectionId}`);
   if (res.status === 404) {
-    return { section_id: sectionId, title: 'No Data for This Section', data_type: 'object', data: null };
+    return {
+      section_id: sectionId,
+      title: 'No Data for This Section',
+      data_type: 'object',
+      data: null,
+    };
   }
   if (!res.ok) throw new ApiError(res.status, `/aerodromes/${icao}/section/${sectionId}`);
   return res.json();
@@ -149,10 +156,7 @@ export async function fetchNotams(icao: string): Promise<NotamData[]> {
   }
 }
 
-export async function fetchDaylight(
-  icao: string,
-  date: string,
-): Promise<DaylightRecord | null> {
+export async function fetchDaylight(icao: string, date: string): Promise<DaylightRecord | null> {
   const data = await getOrNull<{ records?: DaylightRecord[] }>(`/daylight/${icao}?date=${date}`);
   return data?.records?.[0] || null;
 }

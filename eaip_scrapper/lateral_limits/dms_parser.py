@@ -18,9 +18,7 @@ from .models import Coordinate
 
 # Regex for a single lat or lng token.
 # Captures: digits (possibly with decimal), hemisphere letter.
-_COORD_TOKEN = re.compile(
-    r"(\d+(?:\.\d+)?)\s*([NSEWnsew])"
-)
+_COORD_TOKEN = re.compile(r"(\d+(?:\.\d+)?)\s*([NSEWnsew])")
 
 
 def _parse_single_component(digits: str, hemisphere: str) -> float:

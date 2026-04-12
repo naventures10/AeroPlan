@@ -158,6 +158,7 @@ def _get_agent() -> Agent:
 # LLM parsing with retry
 # ---------------------------------------------------------------------------
 
+
 async def parse_with_llm(
     lateral_limits_text: str,
     name: str = "",
@@ -184,10 +185,8 @@ async def parse_with_llm(
             result = await agent.run(prompt)
             return result.output
         except Exception as e:
-            delay = base_delay * (2 ** attempt)
-            print(
-                f"  [!] Attempt {attempt + 1}/{max_retries} failed for '{name}': {e}"
-            )
+            delay = base_delay * (2**attempt)
+            print(f"  [!] Attempt {attempt + 1}/{max_retries} failed for '{name}': {e}")
             if attempt < max_retries - 1:
                 print(f"      Retrying in {delay:.1f}s...")
                 await asyncio.sleep(delay)

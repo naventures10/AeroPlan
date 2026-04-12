@@ -10,7 +10,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 DAYLIGHT_PDF_URL = "https://aim-india.aai.aero/sites/default/files/menu_item_files/GEN_2.7_Sunrise_Sunset%20%282026%29.pdf"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent.parent / "output"
 CHUNK_SIZE = 20  # pages per chunk — keep small to limit memory per worker
-MAX_WORKERS = 2   # each worker loads ~1-2GB of ML models, so keep low
+MAX_WORKERS = 2  # each worker loads ~1-2GB of ML models, so keep low
 
 
 def download_pdf(pdf_url: str, dest_path: Path) -> Path:
@@ -68,8 +68,10 @@ def _get_accelerator_device():
     """
     try:
         import torch
+
         if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
             from docling.datamodel.pipeline_options import AcceleratorDevice
+
             print("  🚀 Using Apple Silicon MPS GPU acceleration")
             return AcceleratorDevice.MPS
     except ImportError:
@@ -77,14 +79,17 @@ def _get_accelerator_device():
 
     try:
         import torch
+
         if torch.cuda.is_available():
             from docling.datamodel.pipeline_options import AcceleratorDevice
+
             print("  🚀 Using CUDA GPU acceleration")
             return AcceleratorDevice.CUDA
     except ImportError:
         pass
 
     from docling.datamodel.pipeline_options import AcceleratorDevice
+
     print("  ℹ️  Using AUTO accelerator (CPU)")
     return AcceleratorDevice.AUTO
 
@@ -98,13 +103,18 @@ def convert_chunk(chunk_path_str: str) -> tuple[str, str]:
     """
     from docling.document_converter import DocumentConverter, PdfFormatOption
     from docling.datamodel.base_models import InputFormat
-    from docling.datamodel.pipeline_options import PdfPipelineOptions, AcceleratorOptions
+    from docling.datamodel.pipeline_options import (
+        PdfPipelineOptions,
+        AcceleratorOptions,
+    )
 
     chunk_path = Path(chunk_path_str)
     device = _get_accelerator_device()
 
     pipeline_options = PdfPipelineOptions()
-    pipeline_options.accelerator_options = AcceleratorOptions(device=device, num_threads=4)
+    pipeline_options.accelerator_options = AcceleratorOptions(
+        device=device, num_threads=4
+    )
 
     converter = DocumentConverter(
         format_options={
@@ -125,13 +135,13 @@ def main():
     pdf_filename = DAYLIGHT_PDF_URL.rsplit("/", 1)[-1]
     md_filename = pdf_filename.replace(".pdf", ".md")
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(" Daylight Tables Scraper (Batch + GPU)")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f" PDF:        {pdf_filename}")
     print(f" Chunk size: {CHUNK_SIZE} pages")
     print(f" Workers:    {MAX_WORKERS}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
@@ -156,8 +166,7 @@ def main():
 
         with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
             future_to_chunk = {
-                executor.submit(convert_chunk, str(cp)): cp.name
-                for cp in chunk_paths
+                executor.submit(convert_chunk, str(cp)): cp.name for cp in chunk_paths
             }
             for future in as_completed(future_to_chunk):
                 chunk_name = future_to_chunk[future]
@@ -184,9 +193,9 @@ def main():
         print(f"  ✓ Saved merged Markdown to: {output_path}")
         print(f"    Total size: {len(merged_markdown):,} characters")
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f" Done! Daylight Tables PDF converted and saved to {OUTPUT_DIR}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
 
 if __name__ == "__main__":

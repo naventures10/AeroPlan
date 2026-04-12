@@ -35,11 +35,13 @@ def setup_tracing() -> None:
     if os.getenv("OTEL_ENABLED", "true").lower() not in ("1", "true"):
         return
 
-    resource = Resource.create({
-        "service.name": os.getenv("OTEL_SERVICE_NAME", "aero-plan-api"),
-        "service.version": "0.1.0",
-        "deployment.environment": os.getenv("ENVIRONMENT", "development"),
-    })
+    resource = Resource.create(
+        {
+            "service.name": os.getenv("OTEL_SERVICE_NAME", "aero-plan-api"),
+            "service.version": "0.1.0",
+            "deployment.environment": os.getenv("ENVIRONMENT", "development"),
+        }
+    )
 
     provider = TracerProvider(resource=resource)
 
@@ -52,6 +54,7 @@ def setup_tracing() -> None:
         from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
             OTLPSpanExporter,
         )
+
         exporter = OTLPSpanExporter(endpoint=f"{otlp_endpoint}/v1/traces")
         provider.add_span_processor(BatchSpanProcessor(exporter))
     elif exporter_mode == "console":

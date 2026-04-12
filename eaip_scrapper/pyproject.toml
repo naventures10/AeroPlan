@@ -27,3 +27,8 @@ dependencies = [
     "sqlalchemy>=2.0.48",
     "urllib3>=2.6.3",
 ]
+
+[dependency-groups]
+dev = [
+    "pyrefly",
+]

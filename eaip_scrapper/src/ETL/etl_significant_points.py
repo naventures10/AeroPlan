@@ -9,17 +9,21 @@ class WaypointLoader:
     """Loads ENR 4.4 Significant Points from MinIO into the PostGIS database."""
 
     def __init__(self, bucket_name="ais"):
-        self.s3 = boto3.client('s3',
-            endpoint_url='http://localhost:9000',
-            aws_access_key_id='ais_admin',
-            aws_secret_access_key='AviationData2026!',
-            region_name='us-east-1'
+        self.s3 = boto3.client(
+            "s3",
+            endpoint_url="http://localhost:9000",
+            aws_access_key_id="ais_admin",
+            aws_secret_access_key="AviationData2026!",
+            region_name="us-east-1",
         )
         self.bucket_name = bucket_name
 
         self.conn = psycopg2.connect(
-            dbname="aeronautical_information_system", user="postgres", password="postgres",
-            host="localhost", port="5432"
+            dbname="aeronautical_information_system",
+            user="postgres",
+            password="postgres",
+            host="localhost",
+            port="5432",
         )
         self.conn.autocommit = False
 
@@ -31,16 +35,18 @@ class WaypointLoader:
         direction = coord_str[-1]
         numbers = coord_str[:-1]
 
-        is_lat = direction in ['N', 'S']
+        is_lat = direction in ["N", "S"]
         deg_len = 2 if is_lat else 3
 
         try:
             degrees = float(numbers[:deg_len])
-            minutes = float(numbers[deg_len:deg_len + 2])
-            seconds = float(numbers[deg_len + 2:]) if len(numbers) > deg_len + 2 else 0.0
+            minutes = float(numbers[deg_len : deg_len + 2])
+            seconds = (
+                float(numbers[deg_len + 2 :]) if len(numbers) > deg_len + 2 else 0.0
+            )
 
             decimal = degrees + (minutes / 60) + (seconds / 3600)
-            if direction in ['S', 'W']:
+            if direction in ["S", "W"]:
                 decimal *= -1
             return round(decimal, 6)
         except ValueError:
@@ -53,10 +59,10 @@ class WaypointLoader:
         (waypoint_name, routes, raw_coordinates, geom_ewkt)
         """
         records = []
-        for item in data.get('significant_points', []):
-            name = item.get('waypoint')
-            coords_str = item.get('coordinates', '')
-            routes = item.get('routes', [])
+        for item in data.get("significant_points", []):
+            name = item.get("waypoint")
+            coords_str = item.get("coordinates", "")
+            routes = item.get("routes", [])
 
             match = re.match(r"(\d+[NS])\s+(\d+[EW])", coords_str)
             if match:
@@ -75,7 +81,7 @@ class WaypointLoader:
         print(f"[*] Fetching '{filename}' from MinIO bucket '{self.bucket_name}'...")
         try:
             response = self.s3.get_object(Bucket=self.bucket_name, Key=filename)
-            data = json.loads(response['Body'].read().decode('utf-8'))
+            data = json.loads(response["Body"].read().decode("utf-8"))
         except Exception as e:
             print(f"[!] Failed to fetch or parse file from MinIO: {e}")
             return
@@ -90,7 +96,9 @@ class WaypointLoader:
 
             # Bulk insert all waypoints with upsert
             if records:
-                execute_values(cur, """
+                execute_values(
+                    cur,
+                    """
                     INSERT INTO significant_points (waypoint_name, routes, raw_coordinates, geom)
                     VALUES %s
                     ON CONFLICT (waypoint_name) 
@@ -98,11 +106,16 @@ class WaypointLoader:
                         routes = EXCLUDED.routes,
                         raw_coordinates = EXCLUDED.raw_coordinates,
                         geom = EXCLUDED.geom
-                """, records, template="(%s, %s::text[], %s, ST_GeomFromEWKT(%s))")
+                """,
+                    records,
+                    template="(%s, %s::text[], %s, ST_GeomFromEWKT(%s))",
+                )
 
             self.conn.commit()
 
-        print(f"[+] Successfully loaded {len(records)} waypoints into significant_points!")
+        print(
+            f"[+] Successfully loaded {len(records)} waypoints into significant_points!"
+        )
 
     def close(self):
         """Closes the database connection."""

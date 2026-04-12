@@ -13,19 +13,21 @@ SECTION_MAP = [
 class ENRAirspaceExtractor(BaseENRExtractor):
     """
     Standalone scraper for ENR 2.1 - FIR, UIR, TMA AND CTA.
-    
+
     Inherits AIRAC cycle resolution and JSON extraction boilerplate.
-    Parses the 5-column tables for each airspace section and extracts PDF 
+    Parses the 5-column tables for each airspace section and extracts PDF
     chart links from iframes using ChartExtractor.
     """
 
-    def __init__(self, active_eaip_url, session=None, output_file="enr_2_1_airspace.json"):
+    def __init__(
+        self, active_eaip_url, session=None, output_file="enr_2_1_airspace.json"
+    ):
         super().__init__(
             active_eaip_url=active_eaip_url,
             section_code="ENR 2.1",
             title="FIR, UIR, TMA AND CTA",
             output_file=output_file,
-            session=session
+            session=session,
         )
 
     def _extract_data(self):
@@ -34,7 +36,7 @@ class ENRAirspaceExtractor(BaseENRExtractor):
         if not soup:
             return None
 
-        tables = soup.find_all('table')
+        tables = soup.find_all("table")
         print(f"[*] Found {len(tables)} table(s) on the ENR 2.1 page.")
         sections = self._classify_tables(tables)
 
@@ -47,7 +49,7 @@ class ENRAirspaceExtractor(BaseENRExtractor):
             entries = []
             for grid in grids:
                 entries.extend(self._extract_airspace_entries(grid))
-            
+
             airspace_data[section_key] = entries
             total_entries += len(entries)
             print(f"[+] {section_title}: {len(entries)} entries")
@@ -63,18 +65,20 @@ class ENRAirspaceExtractor(BaseENRExtractor):
             "summary": {
                 "total_entries": total_entries,
                 "total_charts": len(charts),
-                "sections": {key: len(airspace_data.get(key, [])) for _, key, _ in SECTION_MAP}
-            }
+                "sections": {
+                    key: len(airspace_data.get(key, [])) for _, key, _ in SECTION_MAP
+                },
+            },
         }
 
     def _classify_tables(self, tables):
         """
         Walks through all tables and groups them by section.
-        
+
         The ENR 2.1 page has section header tables (1 row, 1 col) interleaved
-        with data tables (multi-row, 5 cols). This method pairs each header 
+        with data tables (multi-row, 5 cols). This method pairs each header
         with its data table(s).
-        
+
         Returns: dict mapping section_key -> list of data grids
         """
         sections = {}
@@ -95,7 +99,7 @@ class ENRAirspaceExtractor(BaseENRExtractor):
                         print(f"    -> Section detected: {header_text}")
                         break
                 continue
-            
+
             # Also skip 2-row single-col tables (like 2.1.4 which has a subtitle)
             if len(grid) <= 2 and all(len(row) == 1 for row in grid):
                 header_text = grid[0][0].strip()
@@ -115,13 +119,13 @@ class ENRAirspaceExtractor(BaseENRExtractor):
 
     def _extract_airspace_entries(self, grid):
         """
-        Extracts airspace entries from a 5-column virtual grid, grouping 
+        Extracts airspace entries from a 5-column virtual grid, grouping
         rows that share the same airspace name.
-        
+
         Multiple rows for the same airspace (e.g. Chennai FIR has rows for
-        MWARA, RDARA, SAR, ACC) are merged into a single entry with a 
+        MWARA, RDARA, SAR, ACC) are merged into a single entry with a
         nested `services` array.
-        
+
         Columns:
           0: Name, Lateral Limits, Vertical Limits, Class of airspace
           1: Unit providing service
@@ -131,7 +135,7 @@ class ENRAirspaceExtractor(BaseENRExtractor):
         """
         from collections import OrderedDict  # preserve insertion order
 
-        clean = lambda c: c.replace(' | ', '\n').strip() if isinstance(c, str) else ""
+        clean = lambda c: c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
         grouped = OrderedDict()  # key: name_and_limits -> entry dict
 
         for row in grid:
@@ -159,7 +163,7 @@ class ENRAirspaceExtractor(BaseENRExtractor):
                 "unit_providing_service": clean(unit),
                 "callsign_language_hours": clean(callsign_info),
                 "frequency": clean(frequency),
-                "remarks": clean(remarks)
+                "remarks": clean(remarks),
             }
 
             if cleaned_name in grouped:
@@ -169,9 +173,7 @@ class ENRAirspaceExtractor(BaseENRExtractor):
                 # Create new airspace entry
                 grouped[cleaned_name] = {
                     "name_and_limits": cleaned_name,
-                    "services": [service]
+                    "services": [service],
                 }
 
         return list(grouped.values())
-
-

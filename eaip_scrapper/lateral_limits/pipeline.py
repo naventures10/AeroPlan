@@ -71,6 +71,7 @@ def _save_progress(output_dir: Path, progress: dict) -> None:
 # GeoJSON helpers
 # ---------------------------------------------------------------------------
 
+
 def _circle_to_geojson_polygon(
     center_lat: float, center_lng: float, radius_nm: float, num_points: int = 64
 ) -> list[list[float]]:
@@ -145,7 +146,9 @@ def geometry_to_geojson_feature(
         if geom.radius_unit == "KM":
             radius = radius / 1.852
         ring = _circle_to_geojson_polygon(geom.center.lat, geom.center.lng, radius)
-        properties["note"] = f"Annular ring, inner radius {geom.inner_radius_value} {geom.radius_unit}"
+        properties["note"] = (
+            f"Annular ring, inner radius {geom.inner_radius_value} {geom.radius_unit}"
+        )
         return {
             "type": "Feature",
             "properties": properties,
@@ -153,9 +156,7 @@ def geometry_to_geojson_feature(
         }
 
     elif isinstance(geom, SimplePolygonAirspace):
-        ring = [
-            [round(c.lng, 6), round(c.lat, 6)] for c in geom.coordinates
-        ]
+        ring = [[round(c.lng, 6), round(c.lat, 6)] for c in geom.coordinates]
         if ring[0] != ring[-1]:
             ring.append(ring[0])
         return {
@@ -170,6 +171,7 @@ def geometry_to_geojson_feature(
 # ---------------------------------------------------------------------------
 # Main pipeline
 # ---------------------------------------------------------------------------
+
 
 def load_airspace_data(path: Path) -> list[dict]:
     """Load and flatten all airspace entries from combined_airspace_data.json."""
@@ -254,15 +256,17 @@ async def run_pipeline(
         scheduled: If True, run in background mode with interval waits
         interval_minutes: Minutes between scheduled batches
     """
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  Lateral Limits Parser Pipeline")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"  Input:     {input_path}")
     print(f"  Output:    {output_dir}")
     print(f"  Dry run:   {dry_run}")
     print(f"  Batch:     {batch_size}")
-    print(f"  Scheduled: {scheduled} (every {interval_minutes} min)" if scheduled else "")
-    print(f"{'='*60}\n")
+    print(
+        f"  Scheduled: {scheduled} (every {interval_minutes} min)" if scheduled else ""
+    )
+    print(f"{'=' * 60}\n")
 
     # Load data
     entries = load_airspace_data(input_path)
@@ -271,7 +275,13 @@ async def run_pipeline(
     # Phase 1: Deterministic parsing
     deterministic_results: list[AirspaceExtraction] = []
     complex_entries: list[dict] = []
-    stats = {"circle": 0, "bounding_box": 0, "annular_ring": 0, "simple_polygon": 0, "complex": 0}
+    stats = {
+        "circle": 0,
+        "bounding_box": 0,
+        "annular_ring": 0,
+        "simple_polygon": 0,
+        "complex": 0,
+    }
 
     print("Phase 1: Deterministic parsing...")
     print("-" * 40)
@@ -337,7 +347,8 @@ async def run_pipeline(
 
         # Filter out already-processed entries
         remaining = [
-            e for e in complex_entries
+            e
+            for e in complex_entries
             if e.get("name", "") not in already_done
             and e.get("name", "") not in already_failed
         ]
@@ -360,8 +371,10 @@ async def run_pipeline(
                 batch = remaining[i:batch_end]
 
                 now = datetime.now().strftime("%H:%M:%S")
-                print(f"\n[{now}] Batch {batch_num}: "
-                      f"entries {i + 1}–{batch_end} of {len(remaining)}")
+                print(
+                    f"\n[{now}] Batch {batch_num}: "
+                    f"entries {i + 1}–{batch_end} of {len(remaining)}"
+                )
 
                 batch_success = 0
                 batch_fail = 0
@@ -412,15 +425,18 @@ async def run_pipeline(
 
                 # Save progress after each batch
                 _save_progress(output_dir, progress)
-                print(f"\n  Batch {batch_num} done: "
-                      f"{batch_success} ✓, {batch_fail} ✗")
+                print(f"\n  Batch {batch_num} done: {batch_success} ✓, {batch_fail} ✗")
 
                 i = batch_end
 
                 # Save outputs after each batch so results are always up-to-date
                 _save_final_outputs(
-                    output_dir, deterministic_results, llm_results,
-                    llm_failures, stats, len(entries),
+                    output_dir,
+                    deterministic_results,
+                    llm_results,
+                    llm_failures,
+                    stats,
+                    len(entries),
                 )
 
                 # If scheduled and more entries remain, wait for the interval
@@ -429,19 +445,21 @@ async def run_pipeline(
                     batches_left = math.ceil(entries_left / batch_size)
                     eta_hours = (batches_left * interval_minutes) / 60
 
-                    print(f"\n{'='*60}")
+                    print(f"\n{'=' * 60}")
                     print(f"  ⏳ Waiting {interval_minutes} min before next batch...")
-                    print(f"     {entries_left} entries remaining "
-                          f"(~{batches_left} batches, ~{eta_hours:.1f}h ETA)")
+                    print(
+                        f"     {entries_left} entries remaining "
+                        f"(~{batches_left} batches, ~{eta_hours:.1f}h ETA)"
+                    )
                     next_run = datetime.now().strftime("%H:%M")
                     print(f"     Started waiting at {next_run}")
-                    print(f"{'='*60}")
+                    print(f"{'=' * 60}")
 
                     await asyncio.sleep(interval_minutes * 60)
 
                 elif not scheduled and i < len(remaining):
                     # Interactive mode — ask to continue
-                    print(f"\n{'='*40}")
+                    print(f"\n{'=' * 40}")
                     print(f"Batch complete. {len(remaining) - i} entries remaining.")
                     response = input("Continue? [Y/n/q] ").strip().lower()
                     if response in ("n", "q"):
@@ -457,20 +475,24 @@ async def run_pipeline(
 
     # Save final outputs
     num_features = _save_final_outputs(
-        output_dir, deterministic_results, llm_results,
-        llm_failures, stats, len(entries),
+        output_dir,
+        deterministic_results,
+        llm_results,
+        llm_failures,
+        stats,
+        len(entries),
     )
 
     # Summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  Pipeline Summary")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"  Total entries:           {len(entries)}")
     print(f"  Parsed (deterministic):  {len(deterministic_results)}")
     print(f"  Parsed (LLM):            {len(llm_results)}")
     print(f"  Failed/skipped:          {len(llm_failures)}")
     print(f"  GeoJSON features:        {num_features}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     if scheduled and llm_failures:
         print(f"\n💡 To retry failed entries, delete their names from")
@@ -480,6 +502,7 @@ async def run_pipeline(
 # ---------------------------------------------------------------------------
 # CLI entry point
 # ---------------------------------------------------------------------------
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -537,14 +560,16 @@ def main():
             print("No progress file to reset.")
         return
 
-    asyncio.run(run_pipeline(
-        input_path=args.input,
-        output_dir=args.output,
-        dry_run=args.dry_run,
-        batch_size=args.batch_size,
-        scheduled=args.scheduled,
-        interval_minutes=args.interval,
-    ))
+    asyncio.run(
+        run_pipeline(
+            input_path=args.input,
+            output_dir=args.output,
+            dry_run=args.dry_run,
+            batch_size=args.batch_size,
+            scheduled=args.scheduled,
+            interval_minutes=args.interval,
+        )
+    )
 
 
 if __name__ == "__main__":

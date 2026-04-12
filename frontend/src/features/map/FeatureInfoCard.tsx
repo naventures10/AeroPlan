@@ -32,16 +32,20 @@ export function FeatureInfoCard() {
     setIsLoadingRoute(true);
     setShowRemarks(false);
 
-    fetchAtsRouteDetails(data.route_id).then((details) => {
-      if (!cancelled) {
-        setRouteDetails(details);
-        setIsLoadingRoute(false);
-      }
-    }).catch(() => {
-      if (!cancelled) setIsLoadingRoute(false);
-    });
+    fetchAtsRouteDetails(data.route_id)
+      .then((details) => {
+        if (!cancelled) {
+          setRouteDetails(details);
+          setIsLoadingRoute(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setIsLoadingRoute(false);
+      });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [type, data.route_id]);
 
   // Fetch full Navaid details when a NAVAID is selected
@@ -57,16 +61,20 @@ export function FeatureInfoCard() {
     setIsLoadingNavaid(true);
     setShowRemarks(false);
 
-    fetchNavaidDetails(ident).then((details) => {
-      if (!cancelled) {
-        setNavaidDetails(details);
-        setIsLoadingNavaid(false);
-      }
-    }).catch(() => {
-      if (!cancelled) setIsLoadingNavaid(false);
-    });
+    fetchNavaidDetails(ident)
+      .then((details) => {
+        if (!cancelled) {
+          setNavaidDetails(details);
+          setIsLoadingNavaid(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setIsLoadingNavaid(false);
+      });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [type, data.ident, data.id]);
 
   // ── Shared label-value component ──
@@ -88,7 +96,9 @@ export function FeatureInfoCard() {
       return (
         <div className="flex flex-col items-center justify-center py-10 gap-3">
           <Spinner size="md" color="primary" />
-          <span className="text-[11px] text-zinc-500 tracking-wider uppercase">Loading route segments…</span>
+          <span className="text-[11px] text-zinc-500 tracking-wider uppercase">
+            Loading route segments…
+          </span>
         </div>
       );
     }
@@ -141,13 +151,17 @@ export function FeatureInfoCard() {
               {dirOdd && (
                 <div className="flex items-center gap-1.5">
                   <span className="text-base font-bold text-zinc-200 leading-none">{dirOdd}</span>
-                  <span className="text-[10px] font-medium text-zinc-400 tracking-wide">ODD FLs</span>
+                  <span className="text-[10px] font-medium text-zinc-400 tracking-wide">
+                    ODD FLs
+                  </span>
                 </div>
               )}
               {dirEven && (
                 <div className="flex items-center gap-1.5">
                   <span className="text-base font-bold text-zinc-200 leading-none">{dirEven}</span>
-                  <span className="text-[10px] font-medium text-zinc-400 tracking-wide">EVEN FLs</span>
+                  <span className="text-[10px] font-medium text-zinc-400 tracking-wide">
+                    EVEN FLs
+                  </span>
                 </div>
               )}
             </div>
@@ -175,12 +189,18 @@ export function FeatureInfoCard() {
                   return (
                     <React.Fragment key={seg.sequence_number}>
                       {/* ── Waypoint Row (FROM) ── */}
-                      <tr className={`border-t border-white/[0.06] ${idx % 2 === 0 ? 'bg-white/[0.02]' : ''}`}>
+                      <tr
+                        className={`border-t border-white/[0.06] ${idx % 2 === 0 ? 'bg-white/[0.02]' : ''}`}
+                      >
                         <td className="route-td font-semibold text-white">
                           <div className="flex flex-col">
-                            <span className="text-[11px] leading-tight">{wp?.waypoint_name || seg.from_waypoint}</span>
+                            <span className="text-[11px] leading-tight">
+                              {wp?.waypoint_name || seg.from_waypoint}
+                            </span>
                             {wp?.navaid_info && (
-                              <span className="text-[9px] text-cyan-400/80 font-normal">{wp.navaid_info}</span>
+                              <span className="text-[9px] text-cyan-400/80 font-normal">
+                                {wp.navaid_info}
+                              </span>
                             )}
                           </div>
                         </td>
@@ -204,7 +224,9 @@ export function FeatureInfoCard() {
                             <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold bg-white/10 text-cyan-300 border border-white/10">
                               {seg.airspace_class}
                             </span>
-                          ) : '—'}
+                          ) : (
+                            '—'
+                          )}
                         </td>
                         <td className="route-td text-right text-[10px] text-zinc-400">
                           {seg.moca || '—'}
@@ -218,9 +240,13 @@ export function FeatureInfoCard() {
                   <tr className="border-t border-white/[0.06] bg-white/[0.02]">
                     <td className="route-td font-semibold text-white">
                       <div className="flex flex-col">
-                        <span className="text-[11px] leading-tight">{lastWaypoint.waypoint_name}</span>
+                        <span className="text-[11px] leading-tight">
+                          {lastWaypoint.waypoint_name}
+                        </span>
                         {lastWaypoint.navaid_info && (
-                          <span className="text-[9px] text-cyan-400/80 font-normal">{lastWaypoint.navaid_info}</span>
+                          <span className="text-[9px] text-cyan-400/80 font-normal">
+                            {lastWaypoint.navaid_info}
+                          </span>
                         )}
                       </div>
                     </td>
@@ -244,8 +270,14 @@ export function FeatureInfoCard() {
               onClick={() => setShowRemarks(!showRemarks)}
               className="w-full flex items-center justify-between px-3 py-2 bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
             >
-              <span className="text-[10px] font-bold text-zinc-500 tracking-widest uppercase">Remarks</span>
-              {showRemarks ? <ChevronUp size={14} className="text-zinc-500" /> : <ChevronDown size={14} className="text-zinc-500" />}
+              <span className="text-[10px] font-bold text-zinc-500 tracking-widest uppercase">
+                Remarks
+              </span>
+              {showRemarks ? (
+                <ChevronUp size={14} className="text-zinc-500" />
+              ) : (
+                <ChevronDown size={14} className="text-zinc-500" />
+              )}
             </button>
             <AnimatePresence>
               {showRemarks && (
@@ -257,7 +289,9 @@ export function FeatureInfoCard() {
                   className="overflow-hidden"
                 >
                   <div className="px-3 py-2 border-t border-white/[0.06]">
-                    <p className="text-[11px] text-zinc-400 leading-relaxed whitespace-pre-line">{remarks}</p>
+                    <p className="text-[11px] text-zinc-400 leading-relaxed whitespace-pre-line">
+                      {remarks}
+                    </p>
                   </div>
                 </motion.div>
               )}
@@ -274,17 +308,26 @@ export function FeatureInfoCard() {
       <LabelVal label="Route Type" val={data.route_type} />
       <LabelVal
         label="Direction"
-        val={data.direction_odd && data.direction_even ? 'Two-Way' : data.direction_odd ? `ODD ${data.direction_odd}` : data.direction_even ? `EVEN ${data.direction_even}` : null}
+        val={
+          data.direction_odd && data.direction_even
+            ? 'Two-Way'
+            : data.direction_odd
+              ? `ODD ${data.direction_odd}`
+              : data.direction_even
+                ? `EVEN ${data.direction_even}`
+                : null
+        }
       />
-      <LabelVal label="Magnetic Track" val={data.track_magnetic ? `${data.track_magnetic}°` : null} />
+      <LabelVal
+        label="Magnetic Track"
+        val={data.track_magnetic ? `${data.track_magnetic}°` : null}
+      />
       <LabelVal label="Distance" val={data.distance_nm ? `${data.distance_nm} NM` : null} />
       <LabelVal label="MOCA" val={data.moca} />
       <LabelVal
         label="Flight Level"
         val={
-          (data.lower_limit && data.upper_limit)
-            ? `${data.lower_limit} - ${data.upper_limit}`
-            : null
+          data.lower_limit && data.upper_limit ? `${data.lower_limit} - ${data.upper_limit}` : null
         }
       />
       <div className="col-span-2">
@@ -322,8 +365,14 @@ export function FeatureInfoCard() {
               onClick={() => setShowRemarks(!showRemarks)}
               className="w-full flex items-center justify-between px-3 py-2 bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
             >
-              <span className="text-[10px] font-bold text-zinc-500 tracking-widest uppercase">Remarks</span>
-              {showRemarks ? <ChevronUp size={14} className="text-zinc-500" /> : <ChevronDown size={14} className="text-zinc-500" />}
+              <span className="text-[10px] font-bold text-zinc-500 tracking-widest uppercase">
+                Remarks
+              </span>
+              {showRemarks ? (
+                <ChevronUp size={14} className="text-zinc-500" />
+              ) : (
+                <ChevronDown size={14} className="text-zinc-500" />
+              )}
             </button>
             <AnimatePresence>
               {showRemarks && (
@@ -335,14 +384,16 @@ export function FeatureInfoCard() {
                   className="overflow-hidden"
                 >
                   <div className="px-3 py-2 border-t border-white/[0.06]">
-                    <p className="text-[11px] text-zinc-400 leading-relaxed whitespace-pre-line">{remarks}</p>
+                    <p className="text-[11px] text-zinc-400 leading-relaxed whitespace-pre-line">
+                      {remarks}
+                    </p>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         )}
-        
+
         {isLoadingNavaid && !navaidDetails && (
           <div className="flex justify-center py-2">
             <Spinner size="sm" color="primary" />
@@ -358,7 +409,16 @@ export function FeatureInfoCard() {
         <LabelVal label="Coordinates" val={data.raw_coordinates} />
       </div>
       <div className="col-span-2">
-        <LabelVal label="Intersecting Routes" val={data.route_ids ? String(data.route_ids).replace(/[{"'}]/g, '') : data.routes ? String(data.routes).replace(/[{"'}]/g, '') : null} />
+        <LabelVal
+          label="Intersecting Routes"
+          val={
+            data.route_ids
+              ? String(data.route_ids).replace(/[{"'}]/g, '')
+              : data.routes
+                ? String(data.routes).replace(/[{"'}]/g, '')
+                : null
+          }
+        />
       </div>
       <div className="col-span-2">
         <LabelVal label="Remarks" val={data.remarks} />
@@ -367,23 +427,31 @@ export function FeatureInfoCard() {
   );
 
   // Dynamic titles based on standard properties
-  const title = data.route_designator || data.route_id || data.station_name || data.waypoint_name || 'Feature Details';
+  const title =
+    data.route_designator ||
+    data.route_id ||
+    data.station_name ||
+    data.waypoint_name ||
+    'Feature Details';
 
   // Use wider card for ATS routes to fit the table
   const isRoute = type === 'ATS_ROUTE';
   const cardWidth = isRoute ? 'w-[560px] max-w-[92vw]' : 'w-72';
   const cardPosition = 'top-6 right-6';
 
-  const routeTypeBadge = isRoute && routeDetails?.route_type ? (
-    <span className={`ml-2 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider ${
-      routeDetails.route_type === 'RNAV'
-        ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-        : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-    }`}>
-      {routeDetails.route_type}
-    </span>
-  ) : null;
-  
+  const routeTypeBadge =
+    isRoute && routeDetails?.route_type ? (
+      <span
+        className={`ml-2 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider ${
+          routeDetails.route_type === 'RNAV'
+            ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+            : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+        }`}
+      >
+        {routeDetails.route_type}
+      </span>
+    ) : null;
+
   return (
     <AnimatePresence>
       {isVisible && (
@@ -391,44 +459,44 @@ export function FeatureInfoCard() {
           initial={{ x: 50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 50, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
           className={`absolute ${cardPosition} z-50 ${cardWidth}`}
         >
           <Card className="bg-black/60 backdrop-blur-2xl backdrop-saturate-200 border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.6)] max-h-[calc(100vh-180px)] flex flex-col">
-        <CardHeader className="flex justify-between items-center pb-1.5 pt-3 px-3">
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1">
-              <span className="text-[9px] text-primary-500 font-bold tracking-widest uppercase mb-0.5">
-                {type.replace('_', ' ')}
-              </span>
-              {routeTypeBadge}
-            </div>
-            <h3 className="text-sm font-bold text-white tracking-wide">
-              {title}
-            </h3>
-          </div>
-          <Button
-            isIconOnly
-            size="sm"
-            variant="light"
-            onClick={() => { setSelectedFeature(null); }}
-            className="text-default-400 hover:text-white"
-          >
-            <X size={18} />
-          </Button>
-        </CardHeader>
-        <Divider className="bg-white/10 mx-3 w-auto" />
-        <CardBody className="px-3 py-2.5 max-h-[60vh] overflow-y-auto custom-scrollbar">
-          {type === 'ATS_ROUTE' && renderRouteDetails()}
-          {type === 'NAVAID' && renderNavaidDetails()}
-          {type === 'WAYPOINT' && renderWaypointDetails()}
-          
-        </CardBody>
-      </Card>
-      
-      {/* Table + Scrollbar styling */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
+            <CardHeader className="flex justify-between items-center pb-1.5 pt-3 px-3">
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1">
+                  <span className="text-[9px] text-primary-500 font-bold tracking-widest uppercase mb-0.5">
+                    {type.replace('_', ' ')}
+                  </span>
+                  {routeTypeBadge}
+                </div>
+                <h3 className="text-sm font-bold text-white tracking-wide">{title}</h3>
+              </div>
+              <Button
+                isIconOnly
+                size="sm"
+                variant="light"
+                onClick={() => {
+                  setSelectedFeature(null);
+                }}
+                className="text-default-400 hover:text-white"
+              >
+                <X size={18} />
+              </Button>
+            </CardHeader>
+            <Divider className="bg-white/10 mx-3 w-auto" />
+            <CardBody className="px-3 py-2.5 max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {type === 'ATS_ROUTE' && renderRouteDetails()}
+              {type === 'NAVAID' && renderNavaidDetails()}
+              {type === 'WAYPOINT' && renderWaypointDetails()}
+            </CardBody>
+          </Card>
+
+          {/* Table + Scrollbar styling */}
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
         .custom-scrollbar::-webkit-scrollbar {
           width: 3px;
           height: 3px;
@@ -458,7 +526,9 @@ export function FeatureInfoCard() {
           white-space: nowrap;
           vertical-align: middle;
         }
-      `}} />
+      `,
+            }}
+          />
         </motion.div>
       )}
     </AnimatePresence>

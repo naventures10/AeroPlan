@@ -7,28 +7,34 @@ from bs4 import BeautifulSoup
 import concurrent.futures
 from urllib.parse import urljoin, quote
 from src.scrapper.LiveTableExtractor import TableParser
+
+
 class ENRRoutesExtractor:
     """
     Standalone scraper for ENR 3.1 (Conventional Navigation Routes) and
     ENR 3.2 (Area Navigation Routes).
-    
+
     Each route lives on its own page (e.g. IN-ENR 3.1A201-en-GB.html).
-    The route list is discovered dynamically from the eAIP navigation menu 
+    The route list is discovered dynamically from the eAIP navigation menu
     frame (Menu-en-GB.html). Both sections share the same 8-column table:
-    
+
       Col 0: Route icon
       Col 1: Waypoint name & coordinates
       Col 2: Track / Magnetic / VOR Radial / Distance
       Col 3: Upper Limit / Lower Limit / Airspace Class
       Col 4: Lateral Limits
       Col 5: Direction (Odd)
-      Col 6: Direction (Even)  
+      Col 6: Direction (Even)
       Col 7: Remarks / Controlling Unit / Frequency
     """
 
-    def __init__(self, active_eaip_url, session=None, 
-                 output_file_31="enr_3_1_conventional_routes.json",
-                 output_file_32="enr_3_2_rnav_routes.json"):
+    def __init__(
+        self,
+        active_eaip_url,
+        session=None,
+        output_file_31="enr_3_1_conventional_routes.json",
+        output_file_32="enr_3_2_rnav_routes.json",
+    ):
         self.active_eaip_url = active_eaip_url
         self.session = session or requests.Session()
         self.output_file_31 = output_file_31
@@ -40,10 +46,10 @@ class ENRRoutesExtractor:
     def _discover_routes(self, section):
         """
         Discovers route page URLs from the navigation menu frame.
-        
+
         Args:
             section: "3.1" or "3.2"
-            
+
         Returns:
             List of (route_id, relative_href) tuples, deduplicated.
         """
@@ -57,19 +63,19 @@ class ENRRoutesExtractor:
             print(f"[!] Failed to fetch navigation menu: {e}")
             return []
 
-        soup = BeautifulSoup(resp.text, 'html.parser')
+        soup = BeautifulSoup(resp.text, "html.parser")
         # Match links like "IN-ENR 3.1A201-en-GB.html" with a title attribute
-        pattern = re.compile(rf'IN-ENR {re.escape(section)}')
-        links = soup.find_all('a', href=pattern, title=True)
+        pattern = re.compile(rf"IN-ENR {re.escape(section)}")
+        links = soup.find_all("a", href=pattern, title=True)
 
         # Deduplicate by title (route ID) — first link with a title wins
         seen = set()
         routes = []
         for link in links:
-            route_id = link['title'].strip()
+            route_id = link["title"].strip()
             if route_id and route_id not in seen:
                 seen.add(route_id)
-                routes.append((route_id, link['href']))
+                routes.append((route_id, link["href"]))
 
         print(f"[+] Discovered {len(routes)} routes for ENR {section}")
         return routes
@@ -77,7 +83,7 @@ class ENRRoutesExtractor:
     def _parse_route_page(self, route_id, page_url):
         """
         Fetches and parses a single route page.
-        
+
         Returns a dict with route metadata, waypoints, and remarks.
         """
         try:
@@ -87,16 +93,16 @@ class ENRRoutesExtractor:
             print(f"    [!] Failed to fetch {route_id}: {e}")
             return None
 
-        soup = BeautifulSoup(resp.text, 'html.parser')
-        tables = soup.find_all('table')
+        soup = BeautifulSoup(resp.text, "html.parser")
+        tables = soup.find_all("table")
 
-        clean = lambda c: c.replace(' | ', '\n').strip() if isinstance(c, str) else ""
-        
+        clean = lambda c: c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
+
         route_data = {
             "route_id": route_id,
             "route_designator": "",
             "waypoints": [],
-            "remarks": ""
+            "remarks": "",
         }
 
         for table in tables:
@@ -129,7 +135,10 @@ class ENRRoutesExtractor:
                 col7 = row[7].strip()
 
                 # Skip header rows
-                if "ROUTE DESIGNATOR" in col0.upper() or "ROUTE DESIGNATOR" in col1.upper():
+                if (
+                    "ROUTE DESIGNATOR" in col0.upper()
+                    or "ROUTE DESIGNATOR" in col1.upper()
+                ):
                     continue
                 if col5.upper() == "ODD" or col6.upper() == "EVEN":
                     continue
@@ -148,7 +157,7 @@ class ENRRoutesExtractor:
 
                 if col1:
                     # Waypoint entry
-                    parts = clean(col1).split('\n', 1)
+                    parts = clean(col1).split("\n", 1)
                     entry["waypoint_name"] = parts[0].strip()
                     entry["coordinates"] = parts[1].strip() if len(parts) > 1 else ""
 
@@ -177,7 +186,11 @@ class ENRRoutesExtractor:
 
     def _extract_section(self, section, output_file):
         """Extracts all routes for a given ENR section."""
-        section_name = "CONVENTIONAL NAVIGATION ROUTES" if section == "3.1" else "AREA NAVIGATION (RNAV) ROUTES"
+        section_name = (
+            "CONVENTIONAL NAVIGATION ROUTES"
+            if section == "3.1"
+            else "AREA NAVIGATION (RNAV) ROUTES"
+        )
         print(f"\n{'=' * 50}")
         print(f"[*] ENR {section} {section_name}")
         print(f"{'=' * 50}")
@@ -189,7 +202,7 @@ class ENRRoutesExtractor:
 
         all_routes = []
         total = len(routes_list)
-        
+
         # Parallel extraction limit
         max_workers = 10
 
@@ -202,10 +215,10 @@ class ENRRoutesExtractor:
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_route = {
-                executor.submit(scrape_route, idx, route_id, href): route_id 
+                executor.submit(scrape_route, idx, route_id, href): route_id
                 for idx, (route_id, href) in enumerate(routes_list, 1)
             }
-            
+
             for future in concurrent.futures.as_completed(future_to_route):
                 route_id = future_to_route[future]
                 try:
@@ -227,14 +240,14 @@ class ENRRoutesExtractor:
                 "section": f"ENR {section}",
                 "title": section_name,
                 "extracted_at": datetime.now(ist).isoformat(),
-                "airac_base_url": self.active_eaip_url
+                "airac_base_url": self.active_eaip_url,
             },
             "routes": all_routes,
-            "total_count": len(all_routes)
+            "total_count": len(all_routes),
         }
 
         print(f"[*] Writing {len(all_routes)} routes to {output_file}...")
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(output, f, indent=2, ensure_ascii=False)
 
         print(f"[+] ENR {section} extraction complete. Output: {output_file}")
@@ -250,7 +263,4 @@ class ENRRoutesExtractor:
         result_31 = self._extract_section("3.1", self.output_file_31)
         result_32 = self._extract_section("3.2", self.output_file_32)
 
-        return {
-            "enr_3_1": result_31,
-            "enr_3_2": result_32
-        }
+        return {"enr_3_1": result_31, "enr_3_2": result_32}

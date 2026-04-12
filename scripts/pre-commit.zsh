@@ -41,8 +41,11 @@ run_check() {
 # 1. Static Analysis
 echo "\n[1/2] Phase 1: Static Analysis..."
 run_check "Frontend Lint" "npm run lint" "frontend"
+run_check "Frontend Format" "npm run format:check" "frontend"
+run_check "Frontend Type Check" "npm run type-check" "frontend"
 run_check "Backend Ruff" "uv run ruff check ." "backend"
-run_check "Backend Mypy" "uv run mypy ." "backend"
+run_check "Backend Format" "uv run ruff format --check ." "backend"
+run_check "Backend pyrefly" "uv run pyrefly check" "backend"
 
 # 2. Automated Testing
 echo "\n[2/3] Phase 2: Automated Testing..."

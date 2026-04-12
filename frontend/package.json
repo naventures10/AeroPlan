@@ -9,6 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "generate:types": "./scripts/generate-types.sh",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "type-check": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
@@ -48,6 +51,7 @@
     "globals": "^16.5.0",
     "jsdom": "^29.0.2",
     "openapi-typescript": "^7.13.0",
+    "prettier": "^3.8.2",
     "rollup-plugin-visualizer": "^7.0.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.48.0",

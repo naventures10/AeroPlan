@@ -19,6 +19,7 @@ from typing import List, Union, Literal, Optional
 # Coordinate
 # ---------------------------------------------------------------------------
 
+
 class Coordinate(BaseModel):
     """A precise geographic point in decimal degrees."""
 
@@ -43,6 +44,7 @@ class Coordinate(BaseModel):
 # ---------------------------------------------------------------------------
 # Boundary Segments (used inside ComplexPolygonAirspace)
 # ---------------------------------------------------------------------------
+
 
 class StraightSegment(BaseModel):
     """A straight line to the next coordinate."""
@@ -89,6 +91,7 @@ class TopologicalBoundary(BaseModel):
 # Geometry Types
 # ---------------------------------------------------------------------------
 
+
 class CircularAirspace(BaseModel):
     """An airspace defined entirely by a single circle."""
 
@@ -114,9 +117,7 @@ class BoundingBoxAirspace(BaseModel):
                 f"lat_south ({self.lat_south}) > lat_north ({self.lat_north})"
             )
         if self.lng_west > self.lng_east:
-            raise ValueError(
-                f"lng_west ({self.lng_west}) > lng_east ({self.lng_east})"
-            )
+            raise ValueError(f"lng_west ({self.lng_west}) > lng_east ({self.lng_east})")
         return self
 
 
@@ -189,6 +190,7 @@ AirspaceGeometry = Union[
 # Top-level extraction result
 # ---------------------------------------------------------------------------
 
+
 class AirspaceExtraction(BaseModel):
     """The complete structured extraction of one airspace entry."""
 
@@ -215,6 +217,7 @@ class AirspaceExtraction(BaseModel):
 # ---------------------------------------------------------------------------
 # LLM Output Model (subset sent to the LLM for complex cases)
 # ---------------------------------------------------------------------------
+
 
 class LLMGeometryOutput(BaseModel):
     """The geometry the LLM must produce. Used as Pydantic AI output_type."""

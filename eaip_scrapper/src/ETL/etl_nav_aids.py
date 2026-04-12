@@ -11,26 +11,30 @@ class NavAidLoader:
     # Classify the aid type from the station name
     AID_TYPE_PATTERNS = [
         ("DVOR/DME", "DVOR/DME"),
-        ("VOR/DME",  "VOR/DME"),
-        ("DVOR",     "DVOR"),
-        ("VOR",      "VOR"),
-        ("NDB",      "NDB"),
-        ("DME",      "DME"),
-        ("TACAN",    "TACAN"),
+        ("VOR/DME", "VOR/DME"),
+        ("DVOR", "DVOR"),
+        ("VOR", "VOR"),
+        ("NDB", "NDB"),
+        ("DME", "DME"),
+        ("TACAN", "TACAN"),
     ]
 
     def __init__(self, bucket_name="ais"):
-        self.s3 = boto3.client('s3',
-            endpoint_url='http://localhost:9000',
-            aws_access_key_id='ais_admin',
-            aws_secret_access_key='AviationData2026!',
-            region_name='us-east-1'
+        self.s3 = boto3.client(
+            "s3",
+            endpoint_url="http://localhost:9000",
+            aws_access_key_id="ais_admin",
+            aws_secret_access_key="AviationData2026!",
+            region_name="us-east-1",
         )
         self.bucket_name = bucket_name
 
         self.conn = psycopg2.connect(
-            dbname="aeronautical_information_system", user="postgres", password="postgres",
-            host="localhost", port="5432"
+            dbname="aeronautical_information_system",
+            user="postgres",
+            password="postgres",
+            host="localhost",
+            port="5432",
         )
         self.conn.autocommit = False
 
@@ -45,16 +49,16 @@ class NavAidLoader:
             return None
 
         numbers, hemisphere = match.groups()
-        is_lat = hemisphere in ['N', 'S']
+        is_lat = hemisphere in ["N", "S"]
         deg_len = 2 if is_lat else 3
 
         try:
             degrees = float(numbers[:deg_len])
-            minutes = float(numbers[deg_len:deg_len + 2])
-            seconds = float(numbers[deg_len + 2:])
+            minutes = float(numbers[deg_len : deg_len + 2])
+            seconds = float(numbers[deg_len + 2 :])
 
             decimal = degrees + (minutes / 60) + (seconds / 3600)
-            if hemisphere in ['S', 'W']:
+            if hemisphere in ["S", "W"]:
                 decimal *= -1
             return round(decimal, 6)
         except ValueError:
@@ -76,14 +80,14 @@ class NavAidLoader:
         (station_name, ident, aid_type, frequency, hours_of_operation, elevation, remarks, raw_coordinates, geom_ewkt)
         """
         records = []
-        for item in data.get('radio_navigation_aids', []):
-            station_name = item.get('station_name', '')
-            ident = item.get('id', '')
-            frequency = item.get('frequency', '').replace('\n', ' ').strip()
-            hours = item.get('hours_of_operation', '')
-            elevation = item.get('elevation', '').strip()
-            remarks = item.get('remarks', '').strip()
-            coords_str = item.get('coordinates', '')
+        for item in data.get("radio_navigation_aids", []):
+            station_name = item.get("station_name", "")
+            ident = item.get("id", "")
+            frequency = item.get("frequency", "").replace("\n", " ").strip()
+            hours = item.get("hours_of_operation", "")
+            elevation = item.get("elevation", "").strip()
+            remarks = item.get("remarks", "").strip()
+            coords_str = item.get("coordinates", "")
             aid_type = cls.classify_aid_type(station_name)
 
             # Parse coordinates: "235325.48N 0911419.13E"
@@ -96,10 +100,19 @@ class NavAidLoader:
 
                 if lat and lng:
                     geom_ewkt = f"SRID=4326;POINT({lng} {lat})"
-                    records.append((
-                        station_name, ident, aid_type, frequency,
-                        hours, elevation, remarks, coords_str, geom_ewkt
-                    ))
+                    records.append(
+                        (
+                            station_name,
+                            ident,
+                            aid_type,
+                            frequency,
+                            hours,
+                            elevation,
+                            remarks,
+                            coords_str,
+                            geom_ewkt,
+                        )
+                    )
 
         return records
 
@@ -108,7 +121,7 @@ class NavAidLoader:
         print(f"[*] Fetching '{filename}' from MinIO bucket '{self.bucket_name}'...")
         try:
             response = self.s3.get_object(Bucket=self.bucket_name, Key=filename)
-            data = json.loads(response['Body'].read().decode('utf-8'))
+            data = json.loads(response["Body"].read().decode("utf-8"))
         except Exception as e:
             print(f"[!] Failed to fetch or parse file from MinIO: {e}")
             return
@@ -123,15 +136,22 @@ class NavAidLoader:
 
             # Bulk insert all nav aids
             if records:
-                execute_values(cur, """
+                execute_values(
+                    cur,
+                    """
                     INSERT INTO radio_nav_aids 
                         (station_name, ident, aid_type, frequency, hours_of_operation, elevation, remarks, raw_coordinates, geom)
                     VALUES %s
-                """, records, template="(%s, %s, %s, %s, %s, %s, %s, %s, ST_GeomFromEWKT(%s))")
+                """,
+                    records,
+                    template="(%s, %s, %s, %s, %s, %s, %s, %s, ST_GeomFromEWKT(%s))",
+                )
 
             self.conn.commit()
 
-        print(f"[+] Successfully loaded {len(records)} radio nav aids into radio_nav_aids!")
+        print(
+            f"[+] Successfully loaded {len(records)} radio nav aids into radio_nav_aids!"
+        )
 
     def close(self):
         """Closes the database connection."""

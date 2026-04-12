@@ -32,7 +32,7 @@ def scrape_latest_notam_links() -> list[str]:
     """
     print(f"Fetching NOTAM summaries page: {NOTAM_SUMMARIES_URL}")
     params = {"field_airport_tid": "All", "field_series_value": "All"}
-    
+
     # Retry logic for the initial page fetch
     max_retries = 3
     for attempt in range(max_retries):
@@ -44,11 +44,16 @@ def scrape_latest_notam_links() -> list[str]:
             break
         except (requests.exceptions.RequestException, Exception) as e:
             if attempt < max_retries - 1:
-                print(f"  [!] Timeout/Error fetching summaries (Attempt {attempt+1}/{max_retries}): {e}. Retrying in 5s...")
+                print(
+                    f"  [!] Timeout/Error fetching summaries (Attempt {attempt + 1}/{max_retries}): {e}. Retrying in 5s..."
+                )
                 import time
+
                 time.sleep(5)
             else:
-                print(f"  [!] Failed to fetch NOTAM summaries after {max_retries} attempts.")
+                print(
+                    f"  [!] Failed to fetch NOTAM summaries after {max_retries} attempts."
+                )
                 raise e
 
     soup = BeautifulSoup(response.text, "html.parser")
@@ -95,7 +100,7 @@ def scrape_latest_notam_links() -> list[str]:
             key = (filename.split("_")[0].capitalize(), filename.split("_")[1].upper())
             year = int(match.group(1))
             month = int(match.group(2))
-            
+
             if key in latest:
                 max_year = latest[key][1][0]
                 if year == max_year and month == 1:
@@ -104,9 +109,9 @@ def scrape_latest_notam_links() -> list[str]:
 
     result_urls = set(url for _, (url, _) in latest.items())
     result_urls.update(january_links)
-    
+
     final_urls = sorted(list(result_urls))
-    
+
     print("\nSelected NOTAM PDFs (Latest Month + January Baseline):")
     for url in final_urls:
         filename = url.rsplit("/", 1)[-1]
@@ -128,8 +133,11 @@ def download_pdf(pdf_url: str, dest_path: Path) -> Path:
             break
         except (requests.exceptions.RequestException, Exception) as e:
             if attempt < max_retries - 1:
-                print(f"    [!] Download failed (Attempt {attempt+1}/{max_retries}): {e}. Retrying in 5s...")
+                print(
+                    f"    [!] Download failed (Attempt {attempt + 1}/{max_retries}): {e}. Retrying in 5s..."
+                )
                 import time
+
                 time.sleep(5)
             else:
                 print(f"    [!] Failed to download PDF after {max_retries} attempts.")
@@ -143,7 +151,9 @@ def download_pdf(pdf_url: str, dest_path: Path) -> Path:
     return dest_path
 
 
-async def convert_pdf_to_md_with_llama(pdf_path: Path, output_path: Path, api_key: str) -> None:
+async def convert_pdf_to_md_with_llama(
+    pdf_path: Path, output_path: Path, api_key: str
+) -> None:
     """
     Use LlamaParse (LlamaCloud) to convert a PDF to high-fidelity Markdown.
     """
@@ -152,8 +162,10 @@ async def convert_pdf_to_md_with_llama(pdf_path: Path, output_path: Path, api_ke
     client = AsyncLlamaCloud(api_key=api_key)
 
     # Upload and parse
-    file = await client.files.create(file=openai_file_upload_stream(pdf_path), purpose="parse")
-    
+    file = await client.files.create(
+        file=openai_file_upload_stream(pdf_path), purpose="parse"
+    )
+
     result = await client.parsing.parse(
         file_id=file.id,
         tier="agentic",
@@ -163,10 +175,12 @@ async def convert_pdf_to_md_with_llama(pdf_path: Path, output_path: Path, api_ke
 
     if result.markdown and result.markdown.pages:
         full_markdown = "\n\n".join([page.markdown for page in result.markdown.pages])
-        
+
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(full_markdown, encoding="utf-8")
-        print(f"  ✓ Saved Markdown to: {output_path.name} ({len(result.markdown.pages)} pages)")
+        print(
+            f"  ✓ Saved Markdown to: {output_path.name} ({len(result.markdown.pages)} pages)"
+        )
     else:
         print(f"  [!] No content extracted for {pdf_path.name}")
 
@@ -181,7 +195,11 @@ async def main():
     RAW_PDF_DIR.mkdir(parents=True, exist_ok=True)
 
     # Load all LLAMA_CLOUD_API_KEY_* variables
-    llama_keys = [v for k, v in os.environ.items() if k.startswith("LLAMA_CLOUD_API_KEY_") and v.strip()]
+    llama_keys = [
+        v
+        for k, v in os.environ.items()
+        if k.startswith("LLAMA_CLOUD_API_KEY_") and v.strip()
+    ]
     if not llama_keys:
         legacy_key = os.getenv("LLAMA_CLOUD_API_KEY")
         if legacy_key:
@@ -225,7 +243,7 @@ async def main():
     # Pass 1: Download all required PDFs sequentially
     print("\n--- PASSS 1: Downloading PDFs ---")
     conversion_tasks = []
-    
+
     for i, pdf_url in enumerate(latest_links):
         pdf_filename = pdf_url.rsplit("/", 1)[-1]  # e.g. Chennai_A_2026_03.pdf
         md_filename = pdf_filename.replace(".pdf", ".md")
@@ -237,18 +255,22 @@ async def main():
             continue
 
         # Explicitly skip Delhi January NOTAM PDFs
-        match = re.search(r"([A-Za-z]+)_[A-Z]_\d{4}_(\d{2})\.pdf", pdf_filename, re.IGNORECASE)
+        match = re.search(
+            r"([A-Za-z]+)_[A-Z]_\d{4}_(\d{2})\.pdf", pdf_filename, re.IGNORECASE
+        )
         if match and match.group(1).lower() == "delhi" and match.group(2) == "01":
-            print(f"Skipping {pdf_filename} (Delhi January NOTAMs are handled via carry-forward).")
+            print(
+                f"Skipping {pdf_filename} (Delhi January NOTAMs are handled via carry-forward)."
+            )
             continue
 
         try:
             if not local_pdf.exists():
-                print(f"Downloading {pdf_filename} ({i+1}/{len(latest_links)})...")
+                print(f"Downloading {pdf_filename} ({i + 1}/{len(latest_links)})...")
                 download_pdf(pdf_url, local_pdf)
             else:
                 print(f"Using cached PDF: {local_pdf.name}")
-                
+
             if not output_md_path.exists():
                 conversion_tasks.append((local_pdf, output_md_path))
         except Exception as e:
@@ -256,8 +278,10 @@ async def main():
 
     # Pass 2: Concurrent Markdown Conversion
     if conversion_tasks:
-        print(f"\n--- PASS 2: Concurrent LlamaParse Processing ({len(conversion_tasks)} files) ---")
-        
+        print(
+            f"\n--- PASS 2: Concurrent LlamaParse Processing ({len(conversion_tasks)} files) ---"
+        )
+
         async def run_conversion(pdf_path, md_path, api_key):
             try:
                 await convert_pdf_to_md_with_llama(pdf_path, md_path, api_key)
@@ -275,10 +299,12 @@ async def main():
         for i, (p_pdf, p_md) in enumerate(conversion_tasks):
             assigned_key = llama_keys[i % len(llama_keys)]
             tasks.append(worker(p_pdf, p_md, assigned_key))
-            
+
         await asyncio.gather(*tasks)
 
-    print(f"\nDone! All NOTAM PDFs downloaded to {RAW_PDF_DIR} and MDs saved to {OUTPUT_DIR}")
+    print(
+        f"\nDone! All NOTAM PDFs downloaded to {RAW_PDF_DIR} and MDs saved to {OUTPUT_DIR}"
+    )
 
 
 if __name__ == "__main__":

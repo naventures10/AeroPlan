@@ -22,9 +22,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
         if (!enrouteElev && activeAerodromeMetadata) {
           const docs = activeAerodromeMetadata.data || activeAerodromeMetadata;
           const elevMatch =
-            docs.geographical_data?.elevation_reference_temp?.match(
-              /(\d+(?:\.\d+)?)\s*FT/i,
-            );
+            docs.geographical_data?.elevation_reference_temp?.match(/(\d+(?:\.\d+)?)\s*FT/i);
           if (elevMatch) enrouteElev = elevMatch[1];
         }
 
@@ -36,33 +34,21 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
             : '';
 
         const magVarStr = row('MAG VAR', p.magnetic_variation);
-        const remarksStr = row(
-          'REMARKS',
-          p.remarks && p.remarks !== 'None' ? p.remarks : '',
-        );
+        const remarksStr = row('REMARKS', p.remarks && p.remarks !== 'None' ? p.remarks : '');
 
         let commsHtml = '';
         try {
           const comms =
-            typeof p.communications === 'string'
-              ? JSON.parse(p.communications)
-              : p.communications;
+            typeof p.communications === 'string' ? JSON.parse(p.communications) : p.communications;
           if (Array.isArray(comms)) {
             const twrComms = comms.filter(
-              (c: any) =>
-                c.service_type?.includes('TWR') ||
-                c.service_type?.includes('APP'),
+              (c: any) => c.service_type?.includes('TWR') || c.service_type?.includes('APP'),
             );
             if (twrComms.length > 0) {
               commsHtml =
                 '<div style="margin-top:4px;">' +
                 twrComms
-                  .map((c: any) =>
-                    row(
-                      c.service_type || 'FREQ',
-                      `${c.frequency} (${c.call_sign})`,
-                    ),
-                  )
+                  .map((c: any) => row(c.service_type || 'FREQ', `${c.frequency} (${c.call_sign})`))
                   .join('') +
                 '</div>';
             }
@@ -91,9 +77,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
         };
       } else if (object && layer?.id === 'waypoints-layer') {
         const p = object.properties ?? {};
-        const routes = p.routes
-          ? p.routes.replace(/[{"'}]/g, '').split(',')
-          : [];
+        const routes = p.routes ? p.routes.replace(/[{"'}]/g, '').split(',') : [];
         const routesDisplay =
           routes.length > 0 && routes[0] !== ''
             ? `<div style="margin-top:6px; font-size:10px; color:#a1a1aa;">ROUTES: <span style="color:#d8b4fe; font-weight:600;">${routes.join(', ')}</span></div>`
@@ -135,12 +119,26 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
         const p = object.properties ?? {};
         if (!activeLayers.atsRoutes && !selectedRouteIds.includes(p.route_id)) return null;
         const isOneWay = p.direction_odd === 'O' || p.direction_even === 'E';
-        const directionStr = isOneWay ? (p.direction_odd === 'O' ? '→ ODD ONLY' : '← EVEN ONLY') : '↔ TWO-WAY';
-        const meainfo = p.mea && p.mea !== 'None' ? `<span style="color:#a1a1aa;font-size:10px;font-weight:600;color:#22c55e;">MEA: <span style="color:#f4f4f5;">${p.mea}</span></span>` : '';
-        const limitStr = (p.upper_limit && p.upper_limit !== 'None') || (p.lower_limit && p.lower_limit !== 'None') 
-                         ? `<span style="color:#a1a1aa;font-size:9px;margin-top:2px;">LIMITS: ${p.lower_limit || 'SFC'} - ${p.upper_limit || 'UNL'}</span>` : '';
-        const trackStr = (p.track_magnetic && p.track_magnetic !== 'None') && (p.distance_nm && p.distance_nm !== 'None')
-                         ? `<span style="color:#a1a1aa;font-size:9px;">SEGMENT: ${p.distance_nm} NM | TR: ${p.track_magnetic}</span>` : '';
+        const directionStr = isOneWay
+          ? p.direction_odd === 'O'
+            ? '→ ODD ONLY'
+            : '← EVEN ONLY'
+          : '↔ TWO-WAY';
+        const meainfo =
+          p.mea && p.mea !== 'None'
+            ? `<span style="color:#a1a1aa;font-size:10px;font-weight:600;color:#22c55e;">MEA: <span style="color:#f4f4f5;">${p.mea}</span></span>`
+            : '';
+        const limitStr =
+          (p.upper_limit && p.upper_limit !== 'None') || (p.lower_limit && p.lower_limit !== 'None')
+            ? `<span style="color:#a1a1aa;font-size:9px;margin-top:2px;">LIMITS: ${p.lower_limit || 'SFC'} - ${p.upper_limit || 'UNL'}</span>`
+            : '';
+        const trackStr =
+          p.track_magnetic &&
+          p.track_magnetic !== 'None' &&
+          p.distance_nm &&
+          p.distance_nm !== 'None'
+            ? `<span style="color:#a1a1aa;font-size:9px;">SEGMENT: ${p.distance_nm} NM | TR: ${p.track_magnetic}</span>`
+            : '';
 
         return {
           html: sanitizeHtml(`<div style="display:flex;flex-direction:column;gap:4px;max-width:250px;">
@@ -158,9 +156,12 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
       } else if (object && layer?.id === 'atsRoutes-waypoints-layer') {
         const p = object.properties ?? {};
         const routes = p.route_ids
-          ? String(p.route_ids).replace(/[{"'}]/g, '').split(',')
+          ? String(p.route_ids)
+              .replace(/[{"'}]/g, '')
+              .split(',')
           : [];
-        if (!activeLayers.atsRoutes && !routes.some((r: string) => selectedRouteIds.includes(r))) return null;
+        if (!activeLayers.atsRoutes && !routes.some((r: string) => selectedRouteIds.includes(r)))
+          return null;
         return {
           html: sanitizeHtml(`<div style="display:flex;flex-direction:column;gap:4px;max-width:250px;">
               <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">${p.waypoint_name || 'WAYPOINT'}</span>
@@ -175,8 +176,10 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
       if (map && x !== undefined && y !== undefined) {
         try {
           const currentLayers = map.getStyle()?.layers?.map((l: any) => l.id) || [];
-          const safeLayers = ['mvt-points', 'mvt-polygons'].filter(l => currentLayers.includes(l));
-          
+          const safeLayers = ['mvt-points', 'mvt-polygons'].filter((l) =>
+            currentLayers.includes(l),
+          );
+
           if (safeLayers.length === 0) return null;
 
           const features = map.queryRenderedFeatures([x, y], {
@@ -193,31 +196,21 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
               const name = p.name || p.feature_name || 'FEATURE';
               const category = p.category || p.feature_category || 'UNKNOWN';
 
-              let elev =
-                p.height ?? p.elevation_m ?? p.elevation ?? null;
+              let elev = p.height ?? p.elevation_m ?? p.elevation ?? null;
 
-              if (
-                elev == null &&
-                category === 'ARP' &&
-                activeAerodromeMetadata
-              ) {
-                const docs =
-                  activeAerodromeMetadata.data || activeAerodromeMetadata;
+              if (elev == null && category === 'ARP' && activeAerodromeMetadata) {
+                const docs = activeAerodromeMetadata.data || activeAerodromeMetadata;
                 const elevMatch =
-                  docs.geographical_data?.elevation_reference_temp?.match(
-                    /(\d+(?:\.\d+)?)\s*FT/i,
-                  );
+                  docs.geographical_data?.elevation_reference_temp?.match(/(\d+(?:\.\d+)?)\s*FT/i);
                 if (elevMatch) elev = elevMatch[1];
               }
-              const elevStr =
-                elev != null ? Number(elev).toFixed(1) + ' FT' : 'N/A';
+              const elevStr = elev != null ? Number(elev).toFixed(1) + ' FT' : 'N/A';
 
               let extraInfo = '';
               let categoryDisplay = category;
 
               if (activeAerodromeMetadata) {
-                const docs =
-                  activeAerodromeMetadata.data || activeAerodromeMetadata;
+                const docs = activeAerodromeMetadata.data || activeAerodromeMetadata;
                 const divider =
                   '<div style="margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">';
                 const row = (label: string, val: string) =>
@@ -230,25 +223,16 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
                   if (geom?.type === 'Point' && geom.coordinates) {
                     categoryDisplay = `${category} | ${geom.coordinates[1].toFixed(5)}, ${geom.coordinates[0].toFixed(5)}`;
                   }
-                } else if (
-                  category === 'OBSTACLE' &&
-                  Array.isArray(docs.obstacles)
-                ) {
+                } else if (category === 'OBSTACLE' && Array.isArray(docs.obstacles)) {
                   let bestObs = null;
                   if (elev != null) {
                     const targetElev = parseFloat(elev);
                     bestObs = docs.obstacles.find((o: any) => {
-                      const nameMatch =
-                        o.obstacle_type === name ||
-                        name.includes(o.obstacle_type);
+                      const nameMatch = o.obstacle_type === name || name.includes(o.obstacle_type);
                       if (!nameMatch || !o.elevation) return false;
                       const docElevMatch = o.elevation.match(/(\d+(?:\.\d+)?)/);
                       if (docElevMatch) {
-                        return (
-                          Math.abs(
-                            parseFloat(docElevMatch[1]) - targetElev,
-                          ) < 1.0
-                        );
+                        return Math.abs(parseFloat(docElevMatch[1]) - targetElev) < 1.0;
                       }
                       return false;
                     });
@@ -256,9 +240,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
                   const obs =
                     bestObs ||
                     docs.obstacles.find(
-                      (o: any) =>
-                        o.obstacle_type === name ||
-                        name.includes(o.obstacle_type),
+                      (o: any) => o.obstacle_type === name || name.includes(o.obstacle_type),
                     );
                   if (obs)
                     extraInfo = `${divider}${row('AREA AFFECTED', obs.area_affected)}${row('LGT/MARKING', obs.marking_lgt)}${row('REMARKS', obs.remarks)}</div>`;
@@ -272,10 +254,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
 
                   for (const n of docs.radio_navigation_and_landing_aids) {
                     const ident = n.identification?.trim().toUpperCase();
-                    const typeStr = n.type_of_aid
-                      ?.split('\n')[0]
-                      ?.trim()
-                      .toUpperCase();
+                    const typeStr = n.type_of_aid?.split('\n')[0]?.trim().toUpperCase();
 
                     let score = 0;
                     if (ident && nameParts.includes(ident)) score += 2;
@@ -287,14 +266,8 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
                       }
                       score += matchCount / Math.max(typeParts.length, 1);
                     }
-                    const combined = `${ident || ''} ${typeStr || ''}`
-                      .trim()
-                      .toUpperCase();
-                    if (
-                      score === 0 &&
-                      combined &&
-                      combined.includes(name)
-                    ) {
+                    const combined = `${ident || ''} ${typeStr || ''}`.trim().toUpperCase();
+                    if (score === 0 && combined && combined.includes(name)) {
                       score += 0.5;
                     }
                     if (score > highestScore) {
@@ -306,15 +279,12 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
                   if (nav)
                     extraInfo = `${divider}${row('FREQ', nav.frequency_channel)}${row('HOURS', nav.hours_of_operation)}${row('REMARKS', nav.remarks)}</div>`;
                 } else if (
-                  (category === 'RUNWAY_THRESHOLD' ||
-                    category === 'RUNWAY') &&
+                  (category === 'RUNWAY_THRESHOLD' || category === 'RUNWAY') &&
                   Array.isArray(docs.runway_physical_characteristics)
                 ) {
                   const rwyNum = name.replace(/[^0-9]/g, '');
                   const rwy = docs.runway_physical_characteristics.find(
-                    (r: any) =>
-                      r.designation === rwyNum ||
-                      r.designation?.includes(rwyNum),
+                    (r: any) => r.designation === rwyNum || r.designation?.includes(rwyNum),
                   );
                   if (rwy)
                     extraInfo = `${divider}${row('DIMENSIONS', rwy.dimensions)}${row('SURFACE/STRENGTH', rwy.strength_and_surface)}</div>`;
@@ -334,7 +304,9 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
             }
 
             return {
-              html: sanitizeHtml(`<div style="max-height: 400px; overflow-y: auto; max-width:300px; padding-right: 4px;">${htmlContent}</div>`),
+              html: sanitizeHtml(
+                `<div style="max-height: 400px; overflow-y: auto; max-width:300px; padding-right: 4px;">${htmlContent}</div>`,
+              ),
               style: tooltipStyle,
             };
           }

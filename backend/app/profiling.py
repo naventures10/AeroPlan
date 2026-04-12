@@ -48,17 +48,21 @@ async def stop_profiling() -> JSONResponse:
     for i, s in enumerate(stats):
         if i >= 50:
             break
-        rows.append({
-            "name": s.full_name,
-            "ncall": s.ncall,
-            "ttot_ms": round(s.ttot * 1000, 2),
-            "tsub_ms": round(s.tsub * 1000, 2),
-            "tavg_ms": round(s.tavg * 1000, 2),
-        })
+        rows.append(
+            {
+                "name": s.full_name,
+                "ncall": s.ncall,
+                "ttot_ms": round(s.ttot * 1000, 2),
+                "tsub_ms": round(s.tsub * 1000, 2),
+                "tavg_ms": round(s.tavg * 1000, 2),
+            }
+        )
 
     yappi.clear_stats()
-    return JSONResponse({
-        "status": "stopped",
-        "top_functions": rows,
-        "full_report": "/tmp/yappi_profile.txt",
-    })
+    return JSONResponse(
+        {
+            "status": "stopped",
+            "top_functions": rows,
+            "full_report": "/tmp/yappi_profile.txt",
+        }
+    )

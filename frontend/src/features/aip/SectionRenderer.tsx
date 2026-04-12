@@ -30,7 +30,9 @@ export default function SectionRenderer({ data, dataType, sectionId }: SectionRe
       return (
         <ObjectRenderer
           data={data}
-          columnConfig={config?.type === 'object' ? (config.columns as ObjectColumnDef[]) : undefined}
+          columnConfig={
+            config?.type === 'object' ? (config.columns as ObjectColumnDef[]) : undefined
+          }
         />
       );
     case 'hybrid':

@@ -1,0 +1,10 @@
+node_modules
+dist
+dist-ssr
+*.local
+public
+.vscode
+.idea
+*.log
+package-lock.json
+stats.html

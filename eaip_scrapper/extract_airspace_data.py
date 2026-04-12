@@ -53,9 +53,9 @@ def _extract_vertical_limits(text: str):
     """
     # Look for patterns like  "FL 460 / FL 255"  or  "UNL / GND"
     pattern = re.compile(
-        r'(UNL|FL\s*\d+|[\d,]+\s*(?:FT|ft)\s*(?:AMSL|AGL|MSL)?)\s*/\s*'
-        r'(UNL|FL\s*\d+|GND|MSL|[\d,]+\s*(?:FT|ft)\s*(?:AMSL|AGL|MSL)?)',
-        re.IGNORECASE
+        r"(UNL|FL\s*\d+|[\d,]+\s*(?:FT|ft)\s*(?:AMSL|AGL|MSL)?)\s*/\s*"
+        r"(UNL|FL\s*\d+|GND|MSL|[\d,]+\s*(?:FT|ft)\s*(?:AMSL|AGL|MSL)?)",
+        re.IGNORECASE,
     )
     m = pattern.search(text)
     if m:
@@ -132,7 +132,12 @@ def _classify_enr21_type(name: str, section_key: str) -> str:
             return "Sub-FIR"
         return "FIR"
     # control_areas
-    if "upper control area" in lower or "upper acc" in lower or "udp" in lower or "sector u" in lower.replace("sector upper", "sector u"):
+    if (
+        "upper control area" in lower
+        or "upper acc" in lower
+        or "udp" in lower
+        or "sector u" in lower.replace("sector upper", "sector u")
+    ):
         return "Upper CTA"
     if "control area" in lower or "cta" in lower:
         return "CTA"
@@ -152,7 +157,9 @@ def parse_enr_2_1(data: dict) -> list:
             blob = item.get("name_and_limits", "")
             name, lateral, upper, lower = _parse_name_and_limits_blob(blob)
             airspace_type = _classify_enr21_type(name, section_key)
-            entries.append(_make_entry(name, airspace_type, lateral, upper, lower, source))
+            entries.append(
+                _make_entry(name, airspace_type, lateral, upper, lower, source)
+            )
 
     return entries
 
@@ -170,7 +177,9 @@ def parse_enr_2_2(data: dict) -> list:
         lateral = item.get("lateral_limits", "")
         upper = item.get("upper_limit", "")
         lower = "GND"  # ENR 2.2 items are surface-level airspace
-        entries.append(_make_entry(name, "Regulated_Airspace", lateral, upper, lower, source))
+        entries.append(
+            _make_entry(name, "Regulated_Airspace", lateral, upper, lower, source)
+        )
 
     return entries
 
@@ -198,11 +207,11 @@ def _classify_enr51_type(identification: str) -> str:
     # Fallback: pattern like VO(D), VA(P), VE(R), etc.
     # Or codes: VOP=Prohibited, VOR=Restricted, VOD=Danger, VID=Danger, VIP=Prohibited, VIR=Restricted, VER=Restricted
     code = ident_upper.replace(" ", "")
-    if re.match(r'^V[A-Z]{1,2}P', code):
+    if re.match(r"^V[A-Z]{1,2}P", code):
         return "Prohibited"
-    if re.match(r'^V[A-Z]{1,2}D', code):
+    if re.match(r"^V[A-Z]{1,2}D", code):
         return "Danger"
-    if re.match(r'^V[A-Z]{1,2}R', code):
+    if re.match(r"^V[A-Z]{1,2}R", code):
         return "Restricted"
 
     return "Restricted"  # safe default
@@ -226,10 +235,14 @@ def parse_enr_5_1(data: dict) -> list:
             if not lateral and not name:
                 continue
 
-            display_name = f"{identification} {name}".strip() if name else identification
+            display_name = (
+                f"{identification} {name}".strip() if name else identification
+            )
             airspace_type = _classify_enr51_type(identification)
 
-            entry = _make_entry(display_name, airspace_type, lateral, upper, lower, source)
+            entry = _make_entry(
+                display_name, airspace_type, lateral, upper, lower, source
+            )
             entry["region"] = region_name
             entries.append(entry)
 
@@ -276,9 +289,7 @@ def parse_enr_5_2(data: dict) -> list:
     for item in data.get("air_defence_identification_zones_adiz", []):
         zone_name = item.get("zone_name", "")
         coords = item.get("zone_coordinates", "")
-        entries.append(_make_entry(
-            zone_name, "ADIZ", coords, "UNL", "GND", source
-        ))
+        entries.append(_make_entry(zone_name, "ADIZ", coords, "UNL", "GND", source))
 
     return entries
 

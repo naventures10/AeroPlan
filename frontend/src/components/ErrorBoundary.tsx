@@ -58,7 +58,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '0.5rem' }}>
             Something went wrong
           </h1>
-          <p style={{ color: '#94a3b8', fontSize: '0.9rem', maxWidth: '420px', marginBottom: '1.5rem' }}>
+          <p
+            style={{
+              color: '#94a3b8',
+              fontSize: '0.9rem',
+              maxWidth: '420px',
+              marginBottom: '1.5rem',
+            }}
+          >
             An unexpected error occurred in the application. This has been logged for debugging.
           </p>
           {this.state.error && (
@@ -93,8 +100,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               cursor: 'pointer',
               transition: 'background-color 0.2s',
             }}
-            onMouseOver={(e) => { (e.target as HTMLButtonElement).style.backgroundColor = '#2563eb'; }}
-            onMouseOut={(e) => { (e.target as HTMLButtonElement).style.backgroundColor = '#3b82f6'; }}
+            onMouseOver={(e) => {
+              (e.target as HTMLButtonElement).style.backgroundColor = '#2563eb';
+            }}
+            onMouseOut={(e) => {
+              (e.target as HTMLButtonElement).style.backgroundColor = '#3b82f6';
+            }}
           >
             Reload Application
           </button>

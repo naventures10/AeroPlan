@@ -77,11 +77,17 @@ export default function SearchBar({
             className="flex-1 bg-transparent border-none outline-none shadow-none text-zinc-100 font-semibold text-sm placeholder-zinc-500 uppercase tracking-[0.1em] px-3 h-full w-full"
             placeholder="SEARCH AIRPORT OR ICAO..."
             value={searchInput}
-            onChange={(e) => { setSearchInput(e.target.value); }}
-            onFocus={() => { setIsSearchFocused(true); }}
+            onChange={(e) => {
+              setSearchInput(e.target.value);
+            }}
+            onFocus={() => {
+              setIsSearchFocused(true);
+            }}
             onBlur={() => {
               if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
-              blurTimeoutRef.current = setTimeout(() => { setIsSearchFocused(false); }, 200);
+              blurTimeoutRef.current = setTimeout(() => {
+                setIsSearchFocused(false);
+              }, 200);
             }}
             onKeyDown={handleSearchKeyDown}
           />
@@ -98,7 +104,9 @@ export default function SearchBar({
                   size="sm"
                   variant="light"
                   radius="full"
-                  onPress={() => { setSearchInput(''); }}
+                  onPress={() => {
+                    setSearchInput('');
+                  }}
                   className="text-zinc-400 hover:text-zinc-200"
                 >
                   <X size={16} />
@@ -141,13 +149,13 @@ export default function SearchBar({
                         index === searchSelectedIndex
                           ? 'bg-zinc-800/80 border-cyan-400'
                           : 'hover:bg-zinc-800/50 border-transparent'
-                      } ${
-                        index !== suggestions.length - 1
-                          ? 'border-b border-zinc-800/50'
-                          : ''
-                      }`}
-                      onClick={() => { handleGlobalSearchSelect(item); }}
-                      onMouseEnter={() => { setSearchSelectedIndex(index); }}
+                      } ${index !== suggestions.length - 1 ? 'border-b border-zinc-800/50' : ''}`}
+                      onClick={() => {
+                        handleGlobalSearchSelect(item);
+                      }}
+                      onMouseEnter={() => {
+                        setSearchSelectedIndex(index);
+                      }}
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-zinc-800/80 flex items-center justify-center">
@@ -156,9 +164,7 @@ export default function SearchBar({
                         <div className="flex flex-col">
                           <span
                             className={`font-mono font-semibold tracking-wider text-[15px] ${
-                              index === searchSelectedIndex
-                                ? 'text-cyan-400'
-                                : 'text-zinc-100'
+                              index === searchSelectedIndex ? 'text-cyan-400' : 'text-zinc-100'
                             }`}
                           >
                             {item.id}

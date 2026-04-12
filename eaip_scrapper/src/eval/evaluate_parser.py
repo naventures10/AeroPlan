@@ -13,6 +13,7 @@ from collections import defaultdict
 
 # Import existing ETL logic — reuse the same parsers and regex patterns
 import sys
+
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 from ETL.etl_notams import (
     NOTAMETL,
@@ -115,15 +116,17 @@ def evaluate_document(pdf_path: Path, md_path: Path, etl: NOTAMETL) -> dict:
         if from_match and to_match:
             results["passed"].append(notam_id)
         else:
-            results["failed"].append({
-                "notam_id": notam_id,
-                "expected_from": gt_from,
-                "actual_from": md_from,
-                "from_match": from_match,
-                "expected_to": gt_to,
-                "actual_to": md_to,
-                "to_match": to_match,
-            })
+            results["failed"].append(
+                {
+                    "notam_id": notam_id,
+                    "expected_from": gt_from,
+                    "actual_from": md_from,
+                    "from_match": from_match,
+                    "expected_to": gt_to,
+                    "actual_to": md_to,
+                    "to_match": to_match,
+                }
+            )
 
     # Check for NOTAMs in PDF but missing from Markdown
     for gt_id in ground_truth:
@@ -165,13 +168,19 @@ def print_results(all_results: list):
         status = "✅" if failed == 0 else "⚠️"
 
         print(f"\n{status} {res['file']}")
-        print(f"   Markdown NOTAMs: {res['total_md_records']}  |  PDF NOTAMs: {res['total_pdf_records']}")
+        print(
+            f"   Markdown NOTAMs: {res['total_md_records']}  |  PDF NOTAMs: {res['total_pdf_records']}"
+        )
         print(f"   Matched: {passed}/{total} ({rate:.1f}%)")
 
         if missing_pdf:
-            print(f"   ⚠️  {missing_pdf} NOTAMs in MD but not found in PDF: {', '.join(res['missing_in_pdf'][:5])}{'...' if missing_pdf > 5 else ''}")
+            print(
+                f"   ⚠️  {missing_pdf} NOTAMs in MD but not found in PDF: {', '.join(res['missing_in_pdf'][:5])}{'...' if missing_pdf > 5 else ''}"
+            )
         if missing_md:
-            print(f"   ⚠️  {missing_md} NOTAMs in PDF but not found in MD: {', '.join(res['missing_in_md'][:5])}{'...' if missing_md > 5 else ''}")
+            print(
+                f"   ⚠️  {missing_md} NOTAMs in PDF but not found in MD: {', '.join(res['missing_in_md'][:5])}{'...' if missing_md > 5 else ''}"
+            )
 
         if res["failed"]:
             for f in res["failed"]:
@@ -201,9 +210,13 @@ def print_results(all_results: list):
         for f in all_failures:
             print(f"\n   NOTAM: {f['notam_id']}  ({f['file']})")
             if not f["from_match"]:
-                print(f"     Valid From:  expected={f['expected_from']}  actual={f['actual_from']}")
+                print(
+                    f"     Valid From:  expected={f['expected_from']}  actual={f['actual_from']}"
+                )
             if not f["to_match"]:
-                print(f"     Valid To:    expected={f['expected_to']}  actual={f['actual_to']}")
+                print(
+                    f"     Valid To:    expected={f['expected_to']}  actual={f['actual_to']}"
+                )
     else:
         print("\n   🎉 Zero hallucinations detected! LlamaParse extraction is perfect.")
 
@@ -215,7 +228,9 @@ def main():
         description="Deterministic NOTAM Parser Evaluator — Regex-based, zero API calls."
     )
     parser.add_argument("--pdf", required=False, help="Path to a specific PDF file.")
-    parser.add_argument("--md", required=False, help="Path to a specific Markdown file.")
+    parser.add_argument(
+        "--md", required=False, help="Path to a specific Markdown file."
+    )
     parser.add_argument(
         "--limit",
         type=int,
@@ -250,7 +265,7 @@ def main():
         print(f"[*] Auto-discovered {len(files_to_eval)} document pairs to evaluate.")
 
     if args.limit:
-        files_to_eval = files_to_eval[:args.limit]
+        files_to_eval = files_to_eval[: args.limit]
         print(f"[*] Limiting to {args.limit} document pair(s).")
 
     # Use a dummy DB URL — we only need the parser selection logic

@@ -45,9 +45,12 @@ export function useSearch() {
   const selectionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Cleanup on unmount
-  useLayoutEffect(() => () => {
-    if (selectionTimerRef.current) clearTimeout(selectionTimerRef.current);
-  }, []);
+  useLayoutEffect(
+    () => () => {
+      if (selectionTimerRef.current) clearTimeout(selectionTimerRef.current);
+    },
+    [],
+  );
 
   // Debounced fetch
   useEffect(() => {
@@ -96,7 +99,9 @@ export function useSearch() {
   }, [searchInput]);
 
   // Reset keyboard index when input changes
-  useEffect(() => { setSearchSelectedIndex(-1); }, [searchInput]);
+  useEffect(() => {
+    setSearchSelectedIndex(-1);
+  }, [searchInput]);
 
   const resetSearchState = useCallback(() => {
     setIsSearchFocused(false);
@@ -112,10 +117,21 @@ export function useSearch() {
       // 1. Kick off the camera animation immediately
       if (item.type === 'ATS_ROUTE' && item.bounds && item.bounds.length === 4) {
         fitBounds(item.bounds as [number, number, number, number]);
-      } else if (item.center && item.center.length >= 2 && item.center[0] !== undefined && item.center[1] !== undefined) {
+      } else if (
+        item.center &&
+        item.center.length >= 2 &&
+        item.center[0] !== undefined &&
+        item.center[1] !== undefined
+      ) {
         const isAero = item.type === 'AERODROME';
         const targetPitch = isAero ? 60 : 0;
-        flyToLocation(item.center[0], item.center[1], 15, targetPitch, isAero ? 'TERMINAL' : 'ENROUTE');
+        flyToLocation(
+          item.center[0],
+          item.center[1],
+          15,
+          targetPitch,
+          isAero ? 'TERMINAL' : 'ENROUTE',
+        );
       }
 
       // Aerodrome layer activations happen immediately (different view mode)
@@ -166,9 +182,7 @@ export function useSearch() {
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSearchSelectedIndex((prev) =>
-          prev < suggestions.length - 1 ? prev + 1 : prev,
-        );
+        setSearchSelectedIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : prev));
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
         setSearchSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));

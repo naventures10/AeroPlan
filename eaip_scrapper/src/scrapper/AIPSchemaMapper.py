@@ -103,7 +103,9 @@ class AIPSchemaMapper:
                 continue
 
             # Helper to clean up Virtual Grid delimiters into clean newlines
-            clean = lambda c: c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
+            clean = lambda c: (
+                c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
+            )
 
             # The Data Contract Mapping
             obstacle_record = {
@@ -814,7 +816,7 @@ class AIPSchemaMapper:
         for row in grid:
             # Clean all cells to preserve grid alignment for proper frontend rendering
             cleaned_cells = [cell.replace(" | ", "\n").strip() for cell in row]
-            
+
             # Find unique non-empty values to route row type
             non_empty_unique = list(dict.fromkeys([c for c in cleaned_cells if c]))
 
@@ -884,7 +886,7 @@ class AIPSchemaMapper:
         for row in grid:
             # Clean all cells to preserve grid alignment for proper frontend rendering
             cleaned_cells = [cell.replace(" | ", "\n").strip() for cell in row]
-            
+
             non_empty_unique = list(dict.fromkeys([c for c in cleaned_cells if c]))
 
             if not non_empty_unique:
@@ -947,7 +949,7 @@ class AIPSchemaMapper:
         for row in grid:
             # Clean all cells to preserve grid alignment for proper frontend rendering
             cleaned_cells = [cell.replace(" | ", "\n").strip() for cell in row]
-            
+
             non_empty_unique = list(dict.fromkeys([c for c in cleaned_cells if c]))
 
             if not non_empty_unique:
