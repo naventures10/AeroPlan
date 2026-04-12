@@ -29,10 +29,7 @@ export default defineConfig({
   optimizeDeps: {
     include: [
       '@heroui/react',
-      'framer-motion',
-      'react-map-gl',
-      'maplibre-gl',
-      'deck.gl'
+      'framer-motion'
     ]
   }
 })
