@@ -92,9 +92,9 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   activeLayers: {
     aerodromes: true,
-    waypoints: true,
-    navaids: true,
-    atsRoutes: true,
+    waypoints: false,
+    navaids: false,
+    atsRoutes: false,
     wacMap: false,
   },
 
