@@ -38,6 +38,9 @@ frontend/*.local
 # Secrets – never commit .env files
 # ============================================================
 **/.env
+frontend/.env
+backend/.env
+eaip_scrapper/.env
 
 # ============================================================
 # macOS metadata
