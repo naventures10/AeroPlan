@@ -1,5 +1,5 @@
 .PHONY: frontend backend dev test test-frontend test-backend \
-       debug profile-bundle profile-db profile-queries profile-jaeger refresh-mv help
+       debug profile-start profile-stop profile-bundle profile-db profile-queries profile-jaeger refresh-mv help
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -31,6 +31,12 @@ test-build: ## Run frontend build
 
 debug: ## Start backend in DEBUG mode (yappi + OTel console tracing)
 	cd backend && DEBUG=true OTEL_EXPORTER=console uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+profile-start: ## Start backend profiling session (requires `make debug` running)
+	curl -X POST http://localhost:8000/api/debug/profiling/start
+
+profile-stop: ## Stop backend profiling session and print hotspot summary
+	curl -X POST http://localhost:8000/api/debug/profiling/stop
 
 profile-bundle: ## Analyze frontend bundle size (opens stats.html)
 	cd frontend && ANALYZE=true npx vite build && open stats.html
