@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { FlyToInterpolator, LinearInterpolator, WebMercatorViewport } from '@deck.gl/core';
+
 
 // 1. Define the TypeScript Blueprint
 interface MapState {
@@ -12,8 +12,9 @@ interface MapState {
         bearing: number;
         maxPitch: number;
         transitionDuration?: number | 'auto';
-        transitionInterpolator?: any;
+        transitionType?: 'FLY' | 'LINEAR';
     };
+
 
     // UI & App State
     viewMode: 'ENROUTE' | 'TERMINAL';
@@ -45,14 +46,18 @@ interface MapState {
     atsRouteLabels: any | null;
     setAtsRouteLabels: (data: any) => void;
 
+    boundsToFit: [number, number, number, number] | null;
+    fitBounds: (bounds: [number, number, number, number] | null) => void;
+
     // Actions (Functions to change the state)
+
     setViewState: (viewState: any) => void;
     toggleViewMode: () => void;
     setSearchQuery: (query: string) => void;
     toggleLayer: (layer: keyof MapState['activeLayers']) => void;
     flyToLocation: (lng: number, lat: number, zoom?: number, pitch?: number, forceViewMode?: 'ENROUTE' | 'TERMINAL') => void;
-    fitBounds: (bounds: [number, number, number, number]) => void;
     returnToEnroute: () => void;
+
 
     terminalPivot: [number, number] | null;
     setTerminalPivot: (coords: [number, number] | null) => void;
@@ -101,7 +106,11 @@ export const useMapStore = create<MapState>((set, get) => ({
     atsRouteLabels: null,
     setAtsRouteLabels: (data) => { set({ atsRouteLabels: data }); },
 
+    boundsToFit: null,
+    fitBounds: (bounds) => { set({ boundsToFit: bounds }); },
+
     terminalPivot: null,
+
     setTerminalPivot: (coords) => { set({ terminalPivot: coords }); },
 
     // Basic Setters
@@ -121,12 +130,13 @@ export const useMapStore = create<MapState>((set, get) => ({
             viewMode: newMode,
             viewState: {
                 ...viewState,
-                pitch: newMode === 'TERMINAL' ? 45 : 0, // Tilt to 45 if Terminal, 0 if Enroute
+                pitch: newMode === 'TERMINAL' ? 45 : 0,
                 transitionDuration: 1000,
-                transitionInterpolator: new LinearInterpolator(['pitch']),
+                transitionType: 'LINEAR',
             }
         });
     },
+
 
     returnToEnroute: () => {
         set({
@@ -137,10 +147,11 @@ export const useMapStore = create<MapState>((set, get) => ({
             viewState: {
                 ...DEFAULT_VIEW,
                 transitionDuration: 2500,
-                transitionInterpolator: new FlyToInterpolator(),
+                transitionType: 'FLY',
             }
         });
     },
+
 
     // The "Search & Fly" Logic
     flyToLocation: (lng, lat, zoom = 14, pitch = 0, forceViewMode) => {
@@ -153,38 +164,13 @@ export const useMapStore = create<MapState>((set, get) => ({
                 pitch: pitch,
                 bearing: 0,
                 maxPitch: 85,
-                transitionDuration: 1200, // Cinematic 1.2s rapid movement
-                transitionInterpolator: new FlyToInterpolator({ speed: 1.5 }),
+                transitionDuration: 1200,
+                transitionType: 'FLY',
             }
         });
     },
 
-    fitBounds: (bounds) => {
-        // bounds array [minX, minY, maxX, maxY]
-        const { viewState } = get();
-        try {
-            // Using typical viewport dimensions, 100px padding to keep the airway fully visible
-            const vp = new WebMercatorViewport({ width: window.innerWidth || 1024, height: window.innerHeight || 768 });
-            const { longitude, latitude, zoom } = vp.fitBounds(
-                [[bounds[0], bounds[1]], [bounds[2], bounds[3]]],
-                { padding: 150 }
-            );
 
-            set({
-                viewMode: 'ENROUTE', // Always lock to 2D Enroute map mode to see airway
-                viewState: {
-                    ...viewState,
-                    longitude,
-                    latitude,
-                    zoom,
-                    pitch: 0, // Request from user to reset tilt
-                    bearing: 0,
-                    transitionDuration: 1200,
-                    transitionInterpolator: new FlyToInterpolator({ speed: 1.5 }),
-                }
-            });
-        } catch (e) {
-            console.error("Failed to calculate fitBounds", e);
-        }
-    }
+    // Note: fitBounds logic moved to MapView to avoid heavy @deck.gl logic in the global store
+    // Components should now trigger fitBounds behavior via state flags if needed
 }));

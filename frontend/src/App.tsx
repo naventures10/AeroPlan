@@ -2,8 +2,7 @@ import { useMapStore } from './store/useMapStore';
 import { useSearch } from './hooks/useSearch';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useAerodromeData } from './hooks/useAerodromeData';
-
-import { lazy, Suspense } from 'react';
+import { useLayoutEffect, lazy, Suspense } from 'react';
 import GlobalLoader from './components/GlobalLoader';
 
 const MapView = lazy(() => import('./features/map/MapView'));
@@ -16,17 +15,11 @@ const AerodromeChartViewer = lazy(() => import('./features/aip/AerodromeChartVie
 const SectionModal = lazy(() => import('./features/aip/SectionModal'));
 const TerminalDashboard = lazy(() => import('./features/terminal/TerminalDashboard'));
 
-
 /**
- * Root application shell.
- *
- * All domain logic has been extracted into custom hooks and feature
- * components. This component is a pure composition layer.
+ * Decoupled content layer to prevent hooks from blocking initial paint.
  */
-export default function App() {
+function AppContent() {
   const { viewMode, activeAirport, viewState } = useMapStore();
-
-  // ── Hooks ──────────────────────────────────────────────────────────
   const search = useSearch();
 
   const {
@@ -48,9 +41,8 @@ export default function App() {
     cancelPendingSelection: search.cancelPendingSelection,
   });
 
-  // ── Render ─────────────────────────────────────────────────────────
   return (
-    <div className="w-screen h-screen overflow-hidden bg-gray-900 relative font-sans">
+    <>
       {/* Map (Primary Chunk) */}
       <Suspense fallback={<GlobalLoader />}>
         <MapView
@@ -62,42 +54,33 @@ export default function App() {
       {/* Overlay Layer (Secondary Chunks) */}
       <Suspense fallback={null}>
         <div className="absolute inset-0 pointer-events-none z-10">
-        {/* AIP Section Dropdown — TERMINAL view only */}
-        {(activeAirport || viewMode === 'TERMINAL') && (
-          <div className="absolute top-6 left-6 pointer-events-auto z-50">
-            <AerodromeInfoDropdown
-              onSectionSelect={handleSectionSelect}
-              activeAirport={activeAirport}
-            />
-          </div>
-        )}
+          {(activeAirport || viewMode === 'TERMINAL') && (
+            <div className="absolute top-6 left-6 pointer-events-auto z-50">
+              <AerodromeInfoDropdown
+                onSectionSelect={handleSectionSelect}
+                activeAirport={activeAirport}
+              />
+            </div>
+          )}
 
-        {/* Terminal Dashboard — TERMINAL view only */}
-        {activeAirport && (viewMode === 'TERMINAL' || viewState.pitch > 0) && (
-          <div className="absolute top-6 right-6 pointer-events-none z-40">
-            <TerminalDashboard icaoCode={activeAirport} />
-          </div>
-        )}
+          {activeAirport && (viewMode === 'TERMINAL' || viewState.pitch > 0) && (
+            <div className="absolute top-6 right-6 pointer-events-none z-40">
+              <TerminalDashboard icaoCode={activeAirport} />
+            </div>
+          )}
 
-        {/* Aerodrome Charts Carousel — visible when airport active */}
-        {activeAirport && (
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-auto z-40 scale-110 origin-bottom">
-            <AerodromeChartViewer icaoCode={activeAirport} />
-          </div>
-        )}
+          {activeAirport && (
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-auto z-40 scale-110 origin-bottom">
+              <AerodromeChartViewer icaoCode={activeAirport} />
+            </div>
+          )}
 
-        {/* Search Bar — ENROUTE view only */}
-        {viewMode === 'ENROUTE' && <SearchBar {...search} />}
-
-        {/* Layer Toolbar — ENROUTE view only */}
-        {viewMode === 'ENROUTE' && <LayerToolbar />}
-
-          {/* View Toggle + Branding */}
+          {viewMode === 'ENROUTE' && <SearchBar {...search} />}
+          {viewMode === 'ENROUTE' && <LayerToolbar />}
           <ViewToggle />
         </div>
       </Suspense>
 
-      {/* AIP Section Modal (Isolated Chunk) */}
       <Suspense fallback={null}>
         <SectionModal
           isOpen={sectionModalOpen}
@@ -109,6 +92,23 @@ export default function App() {
           isLoading={sectionLoading}
         />
       </Suspense>
+    </>
+  );
+}
+
+/**
+ * Root application shell.
+ */
+export default function App() {
+  useLayoutEffect(() => {
+    // @ts-expect-error - native global from index.html
+    if (window.hideLoader) window.hideLoader();
+  }, []);
+
+
+  return (
+    <div className="w-screen h-screen overflow-hidden bg-gray-900 relative font-sans">
+      <AppContent />
     </div>
   );
 }
