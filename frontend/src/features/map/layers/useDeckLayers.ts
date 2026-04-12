@@ -42,7 +42,6 @@ export function useDeckLayers({
     }));
   }, [aerodromes]);
 
-  const rebuildCount = useRef(0);
 
   const deckLayers = useMemo(() => {
     const layers: any[] = [];

@@ -9,7 +9,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     // Run `ANALYZE=true npm run build` to generate stats.html
-    process.env.ANALYZE && visualizer({
+    process.env.ANALYZE === 'true' && visualizer({
       open: true,
       filename: 'stats.html',
       gzipSize: true,

@@ -23,7 +23,6 @@ class CustomMapController extends MapController {
   /**
    * Override rotation detection to swap Right-Click for Middle-Click.
    */
-  // @ts-expect-error - Internal DeckGL method
   _isRotationEvent(event: any) {
     const { srcEvent } = event;
     const isMiddle = event.middleButton || 
@@ -57,7 +56,6 @@ class CustomMapController extends MapController {
       }
     }
 
-    // @ts-expect-error - Internal DeckGL method
     return super.handleEvent(event);
   }
 }
@@ -85,7 +83,6 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     activeAirport,
     setActiveAirport,
     activeLayers,
-    terminalPivot,
   } = useMapStore();
 
   const mapRef = useRef<MapRef>(null);
