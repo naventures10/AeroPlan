@@ -139,13 +139,31 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
     setDaylight(null);
     setLoading(true);
     
-    // Fetch independently instead of waiting for Promise.allSettled
-    // This allows the dashboard to open immediately and populate as data arrives
-    fetch(`/api/weather/${icaoCode}`).then(r => r.ok ? r.json() : null).then(w => w && setWeather(w));
-    fetch(`/api/notams/${icaoCode}?active_only=true`).then(r => r.ok ? r.json() : []).then(n => { setNotams(n); });
-    fetch(`/api/daylight/${icaoCode}?date=${todayStr}`).then(r => r.ok ? r.json() : null).then(d => { setDaylight(d?.records?.[0] || null); });
-    
-    setLoading(false); // Remove global blocker
+    const controller = new AbortController();
+    const signal = controller.signal;
+    let pending = 3;
+    const maybeFinish = () => { if (--pending === 0) setLoading(false); };
+
+    // Fetch independently so the dashboard populates progressively
+    fetch(`/api/weather/${icaoCode}`, { signal })
+      .then(r => r.ok ? r.json() : null)
+      .then(w => { if (!signal.aborted && w) setWeather(w); })
+      .catch(() => {})
+      .finally(maybeFinish);
+
+    fetch(`/api/notams/${icaoCode}?active_only=true`, { signal })
+      .then(r => r.ok ? r.json() : [])
+      .then(n => { if (!signal.aborted) setNotams(n); })
+      .catch(() => {})
+      .finally(maybeFinish);
+
+    fetch(`/api/daylight/${icaoCode}?date=${todayStr}`, { signal })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (!signal.aborted) setDaylight(d?.records?.[0] || null); })
+      .catch(() => {})
+      .finally(maybeFinish);
+
+    return () => { controller.abort(); };
   }, [icaoCode, todayStr]);
 
   const parsedMetar = useMemo(() => parseMetar(weather?.metar || null), [weather]);

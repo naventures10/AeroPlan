@@ -1,3 +1,6 @@
+import time
+from typing import TypedDict
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,13 +10,26 @@ from app.schemas.geojson import GeoJsonFeatureCollection
 
 router = APIRouter(prefix="/api", tags=["ATS Routes"])
 
+class LabelsCache(TypedDict):
+    data: GeoJsonFeatureCollection | None
+    ts: float
+
+# ── In-memory cache for ATS route labels (rarely changes) ────────────────
+_labels_cache: LabelsCache = {"data": None, "ts": 0.0}
+_LABELS_TTL = 3600  # 1 hour
+
 
 @router.get("/ats-route-labels", response_model=GeoJsonFeatureCollection)
 async def get_ats_route_labels(db: AsyncSession = Depends(get_db)) -> GeoJsonFeatureCollection:
     """
     Returns the midpoints of all ATS route segments as GeoJSON points.
-    Includes route_id, route_type, and the segment bearing for labeling.
+    Reads from a pre-computed materialized view (mv_ats_route_labels)
+    and caches the result in-memory for 1 hour.
     """
+    # Return cached response if still fresh
+    if _labels_cache["data"] is not None and (time.monotonic() - _labels_cache["ts"]) < _LABELS_TTL:
+        return _labels_cache["data"]
+
     query = text("""
         SELECT jsonb_build_object(
             'type', 'FeatureCollection',
@@ -21,43 +37,27 @@ async def get_ats_route_labels(db: AsyncSession = Depends(get_db)) -> GeoJsonFea
                 jsonb_agg(
                     jsonb_build_object(
                         'type',       'Feature',
-                        'geometry',   ST_AsGeoJSON(
-                            ST_Transform(
-                                ST_LineInterpolatePoint(ST_Transform(geom, 3857), 0.5),
-                            4326)
-                        )::jsonb,
+                        'geometry',   ST_AsGeoJSON(midpoint_geom)::jsonb,
                         'properties', jsonb_build_object(
                             'id', id,
                             'route_id', route_id,
                             'route_type', route_type,
-                            'bearing', (
-                                CASE
-                                    WHEN (90 - degrees(ST_Azimuth(
-                                        ST_Transform(ST_LineInterpolatePoint(ST_Transform(geom, 3857), 0.49), 4326),
-                                        ST_Transform(ST_LineInterpolatePoint(ST_Transform(geom, 3857), 0.51), 4326)
-                                    ))) < -90
-                                    THEN (90 - degrees(ST_Azimuth(
-                                        ST_Transform(ST_LineInterpolatePoint(ST_Transform(geom, 3857), 0.49), 4326),
-                                        ST_Transform(ST_LineInterpolatePoint(ST_Transform(geom, 3857), 0.51), 4326)
-                                    ))) + 180
-                                    ELSE (90 - degrees(ST_Azimuth(
-                                        ST_Transform(ST_LineInterpolatePoint(ST_Transform(geom, 3857), 0.49), 4326),
-                                        ST_Transform(ST_LineInterpolatePoint(ST_Transform(geom, 3857), 0.51), 4326)
-                                    )))
-                                END
-                            )
+                            'bearing', bearing
                         )
                     )
                 ),
                 '[]'::jsonb
             )
         ) AS geojson
-        FROM v_ats_route_segments;
+        FROM mv_ats_route_labels;
     """)
     result = await db.execute(query)
     row = result.fetchone()
     if row and row[0]:
-        return GeoJsonFeatureCollection(**row[0])
+        data = GeoJsonFeatureCollection(**row[0])
+        _labels_cache["data"] = data
+        _labels_cache["ts"] = time.monotonic()
+        return data
     return GeoJsonFeatureCollection(type="FeatureCollection", features=[])
 
 

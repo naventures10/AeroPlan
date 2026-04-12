@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { fetchAerodromes, fetchAerodromeMetadata, fetchAerodromeSection, fetchAtsRouteLabels } from '../api/client';
 import { useMapStore } from '../store/useMapStore';
 
@@ -7,6 +7,7 @@ import { useMapStore } from '../store/useMapStore';
  *  - Initial aerodromes GeoJSON fetch
  *  - Click handler (fly to + set active airport + fetch metadata)
  *  - AIP section selection state & fetch
+ *  - Lazy ATS route labels fetch (deferred until layer is toggled on)
  */
 export function useAerodromeData() {
   const {
@@ -16,9 +17,12 @@ export function useAerodromeData() {
     activeAirport,
     setAtsRouteLabels,
     setTerminalPivot,
+    activeLayers,
+    selectedRouteIds,
   } = useMapStore();
 
   const [aerodromes, setAerodromes] = useState<any>(null);
+  const atsLabelsFetched = useRef(false);
 
   // Section modal state
   const [sectionModalOpen, setSectionModalOpen] = useState(false);
@@ -28,16 +32,23 @@ export function useAerodromeData() {
   const [sectionDataType, setSectionDataType] = useState('object');
   const [sectionLoading, setSectionLoading] = useState(false);
 
-  // Fetch initial global data once
+  // Fetch aerodromes once on mount
   useEffect(() => {
     fetchAerodromes()
       .then(setAerodromes)
       .catch((err) => { console.error('Failed to fetch aerodromes', err); });
+  }, []);
 
+  // Lazy-load ATS route labels only when the layer is first needed
+  useEffect(() => {
+    if (atsLabelsFetched.current) return;
+    if (!activeLayers.atsRoutes && selectedRouteIds.length === 0) return;
+
+    atsLabelsFetched.current = true;
     fetchAtsRouteLabels()
       .then(setAtsRouteLabels)
       .catch((err) => { console.error('Failed to fetch ATS labels', err); });
-  }, [setAtsRouteLabels]);
+  }, [activeLayers.atsRoutes, selectedRouteIds.length, setAtsRouteLabels]);
 
   // Handle clicking an aerodrome on the map
   const handleAerodromeClick = useCallback(

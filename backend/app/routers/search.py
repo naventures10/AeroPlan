@@ -3,11 +3,14 @@ Search Router — Global search across aerodromes, navaids, waypoints, and ATS r
 """
 
 from fastapi import APIRouter, Depends
+from opentelemetry import trace
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.schemas.search import SearchResultResponse
+
+tracer = trace.get_tracer(__name__)
 
 router = APIRouter(prefix="/api", tags=["Search"])
 
@@ -45,7 +48,23 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)) -> list[Sear
     regex_term = f"({'|'.join(safe_tokens)})" if safe_tokens else re.escape(q_clean)
 
     query = text("""
-        WITH search_results AS (
+        WITH
+        -- Pre-aggregate segment data per route ONCE (replaces 8 correlated subqueries)
+        route_seg_agg AS (
+            SELECT
+                route_id,
+                (array_agg(direction_odd)  FILTER (WHERE direction_odd  IS NOT NULL))[1] AS direction_odd,
+                (array_agg(direction_even) FILTER (WHERE direction_even IS NOT NULL))[1] AS direction_even,
+                (array_agg(track_magnetic) FILTER (WHERE track_magnetic IS NOT NULL))[1] AS track_magnetic,
+                SUM(distance_nm) AS distance_nm,
+                (array_agg(upper_limit)    FILTER (WHERE upper_limit    IS NOT NULL))[1] AS upper_limit,
+                (array_agg(lower_limit)    FILTER (WHERE lower_limit    IS NOT NULL))[1] AS lower_limit,
+                (array_agg(lateral_limits) FILTER (WHERE lateral_limits IS NOT NULL))[1] AS lateral_limits,
+                (array_agg(moca)           FILTER (WHERE moca           IS NOT NULL))[1] AS moca
+            FROM ats_route_segments
+            GROUP BY route_id
+        ),
+        search_results AS (
             -- 1. Aerodromes
             SELECT
                 ad.icao_code AS id,
@@ -104,7 +123,7 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)) -> list[Sear
 
             UNION ALL
 
-            -- 4. ATS Routes (Airways)
+            -- 4. ATS Routes — uses pre-aggregated segment data (no correlated subqueries)
             SELECT
                 r.route_id AS id,
                 COALESCE(r.route_designator, r.route_id) AS name,
@@ -117,19 +136,23 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)) -> list[Sear
                     'route_designator', r.route_designator,
                     'route_type', r.route_type,
                     'remarks', r.remarks,
-                    'direction_odd', (SELECT direction_odd FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1),
-                    'direction_even', (SELECT direction_even FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1),
-                    'track_magnetic', (SELECT track_magnetic FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1),
-                    'distance_nm', (SELECT SUM(distance_nm) FROM ats_route_segments s WHERE s.route_id = r.route_id),
-                    'upper_limit', (SELECT upper_limit FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1),
-                    'lower_limit', (SELECT lower_limit FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1),
-                    'lateral_limits', (SELECT lateral_limits FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1),
-                    'moca', (SELECT moca FROM ats_route_segments s WHERE s.route_id = r.route_id LIMIT 1)
+                    'direction_odd', sa.direction_odd,
+                    'direction_even', sa.direction_even,
+                    'track_magnetic', sa.track_magnetic,
+                    'distance_nm', sa.distance_nm,
+                    'upper_limit', sa.upper_limit,
+                    'lower_limit', sa.lower_limit,
+                    'lateral_limits', sa.lateral_limits,
+                    'moca', sa.moca
                 ) AS properties
             FROM ats_routes r
             JOIN ats_route_waypoints w ON r.route_id = w.route_id
+            LEFT JOIN route_seg_agg sa ON sa.route_id = r.route_id
             WHERE r.route_id ~* :regex_term OR r.route_designator ~* :regex_term
-            GROUP BY r.route_id, r.route_designator, r.route_type, r.remarks
+            GROUP BY r.route_id, r.route_designator, r.route_type, r.remarks,
+                     sa.direction_odd, sa.direction_even, sa.track_magnetic,
+                     sa.distance_nm, sa.upper_limit, sa.lower_limit,
+                     sa.lateral_limits, sa.moca
         ),
         final_search AS (
             SELECT DISTINCT ON (id, type)
@@ -170,13 +193,18 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)) -> list[Sear
         SELECT * FROM final_search ORDER BY relevance DESC, name ASC LIMIT 20;
     """)
 
-    result = await db.execute(query, {
-        "exact_term": exact_term,
-        "start_term": start_term,
-        "contains_term": contains_term,
-        "regex_term": regex_term
-    })
-    rows = result.fetchall()
+    with tracer.start_as_current_span(
+        "search.execute",
+        attributes={"search.query": q_clean, "search.token_count": len(tokens)},
+    ) as span:
+        result = await db.execute(query, {
+            "exact_term": exact_term,
+            "start_term": start_term,
+            "contains_term": contains_term,
+            "regex_term": regex_term
+        })
+        rows = result.fetchall()
+        span.set_attribute("search.result_count", len(rows))
 
     output = []
     for r in rows:
