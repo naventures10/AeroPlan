@@ -281,6 +281,16 @@ class RouteLoader:
                 REFRESH MATERIALIZED VIEW mv_ats_route_labels;
             """)
 
+            # 7. Ensure Spatial Indexes exist
+            print("[*] Ensuring spatial indexes exist for high-performance tile serving...")
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_ats_route_segments_geom 
+                ON public.ats_route_segments USING gist (geom);
+                
+                CREATE INDEX IF NOT EXISTS idx_mv_ats_route_labels_geom 
+                ON public.mv_ats_route_labels USING gist (midpoint_geom);
+            """)
+
             self.conn.commit()
 
         print(f"[+] Successfully loaded {len(all_routes)} routes into the database!")

@@ -1,0 +1,117 @@
+
+
+postgres:
+  connection_string: postgres://postgres:postgres@host.docker.internal:5432/aeronautical_information_system
+  tables:
+    ats_route_segments:
+      schema: public
+      table: v_ats_route_segments
+      srid: 4326
+      geometry_column: geom
+      id_column: id
+      bounds:
+      - 60.0
+      - -6.0
+      - 96.133333
+      - 34.132778
+      properties:
+        airspace_class: varchar
+        direction_even: varchar
+        direction_odd: varchar
+        distance_nm: numeric
+        lateral_limits: varchar
+        lower_limit: varchar
+        moca: varchar
+        remarks: varchar
+        route_designator: varchar
+        route_id: varchar
+        route_type: varchar
+        sequence_number: int4
+        track_magnetic: varchar
+        upper_limit: varchar
+    ats_route_waypoints:
+      schema: public
+      table: ats_waypoints_grouped
+      srid: 4326
+      geometry_column: geom
+      bounds:
+      - 60.0
+      - -6.0
+      - 96.133333
+      - 34.132778
+      properties:
+        route_ids: text[]
+        waypoint_name: varchar
+    fir_airspaces:
+      schema: public
+      table: fir_airspaces
+      srid: 4326
+      geometry_column: geom
+      bounds:
+      - 60.0
+      - -6.0
+      - 97.13472
+      - 35.64778
+      properties: null
+    radio_nav_aids:
+      schema: public
+      table: radio_nav_aids
+      srid: 4326
+      geometry_column: geom
+      id_column: id
+      bounds:
+      - 69.655703
+      - 8.474722
+      - 96.133333
+      - 34.132639
+      properties:
+        aid_type: varchar
+        elevation: varchar
+        frequency: varchar
+        hours_of_operation: varchar
+        ident: varchar
+        raw_coordinates: varchar
+        remarks: text
+        station_name: varchar
+    significant_points:
+      schema: public
+      table: significant_points
+      srid: 4326
+      geometry_column: geom
+      id_column: id
+      bounds:
+      - 60.0
+      - -6.0
+      - 95.955556
+      - 34.032778
+      properties:
+        raw_coordinates: varchar
+        routes: text[]
+        waypoint_name: varchar
+    spatial_features:
+      schema: public
+      table: spatial_features
+      srid: 4326
+      geometry_column: geom
+      id_column: feature_id
+      bounds:
+      - 7.759444
+      - 8.44225
+      - 96.279306
+      - 34.139722
+      properties:
+        elevation_m: numeric
+        feature_category: varchar
+        feature_name: varchar
+        icao_code: varchar
+  functions: {}
+mbtiles:
+  sources:
+    wac_india: /data/wac_india.mbtiles
+observability:
+  metrics:
+    listen_address: 0.0.0.0:9091
+    add_labels:
+      env: development
+
+

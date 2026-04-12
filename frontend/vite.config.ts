@@ -25,5 +25,14 @@ export default defineConfig({
         rewrite: (path: string) => path.replace(/^\/tiles/, '')
       }
     }
+  },
+  optimizeDeps: {
+    include: [
+      '@heroui/react',
+      'framer-motion',
+      'react-map-gl',
+      'maplibre-gl',
+      'deck.gl'
+    ]
   }
 })
