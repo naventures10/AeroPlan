@@ -16,12 +16,16 @@ backend: ## Start the FastAPI server (uvicorn with hot-reload)
 test: ## Run all tests (frontend and backend)
 	$(MAKE) test-backend
 	$(MAKE) test-frontend
+	$(MAKE) test-build
 
 test-frontend: ## Run frontend unit tests (Vitest)
 	cd frontend && npm test
 
 test-backend: ## Run backend integration tests (Pytest)
 	cd backend && uv run pytest
+
+test-build: ## Run frontend build
+	cd frontend && npm run build
 
 # ── Profiling & Debugging ────────────────────────────────────────────────────
 
@@ -61,7 +65,3 @@ profile-jaeger: ## Start Jaeger + backend with OTLP tracing (UI at :16686)
 	@docker start jaeger 2>/dev/null || docker run -d --name jaeger -p 16686:16686 -p 4318:4318 jaegertracing/jaeger:latest
 	@echo "\033[36mJaeger UI:\033[0m http://localhost:16686"
 	cd backend && OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-refresh-mv: ## Refresh the ATS route labels materialized view
-	@docker exec eaip-postgres psql -U postgres -d aeronautical_information_system -c \
-		"REFRESH MATERIALIZED VIEW mv_ats_route_labels;" && echo "\033[32m✓ Materialized view refreshed\033[0m"
