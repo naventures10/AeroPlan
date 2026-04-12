@@ -13,7 +13,9 @@ function isTypedBlockArray(data: any): boolean {
   return (
     Array.isArray(data) &&
     data.length > 0 &&
-    data.every((item: any) => item && typeof item === 'object' && 'type' in item && 'content' in item)
+    data.every(
+      (item: any) => item && typeof item === 'object' && 'type' in item && 'content' in item,
+    )
   );
 }
 
@@ -57,7 +59,11 @@ function RawTableRenderer({ rows }: { rows: any[][] }) {
                   key={cellIdx}
                   className="px-4 py-3 text-zinc-200 text-[13px] leading-relaxed align-top"
                   dangerouslySetInnerHTML={{
-                    __html: sanitizeHtml(String(cell ?? '—').replace(/\\n/g, '<br/>').replace(/\n/g, '<br/>')),
+                    __html: sanitizeHtml(
+                      String(cell ?? '—')
+                        .replace(/\\n/g, '<br/>')
+                        .replace(/\n/g, '<br/>'),
+                    ),
                   }}
                 />
               ))}
@@ -81,9 +87,7 @@ export default function HybridRenderer({ data }: HybridRendererProps) {
   // Null / undefined / empty
   if (data === null || data === undefined) {
     return (
-      <div className="text-zinc-500 text-sm font-medium tracking-wide py-8 text-center">
-        NIL
-      </div>
+      <div className="text-zinc-500 text-sm font-medium tracking-wide py-8 text-center">NIL</div>
     );
   }
 
@@ -91,9 +95,7 @@ export default function HybridRenderer({ data }: HybridRendererProps) {
   if (typeof data === 'string') {
     if (!data.trim() || data.trim().toUpperCase() === 'NIL') {
       return (
-        <div className="text-zinc-500 text-sm font-medium tracking-wide py-8 text-center">
-          NIL
-        </div>
+        <div className="text-zinc-500 text-sm font-medium tracking-wide py-8 text-center">NIL</div>
       );
     }
 
@@ -124,7 +126,12 @@ export default function HybridRenderer({ data }: HybridRendererProps) {
                 return <RawTableRenderer key={idx} rows={content} />;
               }
               // content is array of objects → use standard TableRenderer
-              if (Array.isArray(content) && content.length > 0 && typeof content[0] === 'object' && !Array.isArray(content[0])) {
+              if (
+                Array.isArray(content) &&
+                content.length > 0 &&
+                typeof content[0] === 'object' &&
+                !Array.isArray(content[0])
+              ) {
                 return <TableRenderer key={idx} data={content} />;
               }
               // Fallback: render as text
@@ -169,9 +176,7 @@ export default function HybridRenderer({ data }: HybridRendererProps) {
     const entries = Object.entries(data);
 
     // Check if all values are scalar → treat as object
-    const allScalar = entries.every(
-      ([, v]) => typeof v !== 'object' || v === null
-    );
+    const allScalar = entries.every(([, v]) => typeof v !== 'object' || v === null);
     if (allScalar) {
       return <ObjectRenderer data={data} />;
     }
@@ -180,9 +185,7 @@ export default function HybridRenderer({ data }: HybridRendererProps) {
     return (
       <div className="space-y-6">
         {entries.map(([key, value]) => {
-          const formattedKey = key
-            .replace(/_/g, ' ')
-            .replace(/\b\w/g, (c) => c.toUpperCase());
+          const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
           return (
             <div key={key}>
@@ -207,9 +210,7 @@ export default function HybridRenderer({ data }: HybridRendererProps) {
               ) : typeof value === 'object' && value !== null ? (
                 <ObjectRenderer data={value} />
               ) : (
-                <div className="px-4 py-3 text-zinc-200 text-[13px]">
-                  {String(value ?? 'NIL')}
-                </div>
+                <div className="px-4 py-3 text-zinc-200 text-[13px]">{String(value ?? 'NIL')}</div>
               )}
             </div>
           );
@@ -219,10 +220,5 @@ export default function HybridRenderer({ data }: HybridRendererProps) {
   }
 
   // Fallback for primitives
-  return (
-    <div className="px-4 py-4 text-zinc-200 text-[13px]">
-      {String(data)}
-    </div>
-  );
+  return <div className="px-4 py-4 text-zinc-200 text-[13px]">{String(data)}</div>;
 }
-

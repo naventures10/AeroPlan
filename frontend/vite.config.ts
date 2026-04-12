@@ -1,7 +1,7 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import { visualizer } from 'rollup-plugin-visualizer'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -9,12 +9,13 @@ export default defineConfig({
     react(),
     tailwindcss(),
     // Run `ANALYZE=true npm run build` to generate stats.html
-    process.env.ANALYZE === 'true' && visualizer({
-      open: true,
-      filename: 'stats.html',
-      gzipSize: true,
-      brotliSize: true,
-    }),
+    process.env.ANALYZE === 'true' &&
+      visualizer({
+        open: true,
+        filename: 'stats.html',
+        gzipSize: true,
+        brotliSize: true,
+      }),
   ].filter(Boolean),
   server: {
     proxy: {
@@ -22,8 +23,8 @@ export default defineConfig({
       '/tiles': {
         target: 'http://localhost:3000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/tiles/, '')
-      }
-    }
-  }
-})
+        rewrite: (path: string) => path.replace(/^\/tiles/, ''),
+      },
+    },
+  },
+});

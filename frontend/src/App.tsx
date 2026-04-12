@@ -48,10 +48,7 @@ export default function App() {
   return (
     <div className="w-screen h-screen overflow-hidden bg-gray-900 relative font-sans">
       {/* Map */}
-      <MapView
-        aerodromes={aerodromes}
-        onAerodromeClick={handleAerodromeClick}
-      />
+      <MapView aerodromes={aerodromes} onAerodromeClick={handleAerodromeClick} />
 
       {/* Overlay Layer */}
       <div className="absolute inset-0 pointer-events-none z-10">

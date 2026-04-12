@@ -10,7 +10,7 @@ interface ObjectRendererProps {
 /**
  * Renders AIP data_type: "object" sections as a styled key-value table.
  * Matches the AIP document structure: | Ref | Description | Data |
- * 
+ *
  * If columnConfig is provided, uses official AIP labels and ordering.
  * Otherwise falls back to auto-generating from object keys.
  */
@@ -94,10 +94,12 @@ export default function ObjectRenderer({ data, columnConfig }: ObjectRendererPro
                   className="px-4 py-3 text-zinc-200 text-[13px] leading-relaxed align-top"
                   style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
                   dangerouslySetInnerHTML={{
-                    __html: sanitizeHtml(displayValue
-                      .replace(/\\n/g, '<br/>')
-                      .replace(/\n/g, '<br/>')
-                      .replace(/\s*\|\s*/g, '<br/>')),
+                    __html: sanitizeHtml(
+                      displayValue
+                        .replace(/\\n/g, '<br/>')
+                        .replace(/\n/g, '<br/>')
+                        .replace(/\s*\|\s*/g, '<br/>'),
+                    ),
                   }}
                 />
               </tr>

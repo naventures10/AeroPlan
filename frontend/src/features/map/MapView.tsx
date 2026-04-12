@@ -25,25 +25,29 @@ class CustomMapController extends MapController {
    */
   _isRotationEvent(event: any) {
     const { srcEvent } = event;
-    const isMiddle = event.middleButton || 
-                     (srcEvent && (srcEvent.button === 1 || srcEvent.which === 2 || (srcEvent.buttons & 4)));
+    const isMiddle =
+      event.middleButton ||
+      (srcEvent && (srcEvent.button === 1 || srcEvent.which === 2 || srcEvent.buttons & 4));
 
     if (isMiddle) return true;
-    
+
     // Disable Right-Click rotation
-    if (event.rightButton || (srcEvent && (srcEvent.button === 2 || srcEvent.which === 3))) return false;
-    
+    if (event.rightButton || (srcEvent && (srcEvent.button === 2 || srcEvent.which === 3)))
+      return false;
+
     // @ts-expect-error - Internal DeckGL method
     return super._isRotationEvent(event);
   }
 
   handleEvent(event: any) {
     const { srcEvent } = event;
-    const isMiddle = event.middleButton || 
-                     (srcEvent && (srcEvent.button === 1 || srcEvent.which === 2 || (srcEvent.buttons & 4)));
+    const isMiddle =
+      event.middleButton ||
+      (srcEvent && (srcEvent.button === 1 || srcEvent.which === 2 || srcEvent.buttons & 4));
 
     // Suppress Right-Click drags so they don't fall back to panning
-    const isRight = event.rightButton || (srcEvent && (srcEvent.button === 2 || srcEvent.which === 3));
+    const isRight =
+      event.rightButton || (srcEvent && (srcEvent.button === 2 || srcEvent.which === 3));
     if (isRight && event.type && String(event.type).includes('drag')) {
       return false;
     }
@@ -95,10 +99,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
       let nextVs = vs;
 
       // 1. Zoom-out logic to exit terminal
-      if (
-        (interactionState?.isZooming || interactionState?.isPanning) &&
-        nextVs.zoom < 10
-      ) {
+      if ((interactionState?.isZooming || interactionState?.isPanning) && nextVs.zoom < 10) {
         if (activeAirport) setActiveAirport(null);
         if (viewMode === 'TERMINAL' || nextVs.pitch > 0) {
           setViewMode('ENROUTE');
@@ -120,7 +121,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
         controller={{
           type: CustomMapController,
           dragRotate: true,
-          touchRotate: true
+          touchRotate: true,
         }}
         layers={deckLayers}
         onViewStateChange={onViewStateChange}
@@ -132,13 +133,9 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
           mapStyle={MAP_STYLE}
           reuseMaps
           terrain={
-            viewMode === 'TERMINAL'
-              ? { source: 'maptiler-terrain', exaggeration: 1 }
-              : undefined
+            viewMode === 'TERMINAL' ? { source: 'maptiler-terrain', exaggeration: 1 } : undefined
           }
-          interactiveLayerIds={
-            viewMode === 'TERMINAL' ? ['mvt-points', 'mvt-polygons'] : []
-          }
+          interactiveLayerIds={viewMode === 'TERMINAL' ? ['mvt-points', 'mvt-polygons'] : []}
         >
           <Source
             id="maptiler-terrain"
@@ -150,9 +147,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
             <Source
               id="wac-source"
               type="raster"
-              tiles={[
-                `${window.location.origin}/tiles/wac_india/{z}/{x}/{y}`,
-              ]}
+              tiles={[`${window.location.origin}/tiles/wac_india/{z}/{x}/{y}`]}
               tileSize={256}
               minzoom={7}
               maxzoom={12}
@@ -172,9 +167,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
             <Source
               id="spatial-features-source"
               type="vector"
-              tiles={[
-                `${window.location.origin}/tiles/spatial_features/{z}/{x}/{y}`,
-              ]}
+              tiles={[`${window.location.origin}/tiles/spatial_features/{z}/{x}/{y}`]}
             >
               <Layer
                 id="mvt-polygons"

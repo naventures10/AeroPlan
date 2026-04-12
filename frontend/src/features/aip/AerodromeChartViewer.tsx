@@ -39,28 +39,33 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
       setCharts([]);
       return;
     }
-    
+
     setIsLoading(true);
     fetch(`/api/aerodromes/${icaoCode}/charts`)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         const chartList = Array.isArray(data) ? data : [];
         setCharts(chartList);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Failed to fetch aerodrome charts:', err);
         setCharts([]);
       })
-      .finally(() => { setIsLoading(false); });
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, [icaoCode]);
 
-  const handleChartClick = useCallback((chart: ChartItem) => {
-    setSelectedChart(chart);
-    setCurrentPage(1);
-    setNumPages(0);
-    setPdfScale(1.2);
-    onOpen();
-  }, [onOpen]);
+  const handleChartClick = useCallback(
+    (chart: ChartItem) => {
+      setSelectedChart(chart);
+      setCurrentPage(1);
+      setNumPages(0);
+      setPdfScale(1.2);
+      onOpen();
+    },
+    [onOpen],
+  );
 
   const onDocumentLoadSuccess = useCallback(({ numPages: total }: { numPages: number }) => {
     setNumPages(total);
@@ -105,7 +110,9 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
             {/* Scroll Left */}
             {charts.length > 3 && (
               <button
-                onClick={() => { scroll('left'); }}
+                onClick={() => {
+                  scroll('left');
+                }}
                 className="shrink-0 w-8 h-8 rounded-full bg-zinc-800/60 hover:bg-zinc-700/60 border border-zinc-700/40 flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors backdrop-blur-xl"
               >
                 <ChevronLeft size={16} />
@@ -148,13 +155,18 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: idx * 0.05, duration: 0.2 }}
-                      onClick={() => { handleChartClick(chart); }}
+                      onClick={() => {
+                        handleChartClick(chart);
+                      }}
                       className="group shrink-0 flex flex-col items-center gap-1.5 p-2 rounded-xl border border-zinc-800/50 hover:border-indigo-500/40 bg-zinc-900/40 hover:bg-indigo-500/10 transition-all duration-200 cursor-pointer w-[82px]"
                       title={chart.chart_title}
                     >
                       {/* Chart Icon */}
                       <div className="w-10 h-11 rounded-lg bg-gradient-to-br from-teal-400/20 to-cyan-500/20 border border-teal-500/30 group-hover:border-teal-400/50 flex items-center justify-center transition-colors">
-                        <FileText size={18} className="text-teal-400 group-hover:text-teal-300 transition-colors" />
+                        <FileText
+                          size={18}
+                          className="text-teal-400 group-hover:text-teal-300 transition-colors"
+                        />
                       </div>
                       {/* Title */}
                       <span className="text-[8px] font-bold text-zinc-500 group-hover:text-zinc-200 text-center leading-tight tracking-wider uppercase line-clamp-1 transition-colors w-full">
@@ -169,7 +181,9 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
             {/* Scroll Right */}
             {charts.length > 3 && (
               <button
-                onClick={() => { scroll('right'); }}
+                onClick={() => {
+                  scroll('right');
+                }}
                 className="shrink-0 w-8 h-8 rounded-full bg-zinc-800/60 hover:bg-zinc-700/60 border border-zinc-700/40 flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors backdrop-blur-xl"
               >
                 <ChevronRight size={16} />
@@ -193,113 +207,121 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
         }}
       >
         <ModalContent>
-            <ModalBody className="relative bg-zinc-950 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing">
-              {/* 1. FLOATING CLOSE BUTTON (Top-Right) */}
-              <button
-                onClick={handleModalClose}
-                className="absolute top-6 right-6 z-[60] w-11 h-11 flex items-center justify-center rounded-full bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/50 text-zinc-400 hover:text-white transition-all backdrop-blur-xl shadow-2xl"
-              >
-                <span className="text-xl font-light">✕</span>
-              </button>
+          <ModalBody className="relative bg-zinc-950 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing">
+            {/* 1. FLOATING CLOSE BUTTON (Top-Right) */}
+            <button
+              onClick={handleModalClose}
+              className="absolute top-6 right-6 z-[60] w-11 h-11 flex items-center justify-center rounded-full bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/50 text-zinc-400 hover:text-white transition-all backdrop-blur-xl shadow-2xl"
+            >
+              <span className="text-xl font-light">✕</span>
+            </button>
 
-              {/* 2. FLOATING ZOOM CONTROLS (Top-Left) */}
-              <div className="absolute top-6 left-6 z-50 flex flex-col gap-2">
-                <div className="flex flex-col bg-zinc-900/80 backdrop-blur-xl border border-zinc-700/50 rounded-2xl overflow-hidden shadow-2xl">
-                  <button
-                    onClick={() => { setPdfScale(s => Math.min(4, s + 0.2)); }}
-                    className="p-3 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors border-b border-zinc-800/50"
-                  >
-                    <ZoomIn size={18} />
-                  </button>
-                  <button
-                    onClick={() => { setPdfScale(s => Math.max(0.5, s - 0.2)); }}
-                    className="p-3 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
-                  >
-                    <ZoomOut size={18} />
-                  </button>
-                </div>
-                <div className="px-3 py-1.5 bg-zinc-900/80 backdrop-blur-xl border border-zinc-700/50 rounded-xl shadow-2xl text-center">
-                  <span className="text-[10px] font-bold text-zinc-400 tracking-widest tabular-nums">
-                    {Math.round(pdfScale * 100)}%
+            {/* 2. FLOATING ZOOM CONTROLS (Top-Left) */}
+            <div className="absolute top-6 left-6 z-50 flex flex-col gap-2">
+              <div className="flex flex-col bg-zinc-900/80 backdrop-blur-xl border border-zinc-700/50 rounded-2xl overflow-hidden shadow-2xl">
+                <button
+                  onClick={() => {
+                    setPdfScale((s) => Math.min(4, s + 0.2));
+                  }}
+                  className="p-3 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors border-b border-zinc-800/50"
+                >
+                  <ZoomIn size={18} />
+                </button>
+                <button
+                  onClick={() => {
+                    setPdfScale((s) => Math.max(0.5, s - 0.2));
+                  }}
+                  className="p-3 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                >
+                  <ZoomOut size={18} />
+                </button>
+              </div>
+              <div className="px-3 py-1.5 bg-zinc-900/80 backdrop-blur-xl border border-zinc-700/50 rounded-xl shadow-2xl text-center">
+                <span className="text-[10px] font-bold text-zinc-400 tracking-widest tabular-nums">
+                  {Math.round(pdfScale * 100)}%
+                </span>
+              </div>
+            </div>
+
+            {/* 3. FLOATING PAGINATION (Bottom-Center) */}
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
+              <div className="flex items-center gap-1 p-1 bg-zinc-900/80 backdrop-blur-xl border border-zinc-700/50 rounded-2xl shadow-2xl">
+                <button
+                  onClick={() => {
+                    setCurrentPage((p) => Math.max(1, p - 1));
+                  }}
+                  disabled={currentPage <= 1}
+                  className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <div className="px-4 min-w-[80px] text-center">
+                  <span className="text-xs font-bold text-zinc-200 tracking-[0.2em] tabular-nums">
+                    {numPages > 0 ? `${currentPage} / ${numPages}` : '--'}
                   </span>
                 </div>
+                <button
+                  onClick={() => {
+                    setCurrentPage((p) => Math.min(numPages, p + 1));
+                  }}
+                  disabled={currentPage >= numPages}
+                  className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+                >
+                  <ChevronRight size={20} />
+                </button>
               </div>
+            </div>
 
-              {/* 3. FLOATING PAGINATION (Bottom-Center) */}
-              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
-                <div className="flex items-center gap-1 p-1 bg-zinc-900/80 backdrop-blur-xl border border-zinc-700/50 rounded-2xl shadow-2xl">
-                  <button
-                    onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); }}
-                    disabled={currentPage <= 1}
-                    className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+            {/* PDF RENDER AREA with WHEEL ZOOM and DRAG PAN */}
+            <div
+              className="w-full h-full flex items-center justify-center overflow-hidden bg-zinc-950"
+              onWheel={(e) => {
+                const delta = e.deltaY;
+                setPdfScale((s) => {
+                  const newScale = delta > 0 ? s - 0.1 : s + 0.1;
+                  return Math.min(4, Math.max(0.5, newScale));
+                });
+              }}
+            >
+              {pdfUrl && (
+                <motion.div
+                  drag
+                  dragMomentum={false}
+                  animate={{ scale: pdfScale }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                  style={{ cursor: 'inherit' }}
+                  className="relative"
+                >
+                  <Document
+                    file={pdfUrl}
+                    onLoadSuccess={onDocumentLoadSuccess}
+                    className="shadow-[0_40px_100px_rgba(0,0,0,0.8)]"
+                    loading={
+                      <div className="flex flex-col items-center justify-center gap-3 py-20">
+                        <div className="w-8 h-8 border-2 border-zinc-700 border-t-teal-400 rounded-full animate-spin" />
+                        <span className="text-zinc-500 text-xs font-medium tracking-widest uppercase">
+                          Loading Document...
+                        </span>
+                      </div>
+                    }
                   >
-                    <ChevronLeft size={20} />
-                  </button>
-                  <div className="px-4 min-w-[80px] text-center">
-                    <span className="text-xs font-bold text-zinc-200 tracking-[0.2em] tabular-nums">
-                      {numPages > 0 ? `${currentPage} / ${numPages}` : '--'}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => { setCurrentPage(p => Math.min(numPages, p + 1)); }}
-                    disabled={currentPage >= numPages}
-                    className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
-                  >
-                    <ChevronRight size={20} />
-                  </button>
-                </div>
-              </div>
-
-              {/* PDF RENDER AREA with WHEEL ZOOM and DRAG PAN */}
-              <div 
-                className="w-full h-full flex items-center justify-center overflow-hidden bg-zinc-950"
-                onWheel={(e) => {
-                  const delta = e.deltaY;
-                  setPdfScale(s => {
-                    const newScale = delta > 0 ? s - 0.1 : s + 0.1;
-                    return Math.min(4, Math.max(0.5, newScale));
-                  });
-                }}
-              >
-                {pdfUrl && (
-                  <motion.div
-                    drag
-                    dragMomentum={false}
-                    animate={{ scale: pdfScale }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                    style={{ cursor: 'inherit' }}
-                    className="relative"
-                  >
-                    <Document
-                      file={pdfUrl}
-                      onLoadSuccess={onDocumentLoadSuccess}
-                      className="shadow-[0_40px_100px_rgba(0,0,0,0.8)]"
+                    <Page
+                      pageNumber={currentPage}
+                      scale={1} // We use motion's scale instead for better perf
+                      className="rounded-sm overflow-hidden"
+                      renderTextLayer={true}
+                      renderAnnotationLayer={true}
                       loading={
-                        <div className="flex flex-col items-center justify-center gap-3 py-20">
-                          <div className="w-8 h-8 border-2 border-zinc-700 border-t-teal-400 rounded-full animate-spin" />
-                          <span className="text-zinc-500 text-xs font-medium tracking-widest uppercase">
-                            Loading Document...
-                          </span>
+                        <div className="flex items-center justify-center py-20">
+                          <div className="w-6 h-6 border-2 border-zinc-700 border-t-teal-400 rounded-full animate-spin" />
                         </div>
                       }
-                    >
-                      <Page
-                        pageNumber={currentPage}
-                        scale={1} // We use motion's scale instead for better perf
-                        className="rounded-sm overflow-hidden"
-                        renderTextLayer={true}
-                        renderAnnotationLayer={true}
-                        loading={
-                          <div className="flex items-center justify-center py-20">
-                            <div className="w-6 h-6 border-2 border-zinc-700 border-t-teal-400 rounded-full animate-spin" />
-                          </div>
-                        }
-                      />
-                    </Document>
-                  </motion.div>
-                )}
-              </div>
-            </ModalBody>
+                    />
+                  </Document>
+                </motion.div>
+              )}
+            </div>
+          </ModalBody>
         </ModalContent>
       </Modal>
     </>

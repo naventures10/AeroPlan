@@ -26,7 +26,7 @@ const MIN_WIDTHS: Record<string, string> = {
 
 /**
  * Renders AIP data_type: "array" sections as styled HTML tables.
- * 
+ *
  * Includes Horizontal Scroll optimization:
  * - Sticky Top Headers: Always visible while scrolling long tables.
  * - Sticky Left Identifier: The first column (Runway ID) stays fixed while scrolling horizontally.
@@ -58,7 +58,9 @@ export default function TableRenderer({ data, columnConfig }: TableRendererProps
               <th
                 key={col.key}
                 className={`text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-zinc-400 bg-zinc-950 border-b border-zinc-800 whitespace-nowrap ${
-                  idx === 0 ? 'sticky left-0 z-40 bg-zinc-950 shadow-[2px_0_5px_rgba(0,0,0,0.3)]' : ''
+                  idx === 0
+                    ? 'sticky left-0 z-40 bg-zinc-950 shadow-[2px_0_5px_rgba(0,0,0,0.3)]'
+                    : ''
                 }`}
                 style={{ minWidth: MIN_WIDTHS[col.key] || '140px' }}
               >
@@ -88,10 +90,12 @@ export default function TableRenderer({ data, columnConfig }: TableRendererProps
                       isSticky && rowIdx % 2 === 0 ? 'bg-zinc-950' : isSticky ? 'bg-zinc-950' : ''
                     }`}
                     dangerouslySetInnerHTML={{
-                      __html: sanitizeHtml(cellValue
-                        .replace(/\\n/g, '<br/>')
-                        .replace(/\n/g, '<br/>')
-                        .replace(/\s*\|\s*/g, '<br/>')),
+                      __html: sanitizeHtml(
+                        cellValue
+                          .replace(/\\n/g, '<br/>')
+                          .replace(/\n/g, '<br/>')
+                          .replace(/\s*\|\s*/g, '<br/>'),
+                      ),
                     }}
                   />
                 );
@@ -103,4 +107,3 @@ export default function TableRenderer({ data, columnConfig }: TableRendererProps
     </div>
   );
 }
-

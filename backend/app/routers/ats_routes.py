@@ -10,9 +10,11 @@ from app.schemas.geojson import GeoJsonFeatureCollection
 
 router = APIRouter(prefix="/api", tags=["ATS Routes"])
 
+
 class LabelsCache(TypedDict):
     data: GeoJsonFeatureCollection | None
     ts: float
+
 
 # ── In-memory cache for ATS route labels (rarely changes) ────────────────
 _labels_cache: LabelsCache = {"data": None, "ts": 0.0}

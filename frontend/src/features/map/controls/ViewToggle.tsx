@@ -8,14 +8,8 @@ import { useMapStore } from '../../../store/useMapStore';
  *  - Branding badge
  */
 export default function ViewToggle() {
-  const {
-    viewMode,
-    viewState,
-    setViewState,
-    activeAirport,
-    activeLayers,
-    toggleLayer,
-  } = useMapStore();
+  const { viewMode, viewState, setViewState, activeAirport, activeLayers, toggleLayer } =
+    useMapStore();
 
   return (
     <div className="absolute bottom-6 right-6 flex flex-col items-end gap-4 pointer-events-auto">
@@ -57,10 +51,7 @@ export default function ViewToggle() {
             className="w-full h-full transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
             style={{
               transformStyle: 'preserve-3d',
-              transform:
-                viewState.pitch > 0
-                  ? 'rotateX(-90deg) scale(0.95)'
-                  : 'rotateX(0deg)',
+              transform: viewState.pitch > 0 ? 'rotateX(-90deg) scale(0.95)' : 'rotateX(0deg)',
             }}
           >
             {/* 2D Face (Front) */}
@@ -73,9 +64,7 @@ export default function ViewToggle() {
                 size={20}
                 strokeWidth={2}
               />
-              <span className="text-[10px] font-bold text-zinc-500 tracking-widest mt-0.5">
-                2D
-              </span>
+              <span className="text-[10px] font-bold text-zinc-500 tracking-widest mt-0.5">2D</span>
             </div>
 
             {/* 3D Face (Top) */}

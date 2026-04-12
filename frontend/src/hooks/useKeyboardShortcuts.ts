@@ -16,15 +16,19 @@ export function useKeyboardShortcuts({
   onCloseSectionModal: () => void;
   cancelPendingSelection: () => void;
 }) {
-  const { viewMode, activeAirport, returnToEnroute, selectedRouteIds, setSelectedRouteIds, selectedFeature, setSelectedFeature } = useMapStore();
+  const {
+    viewMode,
+    activeAirport,
+    returnToEnroute,
+    selectedRouteIds,
+    setSelectedRouteIds,
+    selectedFeature,
+    setSelectedFeature,
+  } = useMapStore();
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
-      )
-        return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       if (e.key === 'Escape') {
         if (sectionModalOpen) {
@@ -40,6 +44,19 @@ export function useKeyboardShortcuts({
     };
 
     window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => { window.removeEventListener('keydown', handleGlobalKeyDown); };
-  }, [viewMode, activeAirport, returnToEnroute, sectionModalOpen, onCloseSectionModal, selectedRouteIds, setSelectedRouteIds, selectedFeature, setSelectedFeature, cancelPendingSelection]);
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [
+    viewMode,
+    activeAirport,
+    returnToEnroute,
+    sectionModalOpen,
+    onCloseSectionModal,
+    selectedRouteIds,
+    setSelectedRouteIds,
+    selectedFeature,
+    setSelectedFeature,
+    cancelPendingSelection,
+  ]);
 }

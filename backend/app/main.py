@@ -126,5 +126,6 @@ app.include_router(navaids.router)
 # ── Dev-only: Async profiling endpoints (yappi) ──────────────────────────────
 if os.getenv("DEBUG", "").lower() in ("1", "true"):
     from app.profiling import profiling_router
+
     app.include_router(profiling_router)
     logger.info("profiling_endpoints_enabled")

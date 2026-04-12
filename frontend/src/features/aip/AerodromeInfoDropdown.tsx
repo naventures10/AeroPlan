@@ -4,14 +4,14 @@ import { ChevronDown, BookOpen } from 'lucide-react';
 
 // Mirrors backend SECTION_MAP ordering (AD 2.2 → AD 2.24)
 export const AIP_SECTIONS = [
-  { id: 'AD_2_2',  code: 'AD 2.2',  title: 'Geographical & Administrative Data' },
-  { id: 'AD_2_3',  code: 'AD 2.3',  title: 'Operational Hours' },
-  { id: 'AD_2_4',  code: 'AD 2.4',  title: 'Handling Services & Facilities' },
-  { id: 'AD_2_5',  code: 'AD 2.5',  title: 'Passenger Facilities' },
-  { id: 'AD_2_6',  code: 'AD 2.6',  title: 'Rescue & Fire Fighting' },
-  { id: 'AD_2_7',  code: 'AD 2.7',  title: 'Seasonal Availability — Clearing' },
-  { id: 'AD_2_8',  code: 'AD 2.8',  title: 'Aprons, Taxiways & Check Locations' },
-  { id: 'AD_2_9',  code: 'AD 2.9',  title: 'Surface Movement & Markings' },
+  { id: 'AD_2_2', code: 'AD 2.2', title: 'Geographical & Administrative Data' },
+  { id: 'AD_2_3', code: 'AD 2.3', title: 'Operational Hours' },
+  { id: 'AD_2_4', code: 'AD 2.4', title: 'Handling Services & Facilities' },
+  { id: 'AD_2_5', code: 'AD 2.5', title: 'Passenger Facilities' },
+  { id: 'AD_2_6', code: 'AD 2.6', title: 'Rescue & Fire Fighting' },
+  { id: 'AD_2_7', code: 'AD 2.7', title: 'Seasonal Availability — Clearing' },
+  { id: 'AD_2_8', code: 'AD 2.8', title: 'Aprons, Taxiways & Check Locations' },
+  { id: 'AD_2_9', code: 'AD 2.9', title: 'Surface Movement & Markings' },
   { id: 'AD_2_10', code: 'AD 2.10', title: 'Aerodrome Obstacles' },
   { id: 'AD_2_11', code: 'AD 2.11', title: 'Meteorological Information' },
   { id: 'AD_2_12', code: 'AD 2.12', title: 'Runway Physical Characteristics' },
@@ -54,7 +54,9 @@ export default function AerodromeInfoDropdown({
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => { document.removeEventListener('mousedown', handleClickOutside); };
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   if (!activeAirport) return null;
@@ -63,14 +65,20 @@ export default function AerodromeInfoDropdown({
     <div ref={dropdownRef} className="relative z-50">
       {/* Trigger Button */}
       <button
-        onClick={() => { setIsOpen(!isOpen); }}
+        onClick={() => {
+          setIsOpen(!isOpen);
+        }}
         className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl backdrop-blur-2xl shadow-xl transition-all duration-300 focus:outline-none border ${
           isOpen
             ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300 shadow-[0_0_20px_rgba(99,102,241,0.15)]'
             : 'bg-zinc-950/50 border-zinc-800/60 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900/60 hover:border-zinc-700/60'
         }`}
       >
-        <BookOpen size={16} strokeWidth={2} className={isOpen ? 'text-indigo-400' : 'text-zinc-500'} />
+        <BookOpen
+          size={16}
+          strokeWidth={2}
+          className={isOpen ? 'text-indigo-400' : 'text-zinc-500'}
+        />
         <span className="text-[11px] font-bold tracking-[0.15em] uppercase">
           AERODROME INFORMATION
         </span>

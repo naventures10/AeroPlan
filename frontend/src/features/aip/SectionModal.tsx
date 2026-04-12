@@ -33,7 +33,9 @@ export default function SectionModal({
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKey);
-    return () => { window.removeEventListener('keydown', handleKey); };
+    return () => {
+      window.removeEventListener('keydown', handleKey);
+    };
   }, [isOpen, onClose]);
 
   return (
@@ -67,7 +69,9 @@ export default function SectionModal({
                 backdropFilter: 'blur(32px)',
                 WebkitBackdropFilter: 'blur(32px)',
               }}
-              onClick={(e) => { e.stopPropagation(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
             >
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800/60 shrink-0">
