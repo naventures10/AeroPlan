@@ -9,6 +9,14 @@ echo "======================================"
 echo "    eAIP AI Merge Review Check"
 echo "======================================"
 
+# GUARD: Only run expensive AI review if merging into main
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [[ "$CURRENT_BRANCH" != "main" ]]; then
+    echo "➜ Skipping AI review (Not on main branch)."
+    exit 0
+fi
+
+
 echo "➜ Checking if branch is up-to-date with main..."
 if ! git merge-base --is-ancestor main HEAD; then
     echo "❌ BRANCH OUTDATED: Your branch is missing recent changes from 'main'."
