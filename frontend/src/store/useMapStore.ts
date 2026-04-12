@@ -49,6 +49,13 @@ interface MapState {
   boundsToFit: [number, number, number, number] | null;
   fitBounds: (bounds: [number, number, number, number] | null) => void;
 
+  animatedTrips: any[];
+  setAnimatedTrips: (trips: any[]) => void;
+  animatedLabels: any[];
+  setAnimatedLabels: (labels: any[]) => void;
+  animationConfig: { playing: boolean; duration: number } | null;
+  setAnimationConfig: (config: { playing: boolean; duration: number } | null) => void;
+
   // Actions (Functions to change the state)
   setViewState: (viewState: any) => void;
   toggleViewMode: () => void;
@@ -129,6 +136,13 @@ export const useMapStore = create<MapState>((set, get) => ({
   fitBounds: (bounds) => {
     set({ boundsToFit: bounds });
   },
+
+  animatedTrips: [],
+  setAnimatedTrips: (trips) => set({ animatedTrips: trips }),
+  animatedLabels: [],
+  setAnimatedLabels: (labels) => set({ animatedLabels: labels }),
+  animationConfig: null,
+  setAnimationConfig: (config) => set({ animationConfig: config }),
 
   terminalPivot: null,
   setTerminalPivot: (coords) => {
