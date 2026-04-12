@@ -28,8 +28,8 @@ echo "✅ Branch is current."
 
 echo "➜ Starting CodeRabbit Autonomous Review (Live Progress)..."
 
-# Use 'tee /dev/tty' to show live output while capturing for parsing
-CODERABBIT_OUT=$(coderabbit review --agent --base main 2>&1 | tee /dev/tty)
+# Run CodeRabbit review and capture output
+CODERABBIT_OUT=$(coderabbit review --agent --base main 2>&1)
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -ne 0 ]; then
