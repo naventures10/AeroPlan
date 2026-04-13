@@ -10,7 +10,7 @@ engine = create_engine(db_url)
 print("[*] Loading GeoJSON into GeoPandas...")
 # 2. Read the GeoJSON file directly into a GeoDataFrame
 gdf = gpd.read_file(
-    "/Users/naveendevapalan/Desktop/Naveen/PROJECTS/eAIP/eAIP_Source code/output/in_asp.geojson"
+    "/Users/naveendevapalan/Desktop/Naveen/PROJECTS/eAIP/eaip_scrapper/output/FIR_AIRSPACE.geojson"
 )
 
 # 3. Clean up nested JSON columns (Important!)

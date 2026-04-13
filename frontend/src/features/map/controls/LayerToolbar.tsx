@@ -1,5 +1,5 @@
 import { Button } from '@heroui/react';
-import { Target, Navigation, Radio, Route } from 'lucide-react';
+import { Target, Navigation, Radio, Route, Globe } from 'lucide-react';
 import { useMapStore } from '../../../store/useMapStore';
 
 /**
@@ -37,6 +37,13 @@ export default function LayerToolbar() {
       color: 'text-cyan-400',
       border: 'border-cyan-500/50',
       bg: 'bg-cyan-500/20',
+    },
+    {
+      icon: Globe,
+      id: 'firAirspace' as const,
+      color: 'text-orange-400',
+      border: 'border-orange-500/50',
+      bg: 'bg-orange-500/20',
     },
   ];
 
