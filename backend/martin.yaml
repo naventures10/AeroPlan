@@ -50,6 +50,8 @@ postgres:
       table: fir_airspaces
       geometry_column: geom
       srid: 4326
+      properties:
+        layer: "varchar"
 
     ats_route_waypoints:
       schema: public
