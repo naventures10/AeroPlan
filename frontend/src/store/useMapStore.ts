@@ -29,7 +29,7 @@ interface MapState {
     navaids: boolean;
     atsRoutes: boolean;
     wacMap: boolean;
-    firAirspace: boolean;
+    airspaces: boolean;
   };
 
   selectedRouteIds: string[];
@@ -104,7 +104,7 @@ export const useMapStore = create<MapState>((set, get) => ({
     navaids: false,
     atsRoutes: false,
     wacMap: false,
-    firAirspace: false,
+    airspaces: false,
   },
 
   toggleLayer: (layer) =>

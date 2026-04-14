@@ -11,7 +11,7 @@ export interface ActiveLayers {
   navaids: boolean;
   atsRoutes: boolean;
   wacMap: boolean;
-  firAirspace: boolean;
+  airspaces: boolean;
 }
 
 export interface SelectedFeature {

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useMapStore } from '../../../store/useMapStore';
 import { useRouteAnimation } from './useRouteAnimation';
-import { createFirLayers } from './createFirLayers';
+import { createAirspaceLayers } from './createAirspaceLayers';
 import { createAerodromeLayers } from './createAerodromeLayers';
 import { createWaypointLayer } from './createWaypointLayer';
 import { createNavaidLayer } from './createNavaidLayer';
@@ -64,8 +64,8 @@ export function useDeckLayers({
   const deckLayers = useMemo(() => {
     const layers: any[] = [];
 
-    if (activeLayers.firAirspace) {
-      layers.push(...createFirLayers(ctx));
+    if (activeLayers.airspaces) {
+      layers.push(...createAirspaceLayers(ctx));
     }
 
     if (activeLayers.aerodromes) {
