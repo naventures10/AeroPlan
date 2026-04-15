@@ -118,23 +118,25 @@ class AirspaceMetadataETL:
         self._ensure_schema()
 
     def _ensure_schema(self):
-        """Ensures all the required metadata columns exist in the airspaces table"""
-        columns = {
-            "name": "TEXT",
-            "identification": "TEXT",
-            "lateral_limits": "TEXT",
-            "upper_limit": "TEXT",
-            "lower_limit": "TEXT",
-            "classifications": "TEXT",
-            "remarks": "TEXT",
-            "source_file": "TEXT",
-            "services": "JSONB"
-        }
+        """Ensures the metadata table exists."""
+        sql = """
+        CREATE TABLE IF NOT EXISTS airspaces_metadata (
+            id SERIAL PRIMARY KEY,
+            name TEXT,
+            identification TEXT,
+            lateral_limits TEXT,
+            upper_limit TEXT,
+            lower_limit TEXT,
+            classifications TEXT,
+            remarks TEXT,
+            source_file TEXT,
+            services JSONB,
+            airspace_type VARCHAR,
+            geom Geometry(Point, 4326)
+        );
+        """
         with self.conn.cursor() as cur:
-            for col, dtype in columns.items():
-                cur.execute(f"ALTER TABLE airspaces ADD COLUMN IF NOT EXISTS {col} {dtype};")
-            # Ensure the geometry column has the valid EPSG:4326 SRID instead of 0
-            cur.execute("UPDATE airspaces SET wkb_geometry = ST_SetSRID(wkb_geometry, 4326) WHERE ST_SRID(wkb_geometry) = 0;")
+            cur.execute(sql)
 
     def process_file(self, file_key: str):
         print(f"\n[*] Processing metadata file: {file_key}")
@@ -187,7 +189,7 @@ class AirspaceMetadataETL:
                         "source_file": source_file,
                         "airspace_type": airspace_type
                     }
-                    self._match_and_update(metadata)
+                    self._insert_metadata(metadata)
 
     def _process_enr_2_2(self, data: dict, source_file: str):
         print(f"  [*] Processing Regulated Airspace")
@@ -198,9 +200,9 @@ class AirspaceMetadataETL:
                 "upper_limit": entry.get("upper_limit", ""),
                 "remarks": entry.get("remarks", ""),
                 "source_file": source_file,
-                "airspace_type": "CTA_LOWER" # Best guess for ATZ/regulated
+                "airspace_type": "CTA_LOWER"
             }
-            self._match_and_update(metadata)
+            self._insert_metadata(metadata)
 
     def _process_enr_5_1(self, data: dict, source_file: str):
         for region_name, entries in data.get("regions", {}).items():
@@ -224,10 +226,9 @@ class AirspaceMetadataETL:
                 elif 'VOT' in ident or 'TSA' in ident: metadata["airspace_type"] = "TSA"
                 elif 'TRA' in ident: metadata["airspace_type"] = "TRA"
                 
-                self._match_and_update(metadata)
+                self._insert_metadata(metadata)
 
     def _process_enr_5_2(self, data: dict, source_file: str):
-        # Handle Military Exercise Areas (List of dicts)
         mil_areas = data.get("military_exercise_and_training_areas", [])
         if isinstance(mil_areas, list):
             print(f"  [*] Processing Military Exercise Areas ({len(mil_areas)})")
@@ -242,13 +243,11 @@ class AirspaceMetadataETL:
                     "source_file": source_file,
                     "airspace_type": "TRA" 
                 }
-                self._match_and_update(metadata)
+                self._insert_metadata(metadata)
         
-        # Handle ADIZ
         adiz_areas = data.get("air_defence_identification_zones_adiz", [])
         print(f"  [*] Processing ADIZ Areas ({len(adiz_areas)})")
         for entry in adiz_areas:
-            # ADIZ keys are sometimes zone_name / zone_coordinates
             text = entry.get("zone_coordinates") or entry.get("name_and_lateral_limits") or ""
             name = entry.get("zone_name") or (text.split('\n')[0] if text else "Unknown ADIZ")
             metadata = {
@@ -259,7 +258,7 @@ class AirspaceMetadataETL:
                 "source_file": source_file,
                 "airspace_type": "ADIZ"
             }
-            self._match_and_update(metadata)
+            self._insert_metadata(metadata)
 
     def _process_upr_zones(self, data: dict, source_file: str):
         print("  [*] Processing UPR Zones")
@@ -272,11 +271,9 @@ class AirspaceMetadataETL:
                     parts = re.split(r"(The UPR airspace for the)", text_content)
                     for i in range(1, len(parts), 2):
                         sub_text = parts[i+1]
-                        # Split by "is the airspace within"
                         if "is the airspace within" in sub_text:
                             name_part, limits_part = sub_text.split("is the airspace within", 1)
                             name = name_part.strip()
-                            print(f"    [*] Extracted UPR Zone Name: {name}")
                             metadata = {
                                 "name": f"UPR {name}",
                                 "lateral_limits": limits_part,
@@ -285,9 +282,7 @@ class AirspaceMetadataETL:
                                 "source_file": source_file,
                                 "airspace_type": "UPR_ZONE"
                             }
-                            self._match_and_update(metadata)
-                        else:
-                            print(f"    [!] Could not find 'is the airspace within' in: {sub_text[:50]}...")
+                            self._insert_metadata(metadata)
                 else:
                     name = row[0]
                     if not name or "Designator" in name or "IDENTIFICATION" in name.upper(): continue
@@ -299,75 +294,69 @@ class AirspaceMetadataETL:
                         "source_file": source_file,
                         "airspace_type": "UPR_ZONE"
                     }
-                    self._match_and_update(metadata)
+                    self._insert_metadata(metadata)
 
-    def _match_and_update(self, metadata: dict):
-        points = CoordinateParser.extract_points(metadata["lateral_limits"])
-        if not points:
-            return
-
-        # Create a PostGIS MultiPoint from the coordinates
-        point_strings = [f"ST_Point({lon}, {lat})" for lon, lat in points]
-        multipoint = f"ST_SetSRID(ST_GeomFromText('MULTIPOINT({', '.join([f'{lon} {lat}' for lon, lat in points])})'), 4326)"
-        
-        # Strategy: 
-        # 1. If we have > 2 points, create a Convex Hull (the bounding polygon)
-        # 2. If we have 1-2 points, use a Buffer around them
-        # 3. Update all fragments of the correct type that intersect this hull
-        
-        if len(points) > 2:
-            spatial_search_geom = f"ST_ConvexHull({multipoint})"
-        else:
-            # CTRs and small Danger areas are often center-point only in text
-            # Use a larger 0.5 deg (~50km) buffer for these specific types
-            dist = 0.5 if metadata['airspace_type'] in ['CTR', 'DANGER', 'CTA_LOWER'] else 0.2
-            spatial_search_geom = f"ST_Buffer({multipoint}, {dist})"
-
-        sql_match = f"""
-        SELECT array_agg(ogc_fid) 
-        FROM airspaces 
-        WHERE ST_Intersects(wkb_geometry, {spatial_search_geom})
-        {"AND (airspace_type = %s OR (airspace_type LIKE 'CTA%%' AND %s LIKE 'CTA%%'))" if metadata['airspace_type'] else ""}
-        """
-        
-        with self.conn.cursor() as cur:
-            params = (metadata['airspace_type'], metadata['airspace_type']) if metadata['airspace_type'] else ()
-            cur.execute(sql_match, params)
-            row = cur.fetchone()
-            
-            if row and row[0]:
-                airspace_ids = row[0]
-                print(f"    [+] Matched '{metadata['name'][:40]}' -> {len(airspace_ids)} fragments (Hull Match)")
+    def _insert_metadata(self, metadata: dict):
+        # 1. Combine all text values to find coordinates anywhere in the block
+        all_text_values = []
+        for k, v in metadata.items():
+            if isinstance(v, str):
+                all_text_values.append(v)
+            elif isinstance(v, list) or isinstance(v, dict):
+                all_text_values.append(json.dumps(v))
                 
-                sql_update = f"""
-                UPDATE airspaces
-                SET name = %s,
-                    identification = %s,
-                    lateral_limits = %s,
-                    upper_limit = %s,
-                    lower_limit = %s,
-                    services = %s,
-                    remarks = %s,
-                    source_file = %s
-                WHERE ogc_fid = ANY(%s)
-                """
-                cur.execute(sql_update, (
-                    metadata['name'],
-                    metadata.get('identification'),
-                    metadata['lateral_limits'],
-                    metadata.get('upper_limit') or metadata.get('vertical_limits'),
-                    metadata.get('lower_limit'),
-                    Json(metadata.get('services')),
-                    metadata.get('remarks'),
-                    metadata['source_file'],
-                    airspace_ids
-                ))
-            else:
-                print(f"    [?] NO MATCH for '{metadata['name']}' ({metadata.get('identification')})")
+        combined_text = " ".join(all_text_values)
+        
+        # 2. Extract points
+        points = CoordinateParser.extract_points(combined_text)
+        
+        geom_sql = "NULL"
+        if points:
+            # We will use PostgreSQL to calculate the centroid.
+            # Convert list of points to a WKT MULTIPOINT string
+            wkt_points = ", ".join([f"{lon} {lat}" for lon, lat in points])
+            multipoint_wkt = f"'MULTIPOINT({wkt_points})'"
+            # ST_Centroid on ST_GeomFromText gives the geometric center of all extracted points
+            geom_sql = f"ST_SetSRID(ST_Centroid(ST_GeomFromText({multipoint_wkt})), 4326)"
+        
+        sql_insert = f"""
+        INSERT INTO airspaces_metadata (
+            name, identification, lateral_limits, upper_limit, lower_limit, 
+            classifications, remarks, source_file, services, airspace_type, geom
+        ) VALUES (
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, {geom_sql}
+        )
+        """
+        try:
+           with self.conn.cursor() as cur:
+               cur.execute(sql_insert, (
+                   metadata.get('name'),
+                   metadata.get('identification'),
+                   metadata.get('lateral_limits'),
+                   metadata.get('upper_limit') or metadata.get('vertical_limits'),
+                   metadata.get('lower_limit'),
+                   metadata.get('classifications'),
+                   metadata.get('remarks'),
+                   metadata.get('source_file'),
+                   Json(metadata.get('services')) if metadata.get('services') else None,
+                   metadata.get('airspace_type')
+               ))
+               if points:
+                   print(f"    [+] Inserted '{metadata.get('name')[:30]}...' with centroid of {len(points)} coords")
+               else:
+                   print(f"    [!] Inserted '{metadata.get('name')[:30]}...' WITHOUT geometry (No coords found)")
+        except Exception as e:
+           print(f"    [X] Failed to insert '{metadata.get('name')}': {e}")
+           self.conn.rollback()
 
     def run(self):
+        print("[*] Truncating airspaces_metadata for fresh ingestion...")
+        with self.conn.cursor() as cur:
+            cur.execute("TRUNCATE TABLE airspaces_metadata RESTART IDENTITY CASCADE;")
+            
         for file_key in METADATA_FILES:
             self.process_file(file_key)
+            
         self.conn.close()
 
 if __name__ == "__main__":

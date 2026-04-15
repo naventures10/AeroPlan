@@ -8,6 +8,7 @@
 
 import { MVTLayer } from '@deck.gl/geo-layers';
 import { TextLayer } from '@deck.gl/layers';
+import { CollisionFilterExtension } from '@deck.gl/extensions';
 import type { LayerContext } from './types';
 
 // ── Per-type RGBA theming ────────────────────────────────────────────
@@ -32,7 +33,6 @@ const AIRSPACE_COLORS: Record<
   UPR_ZONE: { fill: [100, 100, 220, 15], stroke: [100, 100, 220, 90] },
 };
 
-const DEFAULT_FILL: [number, number, number, number] = [128, 128, 128, 10];
 const DEFAULT_STROKE: [number, number, number, number] = [128, 128, 128, 60];
 
 // ── Static FIR label centroids ───────────────────────────────────────
@@ -48,40 +48,18 @@ const FIR_LABEL_DATA = [
 // ── Factory ──────────────────────────────────────────────────────────
 
 export function createAirspaceLayers(ctx: LayerContext): any[] {
+  const currentZoom = ctx.viewState?.zoom || 0;
+
   return [
     new MVTLayer({
-      id: 'airspace-fill-layer',
-      data: `${window.location.origin}/tiles/airspaces/{z}/{x}/{y}`,
+      id: 'airspace-basemap-layer',
+      data: `${window.location.origin}/tiles/airspaces_geometry/{z}/{x}/{y}`,
       visible: ctx.viewMode === 'ENROUTE',
-      filled: true,
+      filled: false,
       stroked: true,
-      getFillColor: (f: any) => {
-        const type: string = f.properties?.airspace_type ?? '';
-
-        // Visibility checks based on activeLayers sub-toggles
-        const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = ctx.activeLayers;
-        if (type === 'FIR' && !airspaceFIR) return [0, 0, 0, 0];
-        if (
-          ['DANGER', 'PROHIBITED', 'RESTRICTED', 'TRA', 'TSA', 'ADIZ'].includes(type) &&
-          !airspaceRegulated
-        )
-          return [0, 0, 0, 0];
-        if (['CTR', 'CTA_LOWER', 'CTA_UPPER'].includes(type) && !airspaceControl)
-          return [0, 0, 0, 0];
-        if (type === 'UPR_ZONE' && !airspaceUpr) return [0, 0, 0, 0];
-
-        const baseColor = AIRSPACE_COLORS[type]?.fill ?? DEFAULT_FILL;
-
-        // Boost opacity dramatically if this specific airspace is highlighted
-        const id = f.properties?.id ?? f.id;
-        if (ctx.highlightedAirspaceId && String(id) === ctx.highlightedAirspaceId) {
-          return [baseColor[0], baseColor[1], baseColor[2], 80]; // Highlight fill
-        }
-        return baseColor;
-      },
+      pickable: false,
       getLineColor: (f: any) => {
         const type: string = f.properties?.airspace_type ?? '';
-
         const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = ctx.activeLayers;
         if (type === 'FIR' && !airspaceFIR) return [0, 0, 0, 0];
         if (
@@ -93,22 +71,75 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
           return [0, 0, 0, 0];
         if (type === 'UPR_ZONE' && !airspaceUpr) return [0, 0, 0, 0];
 
-        const baseColor = AIRSPACE_COLORS[type]?.stroke ?? DEFAULT_STROKE;
-
-        const id = f.properties?.id ?? f.id;
-        if (ctx.highlightedAirspaceId && String(id) === ctx.highlightedAirspaceId) {
-          return [baseColor[0], baseColor[1], baseColor[2], 255]; // Max outline opacity
-        }
-
-        return baseColor;
+        // Draw standard non-interactive QGIS lines
+        return AIRSPACE_COLORS[type]?.stroke ?? DEFAULT_STROKE;
       },
       getLineWidth: 2,
       lineWidthMinPixels: 1,
-      pickable: true,
-      autoHighlight: false, // We handle highlighting purely via ID
       updateTriggers: {
-        getFillColor: [ctx.viewMode, ctx.activeLayers, ctx.highlightedAirspaceId],
-        getLineColor: [ctx.viewMode, ctx.activeLayers, ctx.highlightedAirspaceId],
+        getLineColor: [ctx.viewMode, ctx.activeLayers],
+      },
+    }),
+
+    new MVTLayer({
+      id: 'airspace-metadata-layer',
+      data: `${window.location.origin}/tiles/airspaces_metadata/{z}/{x}/{y}`,
+      visible: ctx.viewMode === 'ENROUTE',
+      pickable: true,
+      autoHighlight: false,
+      pointType: 'text',
+      extensions: [new CollisionFilterExtension()],
+      collisionEnabled: true,
+      collisionGroup: 'airspaces',
+      getText: (f: any) => {
+        // Only show labels when zoomed in close (Zoom 9+)
+        if (currentZoom < 5.5) return '';
+
+        const type: string = f.properties?.airspace_type ?? '';
+        const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = ctx.activeLayers;
+        if (type === 'FIR' && !airspaceFIR) return '';
+        if (
+          ['DANGER', 'PROHIBITED', 'RESTRICTED', 'TRA', 'TSA', 'ADIZ'].includes(type) &&
+          !airspaceRegulated
+        )
+          return '';
+        if (['CTR', 'CTA_LOWER', 'CTA_UPPER'].includes(type) && !airspaceControl) return '';
+        if (type === 'UPR_ZONE' && !airspaceUpr) return '';
+
+        const rawName = f.properties?.identification || f.properties?.name || 'Unknown';
+        // Truncate long descriptive names
+        const cleanName = rawName
+          .split(/\||\n|I Area bounded/)[0]
+          .trim()
+          .substring(0, 30);
+        return cleanName.length === 30 ? `${cleanName}...` : cleanName;
+      },
+      getTextSize: 12,
+      getTextColor: (f: any) => {
+        const id = f.properties?.id ?? f.id;
+        if (ctx.highlightedAirspaceId && String(id) === ctx.highlightedAirspaceId) {
+          return [0, 0, 0, 255]; // Black text on yellow background
+        }
+        return [230, 230, 230, 255]; // High visibility white/grey
+      },
+      textBackground: true,
+      getTextBackgroundColor: (f: any) => {
+        const id = f.properties?.id ?? f.id;
+        if (ctx.highlightedAirspaceId && String(id) === ctx.highlightedAirspaceId) {
+          return [255, 255, 0, 255]; // Opaque Yellow for highlight
+        }
+        // Faint 'glass' box with no fill look
+        return [255, 255, 255, 15];
+      },
+      textBackgroundPadding: [4, 2] as [number, number],
+      textOutlineWidth: 1.5,
+      textOutlineColor: [0, 0, 0, 255],
+      textFontSettings: { sdf: true },
+      textFontFamily: 'Inter, sans-serif',
+      updateTriggers: {
+        getText: [ctx.activeLayers, Math.floor(currentZoom)],
+        getTextColor: [ctx.highlightedAirspaceId],
+        getTextBackgroundColor: [ctx.highlightedAirspaceId],
       },
     }),
 
