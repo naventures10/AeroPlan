@@ -179,16 +179,10 @@ class AirspaceETL:
         self.target_crs = QgsCoordinateReferenceSystem("EPSG:4326")
 
     def _build_memory_layers(self):
-        """Create three typed memory layers (Point, Line, Polygon)."""
+        """Create typed memory layer for Line geometries."""
         layers = {
-            QgsWkbTypes.PointGeometry: QgsVectorLayer(
-                "MultiPoint?crs=EPSG:4326", "points", "memory"
-            ),
             QgsWkbTypes.LineGeometry: QgsVectorLayer(
                 "MultiLineString?crs=EPSG:4326", "lines", "memory"
-            ),
-            QgsWkbTypes.PolygonGeometry: QgsVectorLayer(
-                "MultiPolygon?crs=EPSG:4326", "polygons", "memory"
             ),
         }
         for mem in layers.values():
@@ -211,10 +205,21 @@ class AirspaceETL:
         print("-" * 50)
 
         for layer_str in WHITELIST:
-            uri = f"{pdf_path}|layername={layer_str}"
-            vlayer = QgsVectorLayer(uri, layer_str, "ogr")
+            vlayer = None
+            # If there are duplicate layers with the same name, we explicitly ask for the line geometry ones first
+            for gtype in ["LineString", "MultiLineString", ""]:
+                uri = f"{pdf_path}|layername={layer_str}" + (f"|geometrytype={gtype}" if gtype else "")
+                temp_vlayer = QgsVectorLayer(uri, layer_str, "ogr")
+                
+                if temp_vlayer.isValid():
+                    gt = temp_vlayer.geometryType()
+                    # Accept immediately if it's explicitly line or mixed/unknown, or if it's our last-resort fallback
+                    if gt == QgsWkbTypes.LineGeometry or gt == QgsWkbTypes.UnknownGeometry or gtype == "":
+                        vlayer = temp_vlayer
+                        if gt == QgsWkbTypes.LineGeometry:
+                            break  # perfect match
 
-            if not vlayer.isValid():
+            if not vlayer or not vlayer.isValid():
                 print(f"  [X] Could not load '{layer_str}'. Skipping...")
                 continue
 
@@ -227,14 +232,10 @@ class AirspaceETL:
             derived_type = derive_airspace_type(layer_str)
 
             counts = {
-                QgsWkbTypes.PointGeometry: 0,
                 QgsWkbTypes.LineGeometry: 0,
-                QgsWkbTypes.PolygonGeometry: 0,
             }
             features_by_type = {
-                QgsWkbTypes.PointGeometry: [],
                 QgsWkbTypes.LineGeometry: [],
-                QgsWkbTypes.PolygonGeometry: [],
             }
 
             for feat in vlayer.getFeatures():
@@ -263,9 +264,7 @@ class AirspaceETL:
                     total_mapped += len(feats)
 
             print(
-                f"      {counts[QgsWkbTypes.PointGeometry]} pts, "
-                f"{counts[QgsWkbTypes.LineGeometry]} lines, "
-                f"{counts[QgsWkbTypes.PolygonGeometry]} polys"
+                f"      {counts[QgsWkbTypes.LineGeometry]} lines"
             )
 
         print("-" * 50)
@@ -283,7 +282,7 @@ class AirspaceETL:
             options = QgsVectorFileWriter.SaveVectorOptions()
             options.driverName = "PostgreSQL"
             options.layerName = TARGET_TABLE
-            options.actionOnExistingFile = QgsVectorFileWriter.AppendToLayerAddFields
+            options.actionOnExistingFile = QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteLayer
             options.ct = QgsCoordinateTransform(
                 mem_layer.crs(), self.target_crs, QgsProject.instance()
             )

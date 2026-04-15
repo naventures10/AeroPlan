@@ -115,6 +115,26 @@ class AirspaceMetadataETL:
             password=DB_PASS
         )
         self.conn.autocommit = True
+        self._ensure_schema()
+
+    def _ensure_schema(self):
+        """Ensures all the required metadata columns exist in the airspaces table"""
+        columns = {
+            "name": "TEXT",
+            "identification": "TEXT",
+            "lateral_limits": "TEXT",
+            "upper_limit": "TEXT",
+            "lower_limit": "TEXT",
+            "classifications": "TEXT",
+            "remarks": "TEXT",
+            "source_file": "TEXT",
+            "services": "JSONB"
+        }
+        with self.conn.cursor() as cur:
+            for col, dtype in columns.items():
+                cur.execute(f"ALTER TABLE airspaces ADD COLUMN IF NOT EXISTS {col} {dtype};")
+            # Ensure the geometry column has the valid EPSG:4326 SRID instead of 0
+            cur.execute("UPDATE airspaces SET wkb_geometry = ST_SetSRID(wkb_geometry, 4326) WHERE ST_SRID(wkb_geometry) = 0;")
 
     def process_file(self, file_key: str):
         print(f"\n[*] Processing metadata file: {file_key}")
@@ -304,7 +324,7 @@ class AirspaceMetadataETL:
             spatial_search_geom = f"ST_Buffer({multipoint}, {dist})"
 
         sql_match = f"""
-        SELECT array_agg(id) 
+        SELECT array_agg(ogc_fid) 
         FROM airspaces 
         WHERE ST_Intersects(wkb_geometry, {spatial_search_geom})
         {"AND (airspace_type = %s OR (airspace_type LIKE 'CTA%%' AND %s LIKE 'CTA%%'))" if metadata['airspace_type'] else ""}
@@ -329,7 +349,7 @@ class AirspaceMetadataETL:
                     services = %s,
                     remarks = %s,
                     source_file = %s
-                WHERE id = ANY(%s)
+                WHERE ogc_fid = ANY(%s)
                 """
                 cur.execute(sql_update, (
                     metadata['name'],
