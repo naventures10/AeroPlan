@@ -1,13 +1,4 @@
-/**
- * Airspace Layers
- *
- * Renders all airspace types from the `airspaces` Martin tile source.
- * Each airspace_type gets a distinct color so the pilot can visually
- * distinguish FIR boundaries from Danger Areas, CTRs, etc.
- */
-
 import { MVTLayer } from '@deck.gl/geo-layers';
-import { TextLayer } from '@deck.gl/layers';
 import { CollisionFilterExtension } from '@deck.gl/extensions';
 import type { LayerContext } from './types';
 
@@ -21,7 +12,7 @@ const AIRSPACE_COLORS: Record<
   }
 > = {
   FIR: { fill: [255, 165, 0, 10], stroke: [255, 165, 0, 80] },
-  DANGER: { fill: [255, 60, 60, 15], stroke: [255, 60, 60, 100] },
+  DANGER: { fill: [255, 40, 40, 20], stroke: [255, 90, 90, 180] },
   PROHIBITED: { fill: [255, 0, 0, 15], stroke: [255, 0, 0, 120] },
   RESTRICTED: { fill: [255, 140, 0, 15], stroke: [255, 140, 0, 90] },
   TRA: { fill: [255, 200, 50, 15], stroke: [255, 200, 50, 90] },
@@ -30,20 +21,10 @@ const AIRSPACE_COLORS: Record<
   CTR: { fill: [50, 180, 255, 15], stroke: [50, 180, 255, 100] },
   CTA_LOWER: { fill: [80, 200, 220, 15], stroke: [80, 200, 220, 90] },
   CTA_UPPER: { fill: [60, 140, 200, 15], stroke: [60, 140, 200, 90] },
-  UPR_ZONE: { fill: [100, 100, 220, 15], stroke: [100, 100, 220, 90] },
+  UPR_ZONE: { fill: [190, 200, 255, 15], stroke: [190, 200, 255, 120] },
 };
 
 const DEFAULT_STROKE: [number, number, number, number] = [128, 128, 128, 60];
-
-// ── Static FIR label centroids ───────────────────────────────────────
-
-const FIR_LABEL_DATA = [
-  { name: 'Delhi FIR', coordinates: [77.0, 26.5] },
-  { name: 'Mumbai FIR', coordinates: [69.0, 18.5] },
-  { name: 'Chennai FIR', coordinates: [82.0, 11.5] },
-  { name: 'Kolkata FIR', coordinates: [87.5, 20.5] },
-  { name: 'Guwahati SUB-FIR', coordinates: [92.5, 26.5] },
-];
 
 // ── Factory ──────────────────────────────────────────────────────────
 
@@ -59,8 +40,20 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       stroked: true,
       pickable: false,
       getLineColor: (f: any) => {
-        const type: string = f.properties?.airspace_type ?? '';
+        const type: string = (f.properties?.airspace_type || '').toString().trim().toUpperCase();
         const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = ctx.activeLayers;
+
+        // Graduated progressive disclosure
+        if (['FIR', 'ADIZ', 'UPR_ZONE'].includes(type)) {
+          if (currentZoom < 2) return [0, 0, 0, 0];
+        } else if (['CTA_UPPER', 'CTA_LOWER'].includes(type)) {
+          if (currentZoom < 5.0) return [0, 0, 0, 0];
+        } else {
+          // Local/Granular sectors appear at close zoom
+          if (currentZoom < 6.5) return [0, 0, 0, 0];
+        }
+
+        // Layer Toggle Logic
         if (type === 'FIR' && !airspaceFIR) return [0, 0, 0, 0];
         if (
           ['DANGER', 'PROHIBITED', 'RESTRICTED', 'TRA', 'TSA', 'ADIZ'].includes(type) &&
@@ -77,7 +70,13 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       getLineWidth: 2,
       lineWidthMinPixels: 1,
       updateTriggers: {
-        getLineColor: [ctx.viewMode, ctx.activeLayers],
+        getLineColor: [
+          ctx.viewMode,
+          ctx.activeLayers,
+          currentZoom >= 2.0,
+          currentZoom >= 5.0,
+          currentZoom >= 5.5,
+        ],
       },
     }),
 
@@ -92,11 +91,19 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       collisionEnabled: true,
       collisionGroup: 'airspaces',
       getText: (f: any) => {
-        // Only show labels when zoomed in close (Zoom 9+)
-        if (currentZoom < 5.5) return '';
-
-        const type: string = f.properties?.airspace_type ?? '';
+        const type: string = (f.properties?.airspace_type || '').toString().trim().toUpperCase();
         const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = ctx.activeLayers;
+
+        // Aligned graduated progressive disclosure for labels
+        if (['FIR', 'ADIZ', 'UPR_ZONE'].includes(type)) {
+          if (currentZoom < 2) return '';
+        } else if (['CTA_UPPER', 'CTA_LOWER'].includes(type)) {
+          if (currentZoom < 5.0) return '';
+        } else {
+          if (currentZoom < 6.5) return '';
+        }
+
+        // Layer Toggle Logic
         if (type === 'FIR' && !airspaceFIR) return '';
         if (
           ['DANGER', 'PROHIBITED', 'RESTRICTED', 'TRA', 'TSA', 'ADIZ'].includes(type) &&
@@ -120,7 +127,10 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
         if (ctx.highlightedAirspaceId && String(id) === ctx.highlightedAirspaceId) {
           return [0, 0, 0, 255]; // Black text on yellow background
         }
-        return [230, 230, 230, 255]; // High visibility white/grey
+        const type: string = (f.properties?.airspace_type || '').toString().trim().toUpperCase();
+        const baseColor = AIRSPACE_COLORS[type]?.stroke ?? DEFAULT_STROKE;
+        // Match outline color but ensure full opacity for readability
+        return [baseColor[0], baseColor[1], baseColor[2], 255];
       },
       textBackground: true,
       getTextBackgroundColor: (f: any) => {
@@ -137,26 +147,20 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       textFontSettings: { sdf: true },
       textFontFamily: 'Inter, sans-serif',
       updateTriggers: {
-        getText: [ctx.activeLayers, Math.floor(currentZoom)],
-        getTextColor: [ctx.highlightedAirspaceId],
-        getTextBackgroundColor: [ctx.highlightedAirspaceId],
+        getText: [ctx.activeLayers, currentZoom >= 2.0, currentZoom >= 5.0, currentZoom >= 6.5],
+        getTextColor: [
+          ctx.highlightedAirspaceId,
+          currentZoom >= 2.0,
+          currentZoom >= 5.0,
+          currentZoom >= 6.5,
+        ],
+        getTextBackgroundColor: [
+          ctx.highlightedAirspaceId,
+          currentZoom >= 2.0,
+          currentZoom >= 5.0,
+          currentZoom >= 6.5,
+        ],
       },
-    }),
-
-    new TextLayer({
-      id: 'airspace-fir-labels-layer',
-      data: FIR_LABEL_DATA,
-      visible: ctx.viewMode === 'ENROUTE' && ctx.activeLayers.airspaceFIR,
-      getPosition: (d: any) => d.coordinates,
-      getText: (d: any) => d.name,
-      getSize: 16,
-      sizeUnits: 'pixels',
-      getColor: [255, 165, 0, 255],
-      fontFamily: 'Inter, sans-serif',
-      fontWeight: 800,
-      outlineWidth: 3,
-      outlineColor: [0, 0, 0, 200],
-      fontSettings: { sdf: true },
     }),
   ];
 }

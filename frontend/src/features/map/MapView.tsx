@@ -172,6 +172,29 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     }
   }, [boundsToFit, setViewState, viewState, fitBounds]);
 
+  // 4. Hide base map labels/roads below zoom 10
+  const onMapLoad = useCallback((e: any) => {
+    const map = e.target;
+    const layers = map.getStyle()?.layers;
+    if (layers) {
+      layers.forEach((layer: any) => {
+        if (
+          layer.type === 'symbol' ||
+          layer.id.includes('road') ||
+          layer.id.includes('place') ||
+          layer.id.includes('label')
+        ) {
+          try {
+            map.setLayerZoomRange(layer.id, 10, 24);
+          } catch (err) {
+            // Some layers might not support zoom range or be removed
+            console.warn(`Failed to set zoom range for ${layer.id}`, err);
+          }
+        }
+      });
+    }
+  }, []);
+
   return (
     <div className="absolute inset-0 z-0">
       <DeckGL
@@ -229,6 +252,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
         <Map
           ref={mapRef}
           mapStyle={MAP_STYLE}
+          onLoad={onMapLoad}
           reuseMaps
           terrain={
             viewMode === 'TERMINAL' ? { source: 'maptiler-terrain', exaggeration: 1 } : undefined
