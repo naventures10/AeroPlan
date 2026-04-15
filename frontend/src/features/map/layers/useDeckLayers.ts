@@ -33,6 +33,7 @@ export function useDeckLayers({
     viewState,
     atsRouteLabels,
     animatedTrips,
+    highlightedAirspaceId,
   } = useMapStore();
 
   const { isAtsRendered, currentTime } = useRouteAnimation();
@@ -57,6 +58,7 @@ export function useDeckLayers({
     atsRouteLabels,
     animatedTrips,
     currentTime,
+    highlightedAirspaceId,
     setSelectedRouteIds,
     setSelectedFeature,
   };
@@ -101,6 +103,7 @@ export function useDeckLayers({
     atsRouteLabels,
     animatedTrips,
     currentTime,
+    highlightedAirspaceId,
   ]);
 
   return deckLayers;
