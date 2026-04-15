@@ -48,7 +48,7 @@ postgres:
     airspaces:
       schema: public
       table: airspaces
-      id_column: id
+      id_column: ogc_fid
       geometry_column: wkb_geometry
       srid: 4326
       properties:
