@@ -54,6 +54,13 @@ postgres:
       properties:
         airspace_type: "varchar"
         layer_name: "varchar"
+        name: "varchar"
+        identification: "varchar"
+        lateral_limits: "varchar"
+        upper_limit: "varchar"
+        lower_limit: "varchar"
+        remarks: "varchar"
+        source_file: "varchar"
 
     ats_route_waypoints:
       schema: public

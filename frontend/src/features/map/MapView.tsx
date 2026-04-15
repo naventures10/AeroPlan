@@ -94,6 +94,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     activeLayers,
     boundsToFit,
     fitBounds,
+    setSelectedFeature,
   } = useMapStore();
 
   const mapRef = useRef<MapRef>(null);
@@ -183,6 +184,40 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
         onViewStateChange={onViewStateChange}
         getTooltip={getTooltip}
         pickingRadius={20}
+        onClick={(info) => {
+          if (info.layer?.id === 'airspace-fill-layer' && info.layer.context?.deck) {
+            const deck = info.layer.context.deck;
+            try {
+              const multiple = deck.pickMultipleObjects({
+                x: info.x,
+                y: info.y,
+                layerIds: ['airspace-fill-layer'],
+                radius: 4,
+              });
+
+              if (multiple && multiple.length > 0) {
+                // Filter out duplicate features by ID (MVT layers sometimes yield identical features on tile boundaries)
+                const uniqueFeatures = Array.from(
+                  new window.Map(
+                    multiple.map((m: any) => [m.object.properties?.id ?? m.object.id, m.object]),
+                  ).values(),
+                );
+
+                setSelectedFeature({
+                  type: 'AIRSPACE_STACK',
+                  data: uniqueFeatures,
+                });
+                return;
+              }
+            } catch (e) {
+              console.error('Failed to pick airspaces', e);
+            }
+          }
+          // If we clicked empty space or something else, clear feature (assuming we want to)
+          if (!info.object) {
+            setSelectedFeature(null);
+          }
+        }}
       >
         <Map
           ref={mapRef}
