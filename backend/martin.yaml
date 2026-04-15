@@ -45,15 +45,24 @@ postgres:
         remarks: "text"
         raw_coordinates: "varchar"
 
-    airspaces:
+    airspaces_geometry:
       schema: public
-      table: airspaces
+      table: airspaces_geometry
       id_column: ogc_fid
       geometry_column: wkb_geometry
       srid: 4326
       properties:
         airspace_type: "varchar"
         layer_name: "varchar"
+
+    airspaces_metadata:
+      schema: public
+      table: airspaces_metadata
+      id_column: id
+      geometry_column: geom
+      srid: 4326
+      properties:
+        airspace_type: "varchar"
         name: "varchar"
         identification: "varchar"
         lateral_limits: "varchar"

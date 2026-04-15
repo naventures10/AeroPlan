@@ -95,6 +95,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     boundsToFit,
     fitBounds,
     setSelectedFeature,
+    setHighlightedAirspaceId,
   } = useMapStore();
 
   const mapRef = useRef<MapRef>(null);
@@ -185,13 +186,13 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
         getTooltip={getTooltip}
         pickingRadius={20}
         onClick={(info) => {
-          if (info.layer?.id === 'airspace-fill-layer' && info.layer.context?.deck) {
+          if (info.layer?.id === 'airspace-metadata-layer' && info.layer.context?.deck) {
             const deck = info.layer.context.deck;
             try {
               const multiple = deck.pickMultipleObjects({
                 x: info.x,
                 y: info.y,
-                layerIds: ['airspace-fill-layer'],
+                layerIds: ['airspace-metadata-layer'],
                 radius: 4,
               });
 
@@ -207,6 +208,11 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
                   type: 'AIRSPACE_STACK',
                   data: uniqueFeatures,
                 });
+
+                if (uniqueFeatures.length > 0) {
+                  const firstId = uniqueFeatures[0].properties?.id ?? uniqueFeatures[0].id;
+                  setHighlightedAirspaceId(String(firstId));
+                }
                 return;
               }
             } catch (e) {
@@ -216,6 +222,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
           // If we clicked empty space or something else, clear feature (assuming we want to)
           if (!info.object) {
             setSelectedFeature(null);
+            setHighlightedAirspaceId(null);
           }
         }}
       >
