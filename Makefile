@@ -96,3 +96,14 @@ profile-tiles: ## Start Prometheus to monitor Martin (UI at :9090)
 		-v $(PWD)/backend/prometheus.yml:/etc/prometheus/prometheus.yml \
 		prom/prometheus:latest
 	@echo "\033[36mPrometheus UI:\033[0m http://localhost:9090"
+
+# ── ETL & Data Pipelines ───────────────────────────────────────────────────
+
+etl-airspaces: ## Run the Airspace ETL (Geometry Extraction) via QGIS Python
+	/Applications/QGIS.app/Contents/MacOS/python eaip_scrapper/src/ETL/etl_airspaces.py
+
+etl-metadata: ## Run the Airspace Metadata enrichment ETL
+	cd eaip_scrapper && uv run src/ETL/etl_airspace_metadata.py
+
+etl-all: etl-airspaces etl-metadata ## Run full Airspace ETL pipeline (Geom + Metadata)
+

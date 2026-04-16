@@ -40,7 +40,7 @@ export default function LayerToolbar() {
     },
     {
       icon: Globe,
-      id: 'firAirspace' as const,
+      id: 'airspaces' as const,
       color: 'text-orange-400',
       border: 'border-orange-500/50',
       bg: 'bg-orange-500/20',
