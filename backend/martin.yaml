@@ -45,13 +45,31 @@ postgres:
         remarks: "text"
         raw_coordinates: "varchar"
 
-    fir_airspaces:
+    airspaces_geometry:
       schema: public
-      table: fir_airspaces
+      table: airspaces_geometry
+      id_column: ogc_fid
+      geometry_column: wkb_geometry
+      srid: 4326
+      properties:
+        airspace_type: "varchar"
+        layer_name: "varchar"
+
+    airspaces_metadata:
+      schema: public
+      table: airspaces_metadata
+      id_column: id
       geometry_column: geom
       srid: 4326
       properties:
-        layer: "varchar"
+        airspace_type: "varchar"
+        name: "varchar"
+        identification: "varchar"
+        lateral_limits: "varchar"
+        upper_limit: "varchar"
+        lower_limit: "varchar"
+        remarks: "varchar"
+        source_file: "varchar"
 
     ats_route_waypoints:
       schema: public

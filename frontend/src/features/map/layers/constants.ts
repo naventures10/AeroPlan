@@ -15,7 +15,6 @@ export const COLOR_EMERALD: [number, number, number, number] = [52, 211, 153, 25
 export const COLOR_NEON_PURPLE: [number, number, number, number] = [192, 132, 252, 255];
 export const COLOR_LIME_GREEN: [number, number, number, number] = [50, 205, 50, 255];
 export const COLOR_ATS_CYAN: [number, number, number, number] = [34, 211, 238, 255];
-export const COLOR_FIR_ORANGE: [number, number, number, number] = [255, 165, 0, 200];
 
 // RGB-only variants (for colour math in label glow calculations)
 export const RGB_NEON_PURPLE: [number, number, number] = [192, 132, 252];

@@ -11,11 +11,15 @@ export interface ActiveLayers {
   navaids: boolean;
   atsRoutes: boolean;
   wacMap: boolean;
-  firAirspace: boolean;
+  airspaces: boolean;
+  airspaceFIR: boolean;
+  airspaceRegulated: boolean;
+  airspaceControl: boolean;
+  airspaceUpr: boolean;
 }
 
 export interface SelectedFeature {
-  type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID';
+  type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID' | 'AIRSPACE_STACK';
   data: any;
 }
 
@@ -46,6 +50,9 @@ export interface LayerContext {
 
   /** Current animation timestamp (NM from origin) */
   currentTime: number;
+
+  /** The ID of the specific overlapping airspace the user currently expanded in the UI stack */
+  highlightedAirspaceId?: string | null;
 
   // ── Callbacks ──
 

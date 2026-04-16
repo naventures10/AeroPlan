@@ -15,7 +15,11 @@ describe('useMapStore', () => {
         navaids: false,
         atsRoutes: false,
         wacMap: false,
-        firAirspace: false,
+        airspaces: false,
+        airspaceFIR: true,
+        airspaceRegulated: true,
+        airspaceControl: true,
+        airspaceUpr: true,
       },
       selectedRouteIds: [],
       selectedRouteType: null,
@@ -37,22 +41,22 @@ describe('useMapStore', () => {
     // Verify default active layers
     expect(state.activeLayers.aerodromes).toBe(true);
     expect(state.activeLayers.waypoints).toBe(false);
-    expect(state.activeLayers.firAirspace).toBe(false);
+    expect(state.activeLayers.airspaces).toBe(false);
   });
 
   it('should toggle an existing map layer successfully', () => {
     let state = useMapStore.getState();
-    expect(state.activeLayers.firAirspace).toBe(false);
+    expect(state.activeLayers.airspaces).toBe(false);
 
-    // Toggle FIR airspace ON
-    state.toggleLayer('firAirspace');
+    // Toggle airspaces ON
+    state.toggleLayer('airspaces');
     state = useMapStore.getState();
-    expect(state.activeLayers.firAirspace).toBe(true);
+    expect(state.activeLayers.airspaces).toBe(true);
 
-    // Toggle FIR airspace OFF
-    state.toggleLayer('firAirspace');
+    // Toggle airspaces OFF
+    state.toggleLayer('airspaces');
     state = useMapStore.getState();
-    expect(state.activeLayers.firAirspace).toBe(false);
+    expect(state.activeLayers.airspaces).toBe(false);
   });
 
   it('should toggle view modes properly between ENROUTE and TERMINAL', () => {
