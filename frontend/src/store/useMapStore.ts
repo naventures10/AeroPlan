@@ -43,6 +43,18 @@ interface MapState {
   activeAirport: string | null;
   setActiveAirport: (code: string | null) => void;
 
+  /** Terminal RNP: selected procedure from chart modal → 3D MVT layer */
+  selectedRnpProcedureId: number | null;
+  selectedRnpChartKey: string | null;
+  selectedRnpBounds: [number, number, number, number] | null;
+  setSelectedRnpProcedure: (
+    payload: {
+      procedureId: number;
+      chartKey: string;
+      bounds: [number, number, number, number] | null;
+    } | null,
+  ) => void;
+
   selectedFeature: {
     type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID' | 'AIRSPACE_STACK';
     data: any;
@@ -100,7 +112,17 @@ export const useMapStore = create<MapState>((set, get) => ({
   viewState: DEFAULT_VIEW,
 
   viewMode: 'ENROUTE',
-  setViewMode: (mode) => set({ viewMode: mode }),
+  setViewMode: (mode) =>
+    set({
+      viewMode: mode,
+      ...(mode === 'ENROUTE'
+        ? {
+            selectedRnpProcedureId: null,
+            selectedRnpChartKey: null,
+            selectedRnpBounds: null,
+          }
+        : {}),
+    }),
 
   activeAerodromeMetadata: null,
   setActiveAerodromeMetadata: (data) => set({ activeAerodromeMetadata: data }),
@@ -138,7 +160,31 @@ export const useMapStore = create<MapState>((set, get) => ({
     }),
 
   activeAirport: null,
-  setActiveAirport: (code) => set({ activeAirport: code }),
+  setActiveAirport: (code) =>
+    set({
+      activeAirport: code,
+      selectedRnpProcedureId: null,
+      selectedRnpChartKey: null,
+      selectedRnpBounds: null,
+    }),
+
+  selectedRnpProcedureId: null,
+  selectedRnpChartKey: null,
+  selectedRnpBounds: null,
+  setSelectedRnpProcedure: (payload) =>
+    set(
+      payload
+        ? {
+            selectedRnpProcedureId: payload.procedureId,
+            selectedRnpChartKey: payload.chartKey,
+            selectedRnpBounds: payload.bounds,
+          }
+        : {
+            selectedRnpProcedureId: null,
+            selectedRnpChartKey: null,
+            selectedRnpBounds: null,
+          },
+    ),
 
   selectedFeature: null,
   setSelectedFeature: (feature) => set({ selectedFeature: feature }),
@@ -176,6 +222,13 @@ export const useMapStore = create<MapState>((set, get) => ({
     const newMode = viewMode === 'ENROUTE' ? 'TERMINAL' : 'ENROUTE';
     set({
       viewMode: newMode,
+      ...(newMode === 'ENROUTE'
+        ? {
+            selectedRnpProcedureId: null,
+            selectedRnpChartKey: null,
+            selectedRnpBounds: null,
+          }
+        : {}),
       viewState: {
         ...viewState,
         pitch: newMode === 'TERMINAL' ? 45 : 0,
@@ -189,6 +242,9 @@ export const useMapStore = create<MapState>((set, get) => ({
     set({
       viewMode: 'ENROUTE',
       activeAirport: null,
+      selectedRnpProcedureId: null,
+      selectedRnpChartKey: null,
+      selectedRnpBounds: null,
       selectedFeature: null,
       terminalPivot: null,
       viewState: {

@@ -96,6 +96,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     fitBounds,
     setSelectedFeature,
     setHighlightedAirspaceId,
+    selectedRnpProcedureId,
   } = useMapStore();
 
   const mapRef = useRef<MapRef>(null);
@@ -158,7 +159,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
           longitude,
           latitude,
           zoom,
-          pitch: 0,
+          pitch: viewMode === 'TERMINAL' ? 45 : 0,
           bearing: 0,
           transitionDuration: 1200,
           transitionType: 'FLY',
@@ -170,7 +171,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
         console.error('Failed to calculate fitBounds', e);
       }
     }
-  }, [boundsToFit, setViewState, viewState, fitBounds]);
+  }, [boundsToFit, setViewState, viewState, fitBounds, viewMode]);
 
   // 4. Hide base map labels/roads below zoom 10
   const onMapLoad = useCallback((e: any) => {
@@ -257,7 +258,15 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
           terrain={
             viewMode === 'TERMINAL' ? { source: 'maptiler-terrain', exaggeration: 1 } : undefined
           }
-          interactiveLayerIds={viewMode === 'TERMINAL' ? ['mvt-points', 'mvt-polygons'] : []}
+          interactiveLayerIds={
+            viewMode === 'TERMINAL'
+              ? [
+                  'mvt-points',
+                  'mvt-polygons',
+                  ...(selectedRnpProcedureId != null ? ['rnp-procedure-line'] : []),
+                ]
+              : []
+          }
         >
           <Source
             id="maptiler-terrain"
@@ -304,6 +313,27 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
                 source-layer="spatial_features"
                 filter={['==', ['geometry-type'], 'Point']}
                 paint={POINT_PAINT as any}
+              />
+            </Source>
+          )}
+
+          {viewMode === 'TERMINAL' && selectedRnpProcedureId != null && (
+            <Source
+              id="rnp-procedures-source"
+              type="vector"
+              tiles={[`${window.location.origin}/tiles/rnp_procedures/{z}/{x}/{y}`]}
+            >
+              <Layer
+                id="rnp-procedure-line"
+                type="line"
+                source-layer="rnp_procedures"
+                filter={['==', ['to-number', ['get', 'id']], selectedRnpProcedureId]}
+                paint={{
+                  'line-color': '#22d3ee',
+                  'line-width': 5,
+                  'line-blur': 2,
+                  'line-opacity': 0.95,
+                }}
               />
             </Source>
           )}
