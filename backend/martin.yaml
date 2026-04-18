@@ -102,6 +102,20 @@ postgres:
         direction_odd: "varchar"
         direction_even: "varchar"
 
+    rnp_procedures:
+      schema: public
+      table: rnp_procedures
+      id_column: id
+      geometry_column: geom_3d
+      srid: 4326
+      properties:
+        id: int4
+        airport_id: "varchar"
+        name: "varchar"
+        runway: "varchar"
+        type: "varchar"
+        validation_status: "varchar"
+
 mbtiles:
   sources:
     wac_india: /data/wac_india.mbtiles
