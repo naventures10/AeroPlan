@@ -25,6 +25,24 @@ export function normalizeChartKey(text: string | null | undefined): string {
 
   s = s.replace(/[_\s]+/g, '-');
   s = s.replace(/-+/g, '-');
+
+  const suffixes = [
+    '-CODING',
+    '-TABLES',
+    '-TABLE',
+    '-CAT-A-B-C-D',
+    '-CAT-A-B-C',
+    '-CAT-A-B',
+    '-FAS-DATA',
+    '-PROFILE',
+  ];
+  for (const suffix of suffixes) {
+    if (s.includes(suffix)) {
+      s = s.split(suffix).join('');
+    }
+  }
+
+  s = s.replace(/-+/g, '-');
   s = s.replace(/^-+|-+$/g, '');
 
   return s;
