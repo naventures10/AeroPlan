@@ -13,14 +13,29 @@ export interface RnpWaypointMarker {
   role: string | null;
 }
 
+export interface RnpApproachPath {
+  label: string;
+  entry_waypoint: string;
+  path: [number, number, number][];
+  timestamps: number[];
+  total_distance_nm: number;
+  segment_type: string;
+}
+
+export interface RnpMissedApproachPath {
+  path: [number, number, number][];
+  timestamps: number[];
+  total_distance_nm: number;
+}
+
 export interface RnpPath3d {
   procedure_id: number;
   name: string;
   airport_id: string;
   runway: string;
-  path: [number, number, number][]; // [lon, lat, alt_m][]
-  timestamps: number[]; // cumulative NM
-  total_distance_nm: number;
+  approach_paths: RnpApproachPath[];
+  missed_approach_path: RnpMissedApproachPath | null;
+  max_distance_nm: number;
   waypoints: RnpWaypointMarker[];
 }
 
