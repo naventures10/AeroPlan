@@ -28,6 +28,22 @@ def normalize_chart_key(text: str | None) -> str:
 
     s = re.sub(r"[_\s]+", "-", s)
     s = re.sub(r"-+", "-", s)
+
+    # Strip common secondary chart suffixes so tables/coding charts match the base procedure
+    for suffix in [
+        "-CODING",
+        "-TABLES",
+        "-TABLE",
+        "-CAT-A-B-C-D",
+        "-CAT-A-B-C",
+        "-CAT-A-B",
+        "-FAS-DATA",
+        "-PROFILE",
+    ]:
+        if suffix in s:
+            s = s.replace(suffix, "")
+
+    s = re.sub(r"-+", "-", s)
     s = s.strip("-")
 
     return s

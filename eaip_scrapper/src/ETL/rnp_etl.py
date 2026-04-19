@@ -21,6 +21,8 @@ def main():
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     parser.add_argument("--force-load", action="store_true",
                         help="Load procedures even if validation fails (not recommended)")
+    parser.add_argument("--extract-tables-only", action="store_true",
+                        help="Extract only missing TABLES files (skip existing CODING files)")
     args = parser.parse_args()
 
     # Logging setup
@@ -40,9 +42,19 @@ def main():
         # 1. Extraction
         if args.step in ("extract", "all"):
             logger.info("Extraction step triggered (LlamaCloud/Mistral)...")
-            # extractor = RNPExtractor()
-            # ... extraction logic (manual / on-demand to save API credits) ...
-            pass
+            extractor = RNPExtractor()
+            
+            if args.extract_tables_only:
+                # Extract only missing TABLES files
+                success = extractor.extract_tables_files()
+                if not success:
+                    logger.warning("Some TABLES files failed to extract")
+            else:
+                # Full extraction (can be extended for other extraction needs)
+                logger.info("Full extraction mode - currently only TABLES extraction is implemented")
+                success = extractor.extract_tables_files()
+                if not success:
+                    logger.warning("Some TABLES files failed to extract")
 
         # 2. Merging
         if args.step in ("merge", "all"):

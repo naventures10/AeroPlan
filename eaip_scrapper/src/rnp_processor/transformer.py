@@ -19,13 +19,13 @@ class RNPTransformer:
             "FAP", "THR", "MAPTN", "MATFN", "FINAL", "MISAP", "BASE",
             "TRANS", "IDENT", "TYPE", "LAT", "LONG", "COORD", "WGS84",
             "WPT", "FIX", "NAVAID", "INITL", "INITR", "INITB", "MISAP",
-            "MAPT/MATF", "FAF/FAP", "LTP/FTP", "IAF/MAHF",
+            "MAPT/MATF", "FAF/FAP", "LTP/FTP", "IAF/MAHF", "TP",
         }
 
     def get_base_name(self, filename):
         name = filename.replace(".PDF.md", "").replace(".md", "")
         name = re.sub(r'-\d+$', '', name)
-        name = name.replace("-CODING", "").replace("-WAYPOINTS", "")
+        name = name.replace("-CODING", "").replace("-TABLES", "").replace("-TABLE", "").replace("-WAYPOINTS", "")
         return name
 
     def extract_metadata(self, filename):
@@ -35,9 +35,15 @@ class RNPTransformer:
           VOHB-RNP-Y-RWY26
           VECC-RNP-Y-RWY-19R
           VOCL-RNP-Y-RWY-28
+          VOPB-RNP-Y-RWY-04-TABLES
         """
         stem = filename.replace(".PDF.md", "").replace(".md", "")
+        # Remove CODING and TABLES suffixes before processing
+        stem = stem.replace("-CODING", "").replace("-TABLES", "").replace("-TABLE", "")
         parts = stem.split('-')
+        if len(parts) == 1 and ' ' in stem:
+            parts = stem.split()
+            
         airport_id = parts[0] if parts else ""
         runway = ""
         proc_type = ""
@@ -54,8 +60,8 @@ class RNPTransformer:
                 else:
                     proc_type = p
 
-        # Strip stray suffixes from runway
-        runway = runway.replace("CODING", "").strip().rstrip('-')
+        # Strip any remaining stray suffixes from runway
+        runway = runway.replace("CODING", "").replace("TABLES", "").replace("TABLE", "").strip().rstrip('-')
 
         return airport_id, runway, proc_type
 
@@ -170,7 +176,7 @@ class RNPTransformer:
                 if not c:
                     continue
                 c_clean = str(c).upper().strip().strip("'").strip("`")
-                if (3 <= len(c_clean) <= 7
+                if (2 <= len(c_clean) <= 7
                         and c_clean.isalnum()
                         and not c_clean.isdigit()
                         and c_clean not in self.id_blacklist):
