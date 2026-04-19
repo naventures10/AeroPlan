@@ -65,6 +65,7 @@ export function createRnpLayers(pathData: RnpPath3d | null, currentTime: number)
       widthMinPixels: 6,
       jointRounded: true,
       capRounded: true,
+      billboard: true,
       trailLength: pathData.total_distance_nm * 0.4,
       currentTime,
     }),
@@ -81,6 +82,7 @@ export function createRnpLayers(pathData: RnpPath3d | null, currentTime: number)
       opacity: 0.3,
       widthMinPixels: 3,
       jointRounded: true,
+      billboard: true,
       trailLength: pathData.total_distance_nm * 2, // very long = always fully visible
       currentTime: pathData.total_distance_nm, // parked at end = whole path
     }),

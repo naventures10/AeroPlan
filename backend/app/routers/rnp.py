@@ -91,6 +91,69 @@ def _haversine_nm(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
     return r_nm * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
+def _smooth_path_3d(
+    path: list[list[float]], max_turn_dist_nm: float = 1.5, steps: int = 12
+) -> list[list[float]]:
+    """
+    Applies a corner-cutting quadratic Bezier spline to make Fly-By
+    waypoint turns look like realistic aircraft tracks (curved) rather
+    than sharp instantaneous angles. Maps cut distances in Nautical Miles
+    to avoid massive under-turning on long segments.
+    """
+    if len(path) < 3:
+        return path
+
+    smoothed = [path[0]]
+
+    for i in range(1, len(path) - 1):
+        p_a = path[i - 1]
+        p_b = path[i]
+        p_c = path[i + 1]
+
+        # Calculate real-world nautical miles between points
+        dist_ab = _haversine_nm(p_a[0], p_a[1], p_b[0], p_b[1])
+        dist_bc = _haversine_nm(p_b[0], p_b[1], p_c[0], p_c[1])
+
+        # Determine the physical cut distance. Max 1.5 NM, or 30% of the segment if it's very short
+        cut_ab = min(max_turn_dist_nm, dist_ab * 0.3) if dist_ab > 0 else 0
+        cut_bc = min(max_turn_dist_nm, dist_bc * 0.3) if dist_bc > 0 else 0
+
+        alpha_ab = (cut_ab / dist_ab) if dist_ab > 0 else 0
+        alpha_bc = (cut_bc / dist_bc) if dist_bc > 0 else 0
+
+        # q0 is on segment AB, retreating alpha_ab distance from b
+        q0 = [
+            p_b[0] + alpha_ab * (p_a[0] - p_b[0]),
+            p_b[1] + alpha_ab * (p_a[1] - p_b[1]),
+            p_b[2] + alpha_ab * (p_a[2] - p_b[2]),
+        ]
+
+        # q2 is on segment BC, retreating alpha_bc distance from b
+        q2 = [
+            p_b[0] + alpha_bc * (p_c[0] - p_b[0]),
+            p_b[1] + alpha_bc * (p_c[1] - p_b[1]),
+            p_b[2] + alpha_bc * (p_c[2] - p_b[2]),
+        ]
+
+        smoothed.append(q0)
+
+        # Generate quadratic Bezier curve around corner b
+        for j in range(1, steps):
+            t = j / steps
+            inv_t = 1.0 - t
+
+            x = (inv_t**2) * q0[0] + 2 * inv_t * t * p_b[0] + (t * t) * q2[0]
+            y = (inv_t**2) * q0[1] + 2 * inv_t * t * p_b[1] + (t * t) * q2[1]
+            z = (inv_t**2) * q0[2] + 2 * inv_t * t * p_b[2] + (t * t) * q2[2]
+
+            smoothed.append([x, y, z])
+
+        smoothed.append(q2)
+
+    smoothed.append(path[-1])
+    return smoothed
+
+
 @router.get(
     "/rnp-procedures/{procedure_id}/path3d",
     response_model=RnpPath3dResponse,
@@ -126,11 +189,18 @@ async def get_rnp_path_3d(
     # Convert altitude from feet → metres
     path: list[list[float]] = [[c[0], c[1], c[2] * FT_TO_M] for c in raw_coords]
 
+    # Smooth the corners for a realistic RNP visual track
+    path = _smooth_path_3d(path, max_turn_dist_nm=1.5, steps=16)
+
     # Compute cumulative distance in NM as timestamps for TripsLayer
     timestamps: list[float] = [0.0]
     for i in range(1, len(path)):
         seg = _haversine_nm(path[i - 1][0], path[i - 1][1], path[i][0], path[i][1])
-        timestamps.append(round(timestamps[-1] + seg, 2))
+        # DeckGL TripsLayer requires strictly monotonically increasing timestamps.
+        # If consecutive points have the same 2D coordinates (e.g. altitude change only),
+        # seg is 0. Give it a minimum artificial distance of 0.01 NM.
+        seg = max(seg, 0.01)
+        timestamps.append(round(timestamps[-1] + seg, 3))
 
     # 2. Fetch waypoints with coordinates and roles from legs table
     q_wpts = text("""
