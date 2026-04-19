@@ -96,7 +96,6 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     fitBounds,
     setSelectedFeature,
     setHighlightedAirspaceId,
-    selectedRnpProcedureId,
   } = useMapStore();
 
   const mapRef = useRef<MapRef>(null);
@@ -258,15 +257,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
           terrain={
             viewMode === 'TERMINAL' ? { source: 'maptiler-terrain', exaggeration: 1 } : undefined
           }
-          interactiveLayerIds={
-            viewMode === 'TERMINAL'
-              ? [
-                  'mvt-points',
-                  'mvt-polygons',
-                  ...(selectedRnpProcedureId != null ? ['rnp-procedure-line'] : []),
-                ]
-              : []
-          }
+          interactiveLayerIds={viewMode === 'TERMINAL' ? ['mvt-points', 'mvt-polygons'] : []}
         >
           <Source
             id="maptiler-terrain"
@@ -313,27 +304,6 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
                 source-layer="spatial_features"
                 filter={['==', ['geometry-type'], 'Point']}
                 paint={POINT_PAINT as any}
-              />
-            </Source>
-          )}
-
-          {viewMode === 'TERMINAL' && selectedRnpProcedureId != null && (
-            <Source
-              id="rnp-procedures-source"
-              type="vector"
-              tiles={[`${window.location.origin}/tiles/rnp_procedures/{z}/{x}/{y}`]}
-            >
-              <Layer
-                id="rnp-procedure-line"
-                type="line"
-                source-layer="rnp_procedures"
-                filter={['==', ['to-number', ['get', 'id']], selectedRnpProcedureId]}
-                paint={{
-                  'line-color': '#22d3ee',
-                  'line-width': 5,
-                  'line-blur': 2,
-                  'line-opacity': 0.95,
-                }}
               />
             </Source>
           )}
