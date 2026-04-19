@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS rnp_legs (
     id SERIAL PRIMARY KEY,
     procedure_id INT REFERENCES rnp_procedures(id) ON DELETE CASCADE,
     sequence_nr INT,
+    source_serial VARCHAR(10),
     path_descriptor VARCHAR(5),
     waypoint_ident VARCHAR(10),
     altitude_numeric NUMERIC,
@@ -40,6 +41,9 @@ CREATE TABLE IF NOT EXISTS rnp_legs (
     speed_limit TEXT,
     course TEXT,
     distance TEXT,
+    turn_direction VARCHAR(10),
+    vpa_tch VARCHAR(20),
+    nav_spec VARCHAR(50),
     role TEXT,
     fly_over BOOLEAN
 );
@@ -177,18 +181,25 @@ class RNPLoader:
             legs = []
             for i, leg in enumerate(proc_data.get("tabular_description", []), 1):
                 alt_raw = leg.get("altitude") or leg.get("altitude_lower")
+                
+                # Parse fly_over as boolean (usually encoded as 'Y' or ' ' in AIPs)
+                fly_over_raw = str(leg.get("fly_over", "")).strip().upper()
+                is_fly_over = fly_over_raw == "Y"
+                
                 legs.append((
-                    proc_pk, i, leg.get("path_descriptor"), leg.get("waypoint_identifier"),
+                    proc_pk, i, str(leg.get("serial_number", ""))[:10] if leg.get("serial_number") else None, 
+                    leg.get("path_descriptor"), leg.get("waypoint_identifier"),
                     parse_altitude(alt_raw), alt_raw, leg.get("speed_limit"),
-                    leg.get("course"), leg.get("distance"), leg.get("role")
+                    leg.get("course"), leg.get("distance"), leg.get("turn_direction"),
+                    leg.get("vpa_tch"), leg.get("nav_spec"), leg.get("role"), is_fly_over
                 ))
 
             if legs:
                 execute_values(cur, """
                     INSERT INTO rnp_legs
-                        (procedure_id, sequence_nr, path_descriptor, waypoint_ident,
+                        (procedure_id, sequence_nr, source_serial, path_descriptor, waypoint_ident,
                          altitude_numeric, altitude_constraint, speed_limit,
-                         course, distance, role)
+                         course, distance, turn_direction, vpa_tch, nav_spec, role, fly_over)
                     VALUES %s
                 """, legs)
 

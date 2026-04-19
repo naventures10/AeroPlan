@@ -21,16 +21,27 @@ class RnpWaypointMarker(BaseModel):
     role: str | None = None
 
 
+class RnpApproachPath(BaseModel):
+    label: str = Field(..., description='e.g. "via TP607"')
+    entry_waypoint: str = Field(..., description="IAF ident")
+    path: list[list[float]] = Field(..., description="[lon, lat, alt_m][]")
+    timestamps: list[float] = Field(..., description="cumulative NM")
+    total_distance_nm: float
+    segment_type: str = Field(..., description='"approach"')
+
+
+class RnpMissedApproachPath(BaseModel):
+    path: list[list[float]] = Field(..., description="[lon, lat, alt_m][]")
+    timestamps: list[float] = Field(..., description="cumulative NM")
+    total_distance_nm: float
+
+
 class RnpPath3dResponse(BaseModel):
     procedure_id: int
     name: str
     airport_id: str
     runway: str
-    path: list[list[float]] = Field(
-        ..., description="Ordered [lon, lat, altitude_metres] coordinate triplets"
-    )
-    timestamps: list[float] = Field(
-        ..., description="Cumulative distance in NM for each path vertex (TripsLayer animation)"
-    )
-    total_distance_nm: float
+    approach_paths: list[RnpApproachPath] = Field(..., description="Parallel animated trails")
+    missed_approach_path: RnpMissedApproachPath | None = None
+    max_distance_nm: float = Field(..., description="Longest approach path (animation loop)")
     waypoints: list[RnpWaypointMarker]

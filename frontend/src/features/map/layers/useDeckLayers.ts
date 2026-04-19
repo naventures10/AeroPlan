@@ -42,7 +42,7 @@ export function useDeckLayers({
 
   // RNP 3D approach path — fetch data + drive animation
   const rnpPathData = useRnpPath3d(selectedRnpProcedureId);
-  const rnpCurrentTime = useRnpAnimation(rnpPathData?.total_distance_nm ?? null);
+  const rnpCurrentTime = useRnpAnimation(rnpPathData?.max_distance_nm ?? null);
 
   const { isAtsRendered, currentTime } = useRouteAnimation();
 
