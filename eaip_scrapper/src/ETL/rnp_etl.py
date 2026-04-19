@@ -7,17 +7,20 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(BASE_DIR / "src"))
 
-from rnp_processor.utils import setup_logging, SCRATCH_DIR, MERGED_DIR
+from rnp_processor.utils import setup_logging, MERGED_DIR
 from rnp_processor.extractor import RNPExtractor
 from rnp_processor.transformer import RNPTransformer
 from rnp_processor.loader import RNPLoader
 from rnp_processor.validator import RNPValidator
 
+
 def main():
     parser = argparse.ArgumentParser(description="Unified RNP ETL Pipeline")
     parser.add_argument("--step", choices=["extract", "merge", "parse", "load", "all"], default="all",
-                        help="Etl step to run (default: all)")
+                        help="ETL step to run (default: all)")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument("--force-load", action="store_true",
+                        help="Load procedures even if validation fails (not recommended)")
     args = parser.parse_args()
 
     # Logging setup
@@ -34,13 +37,11 @@ def main():
     }
 
     try:
-        # 1. Extraction (Optional/Manual for now to save API credits unless requested)
+        # 1. Extraction
         if args.step in ("extract", "all"):
-            # Note: Full extraction is long, usually run as-needed
-            # For this unification, we assume extraction is handled by dedicated command or run subset
             logger.info("Extraction step triggered (LlamaCloud/Mistral)...")
             # extractor = RNPExtractor()
-            # ... logic to trigger extraction ...
+            # ... extraction logic (manual / on-demand to save API credits) ...
             pass
 
         # 2. Merging
@@ -53,37 +54,70 @@ def main():
             transformer = RNPTransformer()
             loader = RNPLoader(db_config)
             validator = RNPValidator()
-            
+
             if args.step in ("load", "all"):
                 loader.init_schema()
 
             # Iterate through merged files
-            merged_files = list(MERGED_DIR.glob("*.md"))
+            merged_files = sorted(MERGED_DIR.glob("*.md"))
             logger.info(f"Processing {len(merged_files)} merged files...")
-            
-            summary = {"total": 0, "loaded": 0, "failed": 0}
-            
+
+            summary = {
+                "total": 0,
+                "loaded": 0,
+                "skipped": 0,
+                "warned": 0,
+                "failed": 0,
+            }
+
             for f in merged_files:
                 summary["total"] += 1
                 proc_data = transformer.parse_file(f)
-                
-                # Validation
+
+                # ── Validation ────────────────────────────────────────────
                 val_res = validator.validate_procedure_data(proc_data)
+
                 if val_res["status"] == "FAILED":
-                    logger.warning(f"Validation FAILED for {f.name}: {val_res['issues']}")
-                
-                # Load
+                    logger.error(
+                        f"VALIDATION FAILED — {f.name}: {val_res['issues']}"
+                    )
+                    if not args.force_load:
+                        summary["skipped"] += 1
+                        continue
+                    else:
+                        logger.warning(f"  --force-load: loading despite failure")
+
+                if val_res["status"] == "WARNING":
+                    logger.warning(
+                        f"VALIDATION WARNING — {f.name}: {val_res['issues']}"
+                    )
+                    summary["warned"] += 1
+
+                # ── Load ──────────────────────────────────────────────────
                 if args.step in ("load", "all"):
-                    if loader.load_procedure(proc_data):
+                    notes = "; ".join(val_res["issues"]) if val_res["issues"] else None
+                    if loader.load_procedure(
+                        proc_data,
+                        validation_status=val_res["status"],
+                        validation_notes=notes
+                    ):
                         summary["loaded"] += 1
                     else:
                         summary["failed"] += 1
-            
-            logger.info(f"ETL Summary: Total={summary['total']}, Loaded={summary['loaded']}, Failed={summary['failed']}")
+
+            logger.info(
+                f"ETL Summary: "
+                f"Total={summary['total']}, "
+                f"Loaded={summary['loaded']}, "
+                f"Warned={summary['warned']}, "
+                f"Skipped={summary['skipped']}, "
+                f"Failed={summary['failed']}"
+            )
 
     except Exception as e:
         logger.exception(f"ETL Pipeline failed: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
