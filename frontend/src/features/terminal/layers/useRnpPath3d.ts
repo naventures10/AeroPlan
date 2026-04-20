@@ -6,38 +6,8 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-
-export interface RnpWaypointMarker {
-  name: string;
-  position: [number, number, number]; // [lon, lat, alt_m]
-  role: string | null;
-}
-
-export interface RnpApproachPath {
-  label: string;
-  entry_waypoint: string;
-  path: [number, number, number][];
-  timestamps: number[];
-  total_distance_nm: number;
-  segment_type: string;
-}
-
-export interface RnpMissedApproachPath {
-  path: [number, number, number][];
-  timestamps: number[];
-  total_distance_nm: number;
-}
-
-export interface RnpPath3d {
-  procedure_id: number;
-  name: string;
-  airport_id: string;
-  runway: string;
-  approach_paths: RnpApproachPath[];
-  missed_approach_path: RnpMissedApproachPath | null;
-  max_distance_nm: number;
-  waypoints: RnpWaypointMarker[];
-}
+import { fetchRnpPath3d } from '../../../api/client';
+import type { RnpPath3d } from '../../../types';
 
 export function useRnpPath3d(procedureId: number | null): RnpPath3d | null {
   const [data, setData] = useState<RnpPath3d | null>(null);
@@ -60,13 +30,11 @@ export function useRnpPath3d(procedureId: number | null): RnpPath3d | null {
 
     (async () => {
       try {
-        const res = await fetch(`/api/rnp-procedures/${procedureId}/path3d`);
-        if (!res.ok) {
-          console.error(`RNP path3d fetch failed: ${res.status}`);
+        const json = await fetchRnpPath3d(procedureId);
+        if (!json) {
           if (!cancelled) setData(null);
           return;
         }
-        const json: RnpPath3d = await res.json();
         if (!cancelled) {
           cache.current.set(procedureId, json);
           setData(json);

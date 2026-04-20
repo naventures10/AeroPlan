@@ -42,7 +42,7 @@ async def test_get_ats_route_details_success(
     await db_session.commit()
 
     # 2. Call API
-    response = await api_client.get("/api/ats-routes/TEST1/details")
+    response = await api_client.get("/api/v1/ats-routes/TEST1/details")
 
     # 3. Assertions
     assert response.status_code == 200
@@ -64,6 +64,6 @@ async def test_get_ats_route_details_success(
 @pytest.mark.asyncio
 async def test_get_ats_route_details_not_found(api_client: AsyncClient) -> None:
     """Test 404 for non-existent route."""
-    response = await api_client.get("/api/ats-routes/NONEXISTENT/details")
+    response = await api_client.get("/api/v1/ats-routes/NONEXISTENT/details")
     assert response.status_code == 404
     assert "not found" in response.json()["detail"].lower()

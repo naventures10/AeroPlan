@@ -1,0 +1,346 @@
+/**
+ * RNP Approach Path — 3D TripsLayer + Waypoint markers
+ *
+ * Renders the RNP procedure as animated 3D descent paths using DeckGL's
+ * TripsLayer (for the glowing trails) plus a PathLayer for missed approach,
+ * and ScatterplotLayer for waypoint markers at their 3D positions.
+ *
+ * Now uses static clickable paths for approach, showing animation only for the selected one.
+ */
+
+import { TripsLayer } from '@deck.gl/geo-layers';
+import { ScatterplotLayer, TextLayer, PathLayer } from '@deck.gl/layers';
+import type { RnpPath3d, RnpApproachPath, RnpWaypointMarker } from '../../../types';
+
+/** Altitude exaggeration — makes the vertical offset visually prominent */
+const ALT_EXAGGERATION = 3;
+
+/** Base magenta color for RNP approach paths */
+const RGB_APPROACH: [number, number, number] = [255, 0, 255]; // Magenta
+
+/** Waypoint marker colour — warm amber to contrast the cyan trail */
+const COLOR_WAYPOINT: [number, number, number, number] = [255, 191, 0, 220];
+
+/** IAF / FAF marker — brighter magenta */
+const COLOR_KEY_WAYPOINT: [number, number, number, number] = [255, 100, 200, 255];
+
+function roleColor(role: string | null): [number, number, number, number] {
+  if (!role) return COLOR_WAYPOINT;
+  const r = role.toUpperCase();
+  if (r.includes('IAF') || r.includes('FAF') || r.includes('MAPT')) {
+    return COLOR_KEY_WAYPOINT;
+  }
+  return COLOR_WAYPOINT;
+}
+
+// ── Missed Approach Dash Geometry Helpers ───────────────────────────────────
+
+/** Dash length along the path (NM) */
+const MISSED_DASH_NM = 0.35;
+/** Gap length between dashes (NM) */
+const MISSED_GAP_NM = 0.18;
+
+/**
+ * Linearly interpolates a 3D position along `path` at cumulative distance `t` NM.
+ * Uses the `timestamps` array (cumulative NM per vertex) for fast lookup.
+ */
+function pathPosAt(path: number[][], timestamps: number[], t: number): number[] {
+  const firstTs = timestamps[0] as number;
+  const lastTs = timestamps[timestamps.length - 1] as number;
+  if (t <= firstTs) return [...(path[0] ?? [])];
+  if (t >= lastTs) return [...(path[path.length - 1] ?? [])];
+  for (let i = 1; i < timestamps.length; i++) {
+    const tCurr = timestamps[i] as number;
+    const tPrev = timestamps[i - 1] as number;
+    if (tCurr >= t) {
+      const frac = (t - tPrev) / (tCurr - tPrev);
+      const a = path[i - 1] as number[];
+      const b = path[i] as number[];
+      return [
+        (a[0] as number) + frac * ((b[0] as number) - (a[0] as number)),
+        (a[1] as number) + frac * ((b[1] as number) - (a[1] as number)),
+        (a[2] as number) + frac * ((b[2] as number) - (a[2] as number)),
+      ];
+    }
+  }
+  return [...(path[path.length - 1] ?? [])];
+}
+
+/**
+ * Pre-computes dash sub-paths along a 3D path up to `upToNm` NM.
+ *
+ * Each dash is a small array of 3D coordinates following the curved path.
+ * Intermediate vertices between the dash start/end are included so the dash
+ * hugs curves correctly. Every dash is exactly MISSED_DASH_NM long (or shorter
+ * at the very end) — no per-segment compression artifacts.
+ */
+function computeMissedDashes(
+  path: number[][],
+  timestamps: number[],
+  totalNm: number,
+  upToNm: number,
+): number[][][] {
+  const period = MISSED_DASH_NM + MISSED_GAP_NM;
+  const dashes: number[][][] = [];
+  let t = 0;
+
+  while (t < upToNm && t < totalNm) {
+    const start = t;
+    const end = Math.min(t + MISSED_DASH_NM, totalNm, upToNm);
+
+    if (end > start) {
+      // Build this dash's polygon: interpolated start, interior vertices, interpolated end
+      const pts: number[][] = [pathPosAt(path, timestamps, start)];
+      for (let i = 0; i < timestamps.length; i++) {
+        const ts = timestamps[i] as number;
+        if (ts > start + 1e-6 && ts < end - 1e-6) {
+          pts.push([...(path[i] as number[])]);
+        }
+      }
+      pts.push(pathPosAt(path, timestamps, end));
+      dashes.push(pts);
+    }
+
+    t += period;
+  }
+
+  return dashes;
+}
+
+export interface RnpContext {
+  pathData: RnpPath3d | null;
+  selectedRnpApproachId: string | null;
+  setSelectedRnpApproachId: (id: string | null) => void;
+  rnpCurrentTime: number;
+  /** Cumulative NM at which the approach animation reaches the RW waypoint.
+   *  After this point the missed approach phase begins. */
+  approachDist: number;
+}
+
+/**
+ * Build DeckGL layers for the active RNP procedure.
+ */
+export function createRnpLayers({
+  pathData,
+  selectedRnpApproachId,
+  setSelectedRnpApproachId,
+  rnpCurrentTime,
+  approachDist,
+}: RnpContext): any[] {
+  if (!pathData) return [];
+
+  const layers: any[] = [];
+
+  // Find the lowest altitude (usually the runway / MAPt) to anchor the exaggeration
+  // so the path touches the real MapLibre map plane at Z=0.
+  let minZ = Infinity;
+  pathData.approach_paths.forEach((ap: RnpApproachPath) => {
+    ap.path.forEach((p: [number, number, number]) => {
+      if (p[2] < minZ) minZ = p[2];
+    });
+  });
+  if (pathData.missed_approach_path) {
+    pathData.missed_approach_path.path.forEach((p: [number, number, number]) => {
+      if (p[2] < minZ) minZ = p[2];
+    });
+  }
+  if (minZ === Infinity) minZ = 0;
+
+  // Transform approach paths by adding exaggeration
+  const approachTripData = pathData.approach_paths.map((ap: RnpApproachPath) => ({
+    entry_waypoint: ap.entry_waypoint,
+    path: ap.path.map((p: [number, number, number]) => [
+      p[0],
+      p[1],
+      Math.max(0, (p[2] - minZ) * ALT_EXAGGERATION),
+    ]),
+    timestamps: ap.timestamps,
+    total_dist: ap.total_distance_nm,
+  }));
+
+  if (approachTripData.length > 0) {
+    // ── 1. Static 3D Approach Linestrings (Clickable) ───────────────────
+    layers.push(
+      new PathLayer({
+        id: 'rnp-approach-linestrings-layer',
+        data: approachTripData,
+        getPath: (d: any) => d.path,
+        getColor: (d: any) => {
+          if (selectedRnpApproachId === null) {
+            // When none selected, show all relatively visibly
+            return [...RGB_APPROACH, 160] as [number, number, number, number];
+          }
+          if (d.entry_waypoint === selectedRnpApproachId) {
+            return [255, 255, 255, 255]; // Focus style
+          }
+          return [...RGB_APPROACH, 60] as [number, number, number, number]; // Dimmed
+        },
+        getWidth: (d: any) => (d.entry_waypoint === selectedRnpApproachId ? 6 : 4),
+        widthMinPixels: 2,
+        pickable: true,
+        autoHighlight: true,
+        highlightColor: [255, 255, 255, 150],
+        onClick: (info: any) => {
+          if (info.object && info.object.entry_waypoint) {
+            const entry = info.object.entry_waypoint;
+            setSelectedRnpApproachId(selectedRnpApproachId === entry ? null : entry);
+          } else {
+            setSelectedRnpApproachId(null);
+          }
+        },
+        updateTriggers: {
+          getColor: [selectedRnpApproachId],
+          getWidth: [selectedRnpApproachId],
+        },
+        transitions: {
+          getColor: 300,
+          getWidth: 300,
+        },
+      }),
+    );
+
+    // ── 2. Animated 3D Approach Trail (Only for Selected) ───────────────
+    if (selectedRnpApproachId) {
+      const selectedTrip = approachTripData.find((t) => t.entry_waypoint === selectedRnpApproachId);
+
+      if (selectedTrip) {
+        // Clamp the approach head to approachDist so it freezes at the RW waypoint
+        // once the missed approach phase begins (rnpCurrentTime > approachDist).
+        const approachTime = Math.min(
+          rnpCurrentTime,
+          approachDist > 0 ? approachDist : rnpCurrentTime,
+        );
+
+        layers.push(
+          new TripsLayer({
+            id: 'rnp-approach-trips-layer',
+            data: [selectedTrip],
+            getPath: (d: any) => d.path,
+            getTimestamps: (d: any) => d.timestamps,
+            getColor: RGB_APPROACH,
+            opacity: 1,
+            widthMinPixels: 4,
+            jointRounded: true,
+            capRounded: true,
+            billboard: true,
+            trailLength: Math.min(selectedTrip.total_dist * 0.4, 250),
+            currentTime: approachTime,
+          }),
+        );
+      }
+    }
+  }
+
+  // ── 3. Missed Approach — pre-computed uniform dashes ──────────────────────
+  // We walk the 3D path in NM-space and slice it into fixed-length dash segments.
+  // Ghost = all dashes at low opacity (preview). Revealed = dashes up to missedTime
+  // at full opacity. Each dash is a real path geometry so they follow curves and
+  // are always the same NM length — no compression or extension artifacts.
+  if (
+    selectedRnpApproachId &&
+    pathData.missed_approach_path &&
+    pathData.missed_approach_path.path.length >= 2 &&
+    approachDist > 0
+  ) {
+    const missedDist = pathData.missed_approach_path.total_distance_nm;
+    const missedTimestamps = pathData.missed_approach_path.timestamps;
+    const missedTime = Math.max(0, rnpCurrentTime - approachDist);
+
+    const missedPath3d = pathData.missed_approach_path.path.map((p: [number, number, number]) => [
+      p[0],
+      p[1],
+      Math.max(0, (p[2] - minZ) * ALT_EXAGGERATION),
+    ]);
+
+    // All dashes along the full route (ghost / preview)
+    const allDashes = computeMissedDashes(missedPath3d, missedTimestamps, missedDist, missedDist);
+    // Only dashes that have been "drawn" so far
+    const revealedDashes = computeMissedDashes(
+      missedPath3d,
+      missedTimestamps,
+      missedDist,
+      missedTime,
+    );
+
+    // 3a. Ghost — faint dashes showing the full route
+    if (allDashes.length > 0) {
+      layers.push(
+        new PathLayer({
+          id: 'rnp-missed-approach-ghost-layer',
+          data: allDashes.map((seg) => ({ path: seg })),
+          getPath: (d: any) => d.path,
+          getColor: [255, 100, 80, 45],
+          getWidth: 4,
+          widthMinPixels: 2,
+          capRounded: true,
+          jointRounded: true,
+        }),
+      );
+    }
+
+    // 3b. Revealed — bright dashes drawn up to missedTime
+    if (revealedDashes.length > 0) {
+      layers.push(
+        new PathLayer({
+          id: 'rnp-missed-approach-revealed-layer',
+          data: revealedDashes.map((seg) => ({ path: seg })),
+          getPath: (d: any) => d.path,
+          getColor: [255, 100, 80, 235],
+          getWidth: 6,
+          widthMinPixels: 3,
+          capRounded: true,
+          jointRounded: true,
+        }),
+      );
+    }
+  }
+
+  // ── 4. Waypoint markers (3D scatter) ───────────────────────────────
+  if (pathData.waypoints.length > 0) {
+    layers.push(
+      new ScatterplotLayer({
+        id: 'rnp-waypoint-markers-layer',
+        data: pathData.waypoints,
+        getPosition: (d: RnpWaypointMarker) => [
+          d.position[0],
+          d.position[1],
+          Math.max(0, (d.position[2] - minZ) * ALT_EXAGGERATION),
+        ],
+        getRadius: 80,
+        radiusUnits: 'meters',
+        getFillColor: (d: RnpWaypointMarker) => roleColor(d.role),
+        getLineColor: [255, 255, 255, 180],
+        lineWidthMinPixels: 1,
+        stroked: true,
+        filled: true,
+        pickable: true,
+      }),
+    );
+
+    // 4b. Waypoint name labels
+    layers.push(
+      new TextLayer({
+        id: 'rnp-waypoint-labels-layer',
+        data: pathData.waypoints,
+        getPosition: (d: RnpWaypointMarker) => [
+          d.position[0],
+          d.position[1],
+          Math.max(0, (d.position[2] - minZ) * ALT_EXAGGERATION),
+        ],
+        getText: (d: RnpWaypointMarker) => d.name,
+        getSize: 13,
+        getColor: [255, 255, 255, 220],
+        getTextAnchor: 'start',
+        getAlignmentBaseline: 'center',
+        getPixelOffset: [12, 0],
+        fontFamily: 'Inter, sans-serif',
+        fontWeight: 600,
+        outlineWidth: 2,
+        outlineColor: [0, 0, 0, 200],
+        billboard: true,
+      }),
+    );
+  }
+
+  return layers;
+}

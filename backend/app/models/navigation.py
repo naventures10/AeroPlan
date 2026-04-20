@@ -3,7 +3,7 @@ from sqlalchemy import Column, DateTime, Integer, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
 from sqlalchemy.sql import func
 
-from app.database import Base
+from app.core.database import Base
 
 
 class SignificantPoint(Base):

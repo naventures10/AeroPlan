@@ -10,10 +10,10 @@ from fastapi.responses import Response
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.core.database import get_db
 from app.schemas.aerodrome import ChartResponse
 
-router = APIRouter(prefix="/api", tags=["Charts"])
+router = APIRouter(prefix="", tags=["Charts"])
 
 ALLOWED_PDF_DOMAINS = [
     "aim-india.aai.aero",
@@ -64,7 +64,7 @@ async def proxy_pdf(url: str = Query(..., description="Remote PDF URL to proxy")
     """
     _validate_proxy_url(url)
 
-    from app.config import settings
+    from app.core.config import settings
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",

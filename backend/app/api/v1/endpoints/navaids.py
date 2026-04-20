@@ -6,10 +6,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.core.database import get_db
 from app.schemas.navaid import NavAidDetailResponse
 
-router = APIRouter(prefix="/api/navaids", tags=["NavAids"])
+router = APIRouter(prefix="/navaids", tags=["NavAids"])
 
 
 @router.get("/{ident}", response_model=NavAidDetailResponse)

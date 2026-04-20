@@ -8,6 +8,8 @@ import 'react-pdf/dist/Page/TextLayer.css';
 
 import { useMapStore } from '../../store/useMapStore';
 import { normalizeChartKey } from '../../utils/chartKey';
+import { fetchCharts, fetchRnpProcedures, getProxyPdfUrl } from '../../api/client';
+import type { ChartItem, RnpProcedureApi } from '../../types';
 
 // Configure pdf.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -15,27 +17,8 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString();
 
-interface ChartItem {
-  chart_id: number;
-  chart_title: string;
-  chart_index: string;
-  chart_url: string;
-}
-
 interface AerodromeChartViewerProps {
   icaoCode: string | null;
-}
-
-interface RnpProcedureApi {
-  procedure_id: number;
-  name: string;
-  runway: string | null;
-  type: string | null;
-  chart_key: string;
-  min_lng: number | null;
-  min_lat: number | null;
-  max_lng: number | null;
-  max_lat: number | null;
 }
 
 function candidateChartKeys(chart: ChartItem): string[] {
@@ -91,13 +74,10 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
       return;
     }
 
-    const normalizedIcao = icaoCode.toUpperCase();
     setIsLoading(true);
-    fetch(`/api/aerodromes/${normalizedIcao}/charts`)
-      .then((res) => res.json())
+    fetchCharts(icaoCode)
       .then((data) => {
-        const chartList = Array.isArray(data) ? data : [];
-        setCharts(chartList);
+        setCharts(data);
       })
       .catch((err) => {
         console.error('Failed to fetch aerodrome charts:', err);
@@ -106,23 +86,10 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
       .finally(() => {
         setIsLoading(false);
       });
-  }, [icaoCode]);
 
-  useEffect(() => {
-    if (!icaoCode) {
-      setRnpProcedures([]);
-      return;
-    }
-    const normalizedIcao = icaoCode.toUpperCase();
-    fetch(`/api/aerodromes/${normalizedIcao}/rnp-procedures`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
+    fetchRnpProcedures(icaoCode)
       .then((data) => {
-        setRnpProcedures(Array.isArray(data) ? data : []);
+        setRnpProcedures(data);
       })
       .catch((err) => {
         console.error('Failed to fetch RNP procedures:', err);
@@ -206,9 +173,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
   }, []);
 
   // Use proxy URL directly for on-demand fetching via react-pdf
-  const pdfUrl = selectedChart
-    ? `/api/proxy-pdf?url=${encodeURIComponent(selectedChart.chart_url)}`
-    : '';
+  const pdfUrl = selectedChart ? getProxyPdfUrl(selectedChart.chart_url!) : '';
 
   if (!icaoCode) return null;
 
@@ -276,7 +241,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                         handleChartClick(chart);
                       }}
                       className="group shrink-0 flex flex-col items-center gap-1.5 p-2 rounded-xl border border-zinc-800/50 hover:border-indigo-500/40 bg-zinc-900/40 hover:bg-indigo-500/10 transition-all duration-200 cursor-pointer w-[82px]"
-                      title={chart.chart_title}
+                      title={chart.chart_title || undefined}
                     >
                       {/* Chart Icon */}
                       <div className="w-10 h-11 rounded-lg bg-gradient-to-br from-teal-400/20 to-cyan-500/20 border border-teal-500/30 group-hover:border-teal-400/50 flex items-center justify-center transition-colors">

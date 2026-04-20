@@ -8,22 +8,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
-from app.database import AsyncSessionLocal
-from app.logging_config import setup_logging
-from app.routers import (
-    aerodromes,
-    ats_routes,
-    charts,
-    daylight,
-    navaids,
-    notams,
-    rnp,
-    search,
-    spatial,
-    weather,
-)
+from app.api.v1.api import api_router
+from app.core.database import AsyncSessionLocal
+from app.core.logging_config import setup_logging
+from app.core.telemetry import setup_tracing
 from app.schemas.geojson import HealthResponse
-from app.telemetry import setup_tracing
 
 # ── Initialise structured logging ────────────────────────────────────────────
 setup_logging(json_format=os.getenv("LOG_FORMAT", "").lower() == "json")
@@ -96,7 +85,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 
 
 # ── Health Check ─────────────────────────────────────────────────────────────
-@app.get("/api/health", response_model=HealthResponse)
+@app.get("/api/v1/health", response_model=HealthResponse)
 async def health_check() -> dict:
     """
     Returns service status and database connectivity.
@@ -114,20 +103,11 @@ async def health_check() -> dict:
 
 
 # ── Register Routers ─────────────────────────────────────────────────────────
-app.include_router(aerodromes.router)
-app.include_router(search.router)
-app.include_router(charts.router)
-app.include_router(rnp.router)
-app.include_router(spatial.router)
-app.include_router(weather.router)
-app.include_router(notams.router)
-app.include_router(daylight.router)
-app.include_router(ats_routes.router)
-app.include_router(navaids.router)
+app.include_router(api_router, prefix="/api/v1")
 
 # ── Dev-only: Async profiling endpoints (yappi) ──────────────────────────────
 if os.getenv("DEBUG", "").lower() in ("1", "true"):
-    from app.profiling import profiling_router
+    from app.core.profiling import profiling_router
 
     app.include_router(profiling_router)
     logger.info("profiling_endpoints_enabled")
