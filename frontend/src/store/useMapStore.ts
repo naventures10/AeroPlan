@@ -55,6 +55,9 @@ interface MapState {
     } | null,
   ) => void;
 
+  selectedRnpApproachId: string | null;
+  setSelectedRnpApproachId: (id: string | null) => void;
+
   selectedFeature: {
     type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID' | 'AIRSPACE_STACK';
     data: any;
@@ -120,6 +123,7 @@ export const useMapStore = create<MapState>((set, get) => ({
             selectedRnpProcedureId: null,
             selectedRnpChartKey: null,
             selectedRnpBounds: null,
+            selectedRnpApproachId: null,
           }
         : {}),
     }),
@@ -166,11 +170,15 @@ export const useMapStore = create<MapState>((set, get) => ({
       selectedRnpProcedureId: null,
       selectedRnpChartKey: null,
       selectedRnpBounds: null,
+      selectedRnpApproachId: null,
     }),
 
   selectedRnpProcedureId: null,
   selectedRnpChartKey: null,
   selectedRnpBounds: null,
+  selectedRnpApproachId: null,
+  setSelectedRnpApproachId: (id) => set({ selectedRnpApproachId: id }),
+
   setSelectedRnpProcedure: (payload) =>
     set(
       payload
@@ -178,11 +186,13 @@ export const useMapStore = create<MapState>((set, get) => ({
             selectedRnpProcedureId: payload.procedureId,
             selectedRnpChartKey: payload.chartKey,
             selectedRnpBounds: payload.bounds,
+            selectedRnpApproachId: null, // Reset approach ID on new procedure
           }
         : {
             selectedRnpProcedureId: null,
             selectedRnpChartKey: null,
             selectedRnpBounds: null,
+            selectedRnpApproachId: null,
           },
     ),
 
@@ -227,6 +237,7 @@ export const useMapStore = create<MapState>((set, get) => ({
             selectedRnpProcedureId: null,
             selectedRnpChartKey: null,
             selectedRnpBounds: null,
+            selectedRnpApproachId: null,
           }
         : {}),
       viewState: {
@@ -245,6 +256,7 @@ export const useMapStore = create<MapState>((set, get) => ({
       selectedRnpProcedureId: null,
       selectedRnpChartKey: null,
       selectedRnpBounds: null,
+      selectedRnpApproachId: null,
       selectedFeature: null,
       terminalPivot: null,
       viewState: {
