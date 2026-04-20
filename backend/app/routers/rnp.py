@@ -262,6 +262,14 @@ async def get_rnp_path_3d(
                 OR (l.waypoint_ident LIKE 'RW%' AND ident = REPLACE(l.waypoint_ident, 'RW', 'RWY'))
                 OR (l.waypoint_ident LIKE 'RWY%' AND ident = REPLACE(l.waypoint_ident, 'RWY', 'RW'))
               )
+            ORDER BY (
+                CASE
+                    WHEN ident = l.waypoint_ident THEN 0
+                    WHEN l.waypoint_ident LIKE 'RW%' AND ident = REPLACE(l.waypoint_ident, 'RW', 'RWY') THEN 1
+                    WHEN l.waypoint_ident LIKE 'RWY%' AND ident = REPLACE(l.waypoint_ident, 'RWY', 'RW') THEN 2
+                    ELSE 3
+                END
+            )
             LIMIT 1
         ) w ON TRUE
         WHERE l.procedure_id = :pid

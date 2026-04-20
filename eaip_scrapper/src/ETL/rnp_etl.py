@@ -61,12 +61,22 @@ Skip flags:
 
     import os
     # ── DB Config ──────────────────────────────────────────────────────────────
+    postgres_password = os.getenv("POSTGRES_PASSWORD")
+    if not postgres_password:
+        raise ValueError("POSTGRES_PASSWORD must be set in environment variables.")
+
+    postgres_port_str = os.getenv("POSTGRES_PORT", "5432")
+    try:
+        postgres_port = int(postgres_port_str)
+    except ValueError:
+        raise ValueError(f"Invalid POSTGRES_PORT: {postgres_port_str}. Must be numeric.")
+
     db_config = {
         "host": os.getenv("POSTGRES_HOST", "localhost"),
-        "port": int(os.getenv("POSTGRES_PORT", 5432)),
+        "port": postgres_port,
         "database": os.getenv("POSTGRES_DB", "aeronautical_information_system"),
         "user": os.getenv("POSTGRES_USER", "postgres"),
-        "password": os.getenv("POSTGRES_PASSWORD", "postgres"),
+        "password": postgres_password,
     }
 
     try:

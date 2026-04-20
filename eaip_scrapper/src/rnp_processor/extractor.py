@@ -66,7 +66,9 @@ class RNPExtractor:
         logger.info(f"Extracting {pdf_path.name} via LlamaCloud...")
         try:
             client = LlamaCloud(api_key=api_key)
-            file_obj = client.files.create(file=str(pdf_path), purpose="parse")
+            with open(pdf_path, "rb") as f_obj:
+                file_obj = client.files.create(file=f_obj, purpose="parse")
+            
             result = client.parsing.parse(
                 file_id=file_obj.id,
                 tier="agentic",
@@ -92,7 +94,7 @@ class RNPExtractor:
                     return False
 
                 output_md_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(output_md_path, "w") as f:
+                with open(output_md_path, "w", encoding="utf-8") as f:
                     f.write(full_md)
                 return True
             return False
@@ -119,10 +121,19 @@ class RNPExtractor:
             for page in response.pages:
                 md = page.markdown or ""
                 table_lookup = {tbl.id: tbl.content for tbl in (page.tables or [])}
+                
                 # Replace placeholders [tbl-X.html](tbl-X.html)
+                def _replace_table(match):
+                    tid = match.group(1)
+                    content = table_lookup.get(tid)
+                    if content is None:
+                        logger.warning(f"Mistral OCR: table '{tid}' not found in lookup for {pdf_url}")
+                        return ""
+                    return content
+
                 md = re.sub(
                     r"\[([^\]]+\.html)\]\([^\)]+\)",
-                    lambda m: table_lookup.get(m.group(1), ""),
+                    _replace_table,
                     md
                 )
                 md_parts.append(md)
@@ -130,7 +141,7 @@ class RNPExtractor:
             full_md = "\n\n---\n\n".join(md_parts)
             if full_md.strip():
                 output_md_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(output_md_path, "w") as f:
+                with open(output_md_path, "w", encoding="utf-8") as f:
                     f.write(full_md)
                 return True
             return False
