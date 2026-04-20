@@ -250,16 +250,20 @@ async def get_rnp_path_3d(
             l.role,
             l.course,
             l.distance,
-            ST_X(w.geom) AS lon,
-            ST_Y(w.geom) AS lat
+            w.lon,
+            w.lat
         FROM rnp_legs l
-        LEFT JOIN rnp_waypoints w
-          ON w.procedure_id = l.procedure_id
-         AND (
-           w.ident = l.waypoint_ident
-           OR (l.waypoint_ident LIKE 'RW%' AND w.ident = REPLACE(l.waypoint_ident, 'RW', 'RWY'))
-           OR (l.waypoint_ident LIKE 'RWY%' AND w.ident = REPLACE(l.waypoint_ident, 'RWY', 'RW'))
-         )
+        LEFT JOIN LATERAL (
+            SELECT ST_X(geom) AS lon, ST_Y(geom) AS lat
+            FROM rnp_waypoints
+            WHERE procedure_id = l.procedure_id
+              AND (
+                ident = l.waypoint_ident
+                OR (l.waypoint_ident LIKE 'RW%' AND ident = REPLACE(l.waypoint_ident, 'RW', 'RWY'))
+                OR (l.waypoint_ident LIKE 'RWY%' AND ident = REPLACE(l.waypoint_ident, 'RWY', 'RW'))
+              )
+            LIMIT 1
+        ) w ON TRUE
         WHERE l.procedure_id = :pid
         ORDER BY l.sequence_nr
     """)
@@ -456,9 +460,11 @@ async def get_rnp_path_3d(
 
     missed_approach_path = None
     if raw_missed_approach:
+        start_alt_raw = raw_missed_approach[0].altitude_numeric
+        start_alt_ft = float(start_alt_raw) if start_alt_raw is not None else 10000.0
         p3d = extract_path(
             raw_missed_approach,
-            start_alt_ft=float(raw_missed_approach[0].altitude_numeric or 10000.0),
+            start_alt_ft=start_alt_ft,
         )
         smooth_p, ts, dist = process_path(p3d)
         if smooth_p:

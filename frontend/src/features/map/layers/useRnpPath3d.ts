@@ -63,7 +63,7 @@ export function useRnpPath3d(procedureId: number | null): RnpPath3d | null {
         const res = await fetch(`/api/rnp-procedures/${procedureId}/path3d`);
         if (!res.ok) {
           console.error(`RNP path3d fetch failed: ${res.status}`);
-          setData(null);
+          if (!cancelled) setData(null);
           return;
         }
         const json: RnpPath3d = await res.json();

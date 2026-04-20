@@ -59,12 +59,10 @@ class RNPLoader:
 
     def init_schema(self):
         try:
-            conn = psycopg2.connect(**self.db_config)
-            cur = conn.cursor()
-            cur.execute(SCHEMA_SQL)
-            conn.commit()
-            cur.close()
-            conn.close()
+            with psycopg2.connect(**self.db_config) as conn:
+                with conn.cursor() as cur:
+                    cur.execute(SCHEMA_SQL)
+                    conn.commit()
             logger.info("Database schema initialized successfully.")
         except Exception as e:
             logger.error(f"Failed to initialize schema: {e}")
@@ -79,11 +77,12 @@ class RNPLoader:
             validation_notes: Stringified issues list from validator.
         """
         try:
-            conn = psycopg2.connect(**self.db_config)
-            cur = conn.cursor()
-
             # 1. Build 3D Geometry — deduplicate consecutive identical points
-            p_name = proc_data["procedure_name"]
+            p_name = proc_data.get("procedure_name")
+            if not p_name:
+                logger.error("Missing procedure_name in proc_data")
+                return False
+
             points_3d = []
             last_alt = 10000  # Default initial altitude (feet)
             prev_point = None
@@ -93,8 +92,8 @@ class RNPLoader:
                 if not ident:
                     continue
                 wp = next(
-                    (w for w in proc_data["waypoints"]
-                     if w["waypoint_id"] == ident.upper()),
+                    (w for w in proc_data.get("waypoints", [])
+                     if w.get("waypoint_id") == ident.upper()),
                     None
                 )
                 if not wp:
@@ -122,91 +121,92 @@ class RNPLoader:
             if len(points_3d) >= 2:
                 geom_3d_wkt = f"LINESTRING Z ({', '.join(points_3d)})"
 
-            # 2. Insert/Update Procedure — use ST_MakeValid for safety
-            if geom_3d_wkt:
-                cur.execute("""
-                    INSERT INTO rnp_procedures
-                        (name, airport_id, runway, type, geom_3d, validation_status, validation_notes)
-                    VALUES (%s, %s, %s, %s,
-                            ST_MakeValid(ST_GeomFromText(%s, 4326)),
-                            %s, %s)
-                    ON CONFLICT (name) DO UPDATE SET
-                        geom_3d = ST_MakeValid(EXCLUDED.geom_3d),
-                        airport_id = EXCLUDED.airport_id,
-                        runway = EXCLUDED.runway,
-                        type = EXCLUDED.type,
-                        validation_status = EXCLUDED.validation_status,
-                        validation_notes = EXCLUDED.validation_notes
-                    RETURNING id
-                """, (p_name, proc_data.get("airport_id"), proc_data.get("runway"),
-                      proc_data.get("procedure_type"), geom_3d_wkt,
-                      validation_status, validation_notes))
-            else:
-                cur.execute("""
-                    INSERT INTO rnp_procedures
-                        (name, airport_id, runway, type, geom_3d, validation_status, validation_notes)
-                    VALUES (%s, %s, %s, %s, NULL, %s, %s)
-                    ON CONFLICT (name) DO UPDATE SET
-                        geom_3d = NULL,
-                        airport_id = EXCLUDED.airport_id,
-                        runway = EXCLUDED.runway,
-                        type = EXCLUDED.type,
-                        validation_status = EXCLUDED.validation_status,
-                        validation_notes = EXCLUDED.validation_notes
-                    RETURNING id
-                """, (p_name, proc_data.get("airport_id"), proc_data.get("runway"),
-                      proc_data.get("procedure_type"),
-                      validation_status, validation_notes))
+            with psycopg2.connect(**self.db_config) as conn:
+                with conn.cursor() as cur:
+                    # 2. Insert/Update Procedure — use ST_MakeValid for safety
+                    if geom_3d_wkt:
+                        cur.execute("""
+                            INSERT INTO rnp_procedures
+                                (name, airport_id, runway, type, geom_3d, validation_status, validation_notes)
+                            VALUES (%s, %s, %s, %s,
+                                    ST_MakeValid(ST_GeomFromText(%s, 4326)),
+                                    %s, %s)
+                            ON CONFLICT (name) DO UPDATE SET
+                                geom_3d = ST_MakeValid(EXCLUDED.geom_3d),
+                                airport_id = EXCLUDED.airport_id,
+                                runway = EXCLUDED.runway,
+                                type = EXCLUDED.type,
+                                validation_status = EXCLUDED.validation_status,
+                                validation_notes = EXCLUDED.validation_notes
+                            RETURNING id
+                        """, (p_name, proc_data.get("airport_id"), proc_data.get("runway"),
+                              proc_data.get("procedure_type"), geom_3d_wkt,
+                              validation_status, validation_notes))
+                    else:
+                        cur.execute("""
+                            INSERT INTO rnp_procedures
+                                (name, airport_id, runway, type, geom_3d, validation_status, validation_notes)
+                            VALUES (%s, %s, %s, %s, NULL, %s, %s)
+                            ON CONFLICT (name) DO UPDATE SET
+                                geom_3d = NULL,
+                                airport_id = EXCLUDED.airport_id,
+                                runway = EXCLUDED.runway,
+                                type = EXCLUDED.type,
+                                validation_status = EXCLUDED.validation_status,
+                                validation_notes = EXCLUDED.validation_notes
+                            RETURNING id
+                        """, (p_name, proc_data.get("airport_id"), proc_data.get("runway"),
+                              proc_data.get("procedure_type"),
+                              validation_status, validation_notes))
 
-            proc_pk = cur.fetchone()[0]
+                    proc_pk = cur.fetchone()[0]
 
-            # 3. Upsert Waypoints — scoped to procedure_id
-            for wp in proc_data.get("waypoints", []):
-                lat = wp.get("lat_dd")
-                lon = wp.get("lon_dd")
-                if not is_valid_coord(lat, lon):
-                    logger.warning(
-                        f"Skipping waypoint {wp.get('waypoint_id')} — "
-                        f"invalid coords: ({lat}, {lon})"
-                    )
-                    continue
-                cur.execute("""
-                    INSERT INTO rnp_waypoints (procedure_id, ident, geom, coordinates_raw)
-                    VALUES (%s, %s, ST_SetSRID(ST_MakePoint(%s, %s), 4326), %s)
-                    ON CONFLICT (procedure_id, ident) DO UPDATE SET geom = EXCLUDED.geom
-                """, (proc_pk, wp["waypoint_id"], lon, lat, wp.get("coordinates_raw")))
+                    # 3. Upsert Waypoints — scoped to procedure_id
+                    for wp in proc_data.get("waypoints", []):
+                        lat = wp.get("lat_dd")
+                        lon = wp.get("lon_dd")
+                        if not is_valid_coord(lat, lon):
+                            logger.warning(
+                                f"Skipping waypoint {wp.get('waypoint_id')} — "
+                                f"invalid coords: ({lat}, {lon})"
+                            )
+                            continue
+                        cur.execute("""
+                            INSERT INTO rnp_waypoints (procedure_id, ident, geom, coordinates_raw)
+                            VALUES (%s, %s, ST_SetSRID(ST_MakePoint(%s, %s), 4326), %s)
+                            ON CONFLICT (procedure_id, ident) DO UPDATE SET geom = EXCLUDED.geom
+                        """, (proc_pk, wp.get("waypoint_id"), lon, lat, wp.get("coordinates_raw")))
 
-            # 4. Insert Legs
-            cur.execute("DELETE FROM rnp_legs WHERE procedure_id = %s", (proc_pk,))
-            legs = []
-            for i, leg in enumerate(proc_data.get("tabular_description", []), 1):
-                alt_raw = leg.get("altitude") or leg.get("altitude_lower")
-                
-                # Parse fly_over as boolean (usually encoded as 'Y' or ' ' in AIPs)
-                fly_over_raw = str(leg.get("fly_over", "")).strip().upper()
-                is_fly_over = fly_over_raw == "Y"
-                
-                legs.append((
-                    proc_pk, i, str(leg.get("serial_number", ""))[:10] if leg.get("serial_number") else None, 
-                    leg.get("path_descriptor"), leg.get("waypoint_identifier"),
-                    parse_altitude(alt_raw), alt_raw, leg.get("speed_limit"),
-                    leg.get("course"), leg.get("distance"), leg.get("turn_direction"),
-                    leg.get("vpa_tch"), leg.get("nav_spec"), leg.get("role"), is_fly_over
-                ))
+                    # 4. Insert Legs
+                    cur.execute("DELETE FROM rnp_legs WHERE procedure_id = %s", (proc_pk,))
+                    legs = []
+                    for i, leg in enumerate(proc_data.get("tabular_description", []), 1):
+                        alt_raw = leg.get("altitude") or leg.get("altitude_lower")
+                        
+                        # Parse fly_over as boolean (usually encoded as 'Y' or ' ' in AIPs)
+                        fly_over_raw = str(leg.get("fly_over", "")).strip().upper()
+                        is_fly_over = fly_over_raw == "Y"
+                        
+                        legs.append((
+                            proc_pk, i, str(leg.get("serial_number", ""))[:10] if leg.get("serial_number") else None, 
+                            leg.get("path_descriptor"), leg.get("waypoint_identifier"),
+                            parse_altitude(alt_raw), alt_raw, leg.get("speed_limit"),
+                            leg.get("course"), leg.get("distance"), leg.get("turn_direction"),
+                            leg.get("vpa_tch"), leg.get("nav_spec"), leg.get("role"), is_fly_over
+                        ))
 
-            if legs:
-                execute_values(cur, """
-                    INSERT INTO rnp_legs
-                        (procedure_id, sequence_nr, source_serial, path_descriptor, waypoint_ident,
-                         altitude_numeric, altitude_constraint, speed_limit,
-                         course, distance, turn_direction, vpa_tch, nav_spec, role, fly_over)
-                    VALUES %s
-                """, legs)
+                    if legs:
+                        execute_values(cur, """
+                            INSERT INTO rnp_legs
+                                (procedure_id, sequence_nr, source_serial, path_descriptor, waypoint_ident,
+                                 altitude_numeric, altitude_constraint, speed_limit,
+                                 course, distance, turn_direction, vpa_tch, nav_spec, role, fly_over)
+                            VALUES %s
+                        """, legs)
 
-            conn.commit()
-            cur.close()
-            conn.close()
+                    conn.commit()
             return True
         except Exception as e:
             logger.error(f"Error loading {proc_data.get('procedure_name')}: {e}")
             return False
+

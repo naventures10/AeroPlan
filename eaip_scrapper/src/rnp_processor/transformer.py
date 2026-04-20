@@ -81,13 +81,14 @@ class RNPTransformer:
             file_list.sort(key=lambda x: x.name)
             merged_content = []
             for f in file_list:
-                with open(f, "r") as src:
+                with open(f, "r", encoding='utf-8') as src:
                     merged_content.append(f"<!-- Source: {f.name} -->\n" + src.read())
 
             output_file = MERGED_DIR / f"{base_name}.md"
-            with open(output_file, "w") as dest:
+            with open(output_file, "w", encoding='utf-8') as dest:
                 dest.write("\n\n---\n\n".join(merged_content))
         logger.info(f"Merged {len(files)} parts into {len(groups)} procedures.")
+
 
     def classify_table(self, table):
         text_lower = table.get_text(separator=' ').lower()
@@ -108,7 +109,11 @@ class RNPTransformer:
                 continue
             cells = []
             for td in tds:
-                cells.extend([clean_text(td.get_text(strip=True))] * int(td.get('colspan', 1)))
+                try:
+                    colspan = int(td.get('colspan', 1))
+                except (ValueError, TypeError):
+                    colspan = 1
+                cells.extend([clean_text(td.get_text(strip=True))] * colspan)
 
             if len(cells) < len(headers):
                 continue
@@ -194,7 +199,7 @@ class RNPTransformer:
         return wpts
 
     def parse_file(self, filepath):
-        with open(filepath, 'r') as f:
+        with open(filepath, 'r', encoding='utf-8') as f:
             soup = BeautifulSoup(f.read(), 'html.parser')
 
         airport_id, runway, proc_type = self.extract_metadata(filepath.name)
@@ -219,7 +224,11 @@ class RNPTransformer:
                 for candidate_row in table.find_all('tr'):
                     cells = candidate_row.find_all(['td', 'th'])
                     # Skip single-cell spanning title rows
-                    if len(cells) == 1 and int(cells[0].get('colspan', 1)) > 3:
+                    try:
+                        colspan = int(cells[0].get('colspan', 1))
+                    except (ValueError, TypeError):
+                        colspan = 1
+                    if len(cells) == 1 and colspan > 3:
                         continue
                     # Need at least 5 real columns to be a header row
                     if len(cells) < 5:

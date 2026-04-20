@@ -6,7 +6,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Initialize paths
-BASE_DIR = Path("/Users/naveendevapalan/Desktop/Naveen/PROJECTS/eAIP/eaip_scrapper")
+BASE_DIR = Path(os.getenv("RNP_BASE_DIR", Path(__file__).resolve().parent.parent.parent))
 SCRATCH_DIR = BASE_DIR / "scratch"
 OUTPUT_DIR = BASE_DIR / "output"
 EXTRACTED_DIR = OUTPUT_DIR / "extracted_data"
@@ -23,16 +23,20 @@ INDIA_LON_MAX = 100.0
 
 def setup_logging(level=logging.INFO):
     """Configures centralized logging for the ETL process."""
+    # Ensure LOG_FILE directory exists
+    LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    
     logging.basicConfig(
         level=level,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
             logging.FileHandler(LOG_FILE),
-            logging.StreamHandler()
+            logging.StreamHandler(sys.stdout)
         ],
         force=True
     )
     return logging.getLogger("RNP-ETL")
+
 
 def dms_to_dd(degrees, minutes, seconds, direction):
     """Convert Degrees-Minutes-Seconds to Decimal Degrees."""
@@ -196,7 +200,7 @@ def sanitize_header(raw_header: str) -> str:
     """Convert a raw table header into a clean snake_case key."""
     h = raw_header.strip()
     h = re.sub(r'\s+', ' ', h).lower()
-    h = re.sub(r'[°0\*]+[mMtT()/]*', '', h)
+    h = re.sub(r'[°\*]+[mMtT()/]*', '', h)
     h = re.sub(r'\([^)]*\)', '', h)
     h = re.sub(r'[°\'\"*`]', '', h).strip()
 

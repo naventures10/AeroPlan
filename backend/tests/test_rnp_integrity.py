@@ -40,9 +40,8 @@ async def test_rnp_procedures_data_integrity(db_session):
 
             # 3. Check for missed approach (nearly all RNP APCH have one)
             # We skip this for SID/STAR based on naming heuristic
-            is_approach = "-RNP-" in p.name.upper() and (
-                "SID" not in p.name.upper() and "STAR" not in p.name.upper()
-            )
+            p_name = p.name.upper() if p.name else ""
+            is_approach = "-RNP-" in p_name and ("SID" not in p_name and "STAR" not in p_name)
 
             if is_approach:
                 if not path_res.missed_approach_path:

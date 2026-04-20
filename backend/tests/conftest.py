@@ -42,9 +42,9 @@ async def setup_test_db():
     # Safety check: only drop/create if it's explicitly a test database
     db_name = os.environ.get("POSTGRES_DB", "")
     if "test" not in db_name.lower():
-        # Do not drop/create for non-test databases
-        yield
-        return
+        raise RuntimeError(
+            f"Safety check failed: POSTGRES_DB ({db_name}) must contain 'test' to prevent accidental data loss."
+        )
 
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)

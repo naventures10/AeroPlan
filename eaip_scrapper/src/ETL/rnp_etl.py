@@ -59,13 +59,14 @@ Skip flags:
     logger = setup_logging(level=logging.DEBUG if args.debug else logging.INFO)
     logger.info(f"Starting RNP ETL Pipeline [Step: {args.step}]")
 
+    import os
     # ── DB Config ──────────────────────────────────────────────────────────────
     db_config = {
-        "host": "localhost",
-        "port": 5432,
-        "database": "aeronautical_information_system",
-        "user": "postgres",
-        "password": "postgres",
+        "host": os.getenv("POSTGRES_HOST", "localhost"),
+        "port": int(os.getenv("POSTGRES_PORT", 5432)),
+        "database": os.getenv("POSTGRES_DB", "aeronautical_information_system"),
+        "user": os.getenv("POSTGRES_USER", "postgres"),
+        "password": os.getenv("POSTGRES_PASSWORD", "postgres"),
     }
 
     try:
@@ -78,10 +79,15 @@ Skip flags:
             if args.force_extract:
                 from rnp_processor.utils import EXTRACTED_DIR
                 wiped = 0
+                errors = 0
                 for md in EXTRACTED_DIR.glob("*.md"):
-                    md.unlink()
-                    wiped += 1
-                logger.warning(f"--force-extract: removed {wiped} existing .md files")
+                    try:
+                        md.unlink()
+                        wiped += 1
+                    except Exception as e:
+                        logger.error(f"Failed to remove {md}: {e}")
+                        errors += 1
+                logger.warning(f"--force-extract: removed {wiped} existing .md files, {errors} errors")
 
             missing = extractor.get_missing_files()
             if missing:

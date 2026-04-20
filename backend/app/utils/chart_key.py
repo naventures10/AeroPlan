@@ -30,7 +30,7 @@ def normalize_chart_key(text: str | None) -> str:
     s = re.sub(r"-+", "-", s)
 
     # Strip common secondary chart suffixes so tables/coding charts match the base procedure
-    for suffix in [
+    suffixes = [
         "-CODING",
         "-TABLES",
         "-TABLE",
@@ -39,9 +39,16 @@ def normalize_chart_key(text: str | None) -> str:
         "-CAT-A-B",
         "-FAS-DATA",
         "-PROFILE",
-    ]:
-        if suffix in s:
-            s = s.replace(suffix, "")
+    ]
+
+    changed = True
+    while changed:
+        changed = False
+        for suffix in suffixes:
+            if s.endswith(suffix):
+                s = s[: -len(suffix)]
+                changed = True
+                break
 
     s = re.sub(r"-+", "-", s)
     s = s.strip("-")

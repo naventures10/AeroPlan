@@ -181,17 +181,18 @@ class RNPExtractor:
                 chart_name: str = chart.get("chart_name", "")
                 pdf_url: str = chart.get("pdf_url", "")
 
-                if "RNP" not in chart_name:
+                if "RNP" not in chart_name.upper():
                     continue
 
-                is_coding = chart_name.endswith(CODING_SUFFIX)
-                is_table = any(chart_name.endswith(s) for s in TABLE_SUFFIXES)
+                chart_name_lower = chart_name.lower()
+                is_coding = chart_name_lower.endswith(CODING_SUFFIX.lower())
+                is_table = any(chart_name_lower.endswith(s.lower()) for s in TABLE_SUFFIXES)
 
                 if not (is_coding or is_table):
                     continue
 
-                # Expected markdown name: replace .pdf with .PDF.md
-                expected_md = chart_name.replace(".pdf", ".PDF.md")
+                # Expected markdown name: replace .pdf with .PDF.md (case-insensitive)
+                expected_md = re.sub(r'\.pdf$', '.PDF.md', chart_name, flags=re.IGNORECASE)
 
                 if expected_md in existing_md:
                     logger.debug(f"Skipping (already extracted): {expected_md}")

@@ -61,9 +61,9 @@ class RNPValidator:
 
         # ── 4. Path Continuity: detect massive jumps (>500 NM ≈ ~8.3°) ──────
         wpt_lookup = {
-            wp["waypoint_id"]: (wp["lat_dd"], wp["lon_dd"])
+            str(wp.get("waypoint_id", "")).upper(): (wp.get("lat_dd"), wp.get("lon_dd"))
             for wp in proc_data.get("waypoints", [])
-            if wp.get("lat_dd") is not None and wp.get("lon_dd") is not None
+            if wp.get("waypoint_id") and wp.get("lat_dd") is not None and wp.get("lon_dd") is not None
         }
         prev_coord = None
         for leg in proc_data.get("tabular_description", []):
