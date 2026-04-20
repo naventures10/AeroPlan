@@ -26,7 +26,7 @@ from app.schemas.weather import WeatherResponse
 logger = structlog.get_logger()
 tracer = trace.get_tracer(__name__)
 
-router = APIRouter(prefix="/api", tags=["Weather"])
+router = APIRouter(prefix="", tags=["Weather"])
 
 # ── Configuration ────────────────────────────────────────────────────────────
 SOURCES = {

@@ -2,7 +2,7 @@ from sqlalchemy import Boolean, Column, DateTime, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 
-from app.database import Base
+from app.core.database import Base
 
 
 class Notam(Base):

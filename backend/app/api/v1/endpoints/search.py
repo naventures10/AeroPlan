@@ -7,12 +7,12 @@ from opentelemetry import trace
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.core.database import get_db
 from app.schemas.search import SearchResultResponse
 
 tracer = trace.get_tracer(__name__)
 
-router = APIRouter(prefix="/api", tags=["Search"])
+router = APIRouter(prefix="", tags=["Search"])
 
 
 @router.get("/search", response_model=list[SearchResultResponse])

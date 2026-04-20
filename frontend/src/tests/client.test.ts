@@ -15,7 +15,7 @@ describe('API Client Functions', () => {
 
     const result = await searchAll('VOMF');
     expect(result).toEqual(mockData);
-    expect(global.fetch).toHaveBeenCalledWith('/api/search?q=VOMF', expect.any(Object));
+    expect(global.fetch).toHaveBeenCalledWith('/api/v1/search?q=VOMF', expect.any(Object));
   });
 
   it('should throw ApiError automatically inside get() for failed aerodromes fetch', async () => {
@@ -45,7 +45,7 @@ describe('API Client Functions', () => {
 
     const result = await fetchAtsRouteDetails('G333');
     expect(result).toEqual(mockDetails);
-    expect(global.fetch).toHaveBeenCalledWith('/api/ats-routes/G333/details');
+    expect(global.fetch).toHaveBeenCalledWith('/api/v1/ats-routes/G333/details');
   });
 
   it('should return null when fetchAtsRouteDetails 404s', async () => {

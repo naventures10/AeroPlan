@@ -8,11 +8,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.core.database import get_db
 from app.schemas.aerodrome import AerodromeSectionResponse
 from app.schemas.geojson import GeoJsonFeatureCollection
 
-router = APIRouter(prefix="/api", tags=["Aerodromes"])
+router = APIRouter(prefix="", tags=["Aerodromes"])
 
 
 # ── AIP Section ID → Database JSON Key Mapping ──────────────────────────────

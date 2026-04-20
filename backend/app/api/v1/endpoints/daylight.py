@@ -8,10 +8,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.core.database import get_db
 from app.schemas.daylight import DaylightResponse
 
-router = APIRouter(prefix="/api", tags=["Daylight"])
+router = APIRouter(prefix="", tags=["Daylight"])
 
 
 @router.get("/daylight/{icao_code}", response_model=DaylightResponse)
