@@ -9,7 +9,7 @@
 import { TripsLayer } from '@deck.gl/geo-layers';
 import { ScatterplotLayer, TextLayer, PathLayer } from '@deck.gl/layers';
 import { PathStyleExtension } from '@deck.gl/extensions';
-import type { RnpPath3d } from './useRnpPath3d';
+import type { RnpPath3d, RnpApproachPath, RnpWaypointMarker } from '../../../types';
 
 /** Altitude exaggeration — makes the vertical offset visually prominent */
 const ALT_EXAGGERATION = 3;
@@ -52,13 +52,13 @@ export function createRnpLayers(pathData: RnpPath3d | null, currentTime: number)
   // Find the lowest altitude (usually the runway / MAPt) to anchor the exaggeration
   // so the path touches the real MapLibre map plane at Z=0.
   let minZ = Infinity;
-  pathData.approach_paths.forEach((ap) => {
-    ap.path.forEach((p) => {
+  pathData.approach_paths.forEach((ap: RnpApproachPath) => {
+    ap.path.forEach((p: [number, number, number]) => {
       if (p[2] < minZ) minZ = p[2];
     });
   });
   if (pathData.missed_approach_path) {
-    pathData.missed_approach_path.path.forEach((p) => {
+    pathData.missed_approach_path.path.forEach((p: [number, number, number]) => {
       if (p[2] < minZ) minZ = p[2];
     });
   }
@@ -66,8 +66,12 @@ export function createRnpLayers(pathData: RnpPath3d | null, currentTime: number)
 
   // ── 1. Animated 3D Approach Trails ──────────────────────────────────
   if (pathData.approach_paths.length > 0) {
-    const tripData = pathData.approach_paths.map((ap, idx) => ({
-      path: ap.path.map((p) => [p[0], p[1], Math.max(0, (p[2] - minZ) * ALT_EXAGGERATION)]),
+    const tripData = pathData.approach_paths.map((ap: RnpApproachPath, idx: number) => ({
+      path: ap.path.map((p: [number, number, number]) => [
+        p[0],
+        p[1],
+        Math.max(0, (p[2] - minZ) * ALT_EXAGGERATION),
+      ]),
       timestamps: ap.timestamps,
       color: APPROACH_COLORS[idx % APPROACH_COLORS.length],
       total_dist: ap.total_distance_nm,
@@ -113,7 +117,7 @@ export function createRnpLayers(pathData: RnpPath3d | null, currentTime: number)
   if (pathData.missed_approach_path && pathData.missed_approach_path.path.length >= 2) {
     const missedData = [
       {
-        path: pathData.missed_approach_path.path.map((p) => [
+        path: pathData.missed_approach_path.path.map((p: [number, number, number]) => [
           p[0],
           p[1],
           Math.max(0, (p[2] - minZ) * ALT_EXAGGERATION),
@@ -141,14 +145,14 @@ export function createRnpLayers(pathData: RnpPath3d | null, currentTime: number)
       new ScatterplotLayer({
         id: 'rnp-waypoint-markers-layer',
         data: pathData.waypoints,
-        getPosition: (d: any) => [
+        getPosition: (d: RnpWaypointMarker) => [
           d.position[0],
           d.position[1],
           Math.max(0, (d.position[2] - minZ) * ALT_EXAGGERATION),
         ],
         getRadius: 80,
         radiusUnits: 'meters',
-        getFillColor: (d: any) => roleColor(d.role),
+        getFillColor: (d: RnpWaypointMarker) => roleColor(d.role),
         getLineColor: [255, 255, 255, 180],
         lineWidthMinPixels: 1,
         stroked: true,
@@ -162,12 +166,12 @@ export function createRnpLayers(pathData: RnpPath3d | null, currentTime: number)
       new TextLayer({
         id: 'rnp-waypoint-labels-layer',
         data: pathData.waypoints,
-        getPosition: (d: any) => [
+        getPosition: (d: RnpWaypointMarker) => [
           d.position[0],
           d.position[1],
           Math.max(0, (d.position[2] - minZ) * ALT_EXAGGERATION),
         ],
-        getText: (d: any) => d.name,
+        getText: (d: RnpWaypointMarker) => d.name,
         getSize: 13,
         getColor: [255, 255, 255, 220],
         getTextAnchor: 'start',

@@ -15,6 +15,8 @@ import type {
   DaylightRecord,
   GeoJsonFeatureCollection,
   AerodromeSectionResponse,
+  RnpProcedureApi,
+  RnpPath3d,
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -175,6 +177,22 @@ export async function fetchAtsRouteDetails(routeId: string): Promise<AtsRouteDet
 
 export async function fetchNavaidDetails(ident: string): Promise<NavAidDetails | null> {
   return getOrNull<NavAidDetails>(`/navaids/${encodeURIComponent(ident)}`);
+}
+
+// ── RNP Procedures (Terminal) ───────────────────────────────────────────
+
+export async function fetchRnpProcedures(icao: string): Promise<RnpProcedureApi[]> {
+  return get<RnpProcedureApi[]>(`/aerodromes/${icao.toUpperCase()}/rnp-procedures`);
+}
+
+export async function fetchRnpPath3d(procedureId: number): Promise<RnpPath3d | null> {
+  return getOrNull<RnpPath3d>(`/rnp-procedures/${procedureId}/path3d`);
+}
+
+// ── Utils ───────────────────────────────────────────────────────────────
+
+export function getProxyPdfUrl(originalUrl: string): string {
+  return `${API_BASE}/proxy-pdf?url=${encodeURIComponent(originalUrl)}`;
 }
 
 // ── ATS Route Detail Types ──────────────────────────────────────────────
