@@ -98,11 +98,13 @@ def smooth_path_3d(
 
             cross = ux_in * uy_out - uy_in * ux_out
             if cross >= 0:
-                nx, ny = uy_in, -ux_in  # Normal pointing Right
-                sweep_dir = -1.0  # Sweep CW mathematically to go backwards
+                # Left Turn -> Bulge Left, Sweep CCW
+                nx, ny = -uy_in, ux_in
+                sweep_dir = 1.0
             else:
-                nx, ny = -uy_in, ux_in  # Normal pointing Left
-                sweep_dir = 1.0  # Sweep CCW mathematically to go backwards
+                # Right Turn -> Bulge Right, Sweep CW
+                nx, ny = uy_in, -ux_in
+                sweep_dir = -1.0
 
             arm_nm = 1.0
             radius_nm = 1.25
