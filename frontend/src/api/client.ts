@@ -17,7 +17,7 @@ import type {
   AerodromeSectionResponse,
 } from '../types';
 
-const API_BASE = '/api';
+const API_BASE = '/api/v1';
 
 // ── Error class ─────────────────────────────────────────────────────────
 

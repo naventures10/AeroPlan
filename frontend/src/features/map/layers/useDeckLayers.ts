@@ -6,9 +6,9 @@ import { createAerodromeLayers } from './createAerodromeLayers';
 import { createWaypointLayer } from './createWaypointLayer';
 import { createNavaidLayer } from './createNavaidLayer';
 import { createAtsRouteLayers } from './createAtsRouteLayers';
-import { createRnpLayers } from './createRnpLayers';
-import { useRnpPath3d } from './useRnpPath3d';
-import { useRnpAnimation } from './useRnpAnimation';
+import { createRnpLayers } from '../../terminal/layers/createRnpLayers';
+import { useRnpPath3d } from '../../terminal/layers/useRnpPath3d';
+import { useRnpAnimation } from '../../terminal/layers/useRnpAnimation';
 import type { LayerContext } from './types';
 
 /**
