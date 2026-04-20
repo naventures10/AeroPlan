@@ -12,7 +12,7 @@ async def test_get_weather_success(api_client: AsyncClient) -> None:
     # we will just do an integration test for a common airport (e.g., VOMF).
 
     # Ideally, tests shouldn't hit the real network, but this serves as a basic verification.
-    response = await api_client.get("/api/weather/VABF")  # Use Mumbai FIR/Airport
+    response = await api_client.get("/api/v1/weather/VABF")  # Use Mumbai FIR/Airport
 
     # 200 OK or 502 Bad Gateway (if IMD is down) are both acceptable responses
     # to verify the API boundary structure.

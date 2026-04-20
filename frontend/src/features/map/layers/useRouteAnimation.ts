@@ -14,6 +14,7 @@
 import { useState, useEffect } from 'react';
 import { useMapStore } from '../../../store/useMapStore';
 import { buildRouteAnimations } from '../utils/routeAnimation';
+import { fetchAtsRouteDetails } from '../../../api/client';
 
 export function useRouteAnimation() {
   const {
@@ -73,9 +74,7 @@ export function useRouteAnimation() {
     ) {
       const fetchRoutes = async () => {
         try {
-          const promises = selectedRouteIds.map((id) =>
-            fetch(`${window.location.origin}/api/ats-routes/${id}/details`).then((r) => r.json()),
-          );
+          const promises = selectedRouteIds.map((id) => fetchAtsRouteDetails(id));
           const results = await Promise.all(promises);
           if (isCancelled) return;
 

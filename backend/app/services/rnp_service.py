@@ -1,84 +1,19 @@
-"""
-RNP procedures — metadata and chart linking for 3D terminal visualization.
-"""
-
-from __future__ import annotations
-
 import math
 import re
 from collections.abc import Sequence
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.database import get_db
 from app.schemas.rnp import (
     RnpApproachPath,
     RnpMissedApproachPath,
     RnpPath3dResponse,
-    RnpProcedureResponse,
     RnpWaypointMarker,
 )
-from app.utils.chart_key import normalize_chart_key
-
-router = APIRouter(prefix="/api", tags=["RNP"])
 
 FT_TO_M = 0.3048
 
 
-@router.get(
-    "/aerodromes/{icao_code}/rnp-procedures",
-    response_model=list[RnpProcedureResponse],
-)
-async def list_rnp_procedures(
-    icao_code: str, db: AsyncSession = Depends(get_db)
-) -> list[RnpProcedureResponse]:
-    """
-    RNP procedures for an aerodrome (airport_id matches ICAO), with chart_key
-    derived from procedure name for matching aerodrome_charts URLs/titles.
-    """
-    query = text("""
-        SELECT
-            p.id AS procedure_id,
-            p.name,
-            p.runway,
-            p.type AS procedure_type,
-            ST_XMin(ST_Extent(w.geom)) AS min_lng,
-            ST_YMin(ST_Extent(w.geom)) AS min_lat,
-            ST_XMax(ST_Extent(w.geom)) AS max_lng,
-            ST_YMax(ST_Extent(w.geom)) AS max_lat
-        FROM rnp_procedures p
-        LEFT JOIN rnp_waypoints w ON p.id = w.procedure_id
-        WHERE UPPER(TRIM(p.airport_id)) = UPPER(TRIM(:icao))
-        GROUP BY p.id, p.name, p.runway, p.type
-        ORDER BY p.name;
-    """)
-
-    result = await db.execute(query, {"icao": icao_code.upper().strip()})
-    rows = result.fetchall()
-
-    out: list[RnpProcedureResponse] = []
-    for r in rows:
-        ck = normalize_chart_key(r.name)
-        out.append(
-            RnpProcedureResponse(
-                procedure_id=r.procedure_id,
-                name=r.name,
-                runway=r.runway,
-                procedure_type=r.procedure_type,
-                chart_key=ck,
-                min_lng=float(r.min_lng) if r.min_lng is not None else None,
-                min_lat=float(r.min_lat) if r.min_lat is not None else None,
-                max_lng=float(r.max_lng) if r.max_lng is not None else None,
-                max_lat=float(r.max_lat) if r.max_lat is not None else None,
-            )
-        )
-    return out
-
-
-def _haversine_nm(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
+def haversine_nm(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
     """Great-circle distance in nautical miles."""
     r_nm = 3440.065
     d_lat = math.radians(lat2 - lat1)
@@ -90,7 +25,7 @@ def _haversine_nm(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
     return r_nm * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
-def _smooth_path_3d(
+def smooth_path_3d(
     path: list[list[float]], max_turn_dist_nm: float = 1.5, steps: int = 12
 ) -> list[list[float]]:
     """
@@ -109,8 +44,8 @@ def _smooth_path_3d(
         p_b = path[i]
         p_c = path[i + 1]
 
-        dist_ab = _haversine_nm(p_a[0], p_a[1], p_b[0], p_b[1])
-        dist_bc = _haversine_nm(p_b[0], p_b[1], p_c[0], p_c[1])
+        dist_ab = haversine_nm(p_a[0], p_a[1], p_b[0], p_b[1])
+        dist_bc = haversine_nm(p_b[0], p_b[1], p_c[0], p_c[1])
 
         cut_ab = min(max_turn_dist_nm, dist_ab * 0.3) if dist_ab > 0 else 0
         cut_bc = min(max_turn_dist_nm, dist_bc * 0.3) if dist_bc > 0 else 0
@@ -149,15 +84,34 @@ def _smooth_path_3d(
 
 
 def extract_true_course(course_str: str | None) -> float | None:
-    """Parses true course in degrees from strings like '228.34° (228.09°)'."""
+    """Parses true course in degrees from two common formats:
+    - Slash-separated:   '299.41° Mag /297.66° True'  → 297.66
+    - Parenthesis-style: '266.94°(265.44°)'            → 265.44
+    Returns None if parsing fails.
+    """
     if not course_str:
         return None
-    m = re.search(r"\(\D*([\d\.]+)\D*\)", str(course_str))
+    s = str(course_str).strip()
+
+    # Format 1: "NNN.NN° Mag / NNN.NN° True"  (slash separator)
+    # The true course is the numeric value that appears after "/" and before "True"
+    if "/" in s:
+        after_slash = s.split("/", 1)[1]
+        m = re.search(r"([\d\.]+)", after_slash)
+        if m:
+            try:
+                return float(m.group(1))
+            except ValueError:
+                pass
+
+    # Format 2: "NNN.NN°(NNN.NN°)" — true course is inside the parentheses
+    m = re.search(r"\(\D*([\d\.]+)\D*\)", s)
     if m:
         try:
             return float(m.group(1))
         except ValueError:
             pass
+
     return None
 
 
@@ -218,66 +172,7 @@ def group_legs(legs_rows: Sequence[Any]) -> list[list[Any]]:
     return groups
 
 
-@router.get(
-    "/rnp-procedures/{procedure_id}/path3d",
-    response_model=RnpPath3dResponse,
-)
-async def get_rnp_path_3d(
-    procedure_id: int, db: AsyncSession = Depends(get_db)
-) -> RnpPath3dResponse:
-    """
-    Full 3D dynamically-built approach path(s) for an RNP procedure.
-    Supports multiple parallel initial approach paths converging to a final path,
-    plus a separate missed approach segment.
-    """
-    q_proc = text("""
-        SELECT id, name, airport_id, runway
-        FROM rnp_procedures
-        WHERE id = :pid
-    """)
-    result = await db.execute(q_proc, {"pid": procedure_id})
-    proc_row = result.fetchone()
-    if proc_row is None:
-        raise HTTPException(status_code=404, detail="Procedure not found")
-
-    q_legs = text("""
-        SELECT
-            l.sequence_nr,
-            l.source_serial,
-            l.path_descriptor,
-            l.waypoint_ident,
-            l.altitude_numeric,
-            l.role,
-            l.course,
-            l.distance,
-            w.lon,
-            w.lat
-        FROM rnp_legs l
-        LEFT JOIN LATERAL (
-            SELECT ST_X(geom) AS lon, ST_Y(geom) AS lat
-            FROM rnp_waypoints
-            WHERE procedure_id = l.procedure_id
-              AND (
-                ident = l.waypoint_ident
-                OR (l.waypoint_ident LIKE 'RW%' AND ident = REPLACE(l.waypoint_ident, 'RW', 'RWY'))
-                OR (l.waypoint_ident LIKE 'RWY%' AND ident = REPLACE(l.waypoint_ident, 'RWY', 'RW'))
-              )
-            ORDER BY (
-                CASE
-                    WHEN ident = l.waypoint_ident THEN 0
-                    WHEN l.waypoint_ident LIKE 'RW%' AND ident = REPLACE(l.waypoint_ident, 'RW', 'RWY') THEN 1
-                    WHEN l.waypoint_ident LIKE 'RWY%' AND ident = REPLACE(l.waypoint_ident, 'RWY', 'RW') THEN 2
-                    ELSE 3
-                END
-            )
-            LIMIT 1
-        ) w ON TRUE
-        WHERE l.procedure_id = :pid
-        ORDER BY l.sequence_nr
-    """)
-    legs_result = await db.execute(q_legs, {"pid": procedure_id})
-    legs_rows = legs_result.fetchall()
-
+def build_3d_paths(proc_row: Any, legs_rows: Sequence[Any]) -> RnpPath3dResponse:
     if not legs_rows:
         return RnpPath3dResponse(
             procedure_id=proc_row.id,
@@ -310,6 +205,17 @@ async def get_rnp_path_3d(
         final_group_idx = groups.index(final_group)
         for g in groups[final_group_idx + 1 :]:
             raw_missed_approach.extend(g)
+
+        # Truncate raw_missed_approach to only include up to and including the FIRST
+        # HM (hold-in-manual) leg encountered after the runway. Subsequent HM legs
+        # are waypoints for unrelated holding patterns at other fixes and would
+        # draw spurious paths far from the actual missed approach track.
+        truncated_missed = []
+        for leg in raw_missed_approach:
+            truncated_missed.append(leg)
+            if leg.path_descriptor == "HM":
+                break  # Stop after the first HM; ignore all subsequent HM holds
+        raw_missed_approach = truncated_missed
     else:
         final_approach = groups[-1] if groups else []
         raw_missed_approach = []
@@ -321,10 +227,6 @@ async def get_rnp_path_3d(
     ]
 
     def extract_path(legs_list: list, start_alt_ft: float = 10000.0) -> list[list[float]]:
-        """
-        Builds a raw 3D path from a list of legs.
-        Skips legs without coordinates (e.g. CA legs) but maintains altitude progression.
-        """
         path_3d = []
         for leg in legs_list:
             alt_m = (
@@ -332,14 +234,11 @@ async def get_rnp_path_3d(
             )
 
             if leg.lon is not None and leg.lat is not None:
-                # Avoid duplicate points (common with TP/IF/TF overlaps)
                 if not path_3d or (path_3d[-1][0] != leg.lon or path_3d[-1][1] != leg.lat):
                     path_3d.append([leg.lon, leg.lat, alt_m])
                 elif alt_m is not None and path_3d[-1][2] is None:
-                    # Inherit altitude from duplicate points (like HM holds)
                     path_3d[-1][2] = alt_m
             else:
-                # Missing coordinates (e.g. CA, VA). Project a virtual point.
                 if path_3d and leg.path_descriptor in ["CA", "VA", "VI", "CF", "DF"]:
                     course_true = extract_true_course(leg.course)
                     if course_true is not None:
@@ -354,7 +253,6 @@ async def get_rnp_path_3d(
                                 pass
 
                         if dist_nm is None:
-                            # Estimate based on climb (200 ft/NM gradient)
                             prev_alt_m = path_3d[-1][2]
                             if prev_alt_m is not None and alt_m is not None:
                                 climb_ft = (alt_m - prev_alt_m) / FT_TO_M
@@ -367,7 +265,6 @@ async def get_rnp_path_3d(
                         )
                         path_3d.append([v_lon, v_lat, alt_m])
 
-        # Pass 2: Interpolate missing altitudes (None)
         if not path_3d:
             return path_3d
 
@@ -390,15 +287,11 @@ async def get_rnp_path_3d(
                 alt_next = path_3d[next_idx][2]
 
                 dist_prev = sum(
-                    _haversine_nm(
-                        path_3d[j][0], path_3d[j][1], path_3d[j + 1][0], path_3d[j + 1][1]
-                    )
+                    haversine_nm(path_3d[j][0], path_3d[j][1], path_3d[j + 1][0], path_3d[j + 1][1])
                     for j in range(prev_idx, i)
                 )
                 dist_next = sum(
-                    _haversine_nm(
-                        path_3d[j][0], path_3d[j][1], path_3d[j + 1][0], path_3d[j + 1][1]
-                    )
+                    haversine_nm(path_3d[j][0], path_3d[j][1], path_3d[j + 1][0], path_3d[j + 1][1])
                     for j in range(i, next_idx)
                 )
 
@@ -413,10 +306,10 @@ async def get_rnp_path_3d(
     def process_path(raw_path):
         if len(raw_path) < 2:
             return [], [], 0.0
-        path_smoothed = _smooth_path_3d(raw_path, max_turn_dist_nm=1.5, steps=16)
+        path_smoothed = smooth_path_3d(raw_path, max_turn_dist_nm=1.5, steps=16)
         ts = [0.0]
         for i in range(1, len(path_smoothed)):
-            seg = _haversine_nm(
+            seg = haversine_nm(
                 path_smoothed[i - 1][0],
                 path_smoothed[i - 1][1],
                 path_smoothed[i][0],

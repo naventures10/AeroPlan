@@ -3,7 +3,7 @@ import os
 import pytest
 from sqlalchemy import text
 
-from app.routers.rnp import get_rnp_path_3d
+from app.api.v1.endpoints.rnp import get_rnp_path_3d
 
 
 @pytest.mark.asyncio
