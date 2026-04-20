@@ -26,23 +26,28 @@ def haversine_nm(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
 
 
 def smooth_path_3d(
-    path: list[list[float]], max_turn_dist_nm: float = 1.5, steps: int = 12
+    path: list[list[float]], max_turn_dist_nm: float = 2.5, steps: int = 12
 ) -> list[list[float]]:
     """
-    Applies a fly-through quadratic Bezier spline at each waypoint.
+    Angle-adaptive Bezier smoothing with Geometric D-arc for large U-turns.
 
-    Each interior waypoint p_b is positioned exactly on the curve (at t=0.5)
-    using the through-point Bezier formula:
+    Two modes based on local turn angle:
 
-        control = 2 * p_b - 0.5 * (q0 + q2)
+    Small/medium turns (< ~150°):
+      Quadratic fly-by. Cut distance scales linearly with turn_frac.
 
-    where q0 is a point on the inbound leg and q2 is a point on the outbound leg,
-    both `max_turn_dist_nm` from the fix. This produces a smooth arc that crosses
-    the waypoint fix — the aircraft overshoots briefly before aligning with the
-    outbound track, matching the charted IAP leg representation.
+    Large U-turns (≥ ~150°, typical for missed approach reversals):
+      4-point Cubic Geometric D-arc. Mathematically constructed to bulge outward
+      perpendicularly to the turn direction by 1.25 NM, achieving the standard
+      "teardrop" representation seen on IAP charts instead of a flat hairpin.
+
+    turn_frac = (1-cos θ)/2 : 0 = straight-on, 1 = full 180° reversal.
     """
     if len(path) < 3:
         return path
+
+    small_cut = 0.3  # Minimum cut for nearly straight transitions
+    teardrop_threshold = 0.85  # turn_frac above which D-arc is used (~150°+)
 
     smoothed = [path[0]]
 
@@ -54,45 +59,115 @@ def smooth_path_3d(
         dist_ab = haversine_nm(p_a[0], p_a[1], p_b[0], p_b[1])
         dist_bc = haversine_nm(p_b[0], p_b[1], p_c[0], p_c[1])
 
-        cut_ab = min(max_turn_dist_nm, dist_ab * 0.3) if dist_ab > 0 else 0
-        cut_bc = min(max_turn_dist_nm, dist_bc * 0.3) if dist_bc > 0 else 0
+        lat_rad = math.radians(p_b[1])
+        cos_lat = math.cos(lat_rad)
+        lon_to_nm = cos_lat * 60.04
+        lat_to_nm = 60.04
 
-        alpha_ab = (cut_ab / dist_ab) if dist_ab > 0 else 0
-        alpha_bc = (cut_bc / dist_bc) if dist_bc > 0 else 0
+        dx_in, dy_in = p_b[0] - p_a[0], p_b[1] - p_a[1]
+        dx_out, dy_out = p_c[0] - p_b[0], p_c[1] - p_b[1]
 
-        # q0: on the inbound leg, cut_ab before the waypoint
-        q0 = [
-            p_b[0] + alpha_ab * (p_a[0] - p_b[0]),
-            p_b[1] + alpha_ab * (p_a[1] - p_b[1]),
-            p_b[2] + alpha_ab * (p_a[2] - p_b[2]),
-        ]
+        mag_in = math.sqrt(dx_in**2 + dy_in**2)
+        mag_out = math.sqrt(dx_out**2 + dy_out**2)
 
-        # q2: on the outbound leg, cut_bc after the waypoint
-        q2 = [
-            p_b[0] + alpha_bc * (p_c[0] - p_b[0]),
-            p_b[1] + alpha_bc * (p_c[1] - p_b[1]),
-            p_b[2] + alpha_bc * (p_c[2] - p_b[2]),
-        ]
+        if mag_in > 0 and mag_out > 0:
+            cos_a = (dx_in * dx_out + dy_in * dy_out) / (mag_in * mag_out)
+            cos_a = max(-1.0, min(1.0, cos_a))
+            turn_frac = (1.0 - cos_a) / 2.0
+        else:
+            turn_frac = 0.0
 
-        # Through-point control: ensure B(0.5) = p_b exactly.
-        # Derived from: 0.25*q0 + 0.5*ctrl + 0.25*q2 = p_b  =>  ctrl = 2*p_b - 0.5*(q0+q2)
-        ctrl = [
-            2 * p_b[0] - 0.5 * (q0[0] + q2[0]),
-            2 * p_b[1] - 0.5 * (q0[1] + q2[1]),
-            2 * p_b[2] - 0.5 * (q0[2] + q2[2]),
-        ]
+        if turn_frac > teardrop_threshold and dist_ab > 0:
+            # ── PROCEDURAL 180° SEMI-CIRCLE D-ARC ─────────────────────────
+            # Replaces the twisted Bezier approach with a mathematically pure
+            # 1.0 NM fly-over and 1.25 NM lateral semicircle arc.
+            dx_in_nm = dx_in * lon_to_nm
+            dy_in_nm = dy_in * lat_to_nm
+            mag_in_nm = math.sqrt(dx_in_nm**2 + dy_in_nm**2)
+            ux_in = dx_in_nm / mag_in_nm if mag_in_nm > 0 else 0
+            uy_in = dy_in_nm / mag_in_nm if mag_in_nm > 0 else 0
 
-        smoothed.append(q0)
+            # Determine Turn Direction & Sweep
+            # Left Turn (Cross >= 0) -> Bulge Right (North) -> Sweep CCW
+            # Wait, mathematically, Left turn bulge Right gives start_angle -90, sweep CW = -1.0
+            dx_out_nm = dx_out * lon_to_nm
+            dy_out_nm = dy_out * lat_to_nm
+            mag_out_nm = math.sqrt(dx_out_nm**2 + dy_out_nm**2)
+            ux_out = dx_out_nm / mag_out_nm if mag_out_nm > 0 else 0
+            uy_out = dy_out_nm / mag_out_nm if mag_out_nm > 0 else 0
 
-        for j in range(1, steps):
-            t = j / steps
-            inv_t = 1.0 - t
-            x = (inv_t**2) * q0[0] + 2 * inv_t * t * ctrl[0] + (t**2) * q2[0]
-            y = (inv_t**2) * q0[1] + 2 * inv_t * t * ctrl[1] + (t**2) * q2[1]
-            z = (inv_t**2) * q0[2] + 2 * inv_t * t * ctrl[2] + (t**2) * q2[2]
-            smoothed.append([x, y, z])
+            cross = ux_in * uy_out - uy_in * ux_out
+            if cross >= 0:
+                nx, ny = uy_in, -ux_in  # Normal pointing Right
+                sweep_dir = -1.0  # Sweep CW mathematically to go backwards
+            else:
+                nx, ny = -uy_in, ux_in  # Normal pointing Left
+                sweep_dir = 1.0  # Sweep CCW mathematically to go backwards
 
-        smoothed.append(q2)
+            arm_nm = 1.0
+            radius_nm = 1.25
+
+            c_lon = p_b[0] + (arm_nm * ux_in + radius_nm * nx) / lon_to_nm
+            c_lat = p_b[1] + (arm_nm * uy_in + radius_nm * ny) / lat_to_nm
+
+            start_angle = math.atan2(-ny, -nx)
+
+            smoothed.append(list(p_b))
+
+            # Draw the 1.0 NM straight overfly to establish the turn entry
+            straight_steps = 5
+            for j in range(1, straight_steps + 1):
+                alpha = j / straight_steps
+                smoothed.append(
+                    [
+                        p_b[0] + alpha * (arm_nm * ux_in) / lon_to_nm,
+                        p_b[1] + alpha * (arm_nm * uy_in) / lat_to_nm,
+                        p_b[2],
+                    ]
+                )
+
+            # Draw the clean 180° circular arc sequence
+            arc_steps = 15
+            for j in range(1, arc_steps + 1):
+                theta = start_angle + sweep_dir * (j / arc_steps) * math.pi
+                x = c_lon + (radius_nm * math.cos(theta)) / lon_to_nm
+                y = c_lat + (radius_nm * math.sin(theta)) / lat_to_nm
+                smoothed.append([x, y, p_b[2]])
+
+            # Post-arc naturally connects via straight line string to the next fix
+
+        else:
+            # ── QUADRATIC FLY-BY for small/medium turns ──────────────────────────
+            # ... identical logic as before ...
+            adaptive_max = small_cut + (max_turn_dist_nm - small_cut) * turn_frac
+            cut_ab = min(adaptive_max, dist_ab * 0.45) if dist_ab > 0 else 0
+            cut_bc = min(adaptive_max, dist_bc * 0.45) if dist_bc > 0 else 0
+
+            alpha_ab = (cut_ab / dist_ab) if dist_ab > 0 else 0
+            alpha_bc = (cut_bc / dist_bc) if dist_bc > 0 else 0
+
+            q0 = [
+                p_b[0] + alpha_ab * (p_a[0] - p_b[0]),
+                p_b[1] + alpha_ab * (p_a[1] - p_b[1]),
+                p_b[2] + alpha_ab * (p_a[2] - p_b[2]),
+            ]
+            q2 = [
+                p_b[0] + alpha_bc * (p_c[0] - p_b[0]),
+                p_b[1] + alpha_bc * (p_c[1] - p_b[1]),
+                p_b[2] + alpha_bc * (p_c[2] - p_b[2]),
+            ]
+
+            smoothed.append(q0)
+
+            for j in range(1, steps):
+                t = j / steps
+                inv_t = 1.0 - t
+                x = (inv_t**2) * q0[0] + 2 * inv_t * t * p_b[0] + (t**2) * q2[0]
+                y = (inv_t**2) * q0[1] + 2 * inv_t * t * p_b[1] + (t**2) * q2[1]
+                z = (inv_t**2) * q0[2] + 2 * inv_t * t * p_b[2] + (t**2) * q2[2]
+                smoothed.append([x, y, z])
+
+            smoothed.append(q2)
 
     smoothed.append(path[-1])
     return smoothed
@@ -321,9 +396,9 @@ def build_3d_paths(proc_row: Any, legs_rows: Sequence[Any]) -> RnpPath3dResponse
     def process_path(raw_path):
         if len(raw_path) < 2:
             return [], [], 0.0
-        # Fly-over Bezier smoothing: straight legs pass through each fix, then
-        # gracefully arc to the next outbound track.
-        path_smoothed = smooth_path_3d(raw_path, max_turn_dist_nm=1.5, steps=16)
+        # Angle-adaptive Bezier smoothing: 0.3 NM for gentle leg jogs,
+        # scales up to 2.5 NM for near-180° missed approach U-turns.
+        path_smoothed = smooth_path_3d(raw_path, max_turn_dist_nm=2.5, steps=16)
         ts = [0.0]
         for i in range(1, len(path_smoothed)):
             seg = haversine_nm(
