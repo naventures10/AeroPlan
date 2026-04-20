@@ -1,10 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Modal, ModalContent, ModalBody, useDisclosure } from '@heroui/react';
 import { FileText, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
+
+import { useMapStore } from '../../store/useMapStore';
+import { normalizeChartKey } from '../../utils/chartKey';
 
 // Configure pdf.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -23,8 +26,38 @@ interface AerodromeChartViewerProps {
   icaoCode: string | null;
 }
 
+interface RnpProcedureApi {
+  procedure_id: number;
+  name: string;
+  runway: string | null;
+  type: string | null;
+  chart_key: string;
+  min_lng: number | null;
+  min_lat: number | null;
+  max_lng: number | null;
+  max_lat: number | null;
+}
+
+function candidateChartKeys(chart: ChartItem): string[] {
+  const raw = [chart.chart_url, chart.chart_title, chart.chart_index];
+  const keys = raw.map((s) => normalizeChartKey(s ?? '')).filter(Boolean);
+  return [...new Set(keys)];
+}
+
+function findRnpForChart(
+  chart: ChartItem,
+  byChartKey: Map<string, RnpProcedureApi>,
+): RnpProcedureApi | null {
+  for (const k of candidateChartKeys(chart)) {
+    const hit = byChartKey.get(k);
+    if (hit) return hit;
+  }
+  return null;
+}
+
 export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerProps) {
   const [charts, setCharts] = useState<ChartItem[]>([]);
+  const [rnpProcedures, setRnpProcedures] = useState<RnpProcedureApi[]>([]);
   const [selectedChart, setSelectedChart] = useState<ChartItem | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,15 +66,34 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
   const { isOpen, onOpen, onClose } = useDisclosure();
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const setViewMode = useMapStore((s) => s.setViewMode);
+  const setSelectedRnpProcedure = useMapStore((s) => s.setSelectedRnpProcedure);
+  const fitBounds = useMapStore((s) => s.fitBounds);
+
+  const rnpByChartKey = useMemo(() => {
+    const m = new Map<string, RnpProcedureApi>();
+    for (const p of rnpProcedures) {
+      if (!m.has(p.chart_key)) m.set(p.chart_key, p);
+    }
+    return m;
+  }, [rnpProcedures]);
+
+  const matchedRnpForModal = useMemo(() => {
+    if (!selectedChart) return null;
+    return findRnpForChart(selectedChart, rnpByChartKey);
+  }, [selectedChart, rnpByChartKey]);
+
   // Fetch charts when icaoCode changes
   useEffect(() => {
     if (!icaoCode) {
       setCharts([]);
+      setRnpProcedures([]);
       return;
     }
 
+    const normalizedIcao = icaoCode.toUpperCase();
     setIsLoading(true);
-    fetch(`/api/aerodromes/${icaoCode}/charts`)
+    fetch(`/api/aerodromes/${normalizedIcao}/charts`)
       .then((res) => res.json())
       .then((data) => {
         const chartList = Array.isArray(data) ? data : [];
@@ -53,6 +105,28 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
       })
       .finally(() => {
         setIsLoading(false);
+      });
+  }, [icaoCode]);
+
+  useEffect(() => {
+    if (!icaoCode) {
+      setRnpProcedures([]);
+      return;
+    }
+    const normalizedIcao = icaoCode.toUpperCase();
+    fetch(`/api/aerodromes/${normalizedIcao}/rnp-procedures`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setRnpProcedures(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch RNP procedures:', err);
+        setRnpProcedures([]);
       });
   }, [icaoCode]);
 
@@ -77,6 +151,49 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
     setNumPages(0);
     setCurrentPage(1);
   }, [onClose]);
+
+  const handleViewIn3D = useCallback(() => {
+    if (!selectedChart || !matchedRnpForModal) return;
+    const p = matchedRnpForModal;
+    const hasBbox =
+      p.min_lng != null &&
+      p.min_lat != null &&
+      p.max_lng != null &&
+      p.max_lat != null &&
+      Number.isFinite(p.min_lng) &&
+      Number.isFinite(p.min_lat) &&
+      Number.isFinite(p.max_lng) &&
+      Number.isFinite(p.max_lat);
+    const bounds: [number, number, number, number] | null = hasBbox
+      ? [p.min_lng!, p.min_lat!, p.max_lng!, p.max_lat!]
+      : null;
+
+    setSelectedRnpProcedure({
+      procedureId: p.procedure_id,
+      chartKey: p.chart_key,
+      bounds,
+    });
+    setViewMode('TERMINAL');
+    {
+      const { setViewState, viewState } = useMapStore.getState();
+      setViewState({
+        ...viewState,
+        pitch: 45,
+        maxPitch: 85,
+        transitionDuration: 1200,
+        transitionType: 'LINEAR',
+      });
+    }
+    if (bounds) fitBounds(bounds);
+    handleModalClose();
+  }, [
+    selectedChart,
+    matchedRnpForModal,
+    setSelectedRnpProcedure,
+    setViewMode,
+    fitBounds,
+    handleModalClose,
+  ]);
 
   // Scroll left/right in the carousel
   const scroll = useCallback((direction: 'left' | 'right') => {
@@ -241,6 +358,23 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                   {Math.round(pdfScale * 100)}%
                 </span>
               </div>
+            </div>
+
+            {/* 3a. View in 3D (procedure-linked charts only) */}
+            <div className="absolute bottom-8 right-8 z-[55] pointer-events-auto min-h-[40px] flex items-center justify-end">
+              {matchedRnpForModal ? (
+                <button
+                  type="button"
+                  onClick={handleViewIn3D}
+                  className="group relative px-5 py-2.5 rounded-2xl text-[11px] font-black tracking-[0.2em] uppercase text-cyan-100 bg-zinc-950/90 border border-cyan-400/50 shadow-[0_0_24px_rgba(34,211,238,0.45)] hover:shadow-[0_0_36px_rgba(34,211,238,0.65)] transition-all backdrop-blur-xl"
+                >
+                  <span className="relative z-10">View in 3D space</span>
+                  <span
+                    className="pointer-events-none absolute inset-0 rounded-2xl opacity-60 blur-[1px] bg-gradient-to-r from-cyan-500/20 via-teal-400/30 to-cyan-500/20 animate-pulse"
+                    aria-hidden
+                  />
+                </button>
+              ) : null}
             </div>
 
             {/* 3. FLOATING PAGINATION (Bottom-Center) */}

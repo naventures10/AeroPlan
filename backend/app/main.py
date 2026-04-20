@@ -17,6 +17,7 @@ from app.routers import (
     daylight,
     navaids,
     notams,
+    rnp,
     search,
     spatial,
     weather,
@@ -116,6 +117,7 @@ async def health_check() -> dict:
 app.include_router(aerodromes.router)
 app.include_router(search.router)
 app.include_router(charts.router)
+app.include_router(rnp.router)
 app.include_router(spatial.router)
 app.include_router(weather.router)
 app.include_router(notams.router)
