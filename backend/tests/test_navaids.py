@@ -24,7 +24,7 @@ async def test_get_navaid_details_success(
     db_session.add(navaid)
     await db_session.commit()
 
-    response = await api_client.get("/api/navaids/CIB")
+    response = await api_client.get("/api/v1/navaids/CIB")
     assert response.status_code == 200
     data = response.json()
     assert data["ident"] == "CIB"
@@ -35,5 +35,5 @@ async def test_get_navaid_details_success(
 @pytest.mark.asyncio
 async def test_get_navaid_details_not_found(api_client: AsyncClient) -> None:
     """Test fetching navaid details for a non-existent identifier."""
-    response = await api_client.get("/api/navaids/NONEXISTENT")
+    response = await api_client.get("/api/v1/navaids/NONEXISTENT")
     assert response.status_code == 404

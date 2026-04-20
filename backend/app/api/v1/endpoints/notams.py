@@ -6,10 +6,10 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.core.database import get_db
 from app.schemas.notam import NotamResponse, serialize_notam
 
-router = APIRouter(prefix="/api", tags=["NOTAMs"])
+router = APIRouter(prefix="", tags=["NOTAMs"])
 
 
 @router.get("/notams/fir/{fir_code}", response_model=list[NotamResponse])

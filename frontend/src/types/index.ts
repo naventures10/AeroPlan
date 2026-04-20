@@ -58,3 +58,49 @@ export interface ParsedMetar {
   dew: number | null;
   qnh: number | null;
 }
+
+// ── RNP Prodecures (Terminal) ───────────────────────────────────────────
+
+export interface RnpProcedureApi {
+  procedure_id: number;
+  name: string;
+  runway: string | null;
+  procedure_type: string | null;
+  chart_key: string;
+  min_lng: number | null;
+  min_lat: number | null;
+  max_lng: number | null;
+  max_lat: number | null;
+}
+
+export interface RnpWaypointMarker {
+  name: string;
+  position: [number, number, number]; // [lon, lat, alt_m]
+  role: string | null;
+}
+
+export interface RnpApproachPath {
+  label: string;
+  entry_waypoint: string;
+  path: [number, number, number][];
+  timestamps: number[];
+  total_distance_nm: number;
+  segment_type: string;
+}
+
+export interface RnpMissedApproachPath {
+  path: [number, number, number][];
+  timestamps: number[];
+  total_distance_nm: number;
+}
+
+export interface RnpPath3d {
+  procedure_id: number;
+  name: string;
+  airport_id: string;
+  runway: string;
+  approach_paths: RnpApproachPath[];
+  missed_approach_path: RnpMissedApproachPath | null;
+  max_distance_nm: number;
+  waypoints: RnpWaypointMarker[];
+}

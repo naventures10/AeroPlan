@@ -6,10 +6,10 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.core.database import get_db
 from app.schemas.geojson import GeoJsonFeatureCollection
 
-router = APIRouter(prefix="/api", tags=["Spatial"])
+router = APIRouter(prefix="", tags=["Spatial"])
 
 
 @router.get("/features/{icao_code}", response_model=GeoJsonFeatureCollection)
