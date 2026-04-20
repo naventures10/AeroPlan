@@ -38,13 +38,29 @@ export function useDeckLayers({
     animatedTrips,
     highlightedAirspaceId,
     selectedRnpProcedureId,
+    selectedRnpApproachId,
+    setSelectedRnpApproachId,
   } = useMapStore();
 
-  // RNP 3D approach path — fetch data + drive animation
-  const rnpPathData = useRnpPath3d(selectedRnpProcedureId);
-  const rnpCurrentTime = useRnpAnimation(rnpPathData?.max_distance_nm ?? null);
-
   const { isAtsRendered, currentTime } = useRouteAnimation();
+
+  // RNP 3D approach path — fetch data + drive animation only for selected approach
+  const rnpPathData = useRnpPath3d(selectedRnpProcedureId);
+  const selectedApproach = useMemo(() => {
+    if (!rnpPathData || !selectedRnpApproachId) return null;
+    return (
+      rnpPathData.approach_paths.find((a) => a.entry_waypoint === selectedRnpApproachId) || null
+    );
+  }, [rnpPathData, selectedRnpApproachId]);
+
+  // Approach distance (NM) — animation boundary between approach and missed approach phases
+  const approachDist = selectedApproach?.total_distance_nm ?? 0;
+  // Missed approach distance — extends the animation loop beyond the RW waypoint
+  const missedDist = rnpPathData?.missed_approach_path?.total_distance_nm ?? 0;
+  // Total loop covers approach + missed approach so both phases play sequentially
+  const totalAnimDist = selectedApproach ? approachDist + missedDist : null;
+
+  const rnpCurrentTime = useRnpAnimation(totalAnimDist);
 
   // Pre-compute aerodrome text data
   const textData = useMemo(() => {
@@ -96,7 +112,15 @@ export function useDeckLayers({
 
     // RNP 3D approach path (TERMINAL mode only)
     if (viewMode === 'TERMINAL' && rnpPathData) {
-      layers.push(...createRnpLayers(rnpPathData, rnpCurrentTime));
+      layers.push(
+        ...createRnpLayers({
+          pathData: rnpPathData,
+          selectedRnpApproachId,
+          setSelectedRnpApproachId,
+          rnpCurrentTime,
+          approachDist,
+        }),
+      );
     }
 
     return layers;
@@ -118,7 +142,11 @@ export function useDeckLayers({
     currentTime,
     highlightedAirspaceId,
     rnpPathData,
+    selectedRnpApproachId,
+    setSelectedRnpApproachId,
     rnpCurrentTime,
+    approachDist,
+    missedDist,
   ]);
 
   return deckLayers;

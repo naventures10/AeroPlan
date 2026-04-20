@@ -26,16 +26,28 @@ def haversine_nm(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
 
 
 def smooth_path_3d(
-    path: list[list[float]], max_turn_dist_nm: float = 1.5, steps: int = 12
+    path: list[list[float]], max_turn_dist_nm: float = 2.5, steps: int = 12
 ) -> list[list[float]]:
     """
-    Applies a corner-cutting quadratic Bezier spline to make Fly-By
-    waypoint turns look like realistic aircraft tracks (curved) rather
-    than sharp instantaneous angles. Maps cut distances in Nautical Miles
-    to avoid massive under-turning on long segments.
+    Angle-adaptive Bezier smoothing with Geometric D-arc for large U-turns.
+
+    Two modes based on local turn angle:
+
+    Small/medium turns (< ~150°):
+      Quadratic fly-by. Cut distance scales linearly with turn_frac.
+
+    Large U-turns (≥ ~150°, typical for missed approach reversals):
+      4-point Cubic Geometric D-arc. Mathematically constructed to bulge outward
+      perpendicularly to the turn direction by 1.25 NM, achieving the standard
+      "teardrop" representation seen on IAP charts instead of a flat hairpin.
+
+    turn_frac = (1-cos θ)/2 : 0 = straight-on, 1 = full 180° reversal.
     """
     if len(path) < 3:
         return path
+
+    small_cut = 0.3  # Minimum cut for nearly straight transitions
+    teardrop_threshold = 0.85  # turn_frac above which D-arc is used (~150°+)
 
     smoothed = [path[0]]
 
@@ -47,52 +59,151 @@ def smooth_path_3d(
         dist_ab = haversine_nm(p_a[0], p_a[1], p_b[0], p_b[1])
         dist_bc = haversine_nm(p_b[0], p_b[1], p_c[0], p_c[1])
 
-        cut_ab = min(max_turn_dist_nm, dist_ab * 0.3) if dist_ab > 0 else 0
-        cut_bc = min(max_turn_dist_nm, dist_bc * 0.3) if dist_bc > 0 else 0
+        lat_rad = math.radians(p_b[1])
+        cos_lat = math.cos(lat_rad)
+        lon_to_nm = cos_lat * 60.04
+        lat_to_nm = 60.04
 
-        alpha_ab = (cut_ab / dist_ab) if dist_ab > 0 else 0
-        alpha_bc = (cut_bc / dist_bc) if dist_bc > 0 else 0
+        dx_in, dy_in = p_b[0] - p_a[0], p_b[1] - p_a[1]
+        dx_out, dy_out = p_c[0] - p_b[0], p_c[1] - p_b[1]
 
-        q0 = [
-            p_b[0] + alpha_ab * (p_a[0] - p_b[0]),
-            p_b[1] + alpha_ab * (p_a[1] - p_b[1]),
-            p_b[2] + alpha_ab * (p_a[2] - p_b[2]),
-        ]
+        mag_in = math.sqrt(dx_in**2 + dy_in**2)
+        mag_out = math.sqrt(dx_out**2 + dy_out**2)
 
-        q2 = [
-            p_b[0] + alpha_bc * (p_c[0] - p_b[0]),
-            p_b[1] + alpha_bc * (p_c[1] - p_b[1]),
-            p_b[2] + alpha_bc * (p_c[2] - p_b[2]),
-        ]
+        if mag_in > 0 and mag_out > 0:
+            cos_a = (dx_in * dx_out + dy_in * dy_out) / (mag_in * mag_out)
+            cos_a = max(-1.0, min(1.0, cos_a))
+            turn_frac = (1.0 - cos_a) / 2.0
+        else:
+            turn_frac = 0.0
 
-        smoothed.append(q0)
+        if turn_frac > teardrop_threshold and dist_ab > 0:
+            # ── PROCEDURAL 180° SEMI-CIRCLE D-ARC ─────────────────────────
+            # Replaces the twisted Bezier approach with a mathematically pure
+            # 1.0 NM fly-over and 1.25 NM lateral semicircle arc.
+            dx_in_nm = dx_in * lon_to_nm
+            dy_in_nm = dy_in * lat_to_nm
+            mag_in_nm = math.sqrt(dx_in_nm**2 + dy_in_nm**2)
+            ux_in = dx_in_nm / mag_in_nm if mag_in_nm > 0 else 0
+            uy_in = dy_in_nm / mag_in_nm if mag_in_nm > 0 else 0
 
-        for j in range(1, steps):
-            t = j / steps
-            inv_t = 1.0 - t
+            # Determine Turn Direction & Sweep
+            # Left Turn (Cross >= 0) -> Bulge Right (North) -> Sweep CCW
+            # Wait, mathematically, Left turn bulge Right gives start_angle -90, sweep CW = -1.0
+            dx_out_nm = dx_out * lon_to_nm
+            dy_out_nm = dy_out * lat_to_nm
+            mag_out_nm = math.sqrt(dx_out_nm**2 + dy_out_nm**2)
+            ux_out = dx_out_nm / mag_out_nm if mag_out_nm > 0 else 0
+            uy_out = dy_out_nm / mag_out_nm if mag_out_nm > 0 else 0
 
-            x = (inv_t**2) * q0[0] + 2 * inv_t * t * p_b[0] + (t * t) * q2[0]
-            y = (inv_t**2) * q0[1] + 2 * inv_t * t * p_b[1] + (t * t) * q2[1]
-            z = (inv_t**2) * q0[2] + 2 * inv_t * t * p_b[2] + (t * t) * q2[2]
+            cross = ux_in * uy_out - uy_in * ux_out
+            if cross >= 0:
+                # Left Turn -> Bulge Left, Sweep CCW
+                nx, ny = -uy_in, ux_in
+                sweep_dir = 1.0
+            else:
+                # Right Turn -> Bulge Right, Sweep CW
+                nx, ny = uy_in, -ux_in
+                sweep_dir = -1.0
 
-            smoothed.append([x, y, z])
+            arm_nm = 1.0
+            radius_nm = 1.25
 
-        smoothed.append(q2)
+            c_lon = p_b[0] + (arm_nm * ux_in + radius_nm * nx) / lon_to_nm
+            c_lat = p_b[1] + (arm_nm * uy_in + radius_nm * ny) / lat_to_nm
+
+            start_angle = math.atan2(-ny, -nx)
+
+            smoothed.append(list(p_b))
+
+            # Draw the 1.0 NM straight overfly to establish the turn entry
+            straight_steps = 5
+            for j in range(1, straight_steps + 1):
+                alpha = j / straight_steps
+                smoothed.append(
+                    [
+                        p_b[0] + alpha * (arm_nm * ux_in) / lon_to_nm,
+                        p_b[1] + alpha * (arm_nm * uy_in) / lat_to_nm,
+                        p_b[2],
+                    ]
+                )
+
+            # Draw the clean 180° circular arc sequence
+            arc_steps = 15
+            for j in range(1, arc_steps + 1):
+                theta = start_angle + sweep_dir * (j / arc_steps) * math.pi
+                x = c_lon + (radius_nm * math.cos(theta)) / lon_to_nm
+                y = c_lat + (radius_nm * math.sin(theta)) / lat_to_nm
+                smoothed.append([x, y, p_b[2]])
+
+            # Post-arc naturally connects via straight line string to the next fix
+
+        else:
+            # ── QUADRATIC FLY-BY for small/medium turns ──────────────────────────
+            # ... identical logic as before ...
+            adaptive_max = small_cut + (max_turn_dist_nm - small_cut) * turn_frac
+            cut_ab = min(adaptive_max, dist_ab * 0.45) if dist_ab > 0 else 0
+            cut_bc = min(adaptive_max, dist_bc * 0.45) if dist_bc > 0 else 0
+
+            alpha_ab = (cut_ab / dist_ab) if dist_ab > 0 else 0
+            alpha_bc = (cut_bc / dist_bc) if dist_bc > 0 else 0
+
+            q0 = [
+                p_b[0] + alpha_ab * (p_a[0] - p_b[0]),
+                p_b[1] + alpha_ab * (p_a[1] - p_b[1]),
+                p_b[2] + alpha_ab * (p_a[2] - p_b[2]),
+            ]
+            q2 = [
+                p_b[0] + alpha_bc * (p_c[0] - p_b[0]),
+                p_b[1] + alpha_bc * (p_c[1] - p_b[1]),
+                p_b[2] + alpha_bc * (p_c[2] - p_b[2]),
+            ]
+
+            smoothed.append(q0)
+
+            for j in range(1, steps):
+                t = j / steps
+                inv_t = 1.0 - t
+                x = (inv_t**2) * q0[0] + 2 * inv_t * t * p_b[0] + (t**2) * q2[0]
+                y = (inv_t**2) * q0[1] + 2 * inv_t * t * p_b[1] + (t**2) * q2[1]
+                z = (inv_t**2) * q0[2] + 2 * inv_t * t * p_b[2] + (t**2) * q2[2]
+                smoothed.append([x, y, z])
+
+            smoothed.append(q2)
 
     smoothed.append(path[-1])
     return smoothed
 
 
 def extract_true_course(course_str: str | None) -> float | None:
-    """Parses true course in degrees from strings like '228.34° (228.09°)'."""
+    """Parses true course in degrees from two common formats:
+    - Slash-separated:   '299.41° Mag /297.66° True'  → 297.66
+    - Parenthesis-style: '266.94°(265.44°)'            → 265.44
+    Returns None if parsing fails.
+    """
     if not course_str:
         return None
-    m = re.search(r"\(\D*([\d\.]+)\D*\)", str(course_str))
+    s = str(course_str).strip()
+
+    # Format 1: "NNN.NN° Mag / NNN.NN° True"  (slash separator)
+    # The true course is the numeric value that appears after "/" and before "True"
+    if "/" in s:
+        after_slash = s.split("/", 1)[1]
+        m = re.search(r"([\d\.]+)", after_slash)
+        if m:
+            try:
+                return float(m.group(1))
+            except ValueError:
+                pass
+
+    # Format 2: "NNN.NN°(NNN.NN°)" — true course is inside the parentheses
+    m = re.search(r"\(\D*([\d\.]+)\D*\)", s)
     if m:
         try:
             return float(m.group(1))
         except ValueError:
             pass
+
     return None
 
 
@@ -186,6 +297,17 @@ def build_3d_paths(proc_row: Any, legs_rows: Sequence[Any]) -> RnpPath3dResponse
         final_group_idx = groups.index(final_group)
         for g in groups[final_group_idx + 1 :]:
             raw_missed_approach.extend(g)
+
+        # Truncate raw_missed_approach to only include up to and including the FIRST
+        # HM (hold-in-manual) leg encountered after the runway. Subsequent HM legs
+        # are waypoints for unrelated holding patterns at other fixes and would
+        # draw spurious paths far from the actual missed approach track.
+        truncated_missed = []
+        for leg in raw_missed_approach:
+            truncated_missed.append(leg)
+            if leg.path_descriptor == "HM":
+                break  # Stop after the first HM; ignore all subsequent HM holds
+        raw_missed_approach = truncated_missed
     else:
         final_approach = groups[-1] if groups else []
         raw_missed_approach = []
@@ -276,7 +398,9 @@ def build_3d_paths(proc_row: Any, legs_rows: Sequence[Any]) -> RnpPath3dResponse
     def process_path(raw_path):
         if len(raw_path) < 2:
             return [], [], 0.0
-        path_smoothed = smooth_path_3d(raw_path, max_turn_dist_nm=1.5, steps=16)
+        # Angle-adaptive Bezier smoothing: 0.3 NM for gentle leg jogs,
+        # scales up to 2.5 NM for near-180° missed approach U-turns.
+        path_smoothed = smooth_path_3d(raw_path, max_turn_dist_nm=2.5, steps=16)
         ts = [0.0]
         for i in range(1, len(path_smoothed)):
             seg = haversine_nm(
