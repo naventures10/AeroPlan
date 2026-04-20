@@ -29,10 +29,17 @@ def smooth_path_3d(
     path: list[list[float]], max_turn_dist_nm: float = 1.5, steps: int = 12
 ) -> list[list[float]]:
     """
-    Applies a corner-cutting quadratic Bezier spline to make Fly-By
-    waypoint turns look like realistic aircraft tracks (curved) rather
-    than sharp instantaneous angles. Maps cut distances in Nautical Miles
-    to avoid massive under-turning on long segments.
+    Applies a fly-through quadratic Bezier spline at each waypoint.
+
+    Each interior waypoint p_b is positioned exactly on the curve (at t=0.5)
+    using the through-point Bezier formula:
+
+        control = 2 * p_b - 0.5 * (q0 + q2)
+
+    where q0 is a point on the inbound leg and q2 is a point on the outbound leg,
+    both `max_turn_dist_nm` from the fix. This produces a smooth arc that crosses
+    the waypoint fix — the aircraft overshoots briefly before aligning with the
+    outbound track, matching the charted IAP leg representation.
     """
     if len(path) < 3:
         return path
@@ -53,16 +60,26 @@ def smooth_path_3d(
         alpha_ab = (cut_ab / dist_ab) if dist_ab > 0 else 0
         alpha_bc = (cut_bc / dist_bc) if dist_bc > 0 else 0
 
+        # q0: on the inbound leg, cut_ab before the waypoint
         q0 = [
             p_b[0] + alpha_ab * (p_a[0] - p_b[0]),
             p_b[1] + alpha_ab * (p_a[1] - p_b[1]),
             p_b[2] + alpha_ab * (p_a[2] - p_b[2]),
         ]
 
+        # q2: on the outbound leg, cut_bc after the waypoint
         q2 = [
             p_b[0] + alpha_bc * (p_c[0] - p_b[0]),
             p_b[1] + alpha_bc * (p_c[1] - p_b[1]),
             p_b[2] + alpha_bc * (p_c[2] - p_b[2]),
+        ]
+
+        # Through-point control: ensure B(0.5) = p_b exactly.
+        # Derived from: 0.25*q0 + 0.5*ctrl + 0.25*q2 = p_b  =>  ctrl = 2*p_b - 0.5*(q0+q2)
+        ctrl = [
+            2 * p_b[0] - 0.5 * (q0[0] + q2[0]),
+            2 * p_b[1] - 0.5 * (q0[1] + q2[1]),
+            2 * p_b[2] - 0.5 * (q0[2] + q2[2]),
         ]
 
         smoothed.append(q0)
@@ -70,11 +87,9 @@ def smooth_path_3d(
         for j in range(1, steps):
             t = j / steps
             inv_t = 1.0 - t
-
-            x = (inv_t**2) * q0[0] + 2 * inv_t * t * p_b[0] + (t * t) * q2[0]
-            y = (inv_t**2) * q0[1] + 2 * inv_t * t * p_b[1] + (t * t) * q2[1]
-            z = (inv_t**2) * q0[2] + 2 * inv_t * t * p_b[2] + (t * t) * q2[2]
-
+            x = (inv_t**2) * q0[0] + 2 * inv_t * t * ctrl[0] + (t**2) * q2[0]
+            y = (inv_t**2) * q0[1] + 2 * inv_t * t * ctrl[1] + (t**2) * q2[1]
+            z = (inv_t**2) * q0[2] + 2 * inv_t * t * ctrl[2] + (t**2) * q2[2]
             smoothed.append([x, y, z])
 
         smoothed.append(q2)
@@ -306,6 +321,8 @@ def build_3d_paths(proc_row: Any, legs_rows: Sequence[Any]) -> RnpPath3dResponse
     def process_path(raw_path):
         if len(raw_path) < 2:
             return [], [], 0.0
+        # Fly-over Bezier smoothing: straight legs pass through each fix, then
+        # gracefully arc to the next outbound track.
         path_smoothed = smooth_path_3d(raw_path, max_turn_dist_nm=1.5, steps=16)
         ts = [0.0]
         for i in range(1, len(path_smoothed)):
