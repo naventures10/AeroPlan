@@ -51,12 +51,18 @@ export function createRnpLayers(pathData: RnpPath3d | null, currentTime: number)
 
   // Find the lowest altitude (usually the runway / MAPt) to anchor the exaggeration
   // so the path touches the real MapLibre map plane at Z=0.
-  const allZ: number[] = [];
-  pathData.approach_paths.forEach((ap) => allZ.push(...ap.path.map((p) => p[2])));
+  let minZ = Infinity;
+  pathData.approach_paths.forEach((ap) => {
+    ap.path.forEach((p) => {
+      if (p[2] < minZ) minZ = p[2];
+    });
+  });
   if (pathData.missed_approach_path) {
-    allZ.push(...pathData.missed_approach_path.path.map((p) => p[2]));
+    pathData.missed_approach_path.path.forEach((p) => {
+      if (p[2] < minZ) minZ = p[2];
+    });
   }
-  const minZ = allZ.length > 0 ? Math.min(...allZ) : 0;
+  if (minZ === Infinity) minZ = 0;
 
   // ── 1. Animated 3D Approach Trails ──────────────────────────────────
   if (pathData.approach_paths.length > 0) {

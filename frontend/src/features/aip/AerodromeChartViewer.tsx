@@ -91,8 +91,9 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
       return;
     }
 
+    const normalizedIcao = icaoCode.toUpperCase();
     setIsLoading(true);
-    fetch(`/api/aerodromes/${icaoCode}/charts`)
+    fetch(`/api/aerodromes/${normalizedIcao}/charts`)
       .then((res) => res.json())
       .then((data) => {
         const chartList = Array.isArray(data) ? data : [];
@@ -112,12 +113,21 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
       setRnpProcedures([]);
       return;
     }
-    fetch(`/api/aerodromes/${icaoCode.toUpperCase()}/rnp-procedures`)
-      .then((res) => (res.ok ? res.json() : []))
+    const normalizedIcao = icaoCode.toUpperCase();
+    fetch(`/api/aerodromes/${normalizedIcao}/rnp-procedures`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) => {
         setRnpProcedures(Array.isArray(data) ? data : []);
       })
-      .catch(() => setRnpProcedures([]));
+      .catch((err) => {
+        console.error('Failed to fetch RNP procedures:', err);
+        setRnpProcedures([]);
+      });
   }, [icaoCode]);
 
   const handleChartClick = useCallback(
