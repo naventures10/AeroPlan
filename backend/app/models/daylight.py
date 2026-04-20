@@ -2,7 +2,7 @@ from geoalchemy2 import Geometry
 from sqlalchemy import Column, Date, DateTime, Integer, String, Time
 from sqlalchemy.sql import func
 
-from app.database import Base
+from app.core.database import Base
 
 
 class DaylightTime(Base):

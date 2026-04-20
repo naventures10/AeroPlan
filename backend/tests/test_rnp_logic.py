@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from app.routers.rnp import group_legs, parse_serial
+from app.services.rnp_service import group_legs, parse_serial
 
 # Mock leg object
 Leg = namedtuple("Leg", ["source_serial", "path_descriptor", "waypoint_ident"])
