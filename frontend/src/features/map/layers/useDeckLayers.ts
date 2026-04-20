@@ -6,6 +6,9 @@ import { createAerodromeLayers } from './createAerodromeLayers';
 import { createWaypointLayer } from './createWaypointLayer';
 import { createNavaidLayer } from './createNavaidLayer';
 import { createAtsRouteLayers } from './createAtsRouteLayers';
+import { createRnpLayers } from './createRnpLayers';
+import { useRnpPath3d } from './useRnpPath3d';
+import { useRnpAnimation } from './useRnpAnimation';
 import type { LayerContext } from './types';
 
 /**
@@ -34,7 +37,12 @@ export function useDeckLayers({
     atsRouteLabels,
     animatedTrips,
     highlightedAirspaceId,
+    selectedRnpProcedureId,
   } = useMapStore();
+
+  // RNP 3D approach path — fetch data + drive animation
+  const rnpPathData = useRnpPath3d(selectedRnpProcedureId);
+  const rnpCurrentTime = useRnpAnimation(rnpPathData?.max_distance_nm ?? null);
 
   const { isAtsRendered, currentTime } = useRouteAnimation();
 
@@ -86,6 +94,11 @@ export function useDeckLayers({
       layers.push(...createAtsRouteLayers(ctx));
     }
 
+    // RNP 3D approach path (TERMINAL mode only)
+    if (viewMode === 'TERMINAL' && rnpPathData) {
+      layers.push(...createRnpLayers(rnpPathData, rnpCurrentTime));
+    }
+
     return layers;
   }, [
     aerodromes,
@@ -104,6 +117,8 @@ export function useDeckLayers({
     animatedTrips,
     currentTime,
     highlightedAirspaceId,
+    rnpPathData,
+    rnpCurrentTime,
   ]);
 
   return deckLayers;

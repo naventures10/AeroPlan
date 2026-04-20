@@ -158,7 +158,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
           longitude,
           latitude,
           zoom,
-          pitch: 0,
+          pitch: viewMode === 'TERMINAL' ? 45 : 0,
           bearing: 0,
           transitionDuration: 1200,
           transitionType: 'FLY',
@@ -170,7 +170,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
         console.error('Failed to calculate fitBounds', e);
       }
     }
-  }, [boundsToFit, setViewState, viewState, fitBounds]);
+  }, [boundsToFit, setViewState, viewState, fitBounds, viewMode]);
 
   // 4. Hide base map labels/roads below zoom 10
   const onMapLoad = useCallback((e: any) => {

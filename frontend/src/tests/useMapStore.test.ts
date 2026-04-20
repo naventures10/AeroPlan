@@ -31,6 +31,9 @@ describe('useMapStore', () => {
       animatedLabels: [],
       animationConfig: null,
       terminalPivot: null,
+      selectedRnpProcedureId: null,
+      selectedRnpChartKey: null,
+      selectedRnpBounds: null,
     });
   });
 
@@ -75,5 +78,47 @@ describe('useMapStore', () => {
     state = useMapStore.getState();
     expect(state.viewMode).toBe('ENROUTE');
     expect(state.viewState.pitch).toBe(0);
+  });
+
+  it('should set and clear RNP procedure selection', () => {
+    let state = useMapStore.getState();
+    state.setSelectedRnpProcedure({
+      procedureId: 42,
+      chartKey: 'VAAU-RNP-Y-RWY-27',
+      bounds: [78.0, 10.0, 79.0, 11.0],
+    });
+    state = useMapStore.getState();
+    expect(state.selectedRnpProcedureId).toBe(42);
+    expect(state.selectedRnpChartKey).toBe('VAAU-RNP-Y-RWY-27');
+    expect(state.selectedRnpBounds).toEqual([78.0, 10.0, 79.0, 11.0]);
+
+    state.setSelectedRnpProcedure(null);
+    state = useMapStore.getState();
+    expect(state.selectedRnpProcedureId).toBeNull();
+    expect(state.selectedRnpChartKey).toBeNull();
+    expect(state.selectedRnpBounds).toBeNull();
+  });
+
+  it('should clear RNP when switching to ENROUTE', () => {
+    useMapStore.setState({ viewMode: 'TERMINAL' });
+    useMapStore.getState().setSelectedRnpProcedure({
+      procedureId: 1,
+      chartKey: 'KEY',
+      bounds: null,
+    });
+    useMapStore.getState().setViewMode('ENROUTE');
+    const state = useMapStore.getState();
+    expect(state.selectedRnpProcedureId).toBeNull();
+  });
+
+  it('should clear RNP when changing active airport', () => {
+    useMapStore.getState().setActiveAirport('VAAU');
+    useMapStore.getState().setSelectedRnpProcedure({
+      procedureId: 99,
+      chartKey: 'X',
+      bounds: null,
+    });
+    useMapStore.getState().setActiveAirport('VOBL');
+    expect(useMapStore.getState().selectedRnpProcedureId).toBeNull();
   });
 });

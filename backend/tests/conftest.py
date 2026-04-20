@@ -10,8 +10,8 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-# Force the application to use a dedicated test database
-os.environ["POSTGRES_DB"] = "test_aeronautical_information_system"
+# Use dedicated test database by default, but allow overrides
+os.environ.setdefault("POSTGRES_DB", "test_aeronautical_information_system")
 
 from app import models  # noqa: F401 - Ensure all models are registered on Base
 from app.config import settings
@@ -39,6 +39,13 @@ app.dependency_overrides[get_db] = override_get_db
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_test_db():
     """Create all tables in the test database before the test session starts."""
+    # Safety check: only drop/create if it's explicitly a test database
+    db_name = os.environ.get("POSTGRES_DB", "")
+    if "test" not in db_name.lower():
+        raise RuntimeError(
+            f"Safety check failed: POSTGRES_DB ({db_name}) must contain 'test' to prevent accidental data loss."
+        )
+
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
