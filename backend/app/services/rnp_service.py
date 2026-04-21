@@ -47,7 +47,7 @@ def smooth_path_3d(
         return path
 
     small_cut = 0.3  # Minimum cut for nearly straight transitions
-    teardrop_threshold = 0.85  # turn_frac above which D-arc is used (~150°+)
+    teardrop_threshold = 0.95  # turn_frac above which D-arc is used (~163°+)
 
     smoothed = [path[0]]
 
@@ -76,6 +76,7 @@ def smooth_path_3d(
             turn_frac = (1.0 - cos_a) / 2.0
         else:
             turn_frac = 0.0
+            cos_a = 1.0
 
         if turn_frac > teardrop_threshold and dist_ab > 0:
             # ── PROCEDURAL 180° SEMI-CIRCLE D-ARC ─────────────────────────
@@ -112,7 +113,10 @@ def smooth_path_3d(
             c_lon = p_b[0] + (arm_nm * ux_in + radius_nm * nx) / lon_to_nm
             c_lat = p_b[1] + (arm_nm * uy_in + radius_nm * ny) / lat_to_nm
 
+            # Start angle points from center back to the end of the overfly arm
             start_angle = math.atan2(-ny, -nx)
+            # The sweep angle should match the actual required turn angle
+            sweep_angle = math.acos(cos_a)
 
             smoothed.append(list(p_b))
 
@@ -120,27 +124,44 @@ def smooth_path_3d(
             straight_steps = 5
             for j in range(1, straight_steps + 1):
                 alpha = j / straight_steps
+                # Interpolate altitude if p_c exists and has altitude
+                alt = p_b[2]
+                if dist_bc > 0 and p_c[2] is not None and p_b[2] is not None:
+                    # Rough distance-based interpolation
+                    dist_from_b = alpha * arm_nm
+                    alt = p_b[2] + (p_c[2] - p_b[2]) * (
+                        dist_from_b / max(dist_bc, arm_nm + radius_nm * sweep_angle)
+                    )
+
                 smoothed.append(
                     [
                         p_b[0] + alpha * (arm_nm * ux_in) / lon_to_nm,
                         p_b[1] + alpha * (arm_nm * uy_in) / lat_to_nm,
-                        p_b[2],
+                        alt,
                     ]
                 )
 
-            # Draw the clean 180° circular arc sequence
+            # Draw the clean circular arc sequence
             arc_steps = 15
             for j in range(1, arc_steps + 1):
-                theta = start_angle + sweep_dir * (j / arc_steps) * math.pi
+                fraction = j / arc_steps
+                theta = start_angle + sweep_dir * fraction * sweep_angle
                 x = c_lon + (radius_nm * math.cos(theta)) / lon_to_nm
                 y = c_lat + (radius_nm * math.sin(theta)) / lat_to_nm
-                smoothed.append([x, y, p_b[2]])
+
+                alt = p_b[2]
+                if dist_bc > 0 and p_c[2] is not None and p_b[2] is not None:
+                    dist_from_b = arm_nm + (fraction * radius_nm * sweep_angle)
+                    alt = p_b[2] + (p_c[2] - p_b[2]) * (
+                        dist_from_b / max(dist_bc, arm_nm + radius_nm * sweep_angle)
+                    )
+
+                smoothed.append([x, y, alt])
 
             # Post-arc naturally connects via straight line string to the next fix
 
         else:
             # ── QUADRATIC FLY-BY for small/medium turns ──────────────────────────
-            # ... identical logic as before ...
             adaptive_max = small_cut + (max_turn_dist_nm - small_cut) * turn_frac
             cut_ab = min(adaptive_max, dist_ab * 0.45) if dist_ab > 0 else 0
             cut_bc = min(adaptive_max, dist_bc * 0.45) if dist_bc > 0 else 0
