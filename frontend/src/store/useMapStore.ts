@@ -109,6 +109,13 @@ export const DEFAULT_VIEW = {
   maxPitch: 85,
 };
 
+/**
+ * Zoom level below which the map automatically exits TERMINAL mode
+ * and flattens to ENROUTE view. Lowering this makes the terminal view
+ * "relaxed" for viewing large procedures.
+ */
+export const TERMINAL_EXIT_ZOOM_THRESHOLD = 5.5;
+
 // 2. Initialize the Store
 export const useMapStore = create<MapState>((set, get) => ({
   // Default starting view (High-level India)
@@ -250,6 +257,7 @@ export const useMapStore = create<MapState>((set, get) => ({
   },
 
   returnToEnroute: () => {
+    const { viewState } = get();
     set({
       viewMode: 'ENROUTE',
       activeAirport: null,
@@ -260,8 +268,10 @@ export const useMapStore = create<MapState>((set, get) => ({
       selectedFeature: null,
       terminalPivot: null,
       viewState: {
-        ...DEFAULT_VIEW,
-        transitionDuration: 2500,
+        ...viewState,
+        pitch: 0,
+        bearing: 0,
+        transitionDuration: 1500,
         transitionType: 'FLY',
       },
     });
