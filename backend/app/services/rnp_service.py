@@ -364,11 +364,15 @@ def build_3d_paths(
         initial_groups = [g for g in groups if not (len(g) == 1 and g[0].path_descriptor == "HM")]
 
     def extract_path(
-        legs_list: list, start_alt_ft: float = 10000.0, initial_pos: list[float] | None = None
-    ) -> list[list[float]]:
+        legs_list: list,
+        start_alt_ft: float = 10000.0,
+        initial_pos: list[float] | None = None,
+        end_alt_ft: float | None = None,
+    ) -> tuple[list[list[float]], list[float | None]]:
         path_3d = []
+        leg_indices: list[int | None] = []
+
         if initial_pos:
-            # initial_pos expected as [lon, lat, alt_m]
             path_3d.append(list(initial_pos))
 
         for leg in legs_list:
@@ -378,8 +382,11 @@ def build_3d_paths(
             if leg.lon is not None and leg.lat is not None:
                 if not path_3d or (path_3d[-1][0] != leg.lon or path_3d[-1][1] != leg.lat):
                     path_3d.append([leg.lon, leg.lat, alt_m])
-                elif alt_m is not None and path_3d[-1][2] is None:
-                    path_3d[-1][2] = alt_m
+                    leg_indices.append(len(path_3d) - 1)
+                else:
+                    if alt_m is not None and path_3d[-1][2] is None:
+                        path_3d[-1][2] = alt_m
+                    leg_indices.append(len(path_3d) - 1)
             else:
                 if path_3d and leg.path_descriptor in ["CA", "VA", "VI", "CF", "DF"]:
                     course_true = extract_true_course(leg.course)
@@ -406,14 +413,19 @@ def build_3d_paths(
                             path_3d[-1][0], path_3d[-1][1], course_true, dist_nm
                         )
                         path_3d.append([v_lon, v_lat, alt_m])
+                        leg_indices.append(len(path_3d) - 1)
+                    else:
+                        leg_indices.append(None)
+                else:
+                    leg_indices.append(None)
 
         if not path_3d:
-            return path_3d
+            return [], []
 
         if path_3d[0][2] is None:
             path_3d[0][2] = start_alt_ft * FT_TO_M
         if path_3d[-1][2] is None:
-            path_3d[-1][2] = path_3d[0][2]
+            path_3d[-1][2] = end_alt_ft * FT_TO_M if end_alt_ft is not None else path_3d[0][2]
 
         for i in range(1, len(path_3d) - 1):
             if path_3d[i][2] is None:
@@ -443,7 +455,10 @@ def build_3d_paths(
                 else:
                     path_3d[i][2] = alt_prev
 
-        return path_3d
+        # Map interpolated altitudes back to the original legs.
+        leg_alts = [path_3d[idx][2] if idx is not None else None for idx in leg_indices]
+
+        return path_3d, leg_alts
 
     def process_path(raw_path):
         if len(raw_path) < 2:
@@ -467,8 +482,14 @@ def build_3d_paths(
     is_sid = hasattr(proc_row, "type") and proc_row.type == "SID"
     initial_pos = runway_threshold if is_sid else None
 
+    waypoint_altitudes = {}
+
     if not initial_groups and final_approach:
-        p3d = extract_path(final_approach, initial_pos=initial_pos)
+        p3d, leg_alts = extract_path(final_approach, initial_pos=initial_pos)
+        for leg, alt in zip(final_approach, leg_alts, strict=True):
+            if leg.waypoint_ident and alt is not None:
+                waypoint_altitudes[leg.waypoint_ident] = alt
+
         smooth_p, ts, dist = process_path(p3d)
         if smooth_p:
             ident = final_approach[0].waypoint_ident or "START"
@@ -483,6 +504,7 @@ def build_3d_paths(
                 )
             )
     else:
+        ident_counts = {}
         for ig in initial_groups:
             full_legs = ig.copy()
             if final_approach:
@@ -491,14 +513,35 @@ def build_3d_paths(
                 else:
                     full_legs.extend(final_approach)
 
-            p3d = extract_path(full_legs, initial_pos=initial_pos)
+            p3d, leg_alts = extract_path(
+                full_legs, initial_pos=initial_pos, end_alt_ft=10000.0 if is_sid else None
+            )
+            for leg, alt in zip(full_legs, leg_alts, strict=True):
+                if leg.waypoint_ident and alt is not None:
+                    waypoint_altitudes[leg.waypoint_ident] = alt
+
             smooth_p, ts, dist = process_path(p3d)
             if smooth_p:
-                ident = ig[0].waypoint_ident or "START"
+                # Identification Logic:
+                # For SIDs, use the EXIT waypoint (transition) as the identifier.
+                # For STARs/Approaches, use the ENTRY waypoint (IAF).
+                if is_sid:
+                    ident = next(
+                        (leg.waypoint_ident for leg in reversed(ig) if leg.waypoint_ident), "START"
+                    )
+                else:
+                    ident = next((leg.waypoint_ident for leg in ig if leg.waypoint_ident), "START")
+
+                # Ensure uniqueness
+                ident_counts[ident] = ident_counts.get(ident, 0) + 1
+                unique_ident = ident
+                if ident_counts[ident] > 1:
+                    unique_ident = f"{ident}-{ident_counts[ident]}"
+
                 approach_paths.append(
                     RnpApproachPath(
-                        label=f"via {ident}",
-                        entry_waypoint=ident,
+                        label=f"via {unique_ident}",
+                        entry_waypoint=unique_ident,
                         path=smooth_p,
                         timestamps=ts,
                         total_distance_nm=dist,
@@ -509,7 +552,13 @@ def build_3d_paths(
     missed_approach_path = None
     if raw_missed_approach:
         start_alt_ft = extract_altitude(raw_missed_approach[0]) or 10000.0
-        p3d = extract_path(raw_missed_approach, start_alt_ft=start_alt_ft)
+        p3d, leg_alts = extract_path(
+            raw_missed_approach, start_alt_ft=start_alt_ft, end_alt_ft=10000.0 if is_sid else 0.0
+        )
+        for leg, alt in zip(raw_missed_approach, leg_alts, strict=True):
+            if leg.waypoint_ident and alt is not None:
+                waypoint_altitudes[leg.waypoint_ident] = alt
+
         smooth_p, ts, dist = process_path(p3d)
         if smooth_p:
             missed_approach_path = RnpMissedApproachPath(
@@ -524,11 +573,15 @@ def build_3d_paths(
         w_id = leg.waypoint_ident
         if w_id and w_id not in seen and leg.lon is not None:
             seen.add(w_id)
-            alt_ft = extract_altitude(leg) or 0.0
+            # Use interpolated altitude as fallback if explicit one is missing
+            alt_m = extract_altitude(leg)
+            if alt_m is not None:
+                alt_m *= FT_TO_M
+            else:
+                alt_m = waypoint_altitudes.get(w_id, 0.0)
+
             waypoints.append(
-                RnpWaypointMarker(
-                    name=w_id, position=[leg.lon, leg.lat, alt_ft * FT_TO_M], role=leg.role
-                )
+                RnpWaypointMarker(name=w_id, position=[leg.lon, leg.lat, alt_m], role=leg.role)
             )
 
     return RnpPath3dResponse(
