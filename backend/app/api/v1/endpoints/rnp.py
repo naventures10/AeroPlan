@@ -4,6 +4,8 @@ RNP procedures — metadata and chart linking for 3D terminal visualization.
 
 from __future__ import annotations
 
+import re
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +15,7 @@ from app.schemas.rnp import (
     RnpPath3dResponse,
     RnpProcedureResponse,
 )
-from app.services.rnp_service import build_3d_paths
+from app.services.rnp_service import FT_TO_M, build_3d_paths
 from app.utils.chart_key import normalize_chart_key
 
 router = APIRouter(prefix="", tags=["RNP"])
@@ -82,7 +84,7 @@ async def get_rnp_path_3d(
     plus a separate missed approach segment.
     """
     q_proc = text("""
-        SELECT id, name, airport_id, runway
+        SELECT id, name, airport_id, runway, type
         FROM rnp_procedures
         WHERE id = :pid
     """)
@@ -98,6 +100,7 @@ async def get_rnp_path_3d(
             l.path_descriptor,
             l.waypoint_ident,
             l.altitude_numeric,
+            l.altitude_constraint,
             l.role,
             l.course,
             l.distance,
@@ -129,4 +132,35 @@ async def get_rnp_path_3d(
     legs_result = await db.execute(q_legs, {"pid": procedure_id})
     legs_rows = legs_result.fetchall()
 
-    return build_3d_paths(proc_row, legs_rows)
+    runway_threshold = None
+    if proc_row.airport_id and proc_row.runway:
+        q_ad = text("""
+            SELECT aip_document->'data'->'runway_physical_characteristics'
+            FROM aerodrome_documents
+            WHERE icao_code = :icao
+        """)
+        ad_res = await db.execute(q_ad, {"icao": proc_row.airport_id.upper()})
+        ad_row = ad_res.fetchone()
+        if ad_row and ad_row[0]:
+            rwy_chars = ad_row[0]
+            # Find the characteristic for the specific runway designation
+            target_rwy = str(proc_row.runway).strip().zfill(2)
+            for char in rwy_chars:
+                if str(char.get("designation")).strip().zfill(2) == target_rwy:
+                    coords = char.get("coordinates", {})
+                    lat = coords.get("decimal_lat")
+                    lng = coords.get("decimal_lng")
+
+                    # Parse elevation (e.g. "THR: 4617.0FT")
+                    elev_ft = 0.0
+                    elev_str = char.get("thr_elevation", "")
+                    m = re.search(r"THR:\s*([\d\.]+)", str(elev_str))
+                    if m:
+                        elev_ft = float(m.group(1))
+
+                    if lat is not None and lng is not None:
+                        # [lon, lat, alt_m]
+                        runway_threshold = [float(lng), float(lat), elev_ft * FT_TO_M]
+                    break
+
+    return build_3d_paths(proc_row, legs_rows, runway_threshold=runway_threshold)

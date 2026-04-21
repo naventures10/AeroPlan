@@ -207,7 +207,6 @@ def extract_true_course(course_str: str | None) -> float | None:
     s = str(course_str).strip()
 
     # Format 1: "NNN.NN° Mag / NNN.NN° True"  (slash separator)
-    # The true course is the numeric value that appears after "/" and before "True"
     if "/" in s:
         after_slash = s.split("/", 1)[1]
         m = re.search(r"([\d\.]+)", after_slash)
@@ -217,7 +216,7 @@ def extract_true_course(course_str: str | None) -> float | None:
             except ValueError:
                 pass
 
-    # Format 2: "NNN.NN°(NNN.NN°)" — true course is inside the parentheses
+    # Format 2: "NNN.NN°(NNN.NN°)"
     m = re.search(r"\(\D*([\d\.]+)\D*\)", s)
     if m:
         try:
@@ -225,6 +224,28 @@ def extract_true_course(course_str: str | None) -> float | None:
         except ValueError:
             pass
 
+    return None
+
+
+def extract_altitude(leg: Any) -> float | None:
+    """Extracts numeric altitude in feet from altitude_numeric or altitude_constraint."""
+    if leg.altitude_numeric is not None:
+        try:
+            val = float(leg.altitude_numeric)
+            if val > 0:
+                return val
+        except ValueError, TypeError:
+            pass
+
+    if leg.altitude_constraint:
+        s = str(leg.altitude_constraint).strip().upper()
+        # Handle formats like "+5100.00", "5100", "FL150"
+        m = re.search(r"(\d+)", s)
+        if m:
+            val = float(m.group(1))
+            if "FL" in s:
+                return val * 100.0
+            return val
     return None
 
 
@@ -285,7 +306,9 @@ def group_legs(legs_rows: Sequence[Any]) -> list[list[Any]]:
     return groups
 
 
-def build_3d_paths(proc_row: Any, legs_rows: Sequence[Any]) -> RnpPath3dResponse:
+def build_3d_paths(
+    proc_row: Any, legs_rows: Sequence[Any], runway_threshold: list[float] | None = None
+) -> RnpPath3dResponse:
     if not legs_rows:
         return RnpPath3dResponse(
             procedure_id=proc_row.id,
@@ -320,31 +343,37 @@ def build_3d_paths(proc_row: Any, legs_rows: Sequence[Any]) -> RnpPath3dResponse
             raw_missed_approach.extend(g)
 
         # Truncate raw_missed_approach to only include up to and including the FIRST
-        # HM (hold-in-manual) leg encountered after the runway. Subsequent HM legs
-        # are waypoints for unrelated holding patterns at other fixes and would
-        # draw spurious paths far from the actual missed approach track.
+        # HM (hold-in-manual) leg encountered after the runway.
         truncated_missed = []
         for leg in raw_missed_approach:
             truncated_missed.append(leg)
             if leg.path_descriptor == "HM":
-                break  # Stop after the first HM; ignore all subsequent HM holds
+                break
         raw_missed_approach = truncated_missed
+
+        initial_groups = [
+            g
+            for g in groups[: groups.index(final_group)]
+            if g != final_group and not (len(g) == 1 and g[0].path_descriptor == "HM")
+        ]
     else:
-        final_approach = groups[-1] if groups else []
+        # For SIDs and STARs that have no "RW" waypoint, we process all groups
+        # as single continuous tracks without any further "final approach" extension.
+        final_approach = []
         raw_missed_approach = []
+        initial_groups = [g for g in groups if not (len(g) == 1 and g[0].path_descriptor == "HM")]
 
-    initial_groups = [
-        g
-        for g in groups[: groups.index(final_group) if final_group else len(groups)]
-        if g != final_group and not (len(g) == 1 and g[0].path_descriptor == "HM")
-    ]
-
-    def extract_path(legs_list: list, start_alt_ft: float = 10000.0) -> list[list[float]]:
+    def extract_path(
+        legs_list: list, start_alt_ft: float = 10000.0, initial_pos: list[float] | None = None
+    ) -> list[list[float]]:
         path_3d = []
+        if initial_pos:
+            # initial_pos expected as [lon, lat, alt_m]
+            path_3d.append(list(initial_pos))
+
         for leg in legs_list:
-            alt_m = (
-                float(leg.altitude_numeric) * FT_TO_M if leg.altitude_numeric is not None else None
-            )
+            alt_ft = extract_altitude(leg)
+            alt_m = alt_ft * FT_TO_M if alt_ft is not None else None
 
             if leg.lon is not None and leg.lat is not None:
                 if not path_3d or (path_3d[-1][0] != leg.lon or path_3d[-1][1] != leg.lat):
@@ -419,8 +448,6 @@ def build_3d_paths(proc_row: Any, legs_rows: Sequence[Any]) -> RnpPath3dResponse
     def process_path(raw_path):
         if len(raw_path) < 2:
             return [], [], 0.0
-        # Angle-adaptive Bezier smoothing: 0.3 NM for gentle leg jogs,
-        # scales up to 2.5 NM for near-180° missed approach U-turns.
         path_smoothed = smooth_path_3d(raw_path, max_turn_dist_nm=2.5, steps=16)
         ts = [0.0]
         for i in range(1, len(path_smoothed)):
@@ -436,8 +463,12 @@ def build_3d_paths(proc_row: Any, legs_rows: Sequence[Any]) -> RnpPath3dResponse
 
     approach_paths = []
 
+    # SID/STAR context: initial_pos is the runway threshold for SIDs
+    is_sid = hasattr(proc_row, "type") and proc_row.type == "SID"
+    initial_pos = runway_threshold if is_sid else None
+
     if not initial_groups and final_approach:
-        p3d = extract_path(final_approach)
+        p3d = extract_path(final_approach, initial_pos=initial_pos)
         smooth_p, ts, dist = process_path(p3d)
         if smooth_p:
             ident = final_approach[0].waypoint_ident or "START"
@@ -459,7 +490,8 @@ def build_3d_paths(proc_row: Any, legs_rows: Sequence[Any]) -> RnpPath3dResponse
                     full_legs.extend(final_approach[1:])
                 else:
                     full_legs.extend(final_approach)
-            p3d = extract_path(full_legs)
+
+            p3d = extract_path(full_legs, initial_pos=initial_pos)
             smooth_p, ts, dist = process_path(p3d)
             if smooth_p:
                 ident = ig[0].waypoint_ident or "START"
@@ -476,12 +508,8 @@ def build_3d_paths(proc_row: Any, legs_rows: Sequence[Any]) -> RnpPath3dResponse
 
     missed_approach_path = None
     if raw_missed_approach:
-        start_alt_raw = raw_missed_approach[0].altitude_numeric
-        start_alt_ft = float(start_alt_raw) if start_alt_raw is not None else 10000.0
-        p3d = extract_path(
-            raw_missed_approach,
-            start_alt_ft=start_alt_ft,
-        )
+        start_alt_ft = extract_altitude(raw_missed_approach[0]) or 10000.0
+        p3d = extract_path(raw_missed_approach, start_alt_ft=start_alt_ft)
         smooth_p, ts, dist = process_path(p3d)
         if smooth_p:
             missed_approach_path = RnpMissedApproachPath(
@@ -496,9 +524,11 @@ def build_3d_paths(proc_row: Any, legs_rows: Sequence[Any]) -> RnpPath3dResponse
         w_id = leg.waypoint_ident
         if w_id and w_id not in seen and leg.lon is not None:
             seen.add(w_id)
-            alt_m = float(leg.altitude_numeric) * FT_TO_M if leg.altitude_numeric else 0.0
+            alt_ft = extract_altitude(leg) or 0.0
             waypoints.append(
-                RnpWaypointMarker(name=w_id, position=[leg.lon, leg.lat, alt_m], role=leg.role)
+                RnpWaypointMarker(
+                    name=w_id, position=[leg.lon, leg.lat, alt_ft * FT_TO_M], role=leg.role
+                )
             )
 
     return RnpPath3dResponse(
