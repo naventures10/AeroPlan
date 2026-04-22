@@ -23,6 +23,7 @@ function formatAipText(text: any): React.ReactNode {
 }
 
 export function AirspaceDetailsPanel({ data }: { data: any }) {
+  if (!data) return null;
   const p = data.properties || {};
 
   return (
@@ -30,7 +31,7 @@ export function AirspaceDetailsPanel({ data }: { data: any }) {
       {/* Header */}
       <div className="flex flex-col border-b border-white/10 pb-2">
         <span className="text-[10px] font-black text-cyan-400 tracking-[0.2em] uppercase">
-          {(p.airspace_type || 'AIRSPACE').replace('_', ' ')}
+          {(p.airspace_type || 'AIRSPACE').replace(/_/g, ' ')}
         </span>
         <span className="text-sm font-bold text-white mt-0.5 leading-tight">
           {p.name || 'Unnamed Airspace'}

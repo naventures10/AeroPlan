@@ -62,3 +62,6 @@ eaip_scrapper/Mumbai_*
 # ============================================================
 **/*.mbtiles
 backend/data/
+
+# Code Review
+.code-review/

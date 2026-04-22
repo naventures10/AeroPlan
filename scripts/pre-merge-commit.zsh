@@ -54,8 +54,14 @@ fi
 
 if (( FINDINGS > 0 )); then
     echo "❌ CodeRabbit found $FINDINGS unresolved issues!"
+    
+    # Save full output to a file to prevent truncation in CLI
+    REVIEW_DIR=".code-review"
+    mkdir -p "$REVIEW_DIR"
+    echo "$CODERABBIT_OUT" > "$REVIEW_DIR/latest_review.txt"
+    
     echo "------------------------------------------------------------"
-    echo "$CODERABBIT_OUT"
+    echo "Full review saved to: $REVIEW_DIR/latest_review.txt"
     echo "------------------------------------------------------------"
     echo "Please resolve these findings before merging."
     exit 1
