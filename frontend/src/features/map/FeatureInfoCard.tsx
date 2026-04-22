@@ -12,13 +12,7 @@ import { WaypointDetailsPanel } from './components/WaypointDetailsPanel';
 import { AirspaceDetailsPanel } from './components/AirspaceDetailsPanel';
 
 export function FeatureInfoCard() {
-  const {
-    selectedFeature,
-    setSelectedFeature,
-    viewMode,
-    setHighlightedAirspaceId,
-    highlightedAirspaceId,
-  } = useMapStore();
+  const { selectedFeature, setSelectedFeature, viewMode, setHighlightedAirspaceId } = useMapStore();
 
   const isVisible = viewMode === 'ENROUTE' && selectedFeature !== null;
   const type = selectedFeature?.type || '';
@@ -86,8 +80,9 @@ export function FeatureInfoCard() {
   }, [type, data.ident, data.id]);
 
   let title = 'Feature Details';
-  if (type === 'AIRSPACE_STACK') {
-    title = `Overlapping Airspaces (${Array.isArray(data) ? data.length : 0})`;
+  if (type === 'AIRSPACE') {
+    const p = data.properties || {};
+    title = p.name || p.identification || 'Airspace Details';
   } else {
     title =
       data.route_designator ||
@@ -142,7 +137,7 @@ export function FeatureInfoCard() {
                 variant="light"
                 onClick={() => {
                   setSelectedFeature(null);
-                  if (type === 'AIRSPACE_STACK') {
+                  if (type === 'AIRSPACE') {
                     setHighlightedAirspaceId(null);
                   }
                 }}
@@ -168,13 +163,7 @@ export function FeatureInfoCard() {
                 />
               )}
               {type === 'WAYPOINT' && <WaypointDetailsPanel data={data} />}
-              {type === 'AIRSPACE_STACK' && (
-                <AirspaceDetailsPanel
-                  data={data}
-                  highlightedAirspaceId={highlightedAirspaceId}
-                  setHighlightedAirspaceId={setHighlightedAirspaceId}
-                />
-              )}
+              {type === 'AIRSPACE' && <AirspaceDetailsPanel data={data} />}
             </CardBody>
           </Card>
 

@@ -212,38 +212,14 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
         getTooltip={getTooltip}
         pickingRadius={20}
         onClick={(info) => {
-          if (info.layer?.id === 'airspace-metadata-layer' && info.layer.context?.deck) {
-            const deck = info.layer.context.deck;
-            try {
-              const multiple = deck.pickMultipleObjects({
-                x: info.x,
-                y: info.y,
-                layerIds: ['airspace-metadata-layer'],
-                radius: 4,
-              });
-
-              if (multiple && multiple.length > 0) {
-                // Filter out duplicate features by ID (MVT layers sometimes yield identical features on tile boundaries)
-                const uniqueFeatures = Array.from(
-                  new window.Map(
-                    multiple.map((m: any) => [m.object.properties?.id ?? m.object.id, m.object]),
-                  ).values(),
-                );
-
-                setSelectedFeature({
-                  type: 'AIRSPACE_STACK',
-                  data: uniqueFeatures,
-                });
-
-                if (uniqueFeatures.length > 0) {
-                  const firstId = uniqueFeatures[0].properties?.id ?? uniqueFeatures[0].id;
-                  setHighlightedAirspaceId(String(firstId));
-                }
-                return;
-              }
-            } catch (e) {
-              console.error('Failed to pick airspaces', e);
-            }
+          if (info.layer?.id === 'airspace-metadata-layer' && info.object) {
+            setSelectedFeature({
+              type: 'AIRSPACE',
+              data: info.object,
+            });
+            const id = info.object.properties?.id ?? info.object.id;
+            setHighlightedAirspaceId(String(id));
+            return;
           }
           // If we clicked empty space or something else, clear feature (assuming we want to)
           if (!info.object) {

@@ -59,11 +59,11 @@ interface MapState {
   setSelectedRnpApproachId: (id: string | null) => void;
 
   selectedFeature: {
-    type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID' | 'AIRSPACE_STACK';
+    type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID' | 'AIRSPACE';
     data: any;
   } | null;
   setSelectedFeature: (
-    feature: { type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID' | 'AIRSPACE_STACK'; data: any } | null,
+    feature: { type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID' | 'AIRSPACE'; data: any } | null,
   ) => void;
 
   highlightedAirspaceId: string | null;

@@ -51,6 +51,7 @@ postgres:
       id_column: ogc_fid
       geometry_column: wkb_geometry
       srid: 4326
+      buffer: 256
       properties:
         airspace_type: "varchar"
         layer_name: "varchar"
@@ -61,6 +62,7 @@ postgres:
       id_column: id
       geometry_column: geom
       srid: 4326
+      buffer: 256
       properties:
         airspace_type: "varchar"
         name: "varchar"
