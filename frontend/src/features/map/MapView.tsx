@@ -257,7 +257,27 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
                 id="wac-layer"
                 type="raster"
                 paint={{
-                  'raster-opacity': 0.7,
+                  'raster-opacity': 1,
+                  'raster-resampling': 'linear',
+                }}
+              />
+            </Source>
+          )}
+
+          {viewMode === 'ENROUTE' && activeLayers.ercMap && (
+            <Source
+              id="erc-source"
+              type="raster"
+              tiles={[`${window.location.origin}/tiles/erc_india/{z}/{x}/{y}`]}
+              tileSize={256}
+              minzoom={4}
+              maxzoom={12}
+            >
+              <Layer
+                id="erc-layer"
+                type="raster"
+                paint={{
+                  'raster-opacity': 1,
                   'raster-resampling': 'linear',
                 }}
               />
