@@ -24,7 +24,60 @@ const AIRSPACE_COLORS: Record<
   UPR_ZONE: { fill: [190, 200, 255, 15], stroke: [190, 200, 255, 120] },
 };
 
+const AIRSPACE_HIERARCHY: Record<string, { minZoom: number; priority: number }> = {
+  FIR: { minZoom: 2.0, priority: 100 },
+  ADIZ: { minZoom: 2.5, priority: 90 },
+  CTA_UPPER: { minZoom: 4.0, priority: 80 },
+  UPR_ZONE: { minZoom: 4.5, priority: 75 },
+  DANGER: { minZoom: 7.0, priority: 70 },
+  PROHIBITED: { minZoom: 7.0, priority: 70 },
+  RESTRICTED: { minZoom: 7.0, priority: 65 },
+  CTA_LOWER: { minZoom: 6.0, priority: 60 },
+  TRA: { minZoom: 6.5, priority: 50 },
+  TSA: { minZoom: 6.5, priority: 50 },
+  CTR: { minZoom: 7.0, priority: 40 },
+};
+
+const DEFAULT_HIERARCHY = { minZoom: 7.5, priority: 10 };
+
 const DEFAULT_STROKE: [number, number, number, number] = [128, 128, 128, 60];
+
+// ── Helpers ──────────────────────────────────────────────────────────
+
+function getHierarchy(type: string) {
+  return AIRSPACE_HIERARCHY[type] || DEFAULT_HIERARCHY;
+}
+
+function getTextForFeature(f: any, zoom: number, layers: any): string | null {
+  const type: string = (f.properties?.airspace_type || '').toString().trim().toUpperCase();
+  const h = getHierarchy(type);
+
+  // Progressive disclosure check
+  if (zoom < h.minZoom) return null;
+
+  const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = layers;
+
+  // Layer Toggle Logic
+  if (type === 'FIR' && !airspaceFIR) return null;
+  if (
+    ['DANGER', 'PROHIBITED', 'RESTRICTED', 'TRA', 'TSA', 'ADIZ'].includes(type) &&
+    !airspaceRegulated
+  )
+    return null;
+  if (['CTR', 'CTA_LOWER', 'CTA_UPPER'].includes(type) && !airspaceControl) return null;
+  if (type === 'UPR_ZONE' && !airspaceUpr) return null;
+
+  const rawName = (f.properties?.identification || f.properties?.name || '').toString().trim();
+  if (!rawName) return null;
+
+  // Truncate long descriptive names - more aggressively (20 chars)
+  const cleanName = rawName
+    .split(/\||\n|I Area bounded/)[0]
+    .trim()
+    .substring(0, 20);
+
+  return cleanName.length === 20 ? `${cleanName}...` : cleanName;
+}
 
 // ── Factory ──────────────────────────────────────────────────────────
 
@@ -42,16 +95,10 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       getLineColor: (f: any) => {
         const type: string = (f.properties?.airspace_type || '').toString().trim().toUpperCase();
         const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = ctx.activeLayers;
+        const h = getHierarchy(type);
 
-        // Graduated progressive disclosure
-        if (['FIR', 'ADIZ', 'UPR_ZONE'].includes(type)) {
-          if (currentZoom < 2) return [0, 0, 0, 0];
-        } else if (['CTA_UPPER', 'CTA_LOWER'].includes(type)) {
-          if (currentZoom < 5.0) return [0, 0, 0, 0];
-        } else {
-          // Local/Granular sectors appear at close zoom
-          if (currentZoom < 6.5) return [0, 0, 0, 0];
-        }
+        // Hierarchical progressive disclosure for lines
+        if (currentZoom < h.minZoom) return [0, 0, 0, 0];
 
         // Layer Toggle Logic
         if (type === 'FIR' && !airspaceFIR) return [0, 0, 0, 0];
@@ -70,13 +117,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       getLineWidth: 2,
       lineWidthMinPixels: 1,
       updateTriggers: {
-        getLineColor: [
-          ctx.viewMode,
-          ctx.activeLayers,
-          currentZoom >= 2.0,
-          currentZoom >= 5.0,
-          currentZoom >= 5.5,
-        ],
+        getLineColor: [ctx.viewMode, ctx.activeLayers, currentZoom],
       },
     }),
 
@@ -90,71 +131,85 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       extensions: [new CollisionFilterExtension()],
       collisionEnabled: true,
       collisionGroup: 'airspaces',
-      getText: (f: any) => {
+      getCollisionPriority: (f: any) => {
         const type: string = (f.properties?.airspace_type || '').toString().trim().toUpperCase();
-        const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = ctx.activeLayers;
-
-        // Aligned graduated progressive disclosure for labels
-        if (['FIR', 'ADIZ', 'UPR_ZONE'].includes(type)) {
-          if (currentZoom < 2) return '';
-        } else if (['CTA_UPPER', 'CTA_LOWER'].includes(type)) {
-          if (currentZoom < 5.0) return '';
-        } else {
-          if (currentZoom < 6.5) return '';
-        }
-
-        // Layer Toggle Logic
-        if (type === 'FIR' && !airspaceFIR) return '';
-        if (
-          ['DANGER', 'PROHIBITED', 'RESTRICTED', 'TRA', 'TSA', 'ADIZ'].includes(type) &&
-          !airspaceRegulated
-        )
-          return '';
-        if (['CTR', 'CTA_LOWER', 'CTA_UPPER'].includes(type) && !airspaceControl) return '';
-        if (type === 'UPR_ZONE' && !airspaceUpr) return '';
-
-        const rawName = f.properties?.identification || f.properties?.name || 'Unknown';
-        // Truncate long descriptive names
-        const cleanName = rawName
-          .split(/\||\n|I Area bounded/)[0]
-          .trim()
-          .substring(0, 30);
-        return cleanName.length === 30 ? `${cleanName}...` : cleanName;
+        return getHierarchy(type).priority;
       },
-      getTextSize: 12,
+      getText: (f: any) => getTextForFeature(f, currentZoom, ctx.activeLayers),
+      getTextSize: (f: any) => {
+        const text = getTextForFeature(f, currentZoom, ctx.activeLayers);
+        return text ? 12 : 0;
+      },
       getTextColor: (f: any) => {
         const id = f.properties?.id ?? f.id;
         if (ctx.highlightedAirspaceId && String(id) === ctx.highlightedAirspaceId) {
           return [0, 0, 0, 255]; // Black text on yellow background
         }
-        const type: string = (f.properties?.airspace_type || '').toString().trim().toUpperCase();
+        const rawType: string = (f.properties?.airspace_type || '').toString().trim().toUpperCase();
+        const ident = (f.properties?.identification || '').toUpperCase();
+
+        // Inference fallback if DB type is missing
+        let type = rawType;
+        if (!type) {
+          if (ident.match(/V[AEOI]D/)) type = 'DANGER';
+          else if (ident.match(/V[AEOI]P/)) type = 'PROHIBITED';
+          else if (ident.match(/V[AEOI]R/)) type = 'RESTRICTED';
+          else if (ident.includes('TSA')) type = 'TSA';
+          else if (ident.includes('TRA')) type = 'TRA';
+        }
+
         const baseColor = AIRSPACE_COLORS[type]?.stroke ?? DEFAULT_STROKE;
-        // Match outline color but ensure full opacity for readability
         return [baseColor[0], baseColor[1], baseColor[2], 255];
       },
-      textBackground: true,
-      getTextBackgroundColor: (f: any) => {
+      background: true,
+      getBackgroundColor: (f: any) => {
+        const text = getTextForFeature(f, currentZoom, ctx.activeLayers);
+        if (!text) return [0, 0, 0, 0];
+
         const id = f.properties?.id ?? f.id;
         if (ctx.highlightedAirspaceId && String(id) === ctx.highlightedAirspaceId) {
-          return [255, 255, 0, 255]; // Opaque Yellow for highlight
+          return [255, 255, 0, 40]; // Very subtle yellow fill for highlight
         }
-        // Faint 'glass' box with no fill look
-        return [255, 255, 255, 15];
+        return [0, 0, 0, 0]; // No fill
       },
-      textBackgroundPadding: [4, 2] as [number, number],
-      textOutlineWidth: 1.5,
-      textOutlineColor: [0, 0, 0, 255],
-      textFontSettings: { sdf: true },
+      getBorderWidth: 2,
+      getBorderColor: (f: any) => {
+        const text = getTextForFeature(f, currentZoom, ctx.activeLayers);
+        if (!text) return [0, 0, 0, 0];
+
+        const id = f.properties?.id ?? f.id;
+        if (ctx.highlightedAirspaceId && String(id) === ctx.highlightedAirspaceId) {
+          return [255, 255, 0, 255]; // Yellow border for highlight
+        }
+
+        const type = (f.properties?.airspace_type || '').toString().toUpperCase();
+        const colors = AIRSPACE_COLORS[type as keyof typeof AIRSPACE_COLORS] || {
+          stroke: DEFAULT_STROKE,
+        };
+        const baseColor = colors.stroke || DEFAULT_STROKE;
+        return [baseColor[0], baseColor[1], baseColor[2], 255];
+      },
+      backgroundPadding: [4, 2],
+      fontWeight: 600,
+      fontStyle: 'italic',
+      textFontSettings: { sdf: false },
       textFontFamily: 'Inter, sans-serif',
       updateTriggers: {
         getText: [ctx.activeLayers, currentZoom >= 2.0, currentZoom >= 5.0, currentZoom >= 6.5],
+        getTextSize: [ctx.activeLayers, currentZoom >= 2.0, currentZoom >= 5.0, currentZoom >= 6.5],
         getTextColor: [
           ctx.highlightedAirspaceId,
           currentZoom >= 2.0,
           currentZoom >= 5.0,
           currentZoom >= 6.5,
         ],
-        getTextBackgroundColor: [
+        getBackgroundColor: [
+          ctx.highlightedAirspaceId,
+          currentZoom >= 2.0,
+          currentZoom >= 5.0,
+          currentZoom >= 6.5,
+        ],
+        getBorderColor: [
           ctx.highlightedAirspaceId,
           currentZoom >= 2.0,
           currentZoom >= 5.0,
