@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Spinner } from '@heroui/react';
 import { Plane, ArrowUpDown, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,6 +15,20 @@ export function RouteDetailsPanel({
   data: any;
 }) {
   const [showRemarks, setShowRemarks] = useState(false);
+  const remarksRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (showRemarks && remarksRef.current) {
+      // Small delay to ensure the spacer is rendered and layout has updated
+      const timer = setTimeout(() => {
+        remarksRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [showRemarks]);
 
   if (isLoadingRoute) {
     return (
@@ -109,55 +123,53 @@ export function RouteDetailsPanel({
               {segments.map((seg, idx) => {
                 const wp = waypoints[idx];
                 return (
-                  <tbody key={seg.sequence_number}>
-                    {/* ── Waypoint Row (FROM) ── */}
-                    <tr
-                      className={`border-t border-white/[0.06] ${idx % 2 === 0 ? 'bg-white/[0.02]' : ''}`}
-                    >
-                      <td className="route-td font-semibold text-white">
-                        <div className="flex flex-col">
-                          <span className="text-[11px] leading-tight">
-                            {wp?.waypoint_name || seg.from_waypoint}
+                  <tr
+                    key={seg.sequence_number}
+                    className={`border-t border-white/[0.06] ${idx % 2 === 0 ? 'bg-white/[0.02]' : ''}`}
+                  >
+                    <td className="route-td font-semibold text-white">
+                      <div className="flex flex-col">
+                        <span className="text-[11px] leading-tight">
+                          {wp?.waypoint_name || seg.from_waypoint}
+                        </span>
+                        {wp?.navaid_info && (
+                          <span className="text-[9px] text-cyan-400/80 font-normal">
+                            {wp.navaid_info}
                           </span>
-                          {wp?.navaid_info && (
-                            <span className="text-[9px] text-cyan-400/80 font-normal">
-                              {wp.navaid_info}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="route-td font-mono text-[10px] text-zinc-400">
-                        {wp?.raw_coordinates || seg.from_coordinates || '—'}
-                      </td>
-                      <td className="route-td text-zinc-300 text-[11px] font-mono">
-                        {seg.track_magnetic || '—'}
-                      </td>
-                      <td className="route-td text-right text-zinc-300 text-[11px] font-mono">
-                        {seg.distance_nm ? `${seg.distance_nm}` : '—'}
-                      </td>
-                      <td className="route-td">
-                        <div className="flex flex-col text-[10px]">
-                          <span className="text-zinc-300">{seg.upper_limit || '—'}</span>
-                          <span className="text-zinc-500">{seg.lower_limit || '—'}</span>
-                        </div>
-                      </td>
-                      <td className="route-td text-center">
-                        {seg.airspace_class ? (
-                          <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold bg-white/10 text-cyan-300 border border-white/10">
-                            {seg.airspace_class}
-                          </span>
-                        ) : (
-                          '—'
                         )}
-                      </td>
-                      <td className="route-td text-right text-[10px] text-zinc-400">
-                        {seg.moca || '—'}
-                      </td>
-                    </tr>
-                  </tbody>
+                      </div>
+                    </td>
+                    <td className="route-td font-mono text-[10px] text-zinc-400">
+                      {wp?.raw_coordinates || seg.from_coordinates || '—'}
+                    </td>
+                    <td className="route-td text-zinc-300 text-[11px] font-mono">
+                      {seg.track_magnetic || '—'}
+                    </td>
+                    <td className="route-td text-right text-zinc-300 text-[11px] font-mono">
+                      {seg.distance_nm ? `${seg.distance_nm}` : '—'}
+                    </td>
+                    <td className="route-td">
+                      <div className="flex flex-col text-[10px]">
+                        <span className="text-zinc-300">{seg.upper_limit || '—'}</span>
+                        <span className="text-zinc-500">{seg.lower_limit || '—'}</span>
+                      </div>
+                    </td>
+                    <td className="route-td text-center">
+                      {seg.airspace_class ? (
+                        <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold bg-white/10 text-cyan-300 border border-white/10">
+                          {seg.airspace_class}
+                        </span>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                    <td className="route-td text-right text-[10px] text-zinc-400">
+                      {seg.moca || '—'}
+                    </td>
+                  </tr>
                 );
               })}
-              {/* ── Last Waypoint Row (terminal fix) ── */}
+              {/* ── Last Waypoint Row (COP/Terminal fix) ── */}
               {lastWaypoint && (
                 <tr className="border-t border-white/[0.06] bg-white/[0.02]">
                   <td className="route-td font-semibold text-white">
@@ -175,9 +187,13 @@ export function RouteDetailsPanel({
                   <td className="route-td font-mono text-[10px] text-zinc-400">
                     {lastWaypoint.raw_coordinates || '—'}
                   </td>
-                  <td className="route-td text-zinc-500 text-[11px]" colSpan={5}>
-                    <span className="text-[10px] italic text-zinc-600">Terminal Fix</span>
+                  <td className="route-td text-zinc-500 text-[11px]">
+                    <span className="text-[10px] italic text-zinc-600">COP / Terminal Fix</span>
                   </td>
+                  <td className="route-td"></td>
+                  <td className="route-td"></td>
+                  <td className="route-td"></td>
+                  <td className="route-td"></td>
                 </tr>
               )}
             </tbody>
@@ -187,7 +203,7 @@ export function RouteDetailsPanel({
 
       {/* ── Remarks (Collapsible) ── */}
       {remarks && (
-        <div className="rounded-lg border border-white/10 overflow-hidden">
+        <div ref={remarksRef} className="rounded-lg border border-white/10 overflow-hidden">
           <button
             onClick={() => setShowRemarks(!showRemarks)}
             className="w-full flex items-center justify-between px-3 py-2 bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
@@ -220,6 +236,8 @@ export function RouteDetailsPanel({
           </AnimatePresence>
         </div>
       )}
+      {/* ── Spacer for Remarks (Allows pushing table up) ── */}
+      {showRemarks && <div className="h-[40vh]" />}
     </div>
   );
 }
