@@ -26,7 +26,10 @@ def haversine_nm(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
 
 
 def smooth_path_3d(
-    path: list[list[float]], max_turn_dist_nm: float = 2.5, steps: int = 12
+    path: list[list[float]],
+    max_turn_dist_nm: float = 2.5,
+    steps: int = 12,
+    turn_directions: list[str | None] | None = None,
 ) -> list[list[float]]:
     """
     Angle-adaptive Bezier smoothing with Geometric D-arc for large U-turns.
@@ -55,6 +58,9 @@ def smooth_path_3d(
         p_a = path[i - 1]
         p_b = path[i]
         p_c = path[i + 1]
+
+        # Explicit turn direction from database (if any)
+        forced_dir = turn_directions[i] if turn_directions and i < len(turn_directions) else None
 
         dist_ab = haversine_nm(p_a[0], p_a[1], p_b[0], p_b[1])
         dist_bc = haversine_nm(p_b[0], p_b[1], p_c[0], p_c[1])
@@ -89,16 +95,25 @@ def smooth_path_3d(
             uy_in = dy_in_nm / mag_in_nm if mag_in_nm > 0 else 0
 
             # Determine Turn Direction & Sweep
-            # Left Turn (Cross >= 0) -> Bulge Right (North) -> Sweep CCW
-            # Wait, mathematically, Left turn bulge Right gives start_angle -90, sweep CW = -1.0
             dx_out_nm = dx_out * lon_to_nm
             dy_out_nm = dy_out * lat_to_nm
             mag_out_nm = math.sqrt(dx_out_nm**2 + dy_out_nm**2)
             ux_out = dx_out_nm / mag_out_nm if mag_out_nm > 0 else 0
             uy_out = dy_out_nm / mag_out_nm if mag_out_nm > 0 else 0
 
+            # Calculate geometric cross product for default "shortest turn"
             cross = ux_in * uy_out - uy_in * ux_out
-            if cross >= 0:
+
+            # Respect forced direction if provided, otherwise use geometric cross product
+            is_left = False
+            if forced_dir == "L":
+                is_left = True
+            elif forced_dir == "R":
+                is_left = False
+            else:
+                is_left = cross >= 0
+
+            if is_left:
                 # Left Turn -> Bulge Left, Sweep CCW
                 nx, ny = -uy_in, ux_in
                 sweep_dir = 1.0
@@ -115,8 +130,21 @@ def smooth_path_3d(
 
             # Start angle points from center back to the end of the overfly arm
             start_angle = math.atan2(-ny, -nx)
-            # The sweep angle should match the actual required turn angle
-            sweep_angle = math.acos(cos_a)
+
+            # The sweep angle should match the actual required turn angle.
+            # If we are forcing a direction that is the "longer" way (e.g. 183°),
+            # we must adjust the angle.
+            angle_rad = math.acos(cos_a)
+            if forced_dir:
+                # If forced direction differs from shortest geometric direction,
+                # use the complementary angle to go the "long way"
+                shortest_is_left = cross >= 0
+                if (forced_dir == "L" and not shortest_is_left) or (
+                    forced_dir == "R" and shortest_is_left
+                ):
+                    angle_rad = 2 * math.pi - angle_rad
+
+            sweep_angle = angle_rad
 
             smoothed.append(list(p_b))
 
@@ -368,21 +396,40 @@ def build_3d_paths(
         start_alt_ft: float = 10000.0,
         initial_pos: list[float] | None = None,
         end_alt_ft: float | None = None,
-    ) -> tuple[list[list[float]], list[float | None]]:
+    ) -> tuple[list[list[float]], list[float | None], list[str | None]]:
         path_3d = []
         leg_indices: list[int | None] = []
+        turn_directions: list[str | None] = []
 
         if initial_pos:
             path_3d.append(list(initial_pos))
+            turn_directions.append(None)
 
         for leg in legs_list:
             alt_ft = extract_altitude(leg)
             alt_m = alt_ft * FT_TO_M if alt_ft is not None else None
 
+            # The turn direction in the database (L/R) describes the turn
+            # required to ENTER this leg. Therefore, it applies to the turn
+            # at the PREVIOUS waypoint (the one currently at the end of path_3d).
+            turn_dir = None
+            if hasattr(leg, "turn_direction") and leg.turn_direction:
+                turn_dir = str(leg.turn_direction).strip().upper()
+            elif (
+                isinstance(leg, dict)
+                and leg.get("turn_direction")
+                and str(leg["turn_direction"]).strip()
+            ):
+                turn_dir = str(leg["turn_direction"]).strip().upper()
+
+            if turn_dir in ["L", "R"] and turn_directions:
+                turn_directions[-1] = turn_dir
+
             if leg.lon is not None and leg.lat is not None:
                 if not path_3d or (path_3d[-1][0] != leg.lon or path_3d[-1][1] != leg.lat):
                     path_3d.append([leg.lon, leg.lat, alt_m])
                     leg_indices.append(len(path_3d) - 1)
+                    turn_directions.append(None)
                 else:
                     if alt_m is not None and path_3d[-1][2] is None:
                         path_3d[-1][2] = alt_m
@@ -414,13 +461,14 @@ def build_3d_paths(
                         )
                         path_3d.append([v_lon, v_lat, alt_m])
                         leg_indices.append(len(path_3d) - 1)
+                        turn_directions.append(None)
                     else:
                         leg_indices.append(None)
                 else:
                     leg_indices.append(None)
 
         if not path_3d:
-            return [], []
+            return [], [], []
 
         if path_3d[0][2] is None:
             path_3d[0][2] = start_alt_ft * FT_TO_M
@@ -458,12 +506,14 @@ def build_3d_paths(
         # Map interpolated altitudes back to the original legs.
         leg_alts = [path_3d[idx][2] if idx is not None else None for idx in leg_indices]
 
-        return path_3d, leg_alts
+        return path_3d, leg_alts, turn_directions
 
-    def process_path(raw_path):
+    def process_path(raw_path, turn_dirs: list[str | None] | None = None):
         if len(raw_path) < 2:
             return [], [], 0.0
-        path_smoothed = smooth_path_3d(raw_path, max_turn_dist_nm=2.5, steps=16)
+        path_smoothed = smooth_path_3d(
+            raw_path, max_turn_dist_nm=2.5, steps=16, turn_directions=turn_dirs
+        )
         ts = [0.0]
         for i in range(1, len(path_smoothed)):
             seg = haversine_nm(
@@ -485,12 +535,12 @@ def build_3d_paths(
     waypoint_altitudes = {}
 
     if not initial_groups and final_approach:
-        p3d, leg_alts = extract_path(final_approach, initial_pos=initial_pos)
+        p3d, leg_alts, turn_dirs = extract_path(final_approach, initial_pos=initial_pos)
         for leg, alt in zip(final_approach, leg_alts, strict=True):
             if leg.waypoint_ident and alt is not None:
                 waypoint_altitudes[leg.waypoint_ident] = alt
 
-        smooth_p, ts, dist = process_path(p3d)
+        smooth_p, ts, dist = process_path(p3d, turn_dirs=turn_dirs)
         if smooth_p:
             ident = final_approach[0].waypoint_ident or "START"
             approach_paths.append(
@@ -513,14 +563,14 @@ def build_3d_paths(
                 else:
                     full_legs.extend(final_approach)
 
-            p3d, leg_alts = extract_path(
+            p3d, leg_alts, turn_dirs = extract_path(
                 full_legs, initial_pos=initial_pos, end_alt_ft=10000.0 if is_sid else None
             )
             for leg, alt in zip(full_legs, leg_alts, strict=True):
                 if leg.waypoint_ident and alt is not None:
                     waypoint_altitudes[leg.waypoint_ident] = alt
 
-            smooth_p, ts, dist = process_path(p3d)
+            smooth_p, ts, dist = process_path(p3d, turn_dirs=turn_dirs)
             if smooth_p:
                 # Identification Logic:
                 # For SIDs, use the EXIT waypoint (transition) as the identifier.
@@ -552,14 +602,14 @@ def build_3d_paths(
     missed_approach_path = None
     if raw_missed_approach:
         start_alt_ft = extract_altitude(raw_missed_approach[0]) or 10000.0
-        p3d, leg_alts = extract_path(
+        p3d, leg_alts, turn_dirs = extract_path(
             raw_missed_approach, start_alt_ft=start_alt_ft, end_alt_ft=10000.0 if is_sid else 0.0
         )
         for leg, alt in zip(raw_missed_approach, leg_alts, strict=True):
             if leg.waypoint_ident and alt is not None:
                 waypoint_altitudes[leg.waypoint_ident] = alt
 
-        smooth_p, ts, dist = process_path(p3d)
+        smooth_p, ts, dist = process_path(p3d, turn_dirs=turn_dirs)
         if smooth_p:
             missed_approach_path = RnpMissedApproachPath(
                 path=smooth_p, timestamps=ts, total_distance_nm=dist
