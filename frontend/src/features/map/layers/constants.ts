@@ -33,6 +33,11 @@ export const ZOOM_ATS_WAYPOINTS = 7.5;
 /** Zoom level above which navaid text labels are visible */
 export const ZOOM_NAVAIDS = 2.5;
 
+// ── Label Size Constraints (Pixels) ──────────────────────────────────
+
+export const ATS_ROUTE_LABEL_MAX_PIXELS = 32;
+export const ATS_ROUTE_LABEL_TEXT_MAX_PIXELS = 24;
+
 // ── Deck.gl Extensions (singleton instances) ─────────────────────────
 
 const COLLISION_FILTER_EXTENSION = new CollisionFilterExtension();
