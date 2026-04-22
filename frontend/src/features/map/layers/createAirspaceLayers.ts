@@ -48,8 +48,22 @@ function getHierarchy(type: string) {
   return AIRSPACE_HIERARCHY[type] || DEFAULT_HIERARCHY;
 }
 
+function inferAirspaceType(feature: any): string {
+  const rawType = (feature.properties?.airspace_type || '').toString().trim().toUpperCase();
+  if (rawType) return rawType;
+
+  const ident = (feature.properties?.identification || '').toString().toUpperCase();
+  if (ident.match(/\bV[AEOI]D\b/)) return 'DANGER';
+  if (ident.match(/\bV[AEOI]P\b/)) return 'PROHIBITED';
+  if (ident.match(/\bV[AEOI]R\b/)) return 'RESTRICTED';
+  if (ident.includes('TSA')) return 'TSA';
+  if (ident.includes('TRA')) return 'TRA';
+
+  return '';
+}
+
 function getTextForFeature(f: any, zoom: number, layers: any): string | null {
-  const type: string = (f.properties?.airspace_type || '').toString().trim().toUpperCase();
+  const type = inferAirspaceType(f);
   const h = getHierarchy(type);
 
   // Progressive disclosure check
@@ -71,12 +85,10 @@ function getTextForFeature(f: any, zoom: number, layers: any): string | null {
   if (!rawName) return null;
 
   // Truncate long descriptive names - more aggressively (20 chars)
-  const cleanName = rawName
-    .split(/\||\n|I Area bounded/)[0]
-    .trim()
-    .substring(0, 20);
+  const processedName = rawName.split(/\||\n|I Area bounded/)[0].trim();
+  const cleanName = processedName.substring(0, 20);
 
-  return cleanName.length === 20 ? `${cleanName}...` : cleanName;
+  return processedName.length > 20 ? `${cleanName}...` : cleanName;
 }
 
 // ── Factory ──────────────────────────────────────────────────────────
@@ -145,18 +157,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
         if (ctx.highlightedAirspaceId && String(id) === ctx.highlightedAirspaceId) {
           return [0, 0, 0, 255]; // Black text on yellow background
         }
-        const rawType: string = (f.properties?.airspace_type || '').toString().trim().toUpperCase();
-        const ident = (f.properties?.identification || '').toUpperCase();
-
-        // Inference fallback if DB type is missing
-        let type = rawType;
-        if (!type) {
-          if (ident.match(/V[AEOI]D/)) type = 'DANGER';
-          else if (ident.match(/V[AEOI]P/)) type = 'PROHIBITED';
-          else if (ident.match(/V[AEOI]R/)) type = 'RESTRICTED';
-          else if (ident.includes('TSA')) type = 'TSA';
-          else if (ident.includes('TRA')) type = 'TRA';
-        }
+        const type = inferAirspaceType(f);
 
         const baseColor = AIRSPACE_COLORS[type]?.stroke ?? DEFAULT_STROKE;
         return [baseColor[0], baseColor[1], baseColor[2], 255];
