@@ -221,9 +221,9 @@ class AirspaceMetadataETL:
                 }
                 
                 ident = metadata["identification"].upper()
-                if 'VOD' in ident or 'VID' in ident: metadata["airspace_type"] = "DANGER"
-                elif 'VOP' in ident or 'VIP' in ident: metadata["airspace_type"] = "PROHIBITED"
-                elif 'VOR' in ident or 'VER' in ident: metadata["airspace_type"] = "RESTRICTED"
+                if re.search(r'V[AEOI]D', ident): metadata["airspace_type"] = "DANGER"
+                elif re.search(r'V[AEOI]P', ident): metadata["airspace_type"] = "PROHIBITED"
+                elif re.search(r'V[AEOI]R', ident): metadata["airspace_type"] = "RESTRICTED"
                 elif 'VOT' in ident or 'TSA' in ident: metadata["airspace_type"] = "TSA"
                 elif 'TRA' in ident: metadata["airspace_type"] = "TRA"
                 

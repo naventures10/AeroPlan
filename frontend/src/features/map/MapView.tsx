@@ -10,7 +10,7 @@ import Map, { Source, Layer } from 'react-map-gl/maplibre';
 import type { MapRef } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-import { useMapStore } from '../../store/useMapStore';
+import { useMapStore, TERMINAL_EXIT_ZOOM_THRESHOLD } from '../../store/useMapStore';
 import { useDeckLayers } from './layers/useDeckLayers';
 import { useMapTooltip } from './tooltips/useMapTooltip';
 import { POLYGON_PAINT, POINT_PAINT } from './layers/mapStyles';
@@ -108,7 +108,10 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
       let nextVs = vs;
 
       // 1. Zoom-out logic to exit terminal
-      if ((interactionState?.isZooming || interactionState?.isPanning) && nextVs.zoom < 10) {
+      if (
+        (interactionState?.isZooming || interactionState?.isPanning) &&
+        nextVs.zoom < TERMINAL_EXIT_ZOOM_THRESHOLD
+      ) {
         if (activeAirport) setActiveAirport(null);
         if (viewMode === 'TERMINAL' || nextVs.pitch > 0) {
           setViewMode('ENROUTE');
@@ -185,7 +188,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
           layer.id.includes('label')
         ) {
           try {
-            map.setLayerZoomRange(layer.id, 10, 24);
+            map.setLayerZoomRange(layer.id, TERMINAL_EXIT_ZOOM_THRESHOLD, 24);
           } catch (err) {
             // Some layers might not support zoom range or be removed
             console.warn(`Failed to set zoom range for ${layer.id}`, err);
@@ -209,38 +212,14 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
         getTooltip={getTooltip}
         pickingRadius={20}
         onClick={(info) => {
-          if (info.layer?.id === 'airspace-metadata-layer' && info.layer.context?.deck) {
-            const deck = info.layer.context.deck;
-            try {
-              const multiple = deck.pickMultipleObjects({
-                x: info.x,
-                y: info.y,
-                layerIds: ['airspace-metadata-layer'],
-                radius: 4,
-              });
-
-              if (multiple && multiple.length > 0) {
-                // Filter out duplicate features by ID (MVT layers sometimes yield identical features on tile boundaries)
-                const uniqueFeatures = Array.from(
-                  new window.Map(
-                    multiple.map((m: any) => [m.object.properties?.id ?? m.object.id, m.object]),
-                  ).values(),
-                );
-
-                setSelectedFeature({
-                  type: 'AIRSPACE_STACK',
-                  data: uniqueFeatures,
-                });
-
-                if (uniqueFeatures.length > 0) {
-                  const firstId = uniqueFeatures[0].properties?.id ?? uniqueFeatures[0].id;
-                  setHighlightedAirspaceId(String(firstId));
-                }
-                return;
-              }
-            } catch (e) {
-              console.error('Failed to pick airspaces', e);
-            }
+          if (info.layer?.id === 'airspace-metadata-layer' && info.object) {
+            setSelectedFeature({
+              type: 'AIRSPACE',
+              data: info.object,
+            });
+            const id = info.object.properties?.id ?? info.object.id;
+            setHighlightedAirspaceId(String(id));
+            return;
           }
           // If we clicked empty space or something else, clear feature (assuming we want to)
           if (!info.object) {

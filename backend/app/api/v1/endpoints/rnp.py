@@ -104,6 +104,7 @@ async def get_rnp_path_3d(
             l.role,
             l.course,
             l.distance,
+            l.turn_direction,
             w.lon,
             w.lat
         FROM rnp_legs l

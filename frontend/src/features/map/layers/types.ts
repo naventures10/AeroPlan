@@ -19,7 +19,7 @@ export interface ActiveLayers {
 }
 
 export interface SelectedFeature {
-  type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID' | 'AIRSPACE_STACK';
+  type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID' | 'AIRSPACE';
   data: any;
 }
 
