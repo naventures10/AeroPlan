@@ -146,7 +146,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
       setViewState({
         ...viewState,
         pitch: 45,
-        maxPitch: 85,
+        maxPitch: 60,
         transitionDuration: 1200,
         transitionType: 'LINEAR',
       });

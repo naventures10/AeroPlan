@@ -106,7 +106,7 @@ export const DEFAULT_VIEW = {
   zoom: 4.5,
   pitch: 0,
   bearing: 0,
-  maxPitch: 85,
+  maxPitch: 60,
 };
 
 /**
@@ -287,7 +287,7 @@ export const useMapStore = create<MapState>((set, get) => ({
         zoom: zoom,
         pitch: pitch,
         bearing: 0,
-        maxPitch: 85,
+        maxPitch: 60,
         transitionDuration: 1200,
         transitionType: 'FLY',
       },
