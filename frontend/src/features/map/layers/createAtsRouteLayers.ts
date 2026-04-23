@@ -22,6 +22,8 @@ import {
   RGB_ATS_CYAN,
   RGB_WHITE,
   parseRouteIds,
+  ATS_ROUTE_LABEL_MAX_PIXELS,
+  ATS_ROUTE_LABEL_TEXT_MAX_PIXELS,
 } from './constants';
 import type { LayerContext } from './types';
 
@@ -207,6 +209,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         },
         getColor: (): [number, number, number, number] => [0, 0, 0, 255],
         sizeUnits: 'meters',
+        sizeMaxPixels: ATS_ROUTE_LABEL_MAX_PIXELS,
         extensions: EXTENSIONS,
         collisionGroup: 'ats-labels',
         collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
@@ -245,6 +248,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
           return glowColor(baseRgb, getLabelIntensity(d, ctx), selectedRouteType);
         },
         sizeUnits: 'meters',
+        sizeMaxPixels: ATS_ROUTE_LABEL_MAX_PIXELS,
         extensions: EXTENSIONS,
         collisionGroup: 'ats-labels',
         collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
@@ -266,6 +270,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         getAngle: (d: any) => d.properties.bearing,
         getSize: 4000,
         sizeUnits: 'meters',
+        sizeMaxPixels: ATS_ROUTE_LABEL_TEXT_MAX_PIXELS,
         getColor: (d: any) => {
           const isSelected = selectedRouteIds.includes(d.properties.route_id);
           const baseRgb = routeBaseRgb(d.properties.route_type);

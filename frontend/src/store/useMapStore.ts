@@ -34,6 +34,7 @@ interface MapState {
     airspaceRegulated: boolean;
     airspaceControl: boolean;
     airspaceUpr: boolean;
+    ercMap: boolean;
   };
 
   selectedRouteIds: string[];
@@ -152,15 +153,23 @@ export const useMapStore = create<MapState>((set, get) => ({
     airspaceRegulated: true,
     airspaceControl: true,
     airspaceUpr: true,
+    ercMap: false,
   },
 
   toggleLayer: (layer) =>
-    set((state) => ({
-      activeLayers: {
-        ...state.activeLayers,
-        [layer]: !state.activeLayers[layer],
-      },
-    })),
+    set((state) => {
+      const newActiveLayers = { ...state.activeLayers };
+      newActiveLayers[layer] = !newActiveLayers[layer];
+
+      if (layer === 'wacMap' && newActiveLayers.wacMap) {
+        newActiveLayers.ercMap = false;
+      }
+      if (layer === 'ercMap' && newActiveLayers.ercMap) {
+        newActiveLayers.wacMap = false;
+      }
+
+      return { activeLayers: newActiveLayers };
+    }),
 
   selectedRouteIds: [],
   selectedRouteType: null,

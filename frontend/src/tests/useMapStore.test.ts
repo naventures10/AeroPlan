@@ -20,6 +20,7 @@ describe('useMapStore', () => {
         airspaceRegulated: true,
         airspaceControl: true,
         airspaceUpr: true,
+        ercMap: false,
       },
       selectedRouteIds: [],
       selectedRouteType: null,
