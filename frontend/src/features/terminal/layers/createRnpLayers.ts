@@ -113,11 +113,14 @@ function computeMissedDashes(
 export interface RnpContext {
   pathData: RnpPath3d | null;
   selectedRnpApproachId: string | null;
+  hoveredRnpApproachId?: string | null;
   setSelectedRnpApproachId: (id: string | null) => void;
   rnpCurrentTime: number;
   /** Cumulative NM at which the approach animation reaches the RW waypoint.
    *  After this point the missed approach phase begins. */
   approachDist: number;
+  pickable?: boolean;
+  opacity?: number;
 }
 
 /**
@@ -126,9 +129,12 @@ export interface RnpContext {
 export function createRnpLayers({
   pathData,
   selectedRnpApproachId,
+  hoveredRnpApproachId,
   setSelectedRnpApproachId,
   rnpCurrentTime,
   approachDist,
+  pickable,
+  opacity,
 }: RnpContext): any[] {
   if (!pathData) return [];
 
@@ -155,7 +161,7 @@ export function createRnpLayers({
     path: ap.path.map((p: [number, number, number]) => [
       p[0],
       p[1],
-      Math.max(0, (p[2] - minZ) * ALT_EXAGGERATION),
+      minZ + (p[2] - minZ) * ALT_EXAGGERATION + 2,
     ]),
     timestamps: ap.timestamps,
     total_dist: ap.total_distance_nm,
@@ -169,20 +175,33 @@ export function createRnpLayers({
         data: approachTripData,
         getPath: (d: any) => d.path,
         getColor: (d: any) => {
+          const isSelected = d.entry_waypoint === selectedRnpApproachId;
+          const isHovered = d.entry_waypoint === hoveredRnpApproachId;
+
+          if (isHovered) {
+            return [255, 255, 255, 255]; // Full bright white on hover
+          }
+
           if (selectedRnpApproachId === null) {
-            // When none selected, show all relatively visibly
+            // Nothing selected: show all magenta paths
             return [...RGB_APPROACH, 160] as [number, number, number, number];
           }
-          if (d.entry_waypoint === selectedRnpApproachId) {
-            return [255, 255, 255, 255]; // Focus style
+
+          if (isSelected) {
+            // Selected: invisible but pickable (use alpha 0)
+            return [...RGB_APPROACH, 0] as [number, number, number, number];
           }
-          return [...RGB_APPROACH, 60] as [number, number, number, number]; // Dimmed
+
+          // Others: dimmed magenta
+          return [...RGB_APPROACH, 30] as [number, number, number, number];
         },
-        getWidth: (d: any) => (d.entry_waypoint === selectedRnpApproachId ? 6 : 4),
+        getWidth: (d: any) => (d.entry_waypoint === hoveredRnpApproachId ? 6 : 2),
         widthMinPixels: 2,
-        pickable: true,
-        autoHighlight: true,
-        highlightColor: [255, 255, 255, 150],
+        parameters: {
+          blend: true,
+        },
+        pickable: pickable ?? true,
+        opacity: opacity ?? 1,
         onClick: (info: any) => {
           if (info.object && info.object.entry_waypoint) {
             const entry = info.object.entry_waypoint;
@@ -191,9 +210,10 @@ export function createRnpLayers({
             setSelectedRnpApproachId(null);
           }
         },
+        visible: true,
         updateTriggers: {
-          getColor: [selectedRnpApproachId],
-          getWidth: [selectedRnpApproachId],
+          getColor: [selectedRnpApproachId, hoveredRnpApproachId],
+          getWidth: [selectedRnpApproachId, hoveredRnpApproachId],
         },
         transitions: {
           getColor: 300,
@@ -221,8 +241,9 @@ export function createRnpLayers({
             getPath: (d: any) => d.path,
             getTimestamps: (d: any) => d.timestamps,
             getColor: RGB_APPROACH,
-            opacity: 1,
+            opacity: opacity ?? 1,
             widthMinPixels: 4,
+            pickable: false, // TripsLayer is usually not pickable for procedure selection
             jointRounded: true,
             capRounded: true,
             billboard: true,
@@ -252,7 +273,7 @@ export function createRnpLayers({
     const missedPath3d = pathData.missed_approach_path.path.map((p: [number, number, number]) => [
       p[0],
       p[1],
-      Math.max(0, (p[2] - minZ) * ALT_EXAGGERATION),
+      minZ + (p[2] - minZ) * ALT_EXAGGERATION + 2,
     ]);
 
     // All dashes along the full route (ghost / preview)
@@ -273,8 +294,10 @@ export function createRnpLayers({
           data: allDashes.map((seg) => ({ path: seg })),
           getPath: (d: any) => d.path,
           getColor: [255, 100, 80, 45],
+          opacity: opacity ?? 1,
           getWidth: 4,
           widthMinPixels: 2,
+          pickable: false,
           capRounded: true,
           jointRounded: true,
         }),
@@ -289,8 +312,10 @@ export function createRnpLayers({
           data: revealedDashes.map((seg) => ({ path: seg })),
           getPath: (d: any) => d.path,
           getColor: [255, 100, 80, 235],
+          opacity: opacity ?? 1,
           getWidth: 6,
           widthMinPixels: 3,
+          pickable: false,
           capRounded: true,
           jointRounded: true,
         }),
@@ -307,7 +332,7 @@ export function createRnpLayers({
         getPosition: (d: RnpWaypointMarker) => [
           d.position[0],
           d.position[1],
-          Math.max(0, (d.position[2] - minZ) * ALT_EXAGGERATION),
+          minZ + (d.position[2] - minZ) * ALT_EXAGGERATION + 2,
         ],
         getRadius: 80,
         radiusUnits: 'meters',
@@ -316,7 +341,8 @@ export function createRnpLayers({
         lineWidthMinPixels: 1,
         stroked: true,
         filled: true,
-        pickable: true,
+        pickable: pickable ?? true,
+        opacity: opacity ?? 1,
       }),
     );
 
@@ -328,11 +354,12 @@ export function createRnpLayers({
         getPosition: (d: RnpWaypointMarker) => [
           d.position[0],
           d.position[1],
-          Math.max(0, (d.position[2] - minZ) * ALT_EXAGGERATION),
+          minZ + (d.position[2] - minZ) * ALT_EXAGGERATION + 2,
         ],
         getText: (d: RnpWaypointMarker) => d.name,
         getSize: 13,
         getColor: [255, 255, 255, 220],
+        opacity: opacity ?? 1,
         getTextAnchor: 'start',
         getAlignmentBaseline: 'center',
         getPixelOffset: [12, 0],
@@ -340,7 +367,9 @@ export function createRnpLayers({
         fontWeight: 600,
         outlineWidth: 2,
         outlineColor: [0, 0, 0, 200],
+        fontSettings: { sdf: true },
         billboard: true,
+        pickable: false,
       }),
     );
   }
