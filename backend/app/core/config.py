@@ -43,5 +43,15 @@ class Settings(BaseSettings):
     # ── Security ─────────────────────────────────────────────────────
     SSL_VERIFY: bool = True
 
+    # ── Weather Pipeline ──────────────────────────────────────────────
+    # Path to the frontend public folder where assets are served
+    WEATHER_OUTPUT_DIR: str = "/Users/naveendevapalan/Desktop/Naveen/PROJECTS/eAIP/frontend/public/weather"
+    # Base URL relative to the domain
+    WEATHER_BASE_URL: str = "/weather"
+    # Absolute path to GDAL on macOS
+    GDAL_CMD: str = "/opt/homebrew/bin/gdal_translate"
+    # Number of historical runs to keep
+    WEATHER_KEEP_RUNS: int = 4
+
 
 settings = Settings()
