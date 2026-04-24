@@ -132,6 +132,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     onAerodromeClick,
     hoveredRnpApproachId,
   });
+  const hasInterleavedLayers = interleavedLayers.length > 0;
   const getTooltip = useMapTooltip(mapRef);
 
   const onViewStateChange = useCallback(
@@ -231,6 +232,11 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
 
   const handleDeckClick = useCallback(
     (info: any, event: any) => {
+      if (info.layer?.props?.onClick) {
+        info.layer.props.onClick(info, event);
+        return;
+      }
+
       // 1. If we hit an airspace in the overlaid layers, handle it
       if (info.layer?.id === 'airspace-metadata-layer' && info.object) {
         setSelectedFeature({
@@ -272,7 +278,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     setHoveredRnpApproachId(pickedId);
   }, []);
 
-  const onOverlayCreated = useCallback((o: MapboxOverlay) => {
+  const onOverlayCreated = useCallback((o: MapboxOverlay | null) => {
     overlayRef.current = o;
   }, []);
 
@@ -300,7 +306,9 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
         >
           <Source id="maptiler-terrain" type="raster-dem" url={TERRAIN_SOURCE_URL} />
 
-          <InterleavedDeckGL layers={interleavedLayers} onOverlayCreated={onOverlayCreated} />
+          {hasInterleavedLayers && (
+            <InterleavedDeckGL layers={interleavedLayers} onOverlayCreated={onOverlayCreated} />
+          )}
 
           {viewMode === 'ENROUTE' && activeLayers.wacMap && (
             <Source

@@ -6,7 +6,7 @@ import type { ControlPosition } from 'react-map-gl/maplibre';
 interface InterleavedDeckGLProps {
   layers: any[];
   position?: ControlPosition;
-  onOverlayCreated?: (overlay: MapboxOverlay) => void;
+  onOverlayCreated?: (overlay: MapboxOverlay | null) => void;
 }
 
 /**
@@ -24,6 +24,10 @@ export function InterleavedDeckGL(props: InterleavedDeckGLProps) {
     if (props.onOverlayCreated) {
       props.onOverlayCreated(overlay);
     }
+
+    return () => {
+      props.onOverlayCreated?.(null);
+    };
   }, [overlay, props.onOverlayCreated]);
 
   return null;
