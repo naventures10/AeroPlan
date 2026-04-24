@@ -8,6 +8,7 @@ import {
 } from '@deck.gl/core';
 import Map, { Source, Layer } from 'react-map-gl/maplibre';
 import type { MapRef } from 'react-map-gl/maplibre';
+import type { FilterSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { useMapStore, TERMINAL_EXIT_ZOOM_THRESHOLD } from '../../store/useMapStore';
@@ -20,10 +21,13 @@ import { FeatureInfoCard } from './FeatureInfoCard';
 
 const TERMINAL_TERRAIN = { source: 'maptiler-terrain', exaggeration: 1 };
 const TERMINAL_INTERACTIVE_LAYERS = ['mvt-points', 'mvt-polygons'];
+const EMPTY_INTERACTIVE_LAYERS: string[] = [];
 
 const WAC_TILES = [`${window.location.origin}/tiles/wac_india/{z}/{x}/{y}`];
 const ERC_TILES = [`${window.location.origin}/tiles/erc_india/{z}/{x}/{y}`];
 const SPATIAL_TILES = [`${window.location.origin}/tiles/spatial_features/{z}/{x}/{y}`];
+const SPATIAL_POLYGON_FILTER: FilterSpecification = ['==', ['geometry-type'], 'Polygon'];
+const SPATIAL_POINT_FILTER: FilterSpecification = ['==', ['geometry-type'], 'Point'];
 const RASTER_PAINT = {
   'raster-opacity': 1,
   'raster-resampling': 'linear' as const,
@@ -31,6 +35,7 @@ const RASTER_PAINT = {
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 const MAP_STYLE = `https://api.maptiler.com/maps/hybrid/style.json?key=${MAPTILER_KEY}`;
+const TERRAIN_SOURCE_URL = `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${MAPTILER_KEY}`;
 
 /**
  * Custom Map Controller to:
@@ -119,6 +124,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
 
   const mapRef = useRef<MapRef>(null);
   const overlayRef = useRef<MapboxOverlay | null>(null);
+  const hoveredRnpApproachIdRef = useRef<string | null>(null);
   const [hoveredRnpApproachId, setHoveredRnpApproachId] = useState<string | null>(null);
 
   const { overlaidLayers, interleavedLayers } = useDeckLayers({
@@ -255,11 +261,15 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
   );
 
   const handleDeckHover = useCallback((info: any) => {
-    if (overlayRef.current) {
-      const picked = overlayRef.current.pickObject({ x: info.x, y: info.y, radius: 5 });
-      const pickedId = picked?.object?.entry_waypoint ?? null;
-      setHoveredRnpApproachId(pickedId);
-    }
+    if (!overlayRef.current) return;
+
+    const picked = overlayRef.current.pickObject({ x: info.x, y: info.y, radius: 5 });
+    const pickedId = picked?.object?.entry_waypoint ?? null;
+
+    if (hoveredRnpApproachIdRef.current === pickedId) return;
+
+    hoveredRnpApproachIdRef.current = pickedId;
+    setHoveredRnpApproachId(pickedId);
   }, []);
 
   const onOverlayCreated = useCallback((o: MapboxOverlay) => {
@@ -284,13 +294,11 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
           onLoad={onMapLoad}
           reuseMaps
           terrain={viewMode === 'TERMINAL' ? TERMINAL_TERRAIN : undefined}
-          interactiveLayerIds={viewMode === 'TERMINAL' ? TERMINAL_INTERACTIVE_LAYERS : []}
+          interactiveLayerIds={
+            viewMode === 'TERMINAL' ? TERMINAL_INTERACTIVE_LAYERS : EMPTY_INTERACTIVE_LAYERS
+          }
         >
-          <Source
-            id="maptiler-terrain"
-            type="raster-dem"
-            url={`https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${MAPTILER_KEY}`}
-          />
+          <Source id="maptiler-terrain" type="raster-dem" url={TERRAIN_SOURCE_URL} />
 
           <InterleavedDeckGL layers={interleavedLayers} onOverlayCreated={onOverlayCreated} />
 
@@ -326,14 +334,14 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
                 id="mvt-polygons"
                 type="fill-extrusion"
                 source-layer="spatial_features"
-                filter={['==', ['geometry-type'], 'Polygon']}
+                filter={SPATIAL_POLYGON_FILTER}
                 paint={POLYGON_PAINT as any}
               />
               <Layer
                 id="mvt-points"
                 type="circle"
                 source-layer="spatial_features"
-                filter={['==', ['geometry-type'], 'Point']}
+                filter={SPATIAL_POINT_FILTER}
                 paint={POINT_PAINT as any}
               />
             </Source>
