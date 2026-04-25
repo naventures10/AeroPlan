@@ -9,6 +9,15 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/tests/setup.ts'],
     globals: true,
+    coverage: {
+      include: ['src/**'],
+      exclude: ['src/tests/**', 'src/**/*.d.ts', 'src/main.tsx', 'src/vite-env.d.ts', 'src/types/**'],
+      all: true,
+    },
+    alias: {
+      'react-map-gl/maplibre': path.resolve(__dirname, 'node_modules/react-map-gl/dist/maplibre.js'),
+      'react-map-gl': path.resolve(__dirname, 'node_modules/react-map-gl/dist/mapbox.js')
+    }
   },
   resolve: {
     alias: {

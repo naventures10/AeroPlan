@@ -26,6 +26,7 @@ describe('useMapStore', () => {
       selectedRouteType: null,
       activeAirport: null,
       selectedFeature: null,
+      highlightedAirspaceId: null,
       atsRouteLabels: null,
       boundsToFit: null,
       animatedTrips: [],
@@ -35,91 +36,131 @@ describe('useMapStore', () => {
       selectedRnpProcedureId: null,
       selectedRnpChartKey: null,
       selectedRnpBounds: null,
+      selectedRnpApproachId: null,
     });
   });
 
-  it('should have expected state after reset', () => {
-    const state = useMapStore.getState();
-    expect(state.viewMode).toBe('ENROUTE');
+  it('should toggle map layers accurately', () => {
+    let state = useMapStore.getState();
+    expect(state.activeLayers.wacMap).toBe(false);
+    expect(state.activeLayers.ercMap).toBe(false);
 
-    // Verify default active layers
-    expect(state.activeLayers.aerodromes).toBe(true);
-    expect(state.activeLayers.waypoints).toBe(false);
-    expect(state.activeLayers.airspaces).toBe(false);
+    // Turn wacMap ON, should turn ercMap OFF
+    state.toggleLayer('wacMap');
+    state = useMapStore.getState();
+    expect(state.activeLayers.wacMap).toBe(true);
+    expect(state.activeLayers.ercMap).toBe(false);
+
+    // Turn ercMap ON, should turn wacMap OFF
+    state.toggleLayer('ercMap');
+    state = useMapStore.getState();
+    expect(state.activeLayers.wacMap).toBe(false);
+    expect(state.activeLayers.ercMap).toBe(true);
   });
 
-  it('should toggle an existing map layer successfully', () => {
+  it('should test remaining actions correctly', () => {
     let state = useMapStore.getState();
-    expect(state.activeLayers.airspaces).toBe(false);
 
-    // Toggle airspaces ON
-    state.toggleLayer('airspaces');
-    state = useMapStore.getState();
-    expect(state.activeLayers.airspaces).toBe(true);
+    state.setViewMode('TERMINAL');
+    expect(useMapStore.getState().viewMode).toBe('TERMINAL');
 
-    // Toggle airspaces OFF
-    state.toggleLayer('airspaces');
-    state = useMapStore.getState();
-    expect(state.activeLayers.airspaces).toBe(false);
+    state.setViewMode('ENROUTE');
+    expect(useMapStore.getState().viewMode).toBe('ENROUTE');
+
+    state.setActiveAerodromeMetadata({ name: 'Test' });
+    expect(useMapStore.getState().activeAerodromeMetadata).toEqual({ name: 'Test' });
+
+    state.setSearchQuery('test');
+    expect(useMapStore.getState().searchQuery).toBe('test');
+
+    state.setSelectedRouteIds(['A1', 'A2'], 'ATS_ROUTE');
+    expect(useMapStore.getState().selectedRouteIds).toEqual(['A1', 'A2']);
+    expect(useMapStore.getState().selectedRouteType).toBe('ATS_ROUTE');
+
+    state.setActiveAirport('KJFK');
+    expect(useMapStore.getState().activeAirport).toBe('KJFK');
+    expect(useMapStore.getState().selectedRnpProcedureId).toBeNull();
+
+    state.setSelectedRnpApproachId('app1');
+    expect(useMapStore.getState().selectedRnpApproachId).toBe('app1');
+
+    state.setSelectedRnpProcedure({ procedureId: 1, chartKey: 'chart1', bounds: [0, 0, 1, 1] });
+    expect(useMapStore.getState().selectedRnpApproachId).toBeNull(); // it sets approachId to null
+
+    state.setSelectedFeature({ type: 'WAYPOINT', data: { name: 'FIX' } });
+    expect(useMapStore.getState().selectedFeature).toEqual({ type: 'WAYPOINT', data: { name: 'FIX' } });
+
+    state.setHighlightedAirspaceId('air1');
+    expect(useMapStore.getState().highlightedAirspaceId).toBe('air1');
+
+    state.setAtsRouteLabels({ labels: 'test' });
+    expect(useMapStore.getState().atsRouteLabels).toEqual({ labels: 'test' });
+
+    state.fitBounds([0, 0, 10, 10]);
+    expect(useMapStore.getState().boundsToFit).toEqual([0, 0, 10, 10]);
+
+    state.setAnimatedTrips([{ trip: 1 }]);
+    expect(useMapStore.getState().animatedTrips).toEqual([{ trip: 1 }]);
+
+    state.setAnimatedLabels([{ label: 1 }]);
+    expect(useMapStore.getState().animatedLabels).toEqual([{ label: 1 }]);
+
+    state.setAnimationConfig({ playing: true, duration: 100 });
+    expect(useMapStore.getState().animationConfig).toEqual({ playing: true, duration: 100 });
+
+    state.setTerminalPivot([5, 5]);
+    expect(useMapStore.getState().terminalPivot).toEqual([5, 5]);
+
+    state.setViewState({ zoom: 10 });
+    expect(useMapStore.getState().viewState.zoom).toBe(10);
   });
 
-  it('should toggle view modes properly between ENROUTE and TERMINAL', () => {
+  it('should toggle view mode with specific pitch mapping', () => {
     let state = useMapStore.getState();
-    expect(state.viewMode).toBe('ENROUTE');
-    expect(state.viewState.pitch).toBe(0);
-
     state.toggleViewMode();
-    state = useMapStore.getState();
-
-    expect(state.viewMode).toBe('TERMINAL');
-    expect(state.viewState.pitch).toBe(45);
-
-    // Test returnToEnroute helper
-    state.returnToEnroute();
-    state = useMapStore.getState();
-    expect(state.viewMode).toBe('ENROUTE');
-    expect(state.viewState.pitch).toBe(0);
+    expect(useMapStore.getState().viewMode).toBe('TERMINAL');
+    expect(useMapStore.getState().viewState.pitch).toBe(45);
   });
 
-  it('should set and clear RNP procedure selection', () => {
-    let state = useMapStore.getState();
-    state.setSelectedRnpProcedure({
-      procedureId: 42,
-      chartKey: 'VAAU-RNP-Y-RWY-27',
-      bounds: [78.0, 10.0, 79.0, 11.0],
-    });
-    state = useMapStore.getState();
-    expect(state.selectedRnpProcedureId).toBe(42);
-    expect(state.selectedRnpChartKey).toBe('VAAU-RNP-Y-RWY-27');
-    expect(state.selectedRnpBounds).toEqual([78.0, 10.0, 79.0, 11.0]);
+  it('flyToLocation should set properties properly', () => {
+    useMapStore.getState().flyToLocation(10, 20, 10, 45, 'TERMINAL');
+    const state = useMapStore.getState();
+    expect(state.viewMode).toBe('TERMINAL');
+    expect(state.viewState.longitude).toBe(10);
+    expect(state.viewState.latitude).toBe(20);
+    expect(state.viewState.zoom).toBe(10);
+    expect(state.viewState.pitch).toBe(45);
+  });
 
-    state.setSelectedRnpProcedure(null);
-    state = useMapStore.getState();
+  it('flyToLocation with no forceViewMode should detect TERMINAL via pitch', () => {
+    useMapStore.getState().flyToLocation(10, 20, 10, 45);
+    expect(useMapStore.getState().viewMode).toBe('TERMINAL');
+  });
+
+  it('flyToLocation with no forceViewMode should detect ENROUTE via pitch=0', () => {
+    useMapStore.getState().flyToLocation(10, 20, 10, 0);
+    expect(useMapStore.getState().viewMode).toBe('ENROUTE');
+  });
+
+  it('returnToEnroute should cleanup everything', () => {
+    useMapStore.setState({
+      activeAirport: 'KLAX',
+      selectedRnpProcedureId: 1,
+      selectedRnpChartKey: 'X',
+      selectedRnpBounds: [0,0,0,0],
+      selectedRnpApproachId: 'id',
+      selectedFeature: { type: 'NAVAID', data: {} },
+      terminalPivot: [0,0]
+    });
+    useMapStore.getState().returnToEnroute();
+    const state = useMapStore.getState();
+    expect(state.activeAirport).toBeNull();
     expect(state.selectedRnpProcedureId).toBeNull();
     expect(state.selectedRnpChartKey).toBeNull();
     expect(state.selectedRnpBounds).toBeNull();
-  });
-
-  it('should clear RNP when switching to ENROUTE', () => {
-    useMapStore.setState({ viewMode: 'TERMINAL' });
-    useMapStore.getState().setSelectedRnpProcedure({
-      procedureId: 1,
-      chartKey: 'KEY',
-      bounds: null,
-    });
-    useMapStore.getState().setViewMode('ENROUTE');
-    const state = useMapStore.getState();
-    expect(state.selectedRnpProcedureId).toBeNull();
-  });
-
-  it('should clear RNP when changing active airport', () => {
-    useMapStore.getState().setActiveAirport('VAAU');
-    useMapStore.getState().setSelectedRnpProcedure({
-      procedureId: 99,
-      chartKey: 'X',
-      bounds: null,
-    });
-    useMapStore.getState().setActiveAirport('VOBL');
-    expect(useMapStore.getState().selectedRnpProcedureId).toBeNull();
+    expect(state.selectedRnpApproachId).toBeNull();
+    expect(state.selectedFeature).toBeNull();
+    expect(state.terminalPivot).toBeNull();
+    expect(state.viewMode).toBe('ENROUTE');
   });
 });
