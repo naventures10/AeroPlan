@@ -149,10 +149,10 @@ export const useMapStore = create<MapState>((set, get) => ({
     atsRoutes: false,
     wacMap: false,
     airspaces: false,
-    airspaceFIR: true,
-    airspaceRegulated: true,
-    airspaceControl: true,
-    airspaceUpr: true,
+    airspaceFIR: false,
+    airspaceRegulated: false,
+    airspaceControl: false,
+    airspaceUpr: false,
     ercMap: false,
   },
 
@@ -166,6 +166,12 @@ export const useMapStore = create<MapState>((set, get) => ({
       }
       if (layer === 'ercMap' && newActiveLayers.ercMap) {
         newActiveLayers.wacMap = false;
+      }
+      if (layer === 'airspaces' && newActiveLayers.airspaces) {
+        newActiveLayers.airspaceFIR = true;
+        newActiveLayers.airspaceRegulated = true;
+        newActiveLayers.airspaceControl = true;
+        newActiveLayers.airspaceUpr = true;
       }
 
       return { activeLayers: newActiveLayers };

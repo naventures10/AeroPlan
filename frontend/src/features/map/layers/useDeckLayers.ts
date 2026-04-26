@@ -21,9 +21,11 @@ import type { LayerContext } from './types';
 export function useDeckLayers({
   aerodromes,
   onAerodromeClick,
+  hoveredRnpApproachId,
 }: {
   aerodromes: any;
   onAerodromeClick: (icao: string, coords: [number, number]) => void;
+  hoveredRnpApproachId?: string | null;
 }) {
   const {
     viewMode,
@@ -87,43 +89,47 @@ export function useDeckLayers({
     setSelectedFeature,
   };
 
-  const deckLayers = useMemo(() => {
-    const layers: any[] = [];
+  const layers = useMemo(() => {
+    const overlaidLayers: any[] = [];
+    const interleavedLayers: any[] = [];
 
     if (activeLayers.airspaces) {
-      layers.push(...createAirspaceLayers(ctx));
+      overlaidLayers.push(...createAirspaceLayers(ctx));
     }
 
     if (activeLayers.aerodromes) {
-      layers.push(...createAerodromeLayers(ctx, aerodromes, textData, onAerodromeClick));
+      overlaidLayers.push(...createAerodromeLayers(ctx, aerodromes, textData, onAerodromeClick));
     }
 
     if (activeLayers.waypoints) {
-      layers.push(...createWaypointLayer(ctx));
+      overlaidLayers.push(...createWaypointLayer(ctx));
     }
 
     if (activeLayers.navaids) {
-      layers.push(...createNavaidLayer(ctx));
+      overlaidLayers.push(...createNavaidLayer(ctx));
     }
 
     if (isAtsRendered) {
-      layers.push(...createAtsRouteLayers(ctx));
+      overlaidLayers.push(...createAtsRouteLayers(ctx));
     }
 
     // RNP 3D approach path (TERMINAL mode only)
     if (viewMode === 'TERMINAL' && rnpPathData) {
-      layers.push(
+      interleavedLayers.push(
         ...createRnpLayers({
           pathData: rnpPathData,
           selectedRnpApproachId,
+          hoveredRnpApproachId,
           setSelectedRnpApproachId,
           rnpCurrentTime,
           approachDist,
+          pickable: true,
+          opacity: 1,
         }),
       );
     }
 
-    return layers;
+    return { overlaidLayers, interleavedLayers };
   }, [
     aerodromes,
     viewMode,
@@ -136,6 +142,7 @@ export function useDeckLayers({
     setSelectedFeature,
     selectedFeature,
     viewState,
+    hoveredRnpApproachId,
     isAtsRendered,
     atsRouteLabels,
     animatedTrips,
@@ -149,5 +156,5 @@ export function useDeckLayers({
     missedDist,
   ]);
 
-  return deckLayers;
+  return layers;
 }

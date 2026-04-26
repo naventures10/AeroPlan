@@ -91,6 +91,8 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
     };
   }, [isCollapsed]);
 
+  if (!icaoCode) return null;
+
   const tabs: Array<{
     id: 'CONDITIONS' | 'METAR' | 'TAF' | 'NOTAM';
     icon: any;

@@ -114,6 +114,7 @@ export function FeatureInfoCard() {
     <AnimatePresence>
       {isVisible && (
         <motion.div
+          data-testid="feature-info-card"
           initial={{ x: 50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 50, opacity: 0 }}
@@ -132,6 +133,7 @@ export function FeatureInfoCard() {
                 <h3 className="text-sm font-bold text-white tracking-wide">{title}</h3>
               </div>
               <Button
+                data-testid="close-feature-card"
                 isIconOnly
                 size="sm"
                 variant="light"

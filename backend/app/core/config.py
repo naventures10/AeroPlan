@@ -5,7 +5,12 @@ All environment variables are loaded once via pydantic-settings.
 Other modules import the singleton `settings` instance.
 """
 
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Base directory for the project
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 
 
 class Settings(BaseSettings):
@@ -42,6 +47,16 @@ class Settings(BaseSettings):
 
     # ── Security ─────────────────────────────────────────────────────
     SSL_VERIFY: bool = True
+
+    # ── Weather Pipeline ──────────────────────────────────────────────
+    # Path to the frontend public folder where assets are served
+    WEATHER_OUTPUT_DIR: str = str(PROJECT_ROOT / "frontend/public/weather")
+    # Base URL relative to the domain
+    WEATHER_BASE_URL: str = "/weather"
+    # GDAL command (uses PATH by default)
+    GDAL_CMD: str = "gdal_translate"
+    # Number of historical runs to keep
+    WEATHER_KEEP_RUNS: int = 4
 
 
 settings = Settings()

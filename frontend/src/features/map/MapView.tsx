@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect, useMemo } from 'react';
+import { useCallback, useRef, useEffect, useMemo, useState } from 'react';
 import DeckGL from '@deck.gl/react';
 import {
   MapController,
@@ -8,16 +8,34 @@ import {
 } from '@deck.gl/core';
 import Map, { Source, Layer } from 'react-map-gl/maplibre';
 import type { MapRef } from 'react-map-gl/maplibre';
+import type { FilterSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { useMapStore, TERMINAL_EXIT_ZOOM_THRESHOLD } from '../../store/useMapStore';
+import type { MapboxOverlay } from '@deck.gl/mapbox';
 import { useDeckLayers } from './layers/useDeckLayers';
+import { InterleavedDeckGL } from './InterleavedDeckGL';
 import { useMapTooltip } from './tooltips/useMapTooltip';
 import { POLYGON_PAINT, POINT_PAINT } from './layers/mapStyles';
 import { FeatureInfoCard } from './FeatureInfoCard';
 
+const TERMINAL_TERRAIN = { source: 'maptiler-terrain', exaggeration: 1 };
+const TERMINAL_INTERACTIVE_LAYERS = ['mvt-points', 'mvt-polygons'];
+const EMPTY_INTERACTIVE_LAYERS: string[] = [];
+
+const WAC_TILES = [`${window.location.origin}/tiles/wac_india/{z}/{x}/{y}`];
+const ERC_TILES = [`${window.location.origin}/tiles/erc_india/{z}/{x}/{y}`];
+const SPATIAL_TILES = [`${window.location.origin}/tiles/spatial_features/{z}/{x}/{y}`];
+const SPATIAL_POLYGON_FILTER: FilterSpecification = ['==', ['geometry-type'], 'Polygon'];
+const SPATIAL_POINT_FILTER: FilterSpecification = ['==', ['geometry-type'], 'Point'];
+const RASTER_PAINT = {
+  'raster-opacity': 1,
+  'raster-resampling': 'linear' as const,
+};
+
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 const MAP_STYLE = `https://api.maptiler.com/maps/hybrid/style.json?key=${MAPTILER_KEY}`;
+const TERRAIN_SOURCE_URL = `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${MAPTILER_KEY}`;
 
 /**
  * Custom Map Controller to:
@@ -69,6 +87,12 @@ class CustomMapController extends MapController {
   }
 }
 
+const DECK_CONTROLLER = {
+  type: CustomMapController,
+  dragRotate: true,
+  touchRotate: true,
+};
+
 interface MapViewProps {
   aerodromes: any;
   onAerodromeClick: (icao: string, coords: [number, number]) => void;
@@ -99,8 +123,16 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
   } = useMapStore();
 
   const mapRef = useRef<MapRef>(null);
+  const overlayRef = useRef<MapboxOverlay | null>(null);
+  const hoveredRnpApproachIdRef = useRef<string | null>(null);
+  const [hoveredRnpApproachId, setHoveredRnpApproachId] = useState<string | null>(null);
 
-  const deckLayers = useDeckLayers({ aerodromes, onAerodromeClick });
+  const { overlaidLayers, interleavedLayers } = useDeckLayers({
+    aerodromes,
+    onAerodromeClick,
+    hoveredRnpApproachId,
+  });
+  const hasInterleavedLayers = interleavedLayers.length > 0;
   const getTooltip = useMapTooltip(mapRef);
 
   const onViewStateChange = useCallback(
@@ -198,69 +230,96 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     }
   }, []);
 
+  const handleDeckClick = useCallback(
+    (info: any, event: any) => {
+      if (info.layer?.props?.onClick) {
+        info.layer.props.onClick(info, event);
+        return;
+      }
+
+      // 1. If we hit an airspace in the overlaid layers, handle it
+      if (info.layer?.id === 'airspace-metadata-layer' && info.object) {
+        setSelectedFeature({
+          type: 'AIRSPACE',
+          data: info.object,
+        });
+        const id = info.object.properties?.id ?? info.object.id;
+        setHighlightedAirspaceId(String(id));
+        return;
+      }
+
+      // 2. If nothing overlaid was hit, pass the click down to the MapboxOverlay
+      if (overlayRef.current) {
+        // DeckGL info.x and info.y are CSS pixels, same as what pickObject expects
+        const picked = overlayRef.current.pickObject({ x: info.x, y: info.y, radius: 5 });
+        if (picked && picked.layer && picked.layer.props.onClick) {
+          // Manually invoke the layer's onClick handler
+          picked.layer.props.onClick(picked, event);
+          return; // Stop here, we hit something interleaved!
+        }
+      }
+
+      // 3. If we clicked empty space in BOTH contexts, clear selection
+      setSelectedFeature(null);
+      setHighlightedAirspaceId(null);
+    },
+    [setSelectedFeature, setHighlightedAirspaceId],
+  );
+
+  const handleDeckHover = useCallback((info: any) => {
+    if (!overlayRef.current) return;
+
+    const picked = overlayRef.current.pickObject({ x: info.x, y: info.y, radius: 5 });
+    const pickedId = picked?.object?.entry_waypoint ?? null;
+
+    if (hoveredRnpApproachIdRef.current === pickedId) return;
+
+    hoveredRnpApproachIdRef.current = pickedId;
+    setHoveredRnpApproachId(pickedId);
+  }, []);
+
+  const onOverlayCreated = useCallback((o: MapboxOverlay | null) => {
+    overlayRef.current = o;
+  }, []);
+
   return (
     <div className="absolute inset-0 z-0">
       <DeckGL
         viewState={processedViewState}
-        controller={{
-          type: CustomMapController,
-          dragRotate: true,
-          touchRotate: true,
-        }}
-        layers={deckLayers}
+        controller={DECK_CONTROLLER}
+        layers={overlaidLayers}
         onViewStateChange={onViewStateChange}
         getTooltip={getTooltip}
         pickingRadius={20}
-        onClick={(info) => {
-          if (info.layer?.id === 'airspace-metadata-layer' && info.object) {
-            setSelectedFeature({
-              type: 'AIRSPACE',
-              data: info.object,
-            });
-            const id = info.object.properties?.id ?? info.object.id;
-            setHighlightedAirspaceId(String(id));
-            return;
-          }
-          // If we clicked empty space or something else, clear feature (assuming we want to)
-          if (!info.object) {
-            setSelectedFeature(null);
-            setHighlightedAirspaceId(null);
-          }
-        }}
+        onClick={handleDeckClick}
+        onHover={handleDeckHover}
       >
         <Map
           ref={mapRef}
           mapStyle={MAP_STYLE}
           onLoad={onMapLoad}
           reuseMaps
-          terrain={
-            viewMode === 'TERMINAL' ? { source: 'maptiler-terrain', exaggeration: 1 } : undefined
+          terrain={viewMode === 'TERMINAL' ? TERMINAL_TERRAIN : undefined}
+          interactiveLayerIds={
+            viewMode === 'TERMINAL' ? TERMINAL_INTERACTIVE_LAYERS : EMPTY_INTERACTIVE_LAYERS
           }
-          interactiveLayerIds={viewMode === 'TERMINAL' ? ['mvt-points', 'mvt-polygons'] : []}
         >
-          <Source
-            id="maptiler-terrain"
-            type="raster-dem"
-            url={`https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${MAPTILER_KEY}`}
-          />
+          <Source id="maptiler-terrain" type="raster-dem" url={TERRAIN_SOURCE_URL} />
+
+          {hasInterleavedLayers && (
+            <InterleavedDeckGL layers={interleavedLayers} onOverlayCreated={onOverlayCreated} />
+          )}
 
           {viewMode === 'ENROUTE' && activeLayers.wacMap && (
             <Source
               id="wac-source"
               type="raster"
-              tiles={[`${window.location.origin}/tiles/wac_india/{z}/{x}/{y}`]}
+              tiles={WAC_TILES}
               tileSize={256}
               minzoom={7}
               maxzoom={12}
             >
-              <Layer
-                id="wac-layer"
-                type="raster"
-                paint={{
-                  'raster-opacity': 1,
-                  'raster-resampling': 'linear',
-                }}
-              />
+              <Layer id="wac-layer" type="raster" paint={RASTER_PAINT} />
             </Source>
           )}
 
@@ -268,40 +327,29 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
             <Source
               id="erc-source"
               type="raster"
-              tiles={[`${window.location.origin}/tiles/erc_india/{z}/{x}/{y}`]}
+              tiles={ERC_TILES}
               tileSize={256}
               minzoom={4}
               maxzoom={12}
             >
-              <Layer
-                id="erc-layer"
-                type="raster"
-                paint={{
-                  'raster-opacity': 1,
-                  'raster-resampling': 'linear',
-                }}
-              />
+              <Layer id="erc-layer" type="raster" paint={RASTER_PAINT} />
             </Source>
           )}
 
           {viewMode === 'TERMINAL' && (
-            <Source
-              id="spatial-features-source"
-              type="vector"
-              tiles={[`${window.location.origin}/tiles/spatial_features/{z}/{x}/{y}`]}
-            >
+            <Source id="spatial-features-source" type="vector" tiles={SPATIAL_TILES}>
               <Layer
                 id="mvt-polygons"
                 type="fill-extrusion"
                 source-layer="spatial_features"
-                filter={['==', ['geometry-type'], 'Polygon']}
+                filter={SPATIAL_POLYGON_FILTER}
                 paint={POLYGON_PAINT as any}
               />
               <Layer
                 id="mvt-points"
                 type="circle"
                 source-layer="spatial_features"
-                filter={['==', ['geometry-type'], 'Point']}
+                filter={SPATIAL_POINT_FILTER}
                 paint={POINT_PAINT as any}
               />
             </Source>
