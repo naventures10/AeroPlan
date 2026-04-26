@@ -45,7 +45,9 @@ class Settings(BaseSettings):
 
     # ── Weather Pipeline ──────────────────────────────────────────────
     # Path to the frontend public folder where assets are served
-    WEATHER_OUTPUT_DIR: str = "/Users/naveendevapalan/Desktop/Naveen/PROJECTS/eAIP/frontend/public/weather"
+    WEATHER_OUTPUT_DIR: str = (
+        "/Users/naveendevapalan/Desktop/Naveen/PROJECTS/eAIP/frontend/public/weather"
+    )
     # Base URL relative to the domain
     WEATHER_BASE_URL: str = "/weather"
     # Absolute path to GDAL on macOS
