@@ -65,7 +65,9 @@ export default function WindTestPage() {
   const [numParticles, setNumParticles] = useState(5000);
   const [maxAge, setMaxAge] = useState(80);
   const [speedFactor, setSpeedFactor] = useState(0.5);
+  const [fadeOpacity, setFadeOpacity] = useState(0.96); // Default to a higher value for visible trails
   const [particleWidth, setParticleWidth] = useState(2);
+  const [selectedAltitude, setSelectedAltitude] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
   // ── Hide global loader ─────────────────────────────────────────────────────
@@ -89,7 +91,15 @@ export default function WindTestPage() {
         });
         if (!manifestRes.ok) throw new Error(`Manifest fetch failed: ${manifestRes.status}`);
         const manifest = await manifestRes.json();
-        const { url, valid_time } = manifest.wind_surface as {
+
+        const levelKey =
+          selectedAltitude === 0
+            ? 'wind_surface'
+            : `wind_${String(selectedAltitude).padStart(3, '0')}`;
+        const layerData = manifest[levelKey];
+        if (!layerData) throw new Error(`Data for altitude ${levelKey} not found in manifest`);
+
+        const { url, valid_time } = layerData as {
           url: string;
           valid_time: string;
         };
@@ -118,7 +128,7 @@ export default function WindTestPage() {
 
     load();
     return () => controller.abort();
-  }, []);
+  }, [selectedAltitude]);
 
   // ── Build DeckGL layers ────────────────────────────────────────────────────
   const layers = windImage
@@ -132,6 +142,7 @@ export default function WindTestPage() {
           numParticles,
           maxAge,
           speedFactor,
+          fadeOpacity,
           // Style
           width: particleWidth,
           palette: WIND_PALETTE,
@@ -170,11 +181,15 @@ export default function WindTestPage() {
         numParticles={numParticles}
         maxAge={maxAge}
         speedFactor={speedFactor}
+        fadeOpacity={fadeOpacity}
         particleWidth={particleWidth}
+        selectedAltitude={selectedAltitude}
         onNumParticlesChange={setNumParticles}
         onMaxAgeChange={setMaxAge}
         onSpeedFactorChange={setSpeedFactor}
+        onFadeOpacityChange={setFadeOpacity}
         onParticleWidthChange={setParticleWidth}
+        onAltitudeChange={setSelectedAltitude}
       />
 
       {/* ── Legend ── */}
@@ -214,26 +229,50 @@ interface ControlPanelProps {
   numParticles: number;
   maxAge: number;
   speedFactor: number;
+  fadeOpacity: number;
   particleWidth: number;
+  selectedAltitude: number;
   onNumParticlesChange: (v: number) => void;
   onMaxAgeChange: (v: number) => void;
   onSpeedFactorChange: (v: number) => void;
+  onFadeOpacityChange: (v: number) => void;
   onParticleWidthChange: (v: number) => void;
+  onAltitudeChange: (v: number) => void;
 }
 
 function ControlPanel({
   numParticles,
   maxAge,
   speedFactor,
+  fadeOpacity,
   particleWidth,
+  selectedAltitude,
   onNumParticlesChange,
   onMaxAgeChange,
   onSpeedFactorChange,
+  onFadeOpacityChange,
   onParticleWidthChange,
+  onAltitudeChange,
 }: ControlPanelProps) {
+  const formatAltitude = (alt: number) => {
+    if (alt === 0) return 'Surface';
+    if (alt < 5) return `${alt * 1000} ft`;
+    return `FL${String(alt * 10).padStart(3, '0')}`;
+  };
+
   return (
     <aside className="wind-controls">
       <h3 className="wind-controls__title">🎛 Particle Controls</h3>
+
+      <SliderRow
+        label="Altitude"
+        value={selectedAltitude}
+        min={0}
+        max={39}
+        step={1}
+        display={formatAltitude(selectedAltitude)}
+        onChange={onAltitudeChange}
+      />
 
       <SliderRow
         label="Particles"
@@ -248,7 +287,7 @@ function ControlPanel({
         label="Max Age"
         value={maxAge}
         min={10}
-        max={300}
+        max={1000}
         step={10}
         display={`${maxAge} frames`}
         onChange={onMaxAgeChange}
@@ -257,10 +296,19 @@ function ControlPanel({
         label="Speed Factor"
         value={speedFactor}
         min={0.05}
-        max={1}
+        max={3.0}
         step={0.05}
         display={speedFactor.toFixed(2)}
         onChange={onSpeedFactorChange}
+      />
+      <SliderRow
+        label="Trail Persistence"
+        value={fadeOpacity}
+        min={0.8}
+        max={0.99}
+        step={0.005}
+        display={`${(fadeOpacity * 100).toFixed(1)}%`}
+        onChange={onFadeOpacityChange}
       />
       <SliderRow
         label="Line Width"
