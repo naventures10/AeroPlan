@@ -58,7 +58,7 @@ describe('createAirspaceLayers', () => {
     const highlightCtx = { ...ctx, highlightedAirspaceId: '123' };
     const highlightLayers = createAirspaceLayers(highlightCtx as any);
 
-    const highlightFeature = { properties: { id: 123, airspace_type: 'FIR', name: 'FIR' } };
+    const highlightFeature = { properties: { id: '123', airspace_type: 'FIR', name: 'FIR' } };
     expect(highlightLayers[1].props.getTextColor(highlightFeature)).toEqual([0, 0, 0, 255]);
     expect(highlightLayers[1].props.getBackgroundColor(highlightFeature)).toEqual([
       255, 255, 0, 40,
