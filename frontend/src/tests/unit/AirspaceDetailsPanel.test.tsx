@@ -5,15 +5,13 @@ import { AirspaceDetailsPanel } from '../../features/map/components/AirspaceDeta
 describe('AirspaceDetailsPanel', () => {
   it('renders correctly with data', () => {
     const data = {
-      properties: {
-        airspace_type: 'FIR',
-        name: 'TEST FIR',
-        identification: 'VABF',
-        lower_limit: 'FL100',
-        upper_limit: 'FL200',
-        remarks: 'TEST REMARKS',
-        lateral_limits: '123456N 0123456E -then 123456N 0123456E',
-      },
+      airspace_type: 'FIR',
+      name: 'TEST FIR',
+      identification: 'VABF',
+      lower_limit: 'FL100',
+      upper_limit: 'FL200',
+      remarks: 'TEST REMARKS',
+      lateral_limits: '123456N 0123456E -then 123456N 0123456E',
     };
     render(<AirspaceDetailsPanel data={data} />);
     expect(screen.getByText('FIR')).toBeInTheDocument();

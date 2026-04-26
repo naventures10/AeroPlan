@@ -24,7 +24,7 @@ function formatAipText(text: any): React.ReactNode {
 
 export function AirspaceDetailsPanel({ data }: { data: any }) {
   if (!data) return null;
-  const p = data.properties || {};
+  const p = data;
 
   return (
     <div className="flex flex-col gap-4 px-1 py-1">
