@@ -32,6 +32,7 @@ describe('useSearch', () => {
       setActiveAerodromeMetadata: vi.fn(),
       setSelectedRouteIds: vi.fn(),
       setSelectedFeature: vi.fn(),
+      setHighlightedAirspaceId: vi.fn(),
       searchQuery: '',
       setSearchQuery: vi.fn(),
     });
@@ -196,6 +197,43 @@ describe('useSearch', () => {
     expect(toggleLayerSpy).toHaveBeenCalledWith('waypoints');
     expect(setSelectedFeatureSpy).toHaveBeenCalledWith({
       type: 'WAYPOINT',
+      data: feature.properties,
+    });
+  });
+
+  it('should handle AIRSPACE selection', () => {
+    const storeState = useMapStore.getState();
+    const flyToSpy = vi.spyOn(storeState, 'flyToLocation');
+    const toggleLayerSpy = vi.spyOn(storeState, 'toggleLayer');
+    const setHighlightedAirspaceIdSpy = vi.spyOn(storeState, 'setHighlightedAirspaceId');
+    const setSelectedFeatureSpy = vi.spyOn(storeState, 'setSelectedFeature');
+
+    const feature = {
+      id: 'VABF',
+      name: 'MUMBAI FIR',
+      type: 'AIRSPACE',
+      center: [72.8, 19.1],
+      properties: { name: 'MUMBAI FIR', airspace_type: 'FIR' },
+    };
+
+    const { result } = renderHook(() => useSearch());
+
+    act(() => {
+      result.current.handleGlobalSearchSelect(feature as any);
+    });
+
+    // Verify immediate camera animation
+    expect(flyToSpy).toHaveBeenCalledWith(72.8, 19.1, 15, 0, 'ENROUTE');
+
+    act(() => {
+      vi.advanceTimersByTime(1300);
+    });
+
+    // Verify deferred state updates
+    expect(toggleLayerSpy).toHaveBeenCalledWith('airspaces');
+    expect(setHighlightedAirspaceIdSpy).toHaveBeenCalledWith('VABF');
+    expect(setSelectedFeatureSpy).toHaveBeenCalledWith({
+      type: 'AIRSPACE',
       data: feature.properties,
     });
   });

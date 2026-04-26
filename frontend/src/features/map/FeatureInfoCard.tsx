@@ -16,7 +16,10 @@ export function FeatureInfoCard() {
 
   const isVisible = viewMode === 'ENROUTE' && selectedFeature !== null;
   const type = selectedFeature?.type || '';
-  const data = selectedFeature?.data || {};
+  const rawData = selectedFeature?.data || {};
+  // Normalize data: if it has a 'properties' key (like MVT features), use that.
+  // Otherwise use it directly (like search results).
+  const data = rawData.properties || rawData;
 
   // Route details state — fetched on demand when an ATS_ROUTE is selected
   const [routeDetails, setRouteDetails] = useState<AtsRouteDetails | null>(null);
@@ -81,8 +84,7 @@ export function FeatureInfoCard() {
 
   let title = 'Feature Details';
   if (type === 'AIRSPACE') {
-    const p = data.properties || {};
-    title = p.name || p.identification || 'Airspace Details';
+    title = data.name || data.identification || 'Airspace Details';
   } else {
     title =
       data.route_designator ||

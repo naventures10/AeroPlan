@@ -33,6 +33,7 @@ export function useSearch() {
     setActiveAerodromeMetadata,
     setSelectedRouteIds,
     setSelectedFeature,
+    setHighlightedAirspaceId,
   } = useMapStore();
 
   const [searchInput, setSearchInput] = useState('');
@@ -158,9 +159,16 @@ export function useSearch() {
           case 'ATS_ROUTE':
             setSelectedRouteIds([item.id], item.route_type);
             break;
+          case 'AIRSPACE':
+            if (!activeLayers.airspaces) toggleLayer('airspaces');
+            setHighlightedAirspaceId(item.id);
+            break;
         }
 
-        if (['ATS_ROUTE', 'NAVAID', 'WAYPOINT'].includes(item.type) && item.properties) {
+        if (
+          ['ATS_ROUTE', 'NAVAID', 'WAYPOINT', 'AIRSPACE'].includes(item.type) &&
+          item.properties
+        ) {
           setSelectedFeature({ type: item.type as any, data: item.properties });
         }
       }, 1200);
@@ -174,6 +182,7 @@ export function useSearch() {
       setSelectedRouteIds,
       setActiveAerodromeMetadata,
       setSelectedFeature,
+      setHighlightedAirspaceId,
       resetSearchState,
     ],
   );

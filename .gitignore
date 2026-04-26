@@ -14,7 +14,8 @@
 !/backend/
 !/eaip_scrapper/
 !/scripts/
-!.gitlab-ci.yml
+!/.github/
+!/.gitlab-ci.yml
 
 # ============================================================
 # Frontend – Node / Vite artifacts
