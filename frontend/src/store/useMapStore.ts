@@ -1,0 +1,311 @@
+import { create } from 'zustand';
+
+// 1. Define the TypeScript Blueprint
+interface MapState {
+  // Camera State
+  viewState: {
+    longitude: number;
+    latitude: number;
+    zoom: number;
+    pitch: number;
+    bearing: number;
+    maxPitch: number;
+    transitionDuration?: number | 'auto';
+    transitionType?: 'FLY' | 'LINEAR';
+  };
+
+  // UI & App State
+  viewMode: 'ENROUTE' | 'TERMINAL';
+  setViewMode: (mode: 'ENROUTE' | 'TERMINAL') => void;
+
+  // Metadata for the active aerodrome
+  activeAerodromeMetadata: any | null;
+  setActiveAerodromeMetadata: (data: any) => void;
+
+  searchQuery: string;
+  activeLayers: {
+    aerodromes: boolean;
+    waypoints: boolean;
+    navaids: boolean;
+    atsRoutes: boolean;
+    wacMap: boolean;
+    airspaces: boolean;
+    airspaceFIR: boolean;
+    airspaceRegulated: boolean;
+    airspaceControl: boolean;
+    airspaceUpr: boolean;
+    ercMap: boolean;
+  };
+
+  selectedRouteIds: string[];
+  selectedRouteType: string | null;
+  setSelectedRouteIds: (routeIds: string[], routeType?: string | null) => void;
+
+  activeAirport: string | null;
+  setActiveAirport: (code: string | null) => void;
+
+  /** Terminal RNP: selected procedure from chart modal → 3D MVT layer */
+  selectedRnpProcedureId: number | null;
+  selectedRnpChartKey: string | null;
+  selectedRnpBounds: [number, number, number, number] | null;
+  setSelectedRnpProcedure: (
+    payload: {
+      procedureId: number;
+      chartKey: string;
+      bounds: [number, number, number, number] | null;
+    } | null,
+  ) => void;
+
+  selectedRnpApproachId: string | null;
+  setSelectedRnpApproachId: (id: string | null) => void;
+
+  selectedFeature: {
+    type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID' | 'AIRSPACE';
+    data: any;
+  } | null;
+  setSelectedFeature: (
+    feature: { type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID' | 'AIRSPACE'; data: any } | null,
+  ) => void;
+
+  highlightedAirspaceId: string | null;
+  setHighlightedAirspaceId: (id: string | null) => void;
+
+  atsRouteLabels: any | null;
+  setAtsRouteLabels: (data: any) => void;
+
+  boundsToFit: [number, number, number, number] | null;
+  fitBounds: (bounds: [number, number, number, number] | null) => void;
+
+  animatedTrips: any[];
+  setAnimatedTrips: (trips: any[]) => void;
+  animatedLabels: any[];
+  setAnimatedLabels: (labels: any[]) => void;
+  animationConfig: { playing: boolean; duration: number } | null;
+  setAnimationConfig: (config: { playing: boolean; duration: number } | null) => void;
+
+  // Actions (Functions to change the state)
+  setViewState: (viewState: any) => void;
+  toggleViewMode: () => void;
+  setSearchQuery: (query: string) => void;
+  toggleLayer: (layer: keyof MapState['activeLayers']) => void;
+  flyToLocation: (
+    lng: number,
+    lat: number,
+    zoom?: number,
+    pitch?: number,
+    forceViewMode?: 'ENROUTE' | 'TERMINAL',
+  ) => void;
+  returnToEnroute: () => void;
+
+  terminalPivot: [number, number] | null;
+  setTerminalPivot: (coords: [number, number] | null) => void;
+}
+
+export const DEFAULT_VIEW = {
+  longitude: 78.9629,
+  latitude: 20.5937,
+  zoom: 4.5,
+  pitch: 0,
+  bearing: 0,
+  maxPitch: 60,
+};
+
+/**
+ * Zoom level below which the map automatically exits TERMINAL mode
+ * and flattens to ENROUTE view. Lowering this makes the terminal view
+ * "relaxed" for viewing large procedures.
+ */
+export const TERMINAL_EXIT_ZOOM_THRESHOLD = 5.5;
+
+// 2. Initialize the Store
+export const useMapStore = create<MapState>((set, get) => ({
+  // Default starting view (High-level India)
+  viewState: DEFAULT_VIEW,
+
+  viewMode: 'ENROUTE',
+  setViewMode: (mode) =>
+    set({
+      viewMode: mode,
+      ...(mode === 'ENROUTE'
+        ? {
+            selectedRnpProcedureId: null,
+            selectedRnpChartKey: null,
+            selectedRnpBounds: null,
+            selectedRnpApproachId: null,
+          }
+        : {}),
+    }),
+
+  activeAerodromeMetadata: null,
+  setActiveAerodromeMetadata: (data) => set({ activeAerodromeMetadata: data }),
+
+  searchQuery: '',
+  setSearchQuery: (query) => set({ searchQuery: query }),
+
+  activeLayers: {
+    aerodromes: true,
+    waypoints: false,
+    navaids: false,
+    atsRoutes: false,
+    wacMap: false,
+    airspaces: false,
+    airspaceFIR: false,
+    airspaceRegulated: false,
+    airspaceControl: false,
+    airspaceUpr: false,
+    ercMap: false,
+  },
+
+  toggleLayer: (layer) =>
+    set((state) => {
+      const newActiveLayers = { ...state.activeLayers };
+      newActiveLayers[layer] = !newActiveLayers[layer];
+
+      if (layer === 'wacMap' && newActiveLayers.wacMap) {
+        newActiveLayers.ercMap = false;
+      }
+      if (layer === 'ercMap' && newActiveLayers.ercMap) {
+        newActiveLayers.wacMap = false;
+      }
+      if (layer === 'airspaces' && newActiveLayers.airspaces) {
+        newActiveLayers.airspaceFIR = true;
+        newActiveLayers.airspaceRegulated = true;
+        newActiveLayers.airspaceControl = true;
+        newActiveLayers.airspaceUpr = true;
+      }
+
+      return { activeLayers: newActiveLayers };
+    }),
+
+  selectedRouteIds: [],
+  selectedRouteType: null,
+  setSelectedRouteIds: (routeIds, routeType = null) =>
+    set({
+      selectedRouteIds: routeIds,
+      selectedRouteType: routeType,
+    }),
+
+  activeAirport: null,
+  setActiveAirport: (code) =>
+    set({
+      activeAirport: code,
+      selectedRnpProcedureId: null,
+      selectedRnpChartKey: null,
+      selectedRnpBounds: null,
+      selectedRnpApproachId: null,
+    }),
+
+  selectedRnpProcedureId: null,
+  selectedRnpChartKey: null,
+  selectedRnpBounds: null,
+  selectedRnpApproachId: null,
+  setSelectedRnpApproachId: (id) => set({ selectedRnpApproachId: id }),
+
+  setSelectedRnpProcedure: (payload) =>
+    set(
+      payload
+        ? {
+            selectedRnpProcedureId: payload.procedureId,
+            selectedRnpChartKey: payload.chartKey,
+            selectedRnpBounds: payload.bounds,
+            selectedRnpApproachId: null, // Reset approach ID on new procedure
+          }
+        : {
+            selectedRnpProcedureId: null,
+            selectedRnpChartKey: null,
+            selectedRnpBounds: null,
+            selectedRnpApproachId: null,
+          },
+    ),
+
+  selectedFeature: null,
+  setSelectedFeature: (feature) => set({ selectedFeature: feature }),
+
+  highlightedAirspaceId: null,
+  setHighlightedAirspaceId: (id) => set({ highlightedAirspaceId: id }),
+
+  atsRouteLabels: null,
+  setAtsRouteLabels: (data) => {
+    set({ atsRouteLabels: data });
+  },
+
+  boundsToFit: null,
+  fitBounds: (bounds) => {
+    set({ boundsToFit: bounds });
+  },
+
+  animatedTrips: [],
+  setAnimatedTrips: (trips) => set({ animatedTrips: trips }),
+  animatedLabels: [],
+  setAnimatedLabels: (labels) => set({ animatedLabels: labels }),
+  animationConfig: null,
+  setAnimationConfig: (config) => set({ animationConfig: config }),
+
+  terminalPivot: null,
+  setTerminalPivot: (coords) => {
+    set({ terminalPivot: coords });
+  },
+
+  // Basic Setters
+  setViewState: (viewState) => set({ viewState }),
+
+  toggleViewMode: () => {
+    const { viewMode, viewState } = get();
+    const newMode = viewMode === 'ENROUTE' ? 'TERMINAL' : 'ENROUTE';
+    set({
+      viewMode: newMode,
+      ...(newMode === 'ENROUTE'
+        ? {
+            selectedRnpProcedureId: null,
+            selectedRnpChartKey: null,
+            selectedRnpBounds: null,
+            selectedRnpApproachId: null,
+          }
+        : {}),
+      viewState: {
+        ...viewState,
+        pitch: newMode === 'TERMINAL' ? 45 : 0,
+        transitionDuration: 1000,
+        transitionType: 'LINEAR',
+      },
+    });
+  },
+
+  returnToEnroute: () => {
+    const { viewState } = get();
+    set({
+      viewMode: 'ENROUTE',
+      activeAirport: null,
+      selectedRnpProcedureId: null,
+      selectedRnpChartKey: null,
+      selectedRnpBounds: null,
+      selectedRnpApproachId: null,
+      selectedFeature: null,
+      terminalPivot: null,
+      viewState: {
+        ...viewState,
+        pitch: 0,
+        bearing: 0,
+        transitionDuration: 1500,
+        transitionType: 'FLY',
+      },
+    });
+  },
+
+  // The "Search & Fly" Logic
+  flyToLocation: (lng, lat, zoom = 14, pitch = 0, forceViewMode) => {
+    set({
+      viewMode: forceViewMode || (pitch > 0 ? 'TERMINAL' : 'ENROUTE'),
+      viewState: {
+        longitude: lng,
+        latitude: lat,
+        zoom: zoom,
+        pitch: pitch,
+        bearing: 0,
+        maxPitch: 60,
+        transitionDuration: 1200,
+        transitionType: 'FLY',
+      },
+    });
+  },
+}));

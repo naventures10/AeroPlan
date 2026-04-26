@@ -1,0 +1,67 @@
+# ============================================================
+# Ignore EVERYTHING at the root level by default.
+# Only the three packages and explicit root configs are tracked.
+# ============================================================
+
+/*
+
+# Allow root config files
+!.gitignore
+!Makefile
+!README.md
+# Allow the three packages
+!/frontend/
+!/backend/
+!/eaip_scrapper/
+!/scripts/
+!.gitlab-ci.yml
+
+# ============================================================
+# Frontend – Node / Vite artifacts
+# ============================================================
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+frontend/stats.html
+
+# ============================================================
+# Python – common artifacts (applies to backend & scrapper)
+# ============================================================
+**/__pycache__/
+**/*.py[oc]
+**/*.pyo
+**/.venv/
+**/build/
+**/*.egg-info/
+
+# ============================================================
+# Secrets – never commit .env files
+# ============================================================
+**/.env
+frontend/.env
+backend/.env
+eaip_scrapper/.env
+
+# ============================================================
+# macOS metadata
+# ============================================================
+**/.DS_Store
+
+# ============================================================
+# Large scrapper outputs / raw data files
+# ============================================================
+eaip_scrapper/output/
+eaip_scrapper/*.pdf
+eaip_scrapper/*.md
+eaip_scrapper/Chennai_*
+eaip_scrapper/Mumbai_*
+
+# ============================================================
+# Large data files (MBTiles, GeoTIFFs, etc.)
+# ============================================================
+**/*.mbtiles
+backend/data/
+
+# Code Review
+.code-review/
