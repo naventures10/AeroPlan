@@ -38,15 +38,9 @@ test.describe('ATS Route Workflows', () => {
     await expect(infoCard).toContainText('A201');
     await expect(infoCard).toContainText('ATS ROUTE');
 
-    // 4. Verify Layer Auto-Toggle
-    await expect
-      .poll(
-        async () => {
-          return await mapPage.isLayerActive('atsRoutes');
-        },
-        { timeout: 5000 },
-      )
-      .toBe(true);
+    // 4. Verify Layer remains INACTIVE (to avoid clutter)
+    // The specific route is highlighted via selectedRouteIds, but the global layer is not toggled ON.
+    expect(await mapPage.isLayerActive('atsRoutes')).toBe(false);
 
     // 5. Verify Route Details are loaded (check for segments or waypoints in the card)
     // Based on RouteDetailsPanel implementation, it should show waypoints or segments

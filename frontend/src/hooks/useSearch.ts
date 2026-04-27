@@ -157,7 +157,6 @@ export function useSearch() {
             if (!activeLayers.waypoints) toggleLayer('waypoints');
             break;
           case 'ATS_ROUTE':
-            if (!activeLayers.atsRoutes) toggleLayer('atsRoutes');
             setSelectedRouteIds([item.id], item.route_type);
             break;
           case 'AIRSPACE':
