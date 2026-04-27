@@ -8,6 +8,7 @@ async def test_get_daylight(api_client: AsyncClient, db_session) -> None:
     from unittest.mock import MagicMock
 
     mock_result = MagicMock()
+
     # Need to return DaylightRow-like objects
     class DaylightRow:
         def __init__(self):
@@ -19,9 +20,7 @@ async def test_get_daylight(api_client: AsyncClient, db_session) -> None:
             self.sunset = time(18, 0)
             self.twilight_to = time(18, 30)
 
-    mock_result.fetchall.return_value = [
-        DaylightRow()
-    ]
+    mock_result.fetchall.return_value = [DaylightRow()]
     db_session.execute.return_value = mock_result
 
     # Use monkeypatch/mock side_effect properly to match MagicMock behaviour since result is reused

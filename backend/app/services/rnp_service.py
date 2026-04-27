@@ -204,12 +204,16 @@ def smooth_path_3d(
             q0 = [
                 p_b[0] + alpha_ab * (p_a[0] - p_b[0]),
                 p_b[1] + alpha_ab * (p_a[1] - p_b[1]),
-                alt_b + alpha_ab * (alt_a - alt_b) if p_a[2] is not None and p_b[2] is not None else p_b[2],
+                alt_b + alpha_ab * (alt_a - alt_b)
+                if p_a[2] is not None and p_b[2] is not None
+                else p_b[2],
             ]
             q2 = [
                 p_b[0] + alpha_bc * (p_c[0] - p_b[0]),
                 p_b[1] + alpha_bc * (p_c[1] - p_b[1]),
-                alt_b + alpha_bc * (alt_c - alt_b) if p_c[2] is not None and p_b[2] is not None else p_b[2],
+                alt_b + alpha_bc * (alt_c - alt_b)
+                if p_c[2] is not None and p_b[2] is not None
+                else p_b[2],
             ]
 
             smoothed.append(q0)
@@ -253,7 +257,7 @@ def extract_true_course(course_str: str | None) -> float | None:
         if m:
             try:
                 return float(m.group(1))
-            except (ValueError, TypeError):  # pragma: no cover
+            except ValueError, TypeError:  # pragma: no cover
                 pass
 
     # Format 2: "NNN.NN°(NNN.NN°)"
@@ -261,7 +265,7 @@ def extract_true_course(course_str: str | None) -> float | None:
     if m:
         try:
             return float(m.group(1))
-        except (ValueError, TypeError):  # pragma: no cover
+        except ValueError, TypeError:  # pragma: no cover
             pass
 
     return None
@@ -274,7 +278,7 @@ def extract_altitude(leg: Any) -> float | None:
             val = float(leg.altitude_numeric)
             if val > 0:
                 return val
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             pass
 
     if leg.altitude_constraint:
@@ -492,9 +496,6 @@ def build_3d_paths(
         for i in range(1, len(path_3d) - 1):
             if path_3d[i][2] is None:
                 prev_idx = i - 1
-                while prev_idx >= 0 and path_3d[prev_idx][2] is None:  # pragma: no cover
-                    prev_idx -= 1
-
                 next_idx = i + 1
                 while next_idx < len(path_3d) and path_3d[next_idx][2] is None:
                     next_idx += 1

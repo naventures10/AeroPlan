@@ -31,6 +31,7 @@ async def test_list_rnp_procedures(api_client: AsyncClient, db_session) -> None:
     assert data[0]["name"] == "RNP RWY 09"
     assert data[0]["min_lng"] == 72.0
 
+
 @pytest.mark.asyncio
 async def test_list_rnp_procedures_none_bounds(api_client: AsyncClient, db_session) -> None:
     from unittest.mock import MagicMock
@@ -58,6 +59,7 @@ async def test_list_rnp_procedures_none_bounds(api_client: AsyncClient, db_sessi
     assert len(data) == 1
     assert data[0]["min_lng"] is None
 
+
 @pytest.mark.asyncio
 async def test_get_rnp_path_3d_not_found(api_client: AsyncClient, db_session) -> None:
     from unittest.mock import MagicMock
@@ -71,6 +73,7 @@ async def test_get_rnp_path_3d_not_found(api_client: AsyncClient, db_session) ->
 
     response = await api_client.get("/api/v1/rnp-procedures/999/path3d")
     assert response.status_code == 404
+
 
 @pytest.mark.asyncio
 async def test_get_rnp_path_3d_success(api_client: AsyncClient, db_session) -> None:
@@ -99,11 +102,16 @@ async def test_get_rnp_path_3d_success(api_client: AsyncClient, db_session) -> N
 
     mock_ad_row = MagicMock()
     mock_ad_row.__getitem__.return_value = [
-        {"designation": "09", "coordinates": {"decimal_lat": 19.1, "decimal_lng": 72.8}, "thr_elevation": "THR: 50.0FT"}
+        {
+            "designation": "09",
+            "coordinates": {"decimal_lat": 19.1, "decimal_lng": 72.8},
+            "thr_elevation": "THR: 50.0FT",
+        }
     ]
     # Actually fetchone returns a tuple
 
     call_count = 0
+
     async def mock_execute(*args, **kwargs):
         nonlocal call_count
         call_count += 1
@@ -113,9 +121,15 @@ async def test_get_rnp_path_3d_success(api_client: AsyncClient, db_session) -> N
         elif call_count == 2:
             mock_result.fetchall.return_value = [mock_leg]
         elif call_count == 3:
-            mock_result.fetchone.return_value = ([
-                {"designation": "09", "coordinates": {"decimal_lat": 19.1, "decimal_lng": 72.8}, "thr_elevation": "THR: 50.0FT"}
-            ],)
+            mock_result.fetchone.return_value = (
+                [
+                    {
+                        "designation": "09",
+                        "coordinates": {"decimal_lat": 19.1, "decimal_lng": 72.8},
+                        "thr_elevation": "THR: 50.0FT",
+                    }
+                ],
+            )
         return mock_result
 
     db_session.execute.side_effect = mock_execute
@@ -123,8 +137,11 @@ async def test_get_rnp_path_3d_success(api_client: AsyncClient, db_session) -> N
     response = await api_client.get("/api/v1/rnp-procedures/1/path3d")
     assert response.status_code == 200
 
+
 @pytest.mark.asyncio
-async def test_get_rnp_path_3d_success_runway_chars_no_coords(api_client: AsyncClient, db_session) -> None:
+async def test_get_rnp_path_3d_success_runway_chars_no_coords(
+    api_client: AsyncClient, db_session
+) -> None:
     from unittest.mock import MagicMock
 
     mock_proc = MagicMock()
@@ -149,6 +166,7 @@ async def test_get_rnp_path_3d_success_runway_chars_no_coords(api_client: AsyncC
     mock_leg.lat = 19.5
 
     call_count = 0
+
     async def mock_execute(*args, **kwargs):
         nonlocal call_count
         call_count += 1
@@ -159,9 +177,7 @@ async def test_get_rnp_path_3d_success_runway_chars_no_coords(api_client: AsyncC
             mock_result.fetchall.return_value = [mock_leg]
         elif call_count == 3:
             # missing coords
-            mock_result.fetchone.return_value = ([
-                {"designation": "09", "coordinates": {}}
-            ],)
+            mock_result.fetchone.return_value = ([{"designation": "09", "coordinates": {}}],)
         return mock_result
 
     db_session.execute.side_effect = mock_execute
@@ -170,6 +186,7 @@ async def test_get_rnp_path_3d_success_runway_chars_no_coords(api_client: AsyncC
     assert response.status_code == 200
     data = response.json()
     assert "approach_paths" in data
+
 
 @pytest.mark.asyncio
 async def test_get_rnp_path_3d_success_no_runway(api_client: AsyncClient, db_session) -> None:
@@ -198,6 +215,7 @@ async def test_get_rnp_path_3d_success_no_runway(api_client: AsyncClient, db_ses
     mock_leg.lat = 19.5
 
     call_count = 0
+
     async def mock_execute(*args, **kwargs):
         nonlocal call_count
         call_count += 1
@@ -213,8 +231,11 @@ async def test_get_rnp_path_3d_success_no_runway(api_client: AsyncClient, db_ses
     response = await api_client.get("/api/v1/rnp-procedures/1/path3d")
     assert response.status_code == 200
 
+
 @pytest.mark.asyncio
-async def test_get_rnp_path_3d_success_empty_runway_chars(api_client: AsyncClient, db_session) -> None:
+async def test_get_rnp_path_3d_success_empty_runway_chars(
+    api_client: AsyncClient, db_session
+) -> None:
     from unittest.mock import MagicMock
 
     mock_proc = MagicMock()
@@ -239,6 +260,7 @@ async def test_get_rnp_path_3d_success_empty_runway_chars(api_client: AsyncClien
     mock_leg.lat = 19.5
 
     call_count = 0
+
     async def mock_execute(*args, **kwargs):
         nonlocal call_count
         call_count += 1
@@ -249,15 +271,22 @@ async def test_get_rnp_path_3d_success_empty_runway_chars(api_client: AsyncClien
             mock_result.fetchall.return_value = [mock_leg]
         elif call_count == 3:
             # ad_row is present but no match for target runway
-            mock_result.fetchone.return_value = ([
-                {"designation": "27", "coordinates": {"decimal_lat": 19.1, "decimal_lng": 72.8}, "thr_elevation": "THR: 50.0FT"}
-            ],)
+            mock_result.fetchone.return_value = (
+                [
+                    {
+                        "designation": "27",
+                        "coordinates": {"decimal_lat": 19.1, "decimal_lng": 72.8},
+                        "thr_elevation": "THR: 50.0FT",
+                    }
+                ],
+            )
         return mock_result
 
     db_session.execute.side_effect = mock_execute
 
     response = await api_client.get("/api/v1/rnp-procedures/1/path3d")
     assert response.status_code == 200
+
 
 @pytest.mark.asyncio
 async def test_get_rnp_path_3d_success_no_runway_chars(api_client: AsyncClient, db_session) -> None:
@@ -285,6 +314,7 @@ async def test_get_rnp_path_3d_success_no_runway_chars(api_client: AsyncClient, 
     mock_leg.lat = 19.5
 
     call_count = 0
+
     async def mock_execute(*args, **kwargs):
         nonlocal call_count
         call_count += 1

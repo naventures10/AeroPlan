@@ -10,11 +10,17 @@ from app.api.v1.endpoints.charts import _validate_proxy_url
 @pytest.mark.asyncio
 async def test_get_aerodrome_charts(api_client: AsyncClient, db_session) -> None:
     from collections import namedtuple
+
     ChartRow = namedtuple("ChartRow", ["chart_id", "chart_title", "chart_index", "chart_url"])
 
     mock_result = MagicMock()
     mock_result.fetchall.return_value = [
-        ChartRow(chart_id=123, chart_title="Test Chart", chart_index="1", chart_url="https://aim-india.aai.aero/test.pdf")
+        ChartRow(
+            chart_id=123,
+            chart_title="Test Chart",
+            chart_index="1",
+            chart_url="https://aim-india.aai.aero/test.pdf",
+        )
     ]
 
     async def mock_execute(*args, **kwargs):
@@ -30,6 +36,7 @@ async def test_get_aerodrome_charts(api_client: AsyncClient, db_session) -> None
     assert data[0]["chart_title"] == "Test Chart"
     assert data[0]["chart_index"] == "1"
     assert data[0]["chart_url"] == "https://aim-india.aai.aero/test.pdf"
+
 
 def test_validate_proxy_url():
     # Valid urls
@@ -49,6 +56,7 @@ def test_validate_proxy_url():
     assert exc_info.value.status_code == 403
     assert "not in the allow-list" in exc_info.value.detail
 
+
 @pytest.mark.asyncio
 async def test_proxy_pdf_success(api_client: AsyncClient, mock_httpx) -> None:
     mock_response = MagicMock()
@@ -63,6 +71,7 @@ async def test_proxy_pdf_success(api_client: AsyncClient, mock_httpx) -> None:
     assert response.content == b"fake-pdf-content"
     assert response.headers["content-type"] == "application/pdf"
 
+
 @pytest.mark.asyncio
 async def test_proxy_pdf_upstream_error(api_client: AsyncClient, mock_httpx) -> None:
     mock_response = MagicMock()
@@ -74,6 +83,7 @@ async def test_proxy_pdf_upstream_error(api_client: AsyncClient, mock_httpx) -> 
     assert response.status_code == 404
     assert b"Upstream returned 404" in response.content
 
+
 @pytest.mark.asyncio
 async def test_proxy_pdf_request_error(api_client: AsyncClient, monkeypatch) -> None:
     import httpx
@@ -84,10 +94,13 @@ async def test_proxy_pdf_request_error(api_client: AsyncClient, monkeypatch) -> 
     class MockClient:
         def __init__(self, *args, **kwargs):
             pass
+
         async def __aenter__(self):
             return self
+
         async def __aexit__(self, exc_type, exc_val, exc_tb):
             pass
+
         async def get(self, *args, **kwargs):
             raise httpx.RequestError("Mock request error")
 

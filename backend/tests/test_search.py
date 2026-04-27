@@ -9,12 +9,14 @@ async def test_global_search_empty_query(api_client: AsyncClient) -> None:
     assert response.status_code == 200
     assert response.json() == []
 
+
 @pytest.mark.asyncio
 async def test_global_search_whitespace_query(api_client: AsyncClient) -> None:
     """Test that queries with only whitespace return empty list."""
     response = await api_client.get("/api/v1/search?q=   ")
     assert response.status_code == 200
     assert response.json() == []
+
 
 @pytest.mark.asyncio
 async def test_global_search_no_regex_fallback(api_client: AsyncClient, db_session) -> None:
@@ -105,6 +107,7 @@ async def test_global_search_valid_query(api_client: AsyncClient, db_session) ->
     second_result = data[1]
     assert second_result["type"] == "ATS_ROUTE"
     assert second_result["bounds"] == [74.0, 9.0, 76.0, 11.0]
+
 
 @pytest.mark.asyncio
 async def test_global_search_alphanumeric_split(api_client: AsyncClient, db_session) -> None:

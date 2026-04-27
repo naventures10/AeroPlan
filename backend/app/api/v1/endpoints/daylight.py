@@ -2,7 +2,7 @@
 Daylight Tables Router — Query sunrise/sunset and twilight data from the database.
 """
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
@@ -51,7 +51,7 @@ async def get_daylight(
         """)
         params: dict = {"icao": icao, "target_date": target_date}
     else:
-        target_month = month if month else datetime.now().month
+        target_month = month if month else datetime.now(UTC).month
         query = text("""
             SELECT airport_icao, airport_name, date, twilight_from, sunrise, sunset, twilight_to
             FROM daylight_times

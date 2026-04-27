@@ -19,7 +19,7 @@ def test_martin_schema_synchronization():
     import app.models.airspace
     import app.models.daylight
     import app.models.navigation
-    import app.models.notam
+    import app.models.notam  # noqa: F401
 
     # Map of SQLAlchemy table names to their classes
     metadata = Base.metadata
@@ -30,32 +30,37 @@ def test_martin_schema_synchronization():
         "ats_waypoints_grouped",
         "v_ats_route_segments",
         "airspaces_geometry",
-        "airspaces_metadata"
+        "airspaces_metadata",
     }
 
     errors = []
 
-    for key, table_config in tables.items():
+    for _, table_config in tables.items():
         table_name = table_config.get("table")
         if table_name in known_views:
             continue
 
         if table_name not in db_tables:
-            errors.append(f"Table '{table_name}' from Martin config not found in SQLAlchemy models.")
+            errors.append(
+                f"Table '{table_name}' from Martin config not found in SQLAlchemy models."
+            )
             continue
 
         db_table = db_tables[table_name]
 
         # Check id_column
         id_col = table_config.get("id_column")
-        if id_col:
-            if id_col not in db_table.columns:
-                errors.append(f"ID column '{id_col}' in table '{table_name}' not found in SQLAlchemy model.")
+        if id_col and id_col not in db_table.columns:
+            errors.append(
+                f"ID column '{id_col}' in table '{table_name}' not found in SQLAlchemy model."
+            )
 
         # Check properties
         properties = table_config.get("properties", {})
         for prop in properties:
             if prop not in db_table.columns:
-                errors.append(f"Property '{prop}' in table '{table_name}' not found in SQLAlchemy model.")
+                errors.append(
+                    f"Property '{prop}' in table '{table_name}' not found in SQLAlchemy model."
+                )
 
     assert not errors, "Schema synchronization failures:\n" + "\n".join(errors)

@@ -6,15 +6,25 @@ from httpx import AsyncClient
 async def test_get_ats_route_labels(api_client: AsyncClient, db_session, monkeypatch) -> None:
     """Test fetching ats route labels."""
     import app.api.v1.endpoints.ats_routes as routes
+
     monkeypatch.setattr(routes, "_labels_cache", {"data": None, "ts": 0.0})
 
     from unittest.mock import MagicMock
+
     mock_result = MagicMock()
     # Need to return a dict structure to pass GeoJsonFeatureCollection checks
-    mock_result.fetchone.return_value = ({
-        "type": "FeatureCollection",
-        "features": [{"type": "Feature", "geometry": {"type": "Point", "coordinates": [0,0]}, "properties": {}}]
-    },)
+    mock_result.fetchone.return_value = (
+        {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {"type": "Point", "coordinates": [0, 0]},
+                    "properties": {},
+                }
+            ],
+        },
+    )
 
     async def mock_execute(*args, **kwargs):
         return mock_result
@@ -39,9 +49,11 @@ async def test_get_ats_route_labels_empty(api_client: AsyncClient, db_session, m
     """Test fetching ats route labels empty fallback."""
     # Reset cache
     import app.api.v1.endpoints.ats_routes as routes
+
     monkeypatch.setattr(routes, "_labels_cache", {"data": None, "ts": 0.0})
 
     from unittest.mock import MagicMock
+
     mock_result = MagicMock()
     mock_result.fetchone.return_value = None
     db_session.execute.return_value = mock_result
@@ -52,9 +64,7 @@ async def test_get_ats_route_labels_empty(api_client: AsyncClient, db_session, m
 
 
 @pytest.mark.asyncio
-async def test_get_ats_route_details_success(
-    api_client: AsyncClient, db_session
-) -> None:
+async def test_get_ats_route_details_success(api_client: AsyncClient, db_session) -> None:
     """
     Test retrieving full ATS route details.
     Seeds a dummy route and verifies the API returns it correctly.
@@ -64,11 +74,33 @@ async def test_get_ats_route_details_success(
     from unittest.mock import MagicMock
 
     RouteRow = namedtuple("RouteRow", ["route_id", "route_designator", "route_type", "remarks"])
-    WaypointRow = namedtuple("WaypointRow", ["sequence_number", "waypoint_name", "raw_coordinates", "navaid_info"])
-    SegmentRow = namedtuple("SegmentRow", ["sequence_number", "from_waypoint", "to_waypoint", "from_coordinates", "to_coordinates", "track_magnetic", "distance_nm", "upper_limit", "lower_limit", "airspace_class", "moca", "lateral_limits", "direction_odd", "direction_even"])
+    WaypointRow = namedtuple(
+        "WaypointRow", ["sequence_number", "waypoint_name", "raw_coordinates", "navaid_info"]
+    )
+    SegmentRow = namedtuple(
+        "SegmentRow",
+        [
+            "sequence_number",
+            "from_waypoint",
+            "to_waypoint",
+            "from_coordinates",
+            "to_coordinates",
+            "track_magnetic",
+            "distance_nm",
+            "upper_limit",
+            "lower_limit",
+            "airspace_class",
+            "moca",
+            "lateral_limits",
+            "direction_odd",
+            "direction_even",
+        ],
+    )
 
     mock_route_result = MagicMock()
-    mock_route_result.fetchone.return_value = RouteRow("TEST1", "TEST (A-B)", "CONVENTIONAL", "Test remarks")
+    mock_route_result.fetchone.return_value = RouteRow(
+        "TEST1", "TEST (A-B)", "CONVENTIONAL", "Test remarks"
+    )
 
     mock_wp_result = MagicMock()
     mock_wp_result.fetchall.return_value = [
@@ -78,8 +110,38 @@ async def test_get_ats_route_details_success(
 
     mock_seg_result = MagicMock()
     mock_seg_result.fetchall.return_value = [
-        SegmentRow(1, "POINT A", "POINT B", "000000N 0000000E", "010101N 0101010E", "090", 50.5, "FL 460", "FL 100", "D", "2000 FT", "20 NM", None, None),
-        SegmentRow(2, "POINT B", "POINT C", "010101N 0101010E", "020202N 0202020E", "090", None, "FL 460", "FL 100", "D", "2000 FT", "20 NM", None, None)
+        SegmentRow(
+            1,
+            "POINT A",
+            "POINT B",
+            "000000N 0000000E",
+            "010101N 0101010E",
+            "090",
+            50.5,
+            "FL 460",
+            "FL 100",
+            "D",
+            "2000 FT",
+            "20 NM",
+            None,
+            None,
+        ),
+        SegmentRow(
+            2,
+            "POINT B",
+            "POINT C",
+            "010101N 0101010E",
+            "020202N 0202020E",
+            "090",
+            None,
+            "FL 460",
+            "FL 100",
+            "D",
+            "2000 FT",
+            "20 NM",
+            None,
+            None,
+        ),
     ]
 
     async def mock_execute(query, params=None):
@@ -118,6 +180,7 @@ async def test_get_ats_route_details_success(
 async def test_get_ats_route_details_not_found(api_client: AsyncClient, db_session) -> None:
     """Test 404 for non-existent route."""
     from unittest.mock import MagicMock
+
     mock_result = MagicMock()
     mock_result.fetchone.return_value = None
     db_session.execute.return_value = mock_result

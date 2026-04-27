@@ -36,6 +36,7 @@ async def test_get_notams_by_airport(api_client: AsyncClient, db_session) -> Non
     assert data[0]["notam_id"] == "A0001/23"
     assert data[0]["airport_icao"] == "VABB"
 
+
 @pytest.mark.asyncio
 async def test_get_notams_by_fir(api_client: AsyncClient, db_session) -> None:
     from datetime import UTC, datetime
@@ -70,6 +71,7 @@ async def test_get_notams_by_fir(api_client: AsyncClient, db_session) -> None:
     assert data[0]["notam_id"] == "A0002/23"
     assert data[0]["fir"] == "VABF"
 
+
 @pytest.mark.asyncio
 async def test_get_all_notams(api_client: AsyncClient, db_session) -> None:
     from datetime import UTC, datetime
@@ -102,6 +104,7 @@ async def test_get_all_notams(api_client: AsyncClient, db_session) -> None:
     data = response.json()
     assert len(data) == 1
     assert data[0]["notam_id"] == "A0003/23"
+
 
 @pytest.mark.asyncio
 async def test_get_all_notams_with_icao_and_active(api_client: AsyncClient, db_session) -> None:

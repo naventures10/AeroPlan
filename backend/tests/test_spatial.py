@@ -8,10 +8,7 @@ async def test_get_aerodrome_features(api_client: AsyncClient, db_session) -> No
 
     mock_result = MagicMock()
     # geojson feature collection
-    mock_result.fetchone.return_value = ({
-        "type": "FeatureCollection",
-        "features": []
-    },)
+    mock_result.fetchone.return_value = ({"type": "FeatureCollection", "features": []},)
 
     async def mock_execute(*args, **kwargs):
         return mock_result

@@ -13,7 +13,8 @@ from app.services.rnp_service import (
 def test_haversine_nm():
     assert haversine_nm(0, 0, 0, 0) == 0.0
     dist = haversine_nm(0, 0, 1, 0)
-    assert dist > 59.0 and dist < 61.0 # ~60 NM per degree
+    assert dist > 59.0 and dist < 61.0  # ~60 NM per degree
+
 
 def test_extract_true_course():
     assert extract_true_course("299.41° Mag /297.66° True") == 297.66
@@ -23,6 +24,7 @@ def test_extract_true_course():
     assert extract_true_course(None) is None
     assert extract_true_course("123.45°(invalid)") is None
     assert extract_true_course("123.45°(123.45°)") == 123.45
+
 
 def test_extract_altitude():
     class DummyLeg:
@@ -41,6 +43,7 @@ def test_extract_altitude():
         def __init__(self):
             self.altitude_numeric = None
             self.altitude_constraint = None
+
     assert extract_altitude(MissingAttr()) is None
     assert extract_altitude(DummyLeg(alt_num=-1.0)) is None
 
@@ -50,66 +53,70 @@ def test_extract_altitude():
 
     assert extract_altitude(DummyLeg(BadType())) is None
 
+
 def test_project_point():
     lon, lat = project_point(0, 0, 90, 60)
     assert round(lon, 2) == 1.00
     assert round(lat, 2) == 0.0
 
+
 def test_smooth_path_3d():
     # Too short path
-    assert len(smooth_path_3d([[0,0,0], [1,1,1]])) == 2
+    assert len(smooth_path_3d([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])) == 2
 
     # Linear path
-    path = [[0, 0, 0], [1, 0, 1000], [2, 0, 2000]]
+    path = [[0.0, 0.0, 0.0], [1.0, 0.0, 1000.0], [2.0, 0.0, 2000.0]]
     smoothed = smooth_path_3d(path, max_turn_dist_nm=2.5, steps=2)
     assert len(smoothed) > len(path)
 
     # Small turn
-    path = [[0, 0, 0], [1, 0, 1000], [1, 1, 2000]]
+    path = [[0.0, 0.0, 0.0], [1.0, 0.0, 1000.0], [1.0, 1.0, 2000.0]]
     smoothed = smooth_path_3d(path, turn_directions=[None, "R", None])
     assert len(smoothed) > len(path)
 
     # U-turn (D-arc logic) CCW
-    path = [[0, 0, 0], [1, 0, 1000], [0.1, 0.1, 2000]]
-    smoothed = smooth_path_3d(path, max_turn_dist_nm=10, turn_directions=[None, "L", None])
+    path = [[0.0, 0.0, 0.0], [1.0, 0.0, 1000.0], [0.1, 0.1, 2000.0]]
+    smoothed = smooth_path_3d(path, max_turn_dist_nm=10.0, turn_directions=[None, "L", None])
     assert len(smoothed) > len(path)
 
     # U-turn (D-arc logic) CW
-    path = [[0, 0, 0], [1, 0, 1000], [0.1, -0.1, 2000]]
-    smoothed = smooth_path_3d(path, max_turn_dist_nm=10, turn_directions=[None, "R", None])
+    path = [[0.0, 0.0, 0.0], [1.0, 0.0, 1000.0], [0.1, -0.1, 2000.0]]
+    smoothed = smooth_path_3d(path, max_turn_dist_nm=10.0, turn_directions=[None, "R", None])
     assert len(smoothed) > len(path)
 
     # U-turn with forced direction "longer way"
-    path = [[0, 0, 0], [1, 0, 1000], [0.1, 0.1, 2000]]
+    path = [[0.0, 0.0, 0.0], [1.0, 0.0, 1000.0], [0.1, 0.1, 2000.0]]
     # It naturally wants to go left (CCW) so forcing R makes it go the long way
-    smoothed = smooth_path_3d(path, max_turn_dist_nm=10, turn_directions=[None, "R", None])
+    smoothed = smooth_path_3d(path, max_turn_dist_nm=10.0, turn_directions=[None, "R", None])
     assert len(smoothed) > len(path)
 
     # U-turn without forced direction
-    path = [[0, 0, 0], [1, 0, 1000], [0.1, 0.1, 2000]]
-    smoothed = smooth_path_3d(path, max_turn_dist_nm=10, turn_directions=[None, None, None])
+    path = [[0.0, 0.0, 0.0], [1.0, 0.0, 1000.0], [0.1, 0.1, 2000.0]]
+    smoothed = smooth_path_3d(path, max_turn_dist_nm=10.0, turn_directions=[None, None, None])
     assert len(smoothed) > len(path)
 
     # U-turn without alt at end
-    path = [[0, 0, 0], [1, 0, 1000], [0.1, 0.1, None]]
-    smoothed = smooth_path_3d(path, max_turn_dist_nm=10, turn_directions=[None, None, None])
+    path = [[0.0, 0.0, 0.0], [1.0, 0.0, 1000.0], [0.1, 0.1, None]]
+    smoothed = smooth_path_3d(path, max_turn_dist_nm=10.0, turn_directions=[None, None, None])  # type: ignore
     assert len(smoothed) > len(path)
 
     # Missing altitude at start
-    path = [[0, 0, None], [1, 0, None], [2, 0, None]]
-    smoothed = smooth_path_3d(path, turn_directions=[None, None, None])
+    path = [[0.0, 0.0, None], [1.0, 0.0, None], [2.0, 0.0, None]]
+    smoothed = smooth_path_3d(path, turn_directions=[None, None, None])  # type: ignore
     assert len(smoothed) > len(path)
 
     # 0 distance path elements
-    path = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+    path = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
     smoothed = smooth_path_3d(path)
     assert len(smoothed) > len(path)
 
+
 def test_smooth_path_3d_exceptions():
     # Force lines 500, 504, 522
-    path = [[0, 0, 0], [1, 0, 0]]
-    smoothed = smooth_path_3d(path) # < 3 points
+    path = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]
+    smoothed = smooth_path_3d(path)  # < 3 points
     assert len(smoothed) == 2
+
 
 def test_parse_serial():
     assert parse_serial("10") == 10
@@ -117,6 +124,7 @@ def test_parse_serial():
     assert parse_serial(None) == 999
     assert parse_serial("") == 999
     assert parse_serial("invalid") == 999
+
 
 def test_group_legs():
     class DummyLeg:
@@ -163,11 +171,12 @@ def test_group_legs():
 
     legs = [
         DummyLeg("10", "TF", "W1"),
-        DummyLeg("5", "TF", "W2"), # splits
-        DummyLeg("5", "TF", "W3")  # splits again because 5 <= 5
+        DummyLeg("5", "TF", "W2"),  # splits
+        DummyLeg("5", "TF", "W3"),  # splits again because 5 <= 5
     ]
     groups = group_legs(legs)
     assert len(groups) == 3
+
 
 def test_build_3d_paths():
     class DummyProc:
@@ -179,7 +188,20 @@ def test_build_3d_paths():
             self.runway = runway
 
     class DummyLeg:
-        def __init__(self, serial, pd, wpt, lon, lat, alt_num=None, alt_str=None, role=None, turn=None, course=None, dist=None):
+        def __init__(
+            self,
+            serial,
+            pd,
+            wpt,
+            lon,
+            lat,
+            alt_num=None,
+            alt_str=None,
+            role=None,
+            turn=None,
+            course=None,
+            dist=None,
+        ):
             self.source_serial = serial
             self.path_descriptor = pd
             self.waypoint_ident = wpt
@@ -195,6 +217,7 @@ def test_build_3d_paths():
     class DictLeg(dict):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
+
         def __getattr__(self, name):
             if name == "turn_direction":
                 raise AttributeError()
@@ -224,7 +247,7 @@ def test_build_3d_paths():
     legs = [
         DummyLeg("10", "IF", "START", 0, 0, alt_num=1000.0, role="IF"),
         DummyLeg("20", "TF", "RW09", 1, 0, role="TF"),
-        DummyLeg("30", "TF", "END", 2, 0, role="TF")
+        DummyLeg("30", "TF", "END", 2, 0, role="TF"),
     ]
     res = build_3d_paths(proc, legs)
     assert len(res.approach_paths) == 1
@@ -246,7 +269,7 @@ def test_build_3d_paths():
         DummyLeg("20", "IF", "RW09", 1, 0, role="IF"),
         DummyLeg("30", "TF", "MID", 2, 0, role="TF"),
         DummyLeg("10", "HM", "HOLD", 3, 0, role="HM"),
-        DummyLeg("20", "TF", "AFTER_HOLD", 4, 0, role="TF")
+        DummyLeg("20", "TF", "AFTER_HOLD", 4, 0, role="TF"),
     ]
     res = build_3d_paths(proc, legs)
     assert len(res.approach_paths) >= 0
@@ -256,7 +279,7 @@ def test_build_3d_paths():
     legs = [
         DummyLeg("10", "IF", "RW09", 0, 0, role="IF"),
         DummyLeg("20", "TF", "MID", 1, 0, role="TF"),
-        DummyLeg("30", "TF", "END", 2, 0, role="TF")
+        DummyLeg("30", "TF", "END", 2, 0, role="TF"),
     ]
     res = build_3d_paths(proc, legs, runway_threshold=[10, 10])
     assert res.approach_paths[0].path[0][0] == 10
@@ -264,18 +287,28 @@ def test_build_3d_paths():
     # 8. SID specific
     legs = [
         DummyLeg("10", "CF", "START", 0, 0, role="IF"),
-        DummyLeg("20", "TF", "EXIT", 1, 0, alt_num=10000.0, role="TF")
+        DummyLeg("20", "TF", "EXIT", 1, 0, alt_num=10000.0, role="TF"),
     ]
     res = build_3d_paths(proc, legs)
     assert res.approach_paths[0].entry_waypoint == "EXIT"
 
     # 9. Missing branches and dict test
     proc.type = "STAR"
-    d_leg = DictLeg({
-        "source_serial": "70", "path_descriptor": "TF", "waypoint_ident": "END",
-        "lon": 2, "lat": 0, "altitude_numeric": None, "altitude_constraint": None,
-        "role": None, "course": None, "distance": None, "turn_direction": "L"
-    })
+    d_leg = DictLeg(
+        {
+            "source_serial": "70",
+            "path_descriptor": "TF",
+            "waypoint_ident": "END",
+            "lon": 2,
+            "lat": 0,
+            "altitude_numeric": None,
+            "altitude_constraint": None,
+            "role": None,
+            "course": None,
+            "distance": None,
+            "turn_direction": "L",
+        }
+    )
     legs = [
         DummyLeg("10", "IF", "W1", 0, 0, role="IF", alt_num=100.0),
         DummyLeg("20", "IF", "W1", 0, 0, role="IF", alt_num=1000.0),
@@ -284,7 +317,7 @@ def test_build_3d_paths():
         DummyLeg("40", "CA", "W3", None, None, alt_num=3000.0, course="090°", dist=None),
         DummyLeg("50", "CA", "W4", None, None, alt_num=1000.0, course="090°", dist=None),
         DummyLeg("60", "TF", "RW09", 1, 0, role="TF", alt_num=None),
-        d_leg
+        d_leg,
     ]
     res = build_3d_paths(proc, legs)
     assert len(res.approach_paths) >= 1
@@ -294,7 +327,7 @@ def test_build_3d_paths():
         DummyLeg("10", "IF", "START", 0, 0, role="IF", alt_num=1000.0),
         DummyLeg("20", "TF", "W1", 0, 0, role="TF", alt_num=None),
         DummyLeg("30", "TF", "RW09", 1, 0, role="TF", alt_num=1000.0),
-        DummyLeg("40", "TF", "END", 2, 0, role="TF", alt_num=1000.0)
+        DummyLeg("40", "TF", "END", 2, 0, role="TF", alt_num=1000.0),
     ]
     res = build_3d_paths(proc, legs)
     assert len(res.approach_paths) >= 1
@@ -309,6 +342,7 @@ def test_build_3d_paths():
     res = build_3d_paths(proc, legs)
     assert res.missed_approach_path is not None
 
+
 def test_extract_path_more_branches_final():
     class DummyProc:
         def __init__(self, id=1, name="TEST", type="STAR", airport_id="TEST", runway="09"):
@@ -319,7 +353,20 @@ def test_extract_path_more_branches_final():
             self.runway = runway
 
     class DummyLeg:
-        def __init__(self, serial, pd, wpt, lon, lat, alt_num=None, alt_str=None, role=None, turn=None, course=None, dist=None):
+        def __init__(
+            self,
+            serial,
+            pd,
+            wpt,
+            lon,
+            lat,
+            alt_num=None,
+            alt_str=None,
+            role=None,
+            turn=None,
+            course=None,
+            dist=None,
+        ):
             self.source_serial = serial
             self.path_descriptor = pd
             self.waypoint_ident = wpt
@@ -338,7 +385,7 @@ def test_extract_path_more_branches_final():
     legs = [
         DummyLeg("10", "IF", "START", 0, 0, alt_num=1000.0, role="IF"),
         DummyLeg("20", "TF", "RW09", 1, 0, role="TF"),
-        DummyLeg("30", "TF", "END", 2, 0, role="TF")
+        DummyLeg("30", "TF", "END", 2, 0, role="TF"),
     ]
     res = build_3d_paths(proc, legs)
     assert len(res.approach_paths) == 1
@@ -354,7 +401,20 @@ def test_extract_path_more_branches14():
             self.runway = runway
 
     class DummyLeg:
-        def __init__(self, serial, pd, wpt, lon, lat, alt_num=None, alt_str=None, role=None, turn=None, course=None, dist=None):
+        def __init__(
+            self,
+            serial,
+            pd,
+            wpt,
+            lon,
+            lat,
+            alt_num=None,
+            alt_str=None,
+            role=None,
+            turn=None,
+            course=None,
+            dist=None,
+        ):
             self.source_serial = serial
             self.path_descriptor = pd
             self.waypoint_ident = wpt
@@ -373,9 +433,11 @@ def test_extract_path_more_branches14():
     legs = [
         DummyLeg("10", "IF", "START", 0, 0, role="IF", alt_num=1000.0),
         DummyLeg("20", "CA", "W1", None, None, course="090°", dist="10NM"),
-        DummyLeg("30", "CA", "W2", None, None, course="090°", dist=None, alt_num=2000.0), # dist=None, climb > 0
-        DummyLeg("40", "CA", "W3", None, None, course="invalid", dist=None), # invalid course
-        DummyLeg("50", "CA", "W4", None, None, course=None, dist=None), # none course
+        DummyLeg(
+            "30", "CA", "W2", None, None, course="090°", dist=None, alt_num=2000.0
+        ),  # dist=None, climb > 0
+        DummyLeg("40", "CA", "W3", None, None, course="invalid", dist=None),  # invalid course
+        DummyLeg("50", "CA", "W4", None, None, course=None, dist=None),  # none course
         DummyLeg("60", "TF", "RW09", 1, 0, role="TF", alt_num=3000.0),
     ]
 
@@ -402,7 +464,20 @@ def test_extract_path_remaining_branches():
             self.runway = runway
 
     class DummyLeg:
-        def __init__(self, serial, pd, wpt, lon, lat, alt_num=None, alt_str=None, role=None, turn=None, course=None, dist=None):
+        def __init__(
+            self,
+            serial,
+            pd,
+            wpt,
+            lon,
+            lat,
+            alt_num=None,
+            alt_str=None,
+            role=None,
+            turn=None,
+            course=None,
+            dist=None,
+        ):
             self.source_serial = serial
             self.path_descriptor = pd
             self.waypoint_ident = wpt
@@ -418,6 +493,7 @@ def test_extract_path_remaining_branches():
     class DictLeg(dict):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
+
         def __getattr__(self, name):
             if name == "turn_direction":
                 raise AttributeError()
@@ -426,11 +502,21 @@ def test_extract_path_remaining_branches():
     proc = DummyProc()
 
     # Hit 429
-    d_leg = DictLeg({
-        "source_serial": "70", "path_descriptor": "TF", "waypoint_ident": "END",
-        "lon": 2, "lat": 0, "altitude_numeric": None, "altitude_constraint": None,
-        "role": None, "course": None, "distance": None, "turn_direction": "L"
-    })
+    d_leg = DictLeg(
+        {
+            "source_serial": "70",
+            "path_descriptor": "TF",
+            "waypoint_ident": "END",
+            "lon": 2,
+            "lat": 0,
+            "altitude_numeric": None,
+            "altitude_constraint": None,
+            "role": None,
+            "course": None,
+            "distance": None,
+            "turn_direction": "L",
+        }
+    )
 
     legs = [
         DummyLeg("10", "IF", "W1", 0, 0, role="IF", alt_num=100.0),
@@ -440,7 +526,7 @@ def test_extract_path_remaining_branches():
         DummyLeg("40", "CA", "W3", None, None, alt_num=3000.0, course="090°", dist=None),
         DummyLeg("50", "CA", "W4", None, None, alt_num=1000.0, course="090°", dist=None),
         DummyLeg("60", "TF", "RW09", 1, 0, role="TF", alt_num=None),
-        d_leg
+        d_leg,
     ]
     res = build_3d_paths(proc, legs)
     assert len(res.approach_paths) >= 1
@@ -451,7 +537,7 @@ def test_extract_path_remaining_branches():
         DummyLeg("20", "TF", "W1", 0, 0, role="TF", alt_num=None),
         DummyLeg("30", "TF", "RW09", 1, 0, role="TF", alt_num=1000.0),
         # Provide valid extra point to return something
-        DummyLeg("40", "TF", "END", 2, 0, role="TF", alt_num=1000.0)
+        DummyLeg("40", "TF", "END", 2, 0, role="TF", alt_num=1000.0),
     ]
 
     res = build_3d_paths(proc, legs)
@@ -468,7 +554,20 @@ def test_extract_path_more_branches_dist_0():
             self.runway = runway
 
     class DummyLeg:
-        def __init__(self, serial, pd, wpt, lon, lat, alt_num=None, alt_str=None, role=None, turn=None, course=None, dist=None):
+        def __init__(
+            self,
+            serial,
+            pd,
+            wpt,
+            lon,
+            lat,
+            alt_num=None,
+            alt_str=None,
+            role=None,
+            turn=None,
+            course=None,
+            dist=None,
+        ):
             self.source_serial = serial
             self.path_descriptor = pd
             self.waypoint_ident = wpt
@@ -486,10 +585,10 @@ def test_extract_path_more_branches_dist_0():
     # Hit 518 exactly: distance 0 between previous and current
     legs = [
         DummyLeg("10", "IF", "START", 0, 0, role="IF", alt_num=1000.0),
-        DummyLeg("20", "TF", "W1", 0, 0, role="TF", alt_num=None), # same coordinates, dist=0
-        DummyLeg("30", "TF", "W2", 0, 0, role="TF", alt_num=2000.0), # same coordinates
+        DummyLeg("20", "TF", "W1", 0, 0, role="TF", alt_num=None),  # same coordinates, dist=0
+        DummyLeg("30", "TF", "W2", 0, 0, role="TF", alt_num=2000.0),  # same coordinates
         DummyLeg("40", "TF", "RW09", 1, 0, role="TF", alt_num=1000.0),
-        DummyLeg("50", "TF", "END", 2, 0, role="TF", alt_num=1000.0)
+        DummyLeg("50", "TF", "END", 2, 0, role="TF", alt_num=1000.0),
     ]
 
     res = build_3d_paths(proc, legs)
@@ -506,7 +605,20 @@ def test_extract_path_more_branches_dist_0_in_missed():
             self.runway = runway
 
     class DummyLeg:
-        def __init__(self, serial, pd, wpt, lon, lat, alt_num=None, alt_str=None, role=None, turn=None, course=None, dist=None):
+        def __init__(
+            self,
+            serial,
+            pd,
+            wpt,
+            lon,
+            lat,
+            alt_num=None,
+            alt_str=None,
+            role=None,
+            turn=None,
+            course=None,
+            dist=None,
+        ):
             self.source_serial = serial
             self.path_descriptor = pd
             self.waypoint_ident = wpt
@@ -526,8 +638,8 @@ def test_extract_path_more_branches_dist_0_in_missed():
         DummyLeg("10", "IF", "START", 0, 0, role="IF", alt_num=1000.0),
         DummyLeg("20", "TF", "RW09", 1, 0, role="TF", alt_num=None),
         DummyLeg("30", "TF", "W2", 2, 0, role="TF", alt_num=2000.0),
-        DummyLeg("40", "TF", "W3", 2, 0, role="TF", alt_num=None), # same coordinates, dist=0
-        DummyLeg("50", "TF", "END", 2, 0, role="TF", alt_num=1000.0) # same coordinates, dist=0
+        DummyLeg("40", "TF", "W3", 2, 0, role="TF", alt_num=None),  # same coordinates, dist=0
+        DummyLeg("50", "TF", "END", 2, 0, role="TF", alt_num=1000.0),  # same coordinates, dist=0
     ]
 
     res = build_3d_paths(proc, legs)
@@ -544,7 +656,20 @@ def test_extract_path_more_branches_dist_0_missed_2():
             self.runway = runway
 
     class DummyLeg:
-        def __init__(self, serial, pd, wpt, lon, lat, alt_num=None, alt_str=None, role=None, turn=None, course=None, dist=None):
+        def __init__(
+            self,
+            serial,
+            pd,
+            wpt,
+            lon,
+            lat,
+            alt_num=None,
+            alt_str=None,
+            role=None,
+            turn=None,
+            course=None,
+            dist=None,
+        ):
             self.source_serial = serial
             self.path_descriptor = pd
             self.waypoint_ident = wpt
@@ -564,12 +689,13 @@ def test_extract_path_more_branches_dist_0_missed_2():
         DummyLeg("10", "IF", "START", 0, 0, role="IF", alt_num=1000.0),
         DummyLeg("20", "TF", "RW09", 1, 0, role="TF", alt_num=None),
         DummyLeg("30", "TF", "W2", 2, 0, role="TF", alt_num=2000.0),
-        DummyLeg("40", "TF", "W3", 2, 0, role="TF", alt_num=None), # same coordinates, dist=0
-        DummyLeg("50", "TF", "END", 3, 0, role="TF", alt_num=1000.0) # diff coordinates
+        DummyLeg("40", "TF", "W3", 2, 0, role="TF", alt_num=None),  # same coordinates, dist=0
+        DummyLeg("50", "TF", "END", 3, 0, role="TF", alt_num=1000.0),  # diff coordinates
     ]
 
     res = build_3d_paths(proc, legs)
     assert res.missed_approach_path is not None
+
 
 def test_extract_path_interpolate_more():
     class DummyProc:
@@ -581,7 +707,20 @@ def test_extract_path_interpolate_more():
             self.runway = runway
 
     class DummyLeg:
-        def __init__(self, serial, pd, wpt, lon, lat, alt_num=None, alt_str=None, role=None, turn=None, course=None, dist=None):
+        def __init__(
+            self,
+            serial,
+            pd,
+            wpt,
+            lon,
+            lat,
+            alt_num=None,
+            alt_str=None,
+            role=None,
+            turn=None,
+            course=None,
+            dist=None,
+        ):
             self.source_serial = serial
             self.path_descriptor = pd
             self.waypoint_ident = wpt
@@ -601,10 +740,11 @@ def test_extract_path_interpolate_more():
         DummyLeg("10", "IF", "RW09", 0, 0, role="IF", alt_num=1000.0),
         DummyLeg("20", "TF", "W1", 1, 0, role="TF", alt_num=None),
         DummyLeg("30", "TF", "W2", 2, 0, role="TF", alt_num=None),
-        DummyLeg("40", "TF", "END", 3, 0, role="TF", alt_num=1000.0)
+        DummyLeg("40", "TF", "END", 3, 0, role="TF", alt_num=1000.0),
     ]
     res = build_3d_paths(proc, legs)
     assert res.missed_approach_path is not None
+
 
 def test_extract_path_more_branches_dist_0_missed_3():
     class DummyProc:
@@ -616,7 +756,20 @@ def test_extract_path_more_branches_dist_0_missed_3():
             self.runway = runway
 
     class DummyLeg:
-        def __init__(self, serial, pd, wpt, lon, lat, alt_num=None, alt_str=None, role=None, turn=None, course=None, dist=None):
+        def __init__(
+            self,
+            serial,
+            pd,
+            wpt,
+            lon,
+            lat,
+            alt_num=None,
+            alt_str=None,
+            role=None,
+            turn=None,
+            course=None,
+            dist=None,
+        ):
             self.source_serial = serial
             self.path_descriptor = pd
             self.waypoint_ident = wpt
@@ -636,9 +789,9 @@ def test_extract_path_more_branches_dist_0_missed_3():
         DummyLeg("10", "IF", "START", 0, 0, role="IF", alt_num=1000.0),
         DummyLeg("20", "TF", "RW09", 1, 0, role="TF", alt_num=None),
         DummyLeg("30", "TF", "W2", 2, 0, role="TF", alt_num=1000.0),
-        DummyLeg("40", "TF", "W3", 2, 0, role="TF", alt_num=None), # same coordinates, dist=0
-        DummyLeg("45", "TF", "W4", 2, 0, role="TF", alt_num=None), # same coordinates, dist=0
-        DummyLeg("50", "TF", "END", 2, 0, role="TF", alt_num=2000.0) # same coordinates
+        DummyLeg("40", "TF", "W3", 2, 0, role="TF", alt_num=None),  # same coordinates, dist=0
+        DummyLeg("45", "TF", "W4", 2, 0, role="TF", alt_num=None),  # same coordinates, dist=0
+        DummyLeg("50", "TF", "END", 2, 0, role="TF", alt_num=2000.0),  # same coordinates
     ]
 
     res = build_3d_paths(proc, legs)
@@ -655,7 +808,20 @@ def test_extract_path_more_branches_dist_0_missed_4():
             self.runway = runway
 
     class DummyLeg:
-        def __init__(self, serial, pd, wpt, lon, lat, alt_num=None, alt_str=None, role=None, turn=None, course=None, dist=None):
+        def __init__(
+            self,
+            serial,
+            pd,
+            wpt,
+            lon,
+            lat,
+            alt_num=None,
+            alt_str=None,
+            role=None,
+            turn=None,
+            course=None,
+            dist=None,
+        ):
             self.source_serial = serial
             self.path_descriptor = pd
             self.waypoint_ident = wpt
@@ -674,8 +840,8 @@ def test_extract_path_more_branches_dist_0_missed_4():
         DummyLeg("10", "IF", "START", 0, 0, role="IF", alt_num=1000.0),
         DummyLeg("20", "TF", "RW09", 1, 0, role="TF", alt_num=None),
         DummyLeg("30", "TF", "W2", 2, 0, role="TF", alt_num=2000.0),
-        DummyLeg("40", "TF", "W3", 2, 0, role="TF", alt_num=None), # dist 0 here
-        DummyLeg("50", "TF", "END", 2, 0, role="TF", alt_num=1000.0) # diff alt
+        DummyLeg("40", "TF", "W3", 2, 0, role="TF", alt_num=None),  # dist 0 here
+        DummyLeg("50", "TF", "END", 2, 0, role="TF", alt_num=1000.0),  # diff alt
     ]
 
     res = build_3d_paths(proc, legs)
@@ -692,7 +858,20 @@ def test_extract_path_more_branches_dist_0_missed_5():
             self.runway = runway
 
     class DummyLeg:
-        def __init__(self, serial, pd, wpt, lon, lat, alt_num=None, alt_str=None, role=None, turn=None, course=None, dist=None):
+        def __init__(
+            self,
+            serial,
+            pd,
+            wpt,
+            lon,
+            lat,
+            alt_num=None,
+            alt_str=None,
+            role=None,
+            turn=None,
+            course=None,
+            dist=None,
+        ):
             self.source_serial = serial
             self.path_descriptor = pd
             self.waypoint_ident = wpt
@@ -738,14 +917,25 @@ def test_extract_path_more_branches_dist_0_missed_5():
     class DictLeg(dict):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
+
         def __getattr__(self, name):
             return self.get(name)
 
-    d_leg = DictLeg({
-        "source_serial": "70", "path_descriptor": "TF", "waypoint_ident": "END",
-        "lon": 2, "lat": 0, "altitude_numeric": None, "altitude_constraint": None,
-        "role": None, "course": None, "distance": None, "turn_direction": "L"
-    })
+    d_leg = DictLeg(
+        {
+            "source_serial": "70",
+            "path_descriptor": "TF",
+            "waypoint_ident": "END",
+            "lon": 2,
+            "lat": 0,
+            "altitude_numeric": None,
+            "altitude_constraint": None,
+            "role": None,
+            "course": None,
+            "distance": None,
+            "turn_direction": "L",
+        }
+    )
 
     legs4 = [
         DummyLeg("10", "IF", "START", 0, 0, role="IF", alt_num=1000.0),
@@ -766,7 +956,20 @@ def test_trigger():
             self.runway = runway
 
     class DummyLeg:
-        def __init__(self, serial, pd, wpt, lon, lat, alt_num=None, alt_str=None, role=None, turn=None, course=None, dist=None):
+        def __init__(
+            self,
+            serial,
+            pd,
+            wpt,
+            lon,
+            lat,
+            alt_num=None,
+            alt_str=None,
+            role=None,
+            turn=None,
+            course=None,
+            dist=None,
+        ):
             self.source_serial = serial
             self.path_descriptor = pd
             self.waypoint_ident = wpt
@@ -810,5 +1013,18 @@ def test_trigger2():
             self.runway = runway
 
     class DummyLeg:
-        def __init__(self, serial, pd, wpt, lon, lat, alt_num=None, alt_str=None, role=None, turn=None, course=None, dist=None):
+        def __init__(
+            self,
+            serial,
+            pd,
+            wpt,
+            lon,
+            lat,
+            alt_num=None,
+            alt_str=None,
+            role=None,
+            turn=None,
+            course=None,
+            dist=None,
+        ):
             self.source_serial = serial

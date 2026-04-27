@@ -31,6 +31,7 @@ def mock_gdal(monkeypatch):
     monkeypatch.setattr("subprocess.run", mock_run)
     yield mock_run
 
+
 @pytest.fixture(autouse=True)
 def mock_boto3(monkeypatch):
     """Mock boto3 client."""
@@ -39,6 +40,7 @@ def mock_boto3(monkeypatch):
     mock_boto3_module.client.return_value = mock_client
     monkeypatch.setattr("boto3.client", mock_boto3_module.client)
     yield mock_client
+
 
 @pytest.fixture(autouse=True)
 def mock_httpx(monkeypatch):
@@ -52,21 +54,24 @@ def mock_httpx(monkeypatch):
     class MockAsyncClient:
         def __init__(self, *args, **kwargs):
             pass
+
         async def __aenter__(self):
             return mock_client_instance
+
         async def __aexit__(self, exc_type, exc_val, exc_tb):
             pass
+
         get = mock_get
 
     monkeypatch.setattr("httpx.AsyncClient", MockAsyncClient)
     yield mock_get
 
 
-from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
+from httpx import ASGITransport, AsyncClient  # noqa: E402
+from sqlalchemy.ext.asyncio import AsyncSession  # noqa: E402
 
-from app.core.database import get_db
-from app.main import app
+from app.core.database import get_db  # noqa: E402
+from app.main import app  # noqa: E402
 
 
 @pytest_asyncio.fixture
@@ -91,12 +96,15 @@ async def db_session():
 
     yield session
 
+
 @pytest.fixture(autouse=True)
 def mock_async_session_local(monkeypatch, db_session):
     """Mock AsyncSessionLocal used in health checks and elsewhere directly."""
+
     class MockSessionManager:
         async def __aenter__(self):
             return db_session
+
         async def __aexit__(self, exc_type, exc_val, exc_tb):
             pass
 
@@ -109,10 +117,12 @@ def mock_async_session_local(monkeypatch, db_session):
 def override_get_db(db_session):
     async def _get_db():
         yield db_session
+
     app.dependency_overrides[get_db] = _get_db
     yield
     # Clean up override
     app.dependency_overrides.pop(get_db, None)
+
 
 @pytest_asyncio.fixture
 async def api_client():

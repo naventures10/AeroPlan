@@ -11,6 +11,7 @@ async def test_health_check_success(api_client: AsyncClient) -> None:
     assert data["status"] == "online"
     assert data["database"] == "connected"
 
+
 @pytest.mark.asyncio
 async def test_health_check_db_error(api_client: AsyncClient, monkeypatch) -> None:
     """Test health check when the DB is down."""
@@ -19,8 +20,10 @@ async def test_health_check_db_error(api_client: AsyncClient, monkeypatch) -> No
     class MockFailingSession:
         async def __aenter__(self):
             return self
+
         async def __aexit__(self, exc_type, exc_val, exc_tb):
             pass
+
         async def execute(self, *args, **kwargs):
             raise Exception("DB Down")
 
@@ -32,34 +35,43 @@ async def test_health_check_db_error(api_client: AsyncClient, monkeypatch) -> No
     assert data["status"] == "online"
     assert data["database"] == "error"
 
+
 @pytest.mark.asyncio
 async def test_get_db() -> None:
     from app.core.database import get_db
+
     gen = get_db()
     session = await anext(gen)
     assert session is not None
     # We expect anext to raise StopAsyncIteration
-    try:
+    import contextlib
+
+    with contextlib.suppress(StopAsyncIteration):
         await anext(gen)
-    except StopAsyncIteration:
-        pass
+
 
 def test_setup_logging_json() -> None:
     from app.core.logging_config import setup_logging
+
     setup_logging(json_format=True)
     setup_logging(json_format=False)
+
 
 def test_telemetry_disabled(monkeypatch) -> None:
     monkeypatch.setenv("OTEL_ENABLED", "false")
     from app.core.telemetry import setup_tracing
+
     setup_tracing()
+
 
 def test_telemetry_enabled(monkeypatch) -> None:
     monkeypatch.setenv("OTEL_ENABLED", "true")
     monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
     monkeypatch.setenv("ENVIRONMENT", "testing")
     from app.core.telemetry import setup_tracing
+
     setup_tracing()
+
 
 def test_telemetry_enabled_console(monkeypatch) -> None:
     monkeypatch.setenv("OTEL_ENABLED", "true")
@@ -67,12 +79,16 @@ def test_telemetry_enabled_console(monkeypatch) -> None:
     monkeypatch.setenv("OTEL_EXPORTER", "console")
     monkeypatch.setenv("ENVIRONMENT", "testing")
     from app.core.telemetry import setup_tracing
+
     setup_tracing()
+
 
 def test_profiling_router_import() -> None:
     # Just testing we can import it for coverage
     from app.core.profiling import profiling_router
+
     assert profiling_router is not None
+
 
 def test_main_debug_import(monkeypatch) -> None:
     # Mock environment to import main with DEBUG=1
@@ -81,7 +97,9 @@ def test_main_debug_import(monkeypatch) -> None:
     import importlib
 
     import app.main
+
     importlib.reload(app.main)
+
 
 @pytest.mark.asyncio
 async def test_unhandled_exception_route(api_client: AsyncClient) -> None:
@@ -108,7 +126,7 @@ async def test_unhandled_exception_route(api_client: AsyncClient) -> None:
     async def mock_call_next(req):
         raise ValueError("Intentional middleware error")
 
-    try:
+    import contextlib
+
+    with contextlib.suppress(ValueError):
         await logging_middleware(request, mock_call_next)
-    except ValueError:
-        pass
