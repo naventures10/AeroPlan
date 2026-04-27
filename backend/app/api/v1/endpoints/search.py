@@ -124,7 +124,27 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)) -> list[Sear
 
             UNION ALL
 
-            -- 4. ATS Routes — uses pre-aggregated segment data (no correlated subqueries)
+            -- 4. Airspaces
+            SELECT
+                COALESCE(identification, name) AS id,
+                name AS name,
+                'AIRSPACE' AS type,
+                ST_Centroid(geom) AS center_geom,
+                NULL::box2d AS computed_bounds,
+                NULL::VARCHAR AS route_type,
+                jsonb_build_object(
+                    'identification', identification,
+                    'name', name,
+                    'airspace_type', airspace_type,
+                    'upper_limit', upper_limit,
+                    'lower_limit', lower_limit
+                ) AS properties
+            FROM airspaces_metadata
+            WHERE identification ~* :regex_term OR name ~* :regex_term
+
+            UNION ALL
+
+            -- 5. ATS Routes — uses pre-aggregated segment data (no correlated subqueries)
             SELECT
                 r.route_id AS id,
                 COALESCE(r.route_designator, r.route_id) AS name,
@@ -186,8 +206,9 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)) -> list[Sear
                     WHEN 'AERODROME' THEN 1
                     WHEN 'NAVAID' THEN 2
                     WHEN 'WAYPOINT' THEN 3
-                    WHEN 'ATS_ROUTE' THEN 4
-                    ELSE 5
+                    WHEN 'AIRSPACE' THEN 4
+                    WHEN 'ATS_ROUTE' THEN 5
+                    ELSE 6
                 END,
                 name ASC
         )
