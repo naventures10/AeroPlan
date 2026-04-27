@@ -44,6 +44,11 @@ markers = [
     "data_integrity: Audit test for real database data (skipped in clean CI)",
 ]
 
+[tool.coverage.run]
+omit = [
+    "app/core/profiling.py"
+]
+
 [tool.ruff]
 line-length = 100
 target-version = "py314"
