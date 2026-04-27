@@ -22,10 +22,10 @@ const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 const MAP_STYLE = `https://api.maptiler.com/maps/topo-v2-dark/style.json?key=${MAPTILER_KEY}`;
 
 /** GeoTIFF data bounds matching the GDAL crop: [minLon, minLat, maxLon, maxLat] */
-const WIND_BOUNDS: [number, number, number, number] = [65, 5, 100, 40];
+const WIND_BOUNDS: [number, number, number, number] = [20, -10, 180, 80];
 
 /** Clip slightly outside bounds so particles don't get clipped at exact edge */
-const CLIP_BOUNDS: [number, number, number, number] = [64.5, 4.5, 100.5, 40.5];
+const CLIP_BOUNDS: [number, number, number, number] = [19.5, -10.5, 180.5, 80.5];
 
 /** Centre of India for initial view */
 const INITIAL_VIEW_STATE = {
@@ -81,6 +81,37 @@ export interface ForecastTimestamp {
   files: Record<string, string>;
 }
 
+/**
+ * Calculates the fractional index of 'now' within the forecast timestamps.
+ */
+const calculateNowIndex = (timestamps: ForecastTimestamp[]) => {
+  if (timestamps.length === 0) return 0;
+  const now = new Date().getTime();
+
+  // Find the two timestamps between which 'now' falls
+  for (let i = 0; i < timestamps.length - 1; i++) {
+    const time1 = timestamps[i]?.validTime;
+    const time2 = timestamps[i + 1]?.validTime;
+
+    if (time1 && time2) {
+      const t1 = new Date(time1).getTime();
+      const t2 = new Date(time2).getTime();
+
+      if (now >= t1 && now <= t2) {
+        // Linear interpolation for the index
+        return i + (now - t1) / (t2 - t1);
+      }
+    }
+  }
+
+  // If 'now' is before the first timestamp
+  const firstTime = timestamps[0]?.validTime;
+  if (firstTime && now < new Date(firstTime).getTime()) return 0;
+
+  // If 'now' is after the last timestamp
+  return timestamps.length - 1;
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 interface WindStatus {
@@ -130,6 +161,10 @@ export default function WindTestPage() {
             };
           });
           setForecastTimestamps(timestamps);
+
+          // Default animationTime to 'Now'
+          const nowIdx = calculateNowIndex(timestamps);
+          setAnimationTime(nowIdx);
         }
       } catch (err) {
         console.error('Failed to load weather manifest', err);
@@ -291,26 +326,24 @@ export default function WindTestPage() {
     [loadedImages, index1, index2, interpolationWeight],
   );
 
-  const onMouseMove = useCallback(
-    (e: maplibregl.MapMouseEvent) => {
-      const windData = getWindAtLngLat(e.lngLat.lng, e.lngLat.lat);
-      if (windData) {
-        setHoverInfo({
-          x: e.point.x,
-          y: e.point.y,
-          speed: windData.speed,
-          direction: windData.direction,
-        });
-      } else {
-        setHoverInfo(null);
+  const onHover = useCallback(
+    ({ x, y, coordinate }: any) => {
+      if (coordinate) {
+        const windData = getWindAtLngLat(coordinate[0], coordinate[1]);
+        if (windData) {
+          setHoverInfo({
+            x,
+            y,
+            speed: windData.speed,
+            direction: windData.direction,
+          });
+          return;
+        }
       }
+      setHoverInfo(null);
     },
     [getWindAtLngLat],
   );
-
-  const onMouseOut = useCallback(() => {
-    setHoverInfo(null);
-  }, []);
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -320,8 +353,9 @@ export default function WindTestPage() {
         controller={DECK_CONTROLLER}
         layers={layers}
         onViewStateChange={onViewStateChange as any}
+        onHover={onHover}
       >
-        <Map mapStyle={MAP_STYLE} reuseMaps onMouseMove={onMouseMove} onMouseOut={onMouseOut} />
+        <Map mapStyle={MAP_STYLE} reuseMaps />
       </DeckGL>
 
       {hoverInfo && (
@@ -446,6 +480,7 @@ function TimelineControl({
   onTimeChange: (v: number) => void;
   onPlayToggle: () => void;
 }) {
+  const nowIndex = calculateNowIndex(timestamps);
   const currentIndex = Math.min(
     Math.floor(Math.max(0, animationTime)),
     Math.max(0, timestamps.length - 1),
@@ -454,45 +489,61 @@ function TimelineControl({
 
   if (!activeTime) return null;
 
+  const totalSteps = Math.max(1, timestamps.length - 1);
+  const nowPercent = (nowIndex / totalSteps) * 100;
+  const currentPercent = (animationTime / totalSteps) * 100;
+
   return (
     <div className="wind-timeline wind-panel">
       <div className="wind-timeline__header">
-        <button className="wind-timeline__play" onClick={onPlayToggle}>
+        <button className="wind-timeline__play-circle" onClick={onPlayToggle}>
           {isPlaying ? (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M6 4h4v16H6zm8 0h4v16h-4z" />
             </svg>
           ) : (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M8 5v14l11-7z" />
             </svg>
           )}
         </button>
-        <div className="wind-timeline__info">
-          <span className="wind-timeline__title">Wind Speed</span>
-          <span className="wind-timeline__date">{activeTime.date}</span>
+
+        <div className="wind-timeline__info-center">
+          <span className="wind-timeline__title-main">Wind Speed</span>
+          <span className="wind-timeline__date-main">{activeTime.date}</span>
         </div>
+
+        <div className="wind-timeline__header-right" />
       </div>
 
-      <div className="wind-timeline__track">
+      <div className="wind-timeline__interactive-track">
+        <div className="wind-timeline__track-base">
+          <div className="wind-timeline__track-fill" style={{ width: `${currentPercent}%` }} />
+          <div className="wind-timeline__now-pointer" style={{ left: `${nowPercent}%` }} />
+        </div>
+
         <input
           type="range"
-          className="wind-timeline__input"
+          className="wind-timeline__range-overlay"
           min={0}
-          max={Math.max(0, timestamps.length - 1)}
+          max={totalSteps}
           step={0.01}
           value={animationTime}
           onChange={(e) => onTimeChange(parseFloat(e.target.value))}
         />
-        <div className="wind-timeline__labels">
+
+        <div className="wind-timeline__ticks-labels">
           {timestamps.map((t, i) => (
-            <span
-              key={i}
-              className={`wind-timeline__label ${i === currentIndex ? 'wind-timeline__label--active' : ''}`}
-            >
-              {t.label}
-            </span>
+            <div key={i} className="wind-timeline__tick-wrapper">
+              <span className={`wind-timeline__tick-text ${i === currentIndex ? 'active' : ''}`}>
+                {t.label}
+              </span>
+            </div>
           ))}
+
+          <div className="wind-timeline__now-label-container" style={{ left: `${nowPercent}%` }}>
+            <span className="wind-timeline__now-text">Now</span>
+          </div>
         </div>
       </div>
     </div>

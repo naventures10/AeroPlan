@@ -146,7 +146,15 @@ def run_pipeline():
 
     # --- STEP 2: Interpolate & Generate COGs ---
     logger.info("processing_and_interpolating_data")
-    manifest_data = {"forecasts": []}
+    manifest_data = {
+        "generated_at": now.isoformat().replace("+00:00", "Z"),
+        "run_info": {
+            "run_hour": run_hour,
+            "run_time": run_time.isoformat().replace("+00:00", "Z"),
+            "steps": steps,
+        },
+        "forecasts": [],
+    }
 
     try:
         ds_sfc_raw = xr.open_dataset(raw_sfc_file, engine="cfgrib")
@@ -257,13 +265,13 @@ def run_pipeline():
                     "-b",
                     "2",
                     "-projwin",
-                    "65",
-                    "40",
-                    "100",
-                    "5",
+                    "20",
+                    "80",
+                    "180",
+                    "-10",
                     "-outsize",
-                    "140",
-                    "140",
+                    "640",
+                    "360",
                     "-co",
                     "COMPRESS=DEFLATE",
                     "-co",
