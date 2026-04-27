@@ -160,6 +160,7 @@ describe('MapView Component', () => {
     });
 
     expect(setSelectedFeatureMock).toHaveBeenCalled();
+    expect(setHighlightedAirspaceIdMock).toHaveBeenCalled();
   });
 
   it('handles overlay creation and hover', () => {
@@ -175,7 +176,7 @@ describe('MapView Component', () => {
       fireEvent.mouseOver(getByTestId('mock-deckgl'));
     });
 
-    // Hover triggers state updates or tooltip rendering
+    // Verify mock interaction (based on implementation)
     expect(getByTestId('mock-deckgl')).toBeInTheDocument();
   });
 
