@@ -59,6 +59,7 @@ test.describe('ATS Route Workflows', () => {
       .filter({ hasText: 'A201' })
       .filter({ hasText: 'ATS ROUTE' })
       .first();
+    await expect(routeResult).toBeVisible({ timeout: 10000 });
     await routeResult.click();
 
     // 2. Check store for animation state using exposed window.useMapStore
@@ -107,15 +108,19 @@ test.describe('ATS Route Workflows', () => {
     await expect(routeResult).toBeVisible({ timeout: 10000 });
     await routeResult.click();
 
-    // 3. Wait for animation and Deselect
-    await page.waitForTimeout(3000);
+    // 3. Wait for the Info Card to appear (indicates animation/deferred timer started)
+    const infoCard = page.getByTestId('feature-info-card');
+    await expect(infoCard).toBeVisible({ timeout: 10000 });
+
     const closeButton = page.getByTestId('close-feature-card');
     await expect(closeButton).toBeVisible();
     await closeButton.click();
     await expect(page.getByTestId('feature-info-card')).not.toBeVisible();
 
     // 4. Manual Hover on Canvas (center of screen after fly-to)
-    const { width, height } = page.viewportSize()!;
+    const viewportSize = page.viewportSize();
+    if (!viewportSize) throw new Error('Viewport size not set');
+    const { width, height } = viewportSize;
     await page.mouse.move(width / 2, height / 2);
 
     // Verify tooltip appears - should contain 'ROUTE'
@@ -126,7 +131,6 @@ test.describe('ATS Route Workflows', () => {
     await page.mouse.click(width / 2, height / 2);
 
     // 6. Verify Info Card appears
-    const infoCard = page.getByTestId('feature-info-card');
     await expect(infoCard).toBeVisible();
     await expect(infoCard).toContainText('ATS ROUTE');
   });
