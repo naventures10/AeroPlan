@@ -13,12 +13,12 @@ export class TerminalPage {
     this.page = page;
     this.dashboard = page.locator('div.glass-morphism-heavy').filter({ hasText: 'DASHBOARD' });
     this.expandButton = page.getByTitle('Expand Dashboard');
+    // More robust selector for the carousel container that includes the buttons
     this.chartCarousel = page
-      .locator('span:has-text("Aerodrome Charts")')
-      .locator('..')
-      .locator('..');
+      .locator('div.relative.flex.items-center.gap-2')
+      .filter({ hasText: 'Aerodrome Charts' });
     this.viewIn3DButton = page.getByText('View in 3D space');
-    this.modalCloseButton = page.getByText('✕');
+    this.modalCloseButton = page.locator('button:has-text("✕")');
   }
 
   async switchTab(tabName: 'CONDITIONS' | 'METAR' | 'TAF' | 'NOTAM') {
@@ -42,11 +42,9 @@ export class TerminalPage {
   }
 
   async isDashboardCollapsed(): Promise<boolean> {
-    // If width is 38 (from motion.div animate={{ width: isCollapsed ? 38 : 78 }}), it's collapsed
-    // But playwright might not see the raw style if it's dynamic.
-    // We can check if tabs are visible.
     return !(await this.page.getByText('CONDITIONS').isVisible());
   }
+
   async expandDashboard() {
     if (await this.isDashboardCollapsed()) {
       await this.expandButton.click();
