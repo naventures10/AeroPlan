@@ -50,16 +50,8 @@ const WIND_PALETTE = `
 61.73   #d53e4f
 `;
 
-const formatIST = (dateStr: string) => {
-  // dateStr format: YYYYMMDD_HHMMSS (assumed UTC)
-  const year = parseInt(dateStr.slice(0, 4));
-  const month = parseInt(dateStr.slice(4, 6)) - 1;
-  const day = parseInt(dateStr.slice(6, 8));
-  const hour = parseInt(dateStr.slice(9, 11));
-  const minute = parseInt(dateStr.slice(11, 13));
-  const second = parseInt(dateStr.slice(13, 15));
-
-  const utcDate = new Date(Date.UTC(year, month, day, hour, minute, second));
+const formatIST = (isoString: string) => {
+  const utcDate = new Date(isoString);
 
   const labelFormatter = new Intl.DateTimeFormat('en-IN', {
     hour: 'numeric',
@@ -82,15 +74,12 @@ const formatIST = (dateStr: string) => {
   };
 };
 
-const FORECAST_TIMESTAMPS = [
-  '20260426_200710',
-  '20260427_035005',
-  '20260427_065757',
-  '20260427_071940',
-].map((suffix) => {
-  const { label, date } = formatIST(suffix);
-  return { label, fileSuffix: suffix, date };
-});
+export interface ForecastTimestamp {
+  label: string;
+  date: string;
+  validTime: string;
+  files: Record<string, string>;
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -105,6 +94,7 @@ export default function WindTestPage() {
   const [loadedImages, setLoadedImages] = useState<Record<number, WeatherLayers.TextureData>>({});
   const [status, setStatus] = useState<WindStatus>({ state: 'idle' });
 
+  const [forecastTimestamps, setForecastTimestamps] = useState<ForecastTimestamp[]>([]);
   const [selectedAltitude, setSelectedAltitude] = useState(0);
   const [animationTime, setAnimationTime] = useState(0); // float 0 to length-1
   const [isPlaying, setIsPlaying] = useState(false);
@@ -123,20 +113,50 @@ export default function WindTestPage() {
     if (window.hideLoader) window.hideLoader();
   }, []);
 
+  // ── Fetch dynamic manifest ──────────────────────────────────────────────────
+  useEffect(() => {
+    async function fetchManifest() {
+      try {
+        const response = await fetch('/weather/weather_manifest.json');
+        const manifestData = await response.json();
+        if (manifestData && manifestData.forecasts) {
+          const timestamps = manifestData.forecasts.map((f: any) => {
+            const { label, date } = formatIST(f.valid_time);
+            return {
+              label,
+              date,
+              validTime: f.valid_time,
+              files: f.files,
+            };
+          });
+          setForecastTimestamps(timestamps);
+        }
+      } catch (err) {
+        console.error('Failed to load weather manifest', err);
+        setStatus({ state: 'error', message: 'Failed to load weather manifest' });
+      }
+    }
+    fetchManifest();
+  }, []);
+
   // ── Pre-load weather data for current altitude ─────────────────────────────
   useEffect(() => {
     let active = true;
 
     async function loadAll() {
+      if (forecastTimestamps.length === 0) return;
+
       setStatus({ state: 'loading', message: 'Pre-loading forecast frames…' });
       setLoadedImages({});
 
       const levelKey =
         selectedAltitude === 0 ? 'surface' : String(selectedAltitude).padStart(3, '0');
 
-      const loadPromises = FORECAST_TIMESTAMPS.map((t) =>
-        WeatherLayers.loadTextureData(`/weather/wind_${levelKey}_${t.fileSuffix}.tif`),
-      );
+      const loadPromises = forecastTimestamps.map((t) => {
+        const url = t.files[levelKey];
+        if (!url) throw new Error(`Missing URL for level ${levelKey}`);
+        return WeatherLayers.loadTextureData(url);
+      });
 
       try {
         const results = await Promise.all(loadPromises);
@@ -160,11 +180,11 @@ export default function WindTestPage() {
     return () => {
       active = false;
     };
-  }, [selectedAltitude]);
+  }, [selectedAltitude, forecastTimestamps]);
 
   // ── Animation Loop (requestAnimationFrame) ─────────────────────────────────
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying || forecastTimestamps.length === 0) return;
 
     let lastTime = performance.now();
     let frameId: number;
@@ -178,8 +198,8 @@ export default function WindTestPage() {
 
       setAnimationTime((prev) => {
         let next = prev + dt * playbackSpeed;
-        if (next >= FORECAST_TIMESTAMPS.length - 1) {
-          next = FORECAST_TIMESTAMPS.length - 1;
+        if (next >= forecastTimestamps.length - 1) {
+          next = forecastTimestamps.length - 1;
           setIsPlaying(false);
         }
         return next;
@@ -190,11 +210,12 @@ export default function WindTestPage() {
 
     frameId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frameId);
-  }, [isPlaying]);
+  }, [isPlaying, forecastTimestamps.length]);
 
   // ── Calculate Interpolation ────────────────────────────────────────────────
-  const index1 = Math.min(Math.floor(Math.max(0, animationTime)), FORECAST_TIMESTAMPS.length - 1);
-  const index2 = Math.min(index1 + 1, FORECAST_TIMESTAMPS.length - 1);
+  const maxIndex = Math.max(0, forecastTimestamps.length - 1);
+  const index1 = Math.min(Math.floor(Math.max(0, animationTime)), maxIndex);
+  const index2 = Math.min(index1 + 1, maxIndex);
   const interpolationWeight = animationTime - index1;
 
   // ── Build DeckGL layers ────────────────────────────────────────────────────
@@ -208,9 +229,9 @@ export default function WindTestPage() {
           imageWeight: interpolationWeight,
 
           bounds: WIND_BOUNDS,
-          numParticles: 2000,
-          maxAge: 150,
-          speedFactor: 3,
+          numParticles: 3000,
+          maxAge: 100,
+          speedFactor: 5,
           width: 2,
           palette: WIND_PALETTE,
           extensions: [new ClipExtension()],
@@ -291,13 +312,6 @@ export default function WindTestPage() {
     setHoverInfo(null);
   }, []);
 
-  const handlePlayToggle = () => {
-    if (!isPlaying && animationTime >= FORECAST_TIMESTAMPS.length - 1) {
-      setAnimationTime(0);
-    }
-    setIsPlaying(!isPlaying);
-  };
-
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="wind-test-root">
@@ -330,8 +344,17 @@ export default function WindTestPage() {
       <TimelineControl
         animationTime={animationTime}
         isPlaying={isPlaying}
-        onTimeChange={setAnimationTime}
-        onPlayToggle={handlePlayToggle}
+        timestamps={forecastTimestamps}
+        onTimeChange={(val) => {
+          setAnimationTime(val);
+          setIsPlaying(false);
+        }}
+        onPlayToggle={() => {
+          if (animationTime >= forecastTimestamps.length - 1) {
+            setAnimationTime(0);
+          }
+          setIsPlaying(!isPlaying);
+        }}
       />
     </div>
   );
@@ -413,19 +436,21 @@ function AltitudeSlider({
 function TimelineControl({
   animationTime,
   isPlaying,
+  timestamps,
   onTimeChange,
   onPlayToggle,
 }: {
   animationTime: number;
   isPlaying: boolean;
+  timestamps: ForecastTimestamp[];
   onTimeChange: (v: number) => void;
   onPlayToggle: () => void;
 }) {
   const currentIndex = Math.min(
     Math.floor(Math.max(0, animationTime)),
-    FORECAST_TIMESTAMPS.length - 1,
+    Math.max(0, timestamps.length - 1),
   );
-  const activeTime = FORECAST_TIMESTAMPS[currentIndex];
+  const activeTime = timestamps[currentIndex];
 
   if (!activeTime) return null;
 
@@ -454,13 +479,13 @@ function TimelineControl({
           type="range"
           className="wind-timeline__input"
           min={0}
-          max={FORECAST_TIMESTAMPS.length - 1}
+          max={Math.max(0, timestamps.length - 1)}
           step={0.01}
           value={animationTime}
-          onChange={(e) => onTimeChange(Number(e.target.value))}
+          onChange={(e) => onTimeChange(parseFloat(e.target.value))}
         />
         <div className="wind-timeline__labels">
-          {FORECAST_TIMESTAMPS.map((t, i) => (
+          {timestamps.map((t, i) => (
             <span
               key={i}
               className={`wind-timeline__label ${i === currentIndex ? 'wind-timeline__label--active' : ''}`}

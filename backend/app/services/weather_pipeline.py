@@ -28,30 +28,25 @@ from app.core.config import settings
 logger = structlog.get_logger(__name__)
 
 
-def cleanup_old_files(output_dir: str, keep_runs: int):
-    """Keep only the most recent N runs of .tif files to prevent disk bloat."""
+def cleanup_old_files(output_dir: str, manifest_data: dict):
+    """Keep only the files referenced in the current manifest."""
+    active_files = set()
+    if "forecasts" in manifest_data:
+        for forecast in manifest_data["forecasts"]:
+            if "files" in forecast:
+                for url in forecast["files"].values():
+                    filename = os.path.basename(url)
+                    active_files.add(filename)
+
     tif_files = glob.glob(os.path.join(output_dir, "wind_*.tif"))
-
-    # Extract unique timestamps from filenames (e.g. wind_050_20260426_194402.tif)
-    runs = set()
     for f in tif_files:
-        parts = os.path.basename(f).replace(".tif", "").split("_")
-        if len(parts) >= 3:
-            ts = f"{parts[-2]}_{parts[-1]}"
-            runs.add(ts)
-
-    sorted_runs = sorted(list(runs), reverse=True)
-
-    if len(sorted_runs) > keep_runs:
-        runs_to_delete = sorted_runs[keep_runs:]
-        for run in runs_to_delete:
-            files_to_del = glob.glob(os.path.join(output_dir, f"wind_*_{run}.tif"))
-            for f in files_to_del:
-                try:
-                    os.remove(f)
-                    logger.info("deleted_old_weather_file", filename=os.path.basename(f))
-                except Exception as e:
-                    logger.error("failed_to_delete_old_weather_file", filename=f, error=str(e))
+        basename = os.path.basename(f)
+        if basename not in active_files:
+            try:
+                os.remove(f)
+                logger.info("deleted_stale_weather_file", filename=basename)
+            except Exception as e:
+                logger.error("failed_to_delete_stale_weather_file", filename=f, error=str(e))
 
 
 def safe_remove_grib(file_path: str):
@@ -70,10 +65,10 @@ def safe_remove_grib(file_path: str):
         logger.error("failed_to_cleanup_temp_grib", path=file_path, error=str(e))
 
 
-def _get_run_and_step(now: datetime) -> tuple[int, int]:
+def _get_run_and_steps(now: datetime) -> tuple[int, datetime, list[int]]:
     """
-    Determine the most recent available ECMWF run and the forecast step to
-    target a valid_time as close to "now" as possible.
+    Determine the most recent available ECMWF run and the forecast steps to
+    target a 12-hour valid_time window starting close to "now".
 
     ECMWF IFS Open Data runs every 6 hours (00, 06, 12, 18 UTC) with a
     ~2-hour publication latency. Forecast steps are available in 3-hour intervals.
@@ -88,15 +83,17 @@ def _get_run_and_step(now: datetime) -> tuple[int, int]:
     # How many hours since that run?
     elapsed_hours = (now - run_time).total_seconds() / 3600
     # Round to nearest 3-hour step, minimum 3
-    step = max(3, round(elapsed_hours / 3) * 3)
+    start_step = max(3, round(elapsed_hours / 3) * 3)
+
+    # 5 steps = 12 hour window (0, +3, +6, +9, +12)
+    steps = [start_step + (i * 3) for i in range(5)]
 
     logger.info(
         "computed_forecast_target",
         run_utc=f"{run_hour:02d}Z",
-        step=step,
-        target_valid_time=(run_time + timedelta(hours=step)).isoformat(),
+        steps=steps,
     )
-    return run_hour, step
+    return run_hour, run_time, steps
 
 
 def run_pipeline():
@@ -111,16 +108,16 @@ def run_pipeline():
     raw_pl_file = os.path.join(os.getcwd(), f"temp_pl_{timestamp_str}.grib2")
     manifest_path = os.path.join(settings.WEATHER_OUTPUT_DIR, "weather_manifest.json")
 
-    run_hour, step = _get_run_and_step(now)
+    run_hour, run_time, steps = _get_run_and_steps(now)
 
     # --- STEP 1: Download ---
-    logger.info("downloading_ecmwf_data", source="azure", run=f"{run_hour:02d}Z", step=step)
+    logger.info("downloading_ecmwf_data", source="azure", run=f"{run_hour:02d}Z", steps=steps)
     client = Client(source="azure")
     try:
         # Surface levels
         client.retrieve(
             time=run_hour,
-            step=step,
+            step=steps,
             type="fc",
             levtype="sfc",
             param=["10u", "10v"],
@@ -130,17 +127,16 @@ def run_pipeline():
         time.sleep(5)  # Avoid SlowDown error
 
         # Pressure levels (Single call batch approach to avoid 503 Slow Down)
-        result = client.retrieve(
+        client.retrieve(
             time=run_hour,
-            step=step,
+            step=steps,
             type="fc",
             levtype="pl",
             levelist=[1000, 925, 850, 700, 500, 400, 300, 250, 200, 150],
             param=["u", "v"],
             target=raw_pl_file,
         )
-        valid_time = result.datetime + timedelta(hours=step)
-        logger.info("download_complete", valid_time=valid_time.isoformat())
+        logger.info("download_complete", num_steps=len(steps))
 
     except Exception as e:
         logger.error("download_failed", error=str(e))
@@ -150,11 +146,17 @@ def run_pipeline():
 
     # --- STEP 2: Interpolate & Generate COGs ---
     logger.info("processing_and_interpolating_data")
-    manifest_data = {}
+    manifest_data = {"forecasts": []}
 
     try:
         ds_sfc_raw = xr.open_dataset(raw_sfc_file, engine="cfgrib")
         ds_pl = xr.open_dataset(raw_pl_file, engine="cfgrib")
+
+        # Ensure 'step' is a dimension even if only 1 step was downloaded
+        if "step" not in ds_sfc_raw.dims:
+            ds_sfc_raw = ds_sfc_raw.expand_dims("step")
+        if "step" not in ds_pl.dims:
+            ds_pl = ds_pl.expand_dims("step")
 
         # Altitude mapping for pressure levels (hPa -> approx feet, std atmosphere)
         alt_map = {
@@ -185,7 +187,7 @@ def run_pipeline():
         ds_sfc = ds_sfc.assign_coords(altitude=0).expand_dims("altitude")
 
         # Drop mismatched coordinates before concatenating
-        keep_coords = ["altitude", "latitude", "longitude"]
+        keep_coords = ["altitude", "latitude", "longitude", "step", "valid_time"]
         ds_combined = ds_combined.drop_vars([c for c in ds_combined.coords if c not in keep_coords])
         ds_sfc = ds_sfc.drop_vars([c for c in ds_sfc.coords if c not in keep_coords])
 
@@ -197,76 +199,89 @@ def run_pipeline():
 
         # Export each slice
         # ECMWF Open Data 0.25 degree resolution
-        # Origin at 0.0E, 90.0N. from_origin expects positive ysize.
-        transform = from_origin(0.0, 90.0, 0.25, 0.25)
+        # Grid uses -180 to +179.75 longitude, 90 to -90 latitude.
+        transform = from_origin(-180.0, 90.0, 0.25, 0.25)
 
-        for alt in target_alts:
-            alt_slice = ds_interp.sel(altitude=alt)
-            u_data = alt_slice["u"].values.astype(np.float32)
-            v_data = alt_slice["v"].values.astype(np.float32)
+        for step_idx, step_td in enumerate(ds_interp.step.values):
+            # Calculate valid time for this step
+            # step_td is typically a timedelta64[ns]
+            step_hours = int(step_td.astype("timedelta64[h]").astype(int))
+            valid_time = run_time + timedelta(hours=step_hours)
 
-            temp_tif = os.path.join(os.getcwd(), f"temp_out_{int(alt)}.tif")
-
-            # Handle NaNs
-            u_data = np.nan_to_num(u_data, nan=0.0)
-            v_data = np.nan_to_num(v_data, nan=0.0)
-
-            with rasterio.open(
-                temp_tif,
-                "w",
-                driver="GTiff",
-                height=u_data.shape[0],
-                width=u_data.shape[1],
-                count=2,
-                dtype=u_data.dtype,
-                crs="+proj=latlong",
-                transform=transform,
-                nodata=0.0,
-            ) as dst:
-                dst.write(u_data, 1)
-                dst.write(v_data, 2)
-
-            level_name = "surface" if alt == 0 else f"{int(alt // 1000):03d}"
-            final_cog_filename = f"wind_{level_name}_{timestamp_str}.tif"
-            final_cog_path = os.path.join(settings.WEATHER_OUTPUT_DIR, final_cog_filename)
-
-            gdal_args = [
-                settings.GDAL_CMD,
-                "-of",
-                "COG",
-                "-ot",
-                "Float32",
-                "-b",
-                "1",
-                "-b",
-                "2",
-                "-projwin",
-                "65",
-                "40",
-                "100",
-                "5",
-                "-outsize",
-                "140",
-                "140",
-                "-co",
-                "COMPRESS=DEFLATE",
-                "-co",
-                "PREDICTOR=3",
-                temp_tif,
-                final_cog_path,
-            ]
-            subprocess.run(gdal_args, check=True, capture_output=True, text=True)
-
-            manifest_data[f"wind_{level_name}"] = {
-                "url": f"{settings.WEATHER_BASE_URL}/{final_cog_filename}",
+            step_manifest = {
                 "valid_time": valid_time.isoformat().replace("+00:00", "Z"),
-                "generated_at": now.isoformat().replace("+00:00", "Z"),
-                "altitude_ft": int(alt),
+                "step": step_hours,
+                "files": {},
             }
 
-            os.remove(temp_tif)
+            ds_step = ds_interp.isel(step=step_idx)
 
-        logger.info("cogs_generated", count=len(target_alts))
+            for alt in target_alts:
+                alt_slice = ds_step.sel(altitude=alt)
+                u_data = alt_slice["u"].values.astype(np.float32)
+                v_data = alt_slice["v"].values.astype(np.float32)
+
+                temp_tif = os.path.join(os.getcwd(), f"temp_out_{int(alt)}_{step_hours}.tif")
+
+                # Handle NaNs
+                u_data = np.nan_to_num(u_data, nan=0.0)
+                v_data = np.nan_to_num(v_data, nan=0.0)
+
+                with rasterio.open(
+                    temp_tif,
+                    "w",
+                    driver="GTiff",
+                    height=u_data.shape[0],
+                    width=u_data.shape[1],
+                    count=2,
+                    dtype=u_data.dtype,
+                    crs="+proj=latlong",
+                    transform=transform,
+                    nodata=0.0,
+                ) as dst:
+                    dst.write(u_data, 1)
+                    dst.write(v_data, 2)
+
+                level_name = "surface" if alt == 0 else f"{int(alt // 1000):03d}"
+                final_cog_filename = f"wind_{level_name}_{timestamp_str}_step{step_hours:03d}.tif"
+                final_cog_path = os.path.join(settings.WEATHER_OUTPUT_DIR, final_cog_filename)
+
+                gdal_args = [
+                    settings.GDAL_CMD,
+                    "-of",
+                    "COG",
+                    "-ot",
+                    "Float32",
+                    "-b",
+                    "1",
+                    "-b",
+                    "2",
+                    "-projwin",
+                    "65",
+                    "40",
+                    "100",
+                    "5",
+                    "-outsize",
+                    "140",
+                    "140",
+                    "-co",
+                    "COMPRESS=DEFLATE",
+                    "-co",
+                    "PREDICTOR=3",
+                    temp_tif,
+                    final_cog_path,
+                ]
+                subprocess.run(gdal_args, check=True, capture_output=True, text=True)
+
+                step_manifest["files"][level_name] = (
+                    f"{settings.WEATHER_BASE_URL}/{final_cog_filename}"
+                )
+
+                os.remove(temp_tif)
+
+            manifest_data["forecasts"].append(step_manifest)
+
+        logger.info("cogs_generated", count=len(target_alts) * len(steps))
 
     except Exception as e:
         logger.error("processing_failed", error=str(e))
@@ -289,7 +304,7 @@ def run_pipeline():
     safe_remove_grib(raw_pl_file)
     safe_remove_grib(raw_sfc_file)
 
-    cleanup_old_files(settings.WEATHER_OUTPUT_DIR, settings.WEATHER_KEEP_RUNS)
+    cleanup_old_files(settings.WEATHER_OUTPUT_DIR, manifest_data)
     logger.info("pipeline_completed_successfully")
 
 
