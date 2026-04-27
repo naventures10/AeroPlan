@@ -1,5 +1,5 @@
 import { Button } from '@heroui/react';
-import { Target, Navigation, Radio, Route, Globe } from 'lucide-react';
+import { Target, Navigation, Radio, Route, Globe, Wind } from 'lucide-react';
 import { useMapStore } from '../../../store/useMapStore';
 
 /**
@@ -7,7 +7,7 @@ import { useMapStore } from '../../../store/useMapStore';
  * Visible only in ENROUTE view mode.
  */
 export default function LayerToolbar() {
-  const { activeLayers, toggleLayer } = useMapStore();
+  const { activeLayers, toggleLayer, setIsWindMode } = useMapStore();
 
   const toggleButtons = [
     {
@@ -45,6 +45,13 @@ export default function LayerToolbar() {
       border: 'border-orange-500/50',
       bg: 'bg-orange-500/20',
     },
+    {
+      icon: Wind,
+      id: 'windlayer' as const,
+      color: 'text-blue-400',
+      border: 'border-blue-500/50',
+      bg: 'bg-blue-500/20',
+    },
   ];
 
   return (
@@ -58,7 +65,11 @@ export default function LayerToolbar() {
             radius="full"
             variant="flat"
             onPress={() => {
-              toggleLayer(id);
+              if (id === 'windlayer') {
+                setIsWindMode(!isActive);
+              } else {
+                toggleLayer(id);
+              }
             }}
             title={`Toggle ${id}`}
             className={`backdrop-blur-2xl shadow-xl transition-all duration-300 ${

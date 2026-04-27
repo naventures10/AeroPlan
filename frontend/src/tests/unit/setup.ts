@@ -73,3 +73,20 @@ vi.mock('framer-motion', async () => {
     },
   };
 });
+
+// Mock weatherlayers-gl
+vi.mock('weatherlayers-gl', () => ({
+  ParticleLayer: vi.fn(),
+}));
+
+// Mock Worker for libraries that expect it in browser environment
+if (typeof global.Worker === 'undefined') {
+  global.Worker = class {
+    onmessage = () => {};
+    postMessage = () => {};
+    terminate = () => {};
+    addEventListener = () => {};
+    removeEventListener = () => {};
+    dispatchEvent = () => false;
+  } as any;
+}
