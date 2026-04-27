@@ -60,12 +60,7 @@ if (( FINDINGS > 0 )); then
     mkdir -p "$REVIEW_DIR"
     echo "$CODERABBIT_OUT" > "$REVIEW_DIR/latest_review.txt"
     
-    # Extract branch name from the JSON output if available
-    REVIEW_BRANCH=$(echo "$CODERABBIT_OUT" | grep -o '"currentBranch":"[^"]*"' | head -n1 | cut -d'"' -f4)
-    [[ -z "$REVIEW_BRANCH" ]] && REVIEW_BRANCH="Unknown"
-
     echo "------------------------------------------------------------"
-    echo "Review Branch: $REVIEW_BRANCH"
     echo "Full review saved to: $REVIEW_DIR/latest_review.txt"
     echo "------------------------------------------------------------"
     echo "Please resolve these findings before merging."

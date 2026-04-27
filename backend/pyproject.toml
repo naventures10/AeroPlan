@@ -43,6 +43,14 @@ pythonpath = ["."]
 markers = [
     "data_integrity: Audit test for real database data (skipped in clean CI)",
 ]
+filterwarnings = [
+    "ignore:datetime.datetime.utcnow\\(\\) is deprecated:DeprecationWarning:ecmwf.opendata.date",
+]
+
+[tool.coverage.run]
+omit = [
+    "app/core/profiling.py"
+]
 
 [tool.ruff]
 line-length = 100
