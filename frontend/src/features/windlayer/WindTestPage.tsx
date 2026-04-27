@@ -8,7 +8,7 @@
  *
  * No production store / hooks — fully self-contained for rapid iteration.
  */
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import DeckGL from '@deck.gl/react';
 import { MapController } from '@deck.gl/core';
 import Map from 'react-map-gl/maplibre';
@@ -19,7 +19,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
-const MAP_STYLE = `https://api.maptiler.com/maps/hybrid/style.json?key=${MAPTILER_KEY}`;
+const MAP_STYLE = `https://api.maptiler.com/maps/topo-v2-dark/style.json?key=${MAPTILER_KEY}`;
 
 /** GeoTIFF data bounds matching the GDAL crop: [minLon, minLat, maxLon, maxLat] */
 const WIND_BOUNDS: [number, number, number, number] = [65, 5, 100, 40];
@@ -38,17 +38,59 @@ const INITIAL_VIEW_STATE = {
 
 const DECK_CONTROLLER = { type: MapController };
 
-// Wind-speed palette: calm (blue) → fast (red), matching meteorological convention
+// Wind-speed palette: calm (blue) → fast (red)
+// Data is in m/s, so we keep this mapped to m/s values.
 const WIND_PALETTE = `
-0   #3288bd
-5   #66c2a5
-10  #abdda4
-15  #e6f598
-20  #fee08b
-25  #fdae61
-30  #f46d43
-40  #d53e4f
+0       #3288bd
+10.29   #66c2a5
+20.58   #abdda4
+30.87   #e6f598
+41.16   #fee08b
+51.44   #fdae61
+61.73   #d53e4f
 `;
+
+const formatIST = (dateStr: string) => {
+  // dateStr format: YYYYMMDD_HHMMSS (assumed UTC)
+  const year = parseInt(dateStr.slice(0, 4));
+  const month = parseInt(dateStr.slice(4, 6)) - 1;
+  const day = parseInt(dateStr.slice(6, 8));
+  const hour = parseInt(dateStr.slice(9, 11));
+  const minute = parseInt(dateStr.slice(11, 13));
+  const second = parseInt(dateStr.slice(13, 15));
+
+  const utcDate = new Date(Date.UTC(year, month, day, hour, minute, second));
+
+  const labelFormatter = new Intl.DateTimeFormat('en-IN', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: 'Asia/Kolkata',
+  });
+
+  const dateFormatter = new Intl.DateTimeFormat('en-IN', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Asia/Kolkata',
+  });
+
+  return {
+    label: labelFormatter.format(utcDate),
+    date: dateFormatter.format(utcDate),
+  };
+};
+
+const FORECAST_TIMESTAMPS = [
+  '20260426_200710',
+  '20260427_035005',
+  '20260427_065757',
+  '20260427_071940',
+].map((suffix) => {
+  const { label, date } = formatIST(suffix);
+  return { label, fileSuffix: suffix, date };
+});
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -60,15 +102,20 @@ interface WindStatus {
 
 export default function WindTestPage() {
   const [viewState, setViewState] = useState(INITIAL_VIEW_STATE);
-  const [windImage, setWindImage] = useState<WeatherLayers.TextureData | null>(null);
+  const [loadedImages, setLoadedImages] = useState<Record<number, WeatherLayers.TextureData>>({});
   const [status, setStatus] = useState<WindStatus>({ state: 'idle' });
-  const [numParticles, setNumParticles] = useState(5000);
-  const [maxAge, setMaxAge] = useState(80);
-  const [speedFactor, setSpeedFactor] = useState(0.5);
-  const [fadeOpacity, setFadeOpacity] = useState(0.96); // Default to a higher value for visible trails
-  const [particleWidth, setParticleWidth] = useState(2);
+
   const [selectedAltitude, setSelectedAltitude] = useState(0);
-  const abortRef = useRef<AbortController | null>(null);
+  const [animationTime, setAnimationTime] = useState(0); // float 0 to length-1
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  // Hover Tooltip State
+  const [hoverInfo, setHoverInfo] = useState<{
+    x: number;
+    y: number;
+    speed: number;
+    direction: number;
+  } | null>(null);
 
   // ── Hide global loader ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -76,77 +123,96 @@ export default function WindTestPage() {
     if (window.hideLoader) window.hideLoader();
   }, []);
 
-  // ── Load weather data ──────────────────────────────────────────────────────
+  // ── Pre-load weather data for current altitude ─────────────────────────────
   useEffect(() => {
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
+    let active = true;
 
-    async function load() {
-      setStatus({ state: 'loading', message: 'Fetching manifest…' });
+    async function loadAll() {
+      setStatus({ state: 'loading', message: 'Pre-loading forecast frames…' });
+      setLoadedImages({});
+
+      const levelKey =
+        selectedAltitude === 0 ? 'surface' : String(selectedAltitude).padStart(3, '0');
+
+      const loadPromises = FORECAST_TIMESTAMPS.map((t) =>
+        WeatherLayers.loadTextureData(`/weather/wind_${levelKey}_${t.fileSuffix}.tif`),
+      );
+
       try {
-        // 1. Read manifest to find current GeoTIFF
-        const manifestRes = await fetch('/weather/weather_manifest.json', {
-          signal: controller.signal,
+        const results = await Promise.all(loadPromises);
+        if (!active) return;
+
+        const imageMap: Record<number, WeatherLayers.TextureData> = {};
+        results.forEach((img, i) => {
+          imageMap[i] = img;
         });
-        if (!manifestRes.ok) throw new Error(`Manifest fetch failed: ${manifestRes.status}`);
-        const manifest = await manifestRes.json();
 
-        const levelKey =
-          selectedAltitude === 0
-            ? 'wind_surface'
-            : `wind_${String(selectedAltitude).padStart(3, '0')}`;
-        const layerData = manifest[levelKey];
-        if (!layerData) throw new Error(`Data for altitude ${levelKey} not found in manifest`);
-
-        const { url, valid_time } = layerData as {
-          url: string;
-          valid_time: string;
-        };
-
-        setStatus({ state: 'loading', message: `Loading GeoTIFF: ${url}` });
-
-        // 2. Load GeoTIFF via WeatherLayers helper (reads bands, returns TextureData)
-        const image = await WeatherLayers.loadTextureData(url);
-        if (controller.signal.aborted) return;
-
-        setWindImage(image);
-        setStatus({
-          state: 'ready',
-          validTime: valid_time,
-          message: `Data valid: ${new Date(valid_time).toUTCString()}`,
-        });
-      } catch (err: unknown) {
-        if ((err as Error)?.name === 'AbortError') return;
+        setLoadedImages(imageMap);
+        setStatus({ state: 'ready', message: 'All frames ready' });
+      } catch (err) {
+        if (!active) return;
         console.error('[WindTestPage] Load error:', err);
-        setStatus({
-          state: 'error',
-          message: String(err instanceof Error ? err.message : err),
-        });
+        setStatus({ state: 'error', message: 'Failed to pre-load some frames' });
       }
     }
 
-    load();
-    return () => controller.abort();
+    loadAll();
+    return () => {
+      active = false;
+    };
   }, [selectedAltitude]);
 
+  // ── Animation Loop (requestAnimationFrame) ─────────────────────────────────
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    let lastTime = performance.now();
+    let frameId: number;
+
+    const tick = (now: number) => {
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+
+      // Speed: 10 seconds per frame transition (1 / 10 = 0.1 units per second)
+      const playbackSpeed = 0.1;
+
+      setAnimationTime((prev) => {
+        let next = prev + dt * playbackSpeed;
+        if (next >= FORECAST_TIMESTAMPS.length - 1) {
+          next = FORECAST_TIMESTAMPS.length - 1;
+          setIsPlaying(false);
+        }
+        return next;
+      });
+
+      frameId = requestAnimationFrame(tick);
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [isPlaying]);
+
+  // ── Calculate Interpolation ────────────────────────────────────────────────
+  const index1 = Math.min(Math.floor(Math.max(0, animationTime)), FORECAST_TIMESTAMPS.length - 1);
+  const index2 = Math.min(index1 + 1, FORECAST_TIMESTAMPS.length - 1);
+  const interpolationWeight = animationTime - index1;
+
   // ── Build DeckGL layers ────────────────────────────────────────────────────
-  const layers = windImage
+  const layers = loadedImages[index1]
     ? [
         new WeatherLayers.ParticleLayer({
           id: 'wind-particles',
-          // Data
-          image: windImage,
+          // Primary and secondary textures for interpolation
+          image: loadedImages[index1],
+          image2: loadedImages[index2] || null,
+          imageWeight: interpolationWeight,
+
           bounds: WIND_BOUNDS,
-          // Particle behaviour
-          numParticles,
-          maxAge,
-          speedFactor,
-          fadeOpacity,
-          // Style
-          width: particleWidth,
+          numParticles: 2000,
+          maxAge: 150,
+          speedFactor: 3,
+          width: 2,
           palette: WIND_PALETTE,
-          // Clip to data bbox to prevent wrapping artefacts
           extensions: [new ClipExtension()],
           clipBounds: CLIP_BOUNDS,
         }),
@@ -160,46 +226,113 @@ export default function WindTestPage() {
     [],
   );
 
+  // ── Tooltip Logic (Uses current interpolated time) ─────────────────────────
+  const getWindAtLngLat = useCallback(
+    (lng: number, lat: number) => {
+      const img1 = loadedImages[index1];
+      const img2 = loadedImages[index2];
+      if (!img1) return null;
+
+      const [minLng, minLat, maxLng, maxLat] = WIND_BOUNDS;
+      if (lng < minLng || lng > maxLng || lat < minLat || lat > maxLat) return null;
+
+      const x = Math.floor(((lng - minLng) / (maxLng - minLng)) * img1.width);
+      const y = Math.floor(((maxLat - lat) / (maxLat - minLat)) * img1.height);
+
+      // Dynamically calculate components per pixel (2 for UV wind tiff, 4 for RGBA)
+      const components = img1.data.length / (img1.width * img1.height);
+      const idx = (y * img1.width + x) * components;
+
+      const u1 = Number(img1.data[idx]);
+      const v1 = Number(img1.data[idx + 1]);
+
+      let u = u1;
+      let v = v1;
+
+      if (img2) {
+        const u2 = Number(img2.data[idx]);
+        const v2 = Number(img2.data[idx + 1]);
+        u = u1 * (1 - interpolationWeight) + u2 * interpolationWeight;
+        v = v1 * (1 - interpolationWeight) + v2 * interpolationWeight;
+      }
+
+      if (isNaN(u) || isNaN(v) || (u === 0 && v === 0)) return null;
+
+      const speedMS = Math.sqrt(u * u + v * v);
+      const speedKnots = speedMS * 1.94384;
+
+      // atan2(-u, -v) = meteorological FROM direction (wind FROM direction)
+      let dir = Math.atan2(-u, -v) * (180 / Math.PI);
+      if (dir < 0) dir += 360;
+
+      return { speed: speedKnots, direction: dir };
+    },
+    [loadedImages, index1, index2, interpolationWeight],
+  );
+
+  const onMouseMove = useCallback(
+    (e: maplibregl.MapMouseEvent) => {
+      const windData = getWindAtLngLat(e.lngLat.lng, e.lngLat.lat);
+      if (windData) {
+        setHoverInfo({
+          x: e.point.x,
+          y: e.point.y,
+          speed: windData.speed,
+          direction: windData.direction,
+        });
+      } else {
+        setHoverInfo(null);
+      }
+    },
+    [getWindAtLngLat],
+  );
+
+  const onMouseOut = useCallback(() => {
+    setHoverInfo(null);
+  }, []);
+
+  const handlePlayToggle = () => {
+    if (!isPlaying && animationTime >= FORECAST_TIMESTAMPS.length - 1) {
+      setAnimationTime(0);
+    }
+    setIsPlaying(!isPlaying);
+  };
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="wind-test-root">
-      {/* ── Map canvas ── */}
       <DeckGL
         viewState={viewState}
         controller={DECK_CONTROLLER}
         layers={layers}
         onViewStateChange={onViewStateChange as any}
       >
-        <Map mapStyle={MAP_STYLE} reuseMaps />
+        <Map mapStyle={MAP_STYLE} reuseMaps onMouseMove={onMouseMove} onMouseOut={onMouseOut} />
       </DeckGL>
 
-      {/* ── Status badge ── */}
+      {hoverInfo && (
+        <div className="wind-tooltip wind-panel" style={{ left: hoverInfo.x, top: hoverInfo.y }}>
+          <div className="wind-tooltip__row">
+            <span className="wind-tooltip__label">Speed</span>
+            <span className="wind-tooltip__value">{Math.round(hoverInfo.speed)} kt</span>
+          </div>
+          <div className="wind-tooltip__row">
+            <span className="wind-tooltip__label">Dir</span>
+            <span className="wind-tooltip__value">{Math.round(hoverInfo.direction)}°</span>
+          </div>
+        </div>
+      )}
+
       <StatusBadge status={status} />
+      <AltitudeSlider selectedAltitude={selectedAltitude} onChange={setSelectedAltitude} />
+      <VerticalWindLegend />
 
-      {/* ── Control panel ── */}
-      <ControlPanel
-        numParticles={numParticles}
-        maxAge={maxAge}
-        speedFactor={speedFactor}
-        fadeOpacity={fadeOpacity}
-        particleWidth={particleWidth}
-        selectedAltitude={selectedAltitude}
-        onNumParticlesChange={setNumParticles}
-        onMaxAgeChange={setMaxAge}
-        onSpeedFactorChange={setSpeedFactor}
-        onFadeOpacityChange={setFadeOpacity}
-        onParticleWidthChange={setParticleWidth}
-        onAltitudeChange={setSelectedAltitude}
+      <TimelineControl
+        animationTime={animationTime}
+        isPlaying={isPlaying}
+        onTimeChange={setAnimationTime}
+        onPlayToggle={handlePlayToggle}
       />
-
-      {/* ── Legend ── */}
-      <WindLegend />
-
-      {/* ── Page title ── */}
-      <header className="wind-test-header">
-        <span className="wind-test-header-badge">DEV</span>
-        WeatherLayers GL — Wind Particle Test
-      </header>
     </div>
   );
 }
@@ -215,7 +348,7 @@ function StatusBadge({ status }: { status: WindStatus }) {
   }[status.state];
 
   return (
-    <div className={`wind-status ${stateClass}`}>
+    <div className={`wind-status wind-panel ${stateClass}`}>
       <span className="wind-status__dot" />
       <span className="wind-status__text">
         {status.state === 'loading' && '⟳ '}
@@ -225,35 +358,33 @@ function StatusBadge({ status }: { status: WindStatus }) {
   );
 }
 
-interface ControlPanelProps {
-  numParticles: number;
-  maxAge: number;
-  speedFactor: number;
-  fadeOpacity: number;
-  particleWidth: number;
-  selectedAltitude: number;
-  onNumParticlesChange: (v: number) => void;
-  onMaxAgeChange: (v: number) => void;
-  onSpeedFactorChange: (v: number) => void;
-  onFadeOpacityChange: (v: number) => void;
-  onParticleWidthChange: (v: number) => void;
-  onAltitudeChange: (v: number) => void;
+function VerticalWindLegend() {
+  return (
+    <div className="wind-legend-v wind-panel">
+      <div className="wind-legend-v__title">
+        Wind
+        <br />
+        (kt)
+      </div>
+      <div className="wind-legend-v__track">
+        <div className="wind-legend-v__ticks">
+          <span className="wind-legend-v__tick">120</span>
+          <span className="wind-legend-v__tick">80</span>
+          <span className="wind-legend-v__tick">40</span>
+          <span className="wind-legend-v__tick">0</span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-function ControlPanel({
-  numParticles,
-  maxAge,
-  speedFactor,
-  fadeOpacity,
-  particleWidth,
+function AltitudeSlider({
   selectedAltitude,
-  onNumParticlesChange,
-  onMaxAgeChange,
-  onSpeedFactorChange,
-  onFadeOpacityChange,
-  onParticleWidthChange,
-  onAltitudeChange,
-}: ControlPanelProps) {
+  onChange,
+}: {
+  selectedAltitude: number;
+  onChange: (v: number) => void;
+}) {
   const formatAltitude = (alt: number) => {
     if (alt === 0) return 'Surface';
     if (alt < 5) return `${alt * 1000} ft`;
@@ -261,123 +392,83 @@ function ControlPanel({
   };
 
   return (
-    <aside className="wind-controls">
-      <h3 className="wind-controls__title">🎛 Particle Controls</h3>
-
-      <SliderRow
-        label="Altitude"
-        value={selectedAltitude}
-        min={0}
-        max={39}
-        step={1}
-        display={formatAltitude(selectedAltitude)}
-        onChange={onAltitudeChange}
-      />
-
-      <SliderRow
-        label="Particles"
-        value={numParticles}
-        min={500}
-        max={20000}
-        step={500}
-        display={numParticles.toLocaleString()}
-        onChange={onNumParticlesChange}
-      />
-      <SliderRow
-        label="Max Age"
-        value={maxAge}
-        min={10}
-        max={1000}
-        step={10}
-        display={`${maxAge} frames`}
-        onChange={onMaxAgeChange}
-      />
-      <SliderRow
-        label="Speed Factor"
-        value={speedFactor}
-        min={0.05}
-        max={3.0}
-        step={0.05}
-        display={speedFactor.toFixed(2)}
-        onChange={onSpeedFactorChange}
-      />
-      <SliderRow
-        label="Trail Persistence"
-        value={fadeOpacity}
-        min={0.8}
-        max={0.99}
-        step={0.005}
-        display={`${(fadeOpacity * 100).toFixed(1)}%`}
-        onChange={onFadeOpacityChange}
-      />
-      <SliderRow
-        label="Line Width"
-        value={particleWidth}
-        min={1}
-        max={6}
-        step={0.5}
-        display={`${particleWidth}px`}
-        onChange={onParticleWidthChange}
-      />
-    </aside>
-  );
-}
-
-function SliderRow({
-  label,
-  value,
-  min,
-  max,
-  step,
-  display,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  display: string;
-  onChange: (v: number) => void;
-}) {
-  return (
-    <div className="wind-slider">
-      <div className="wind-slider__header">
-        <span className="wind-slider__label">{label}</span>
-        <span className="wind-slider__value">{display}</span>
+    <div className="wind-altitude wind-panel">
+      <div className="wind-altitude__title">Altitude</div>
+      <div className="wind-altitude__display">{formatAltitude(selectedAltitude)}</div>
+      <div className="wind-altitude__slider-wrapper">
+        <input
+          type="range"
+          min={0}
+          max={39}
+          step={1}
+          value={selectedAltitude}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="wind-altitude__input"
+        />
       </div>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="wind-slider__input"
-      />
     </div>
   );
 }
 
-function WindLegend() {
-  const stops = [
-    { speed: 0, color: '#3288bd', label: 'Calm' },
-    { speed: 10, color: '#abdda4', label: '10 m/s' },
-    { speed: 20, color: '#fee08b', label: '20 m/s' },
-    { speed: 30, color: '#f46d43', label: '30 m/s' },
-    { speed: 40, color: '#d53e4f', label: '40+ m/s' },
-  ];
+function TimelineControl({
+  animationTime,
+  isPlaying,
+  onTimeChange,
+  onPlayToggle,
+}: {
+  animationTime: number;
+  isPlaying: boolean;
+  onTimeChange: (v: number) => void;
+  onPlayToggle: () => void;
+}) {
+  const currentIndex = Math.min(
+    Math.floor(Math.max(0, animationTime)),
+    FORECAST_TIMESTAMPS.length - 1,
+  );
+  const activeTime = FORECAST_TIMESTAMPS[currentIndex];
+
+  if (!activeTime) return null;
 
   return (
-    <div className="wind-legend">
-      <div className="wind-legend__title">Wind Speed</div>
-      <div className="wind-legend__bar">
-        {stops.map((s) => (
-          <div key={s.speed} className="wind-legend__stop">
-            <div className="wind-legend__swatch" style={{ background: s.color }} />
-            <span className="wind-legend__speed">{s.label}</span>
-          </div>
-        ))}
+    <div className="wind-timeline wind-panel">
+      <div className="wind-timeline__header">
+        <button className="wind-timeline__play" onClick={onPlayToggle}>
+          {isPlaying ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M6 4h4v16H6zm8 0h4v16h-4z" />
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          )}
+        </button>
+        <div className="wind-timeline__info">
+          <span className="wind-timeline__title">Wind Speed</span>
+          <span className="wind-timeline__date">{activeTime.date}</span>
+        </div>
+      </div>
+
+      <div className="wind-timeline__track">
+        <input
+          type="range"
+          className="wind-timeline__input"
+          min={0}
+          max={FORECAST_TIMESTAMPS.length - 1}
+          step={0.01}
+          value={animationTime}
+          onChange={(e) => onTimeChange(Number(e.target.value))}
+        />
+        <div className="wind-timeline__labels">
+          {FORECAST_TIMESTAMPS.map((t, i) => (
+            <span
+              key={i}
+              className={`wind-timeline__label ${i === currentIndex ? 'wind-timeline__label--active' : ''}`}
+            >
+              {t.label}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
