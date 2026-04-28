@@ -16,7 +16,7 @@ const AerodromeChartViewer = lazy(() => import('./features/aip/AerodromeChartVie
 const SectionModal = lazy(() => import('./features/aip/SectionModal'));
 const TerminalDashboard = lazy(() => import('./features/terminal/TerminalDashboard'));
 const WindControls = lazy(() =>
-  import('./features/windlayer/components/WindControls').then((m) => ({ default: m.WindControls })),
+  import('./features/map/controls/WindControls').then((m) => ({ default: m.WindControls })),
 );
 
 /**

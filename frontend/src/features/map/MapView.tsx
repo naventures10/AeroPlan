@@ -18,7 +18,7 @@ import { InterleavedDeckGL } from './InterleavedDeckGL';
 import { useMapTooltip } from './tooltips/useMapTooltip';
 import { POLYGON_PAINT, POINT_PAINT } from './layers/mapStyles';
 import { FeatureInfoCard } from './FeatureInfoCard';
-import { WindTooltip } from '../windlayer/components/WindTooltip';
+import { WindTooltip } from './tooltips/WindTooltip';
 import { useWindTooltip } from './tooltips/useWindTooltip';
 
 const TERMINAL_TERRAIN = { source: 'maptiler-terrain', exaggeration: 1 };

@@ -161,7 +161,7 @@ export function useWindLayer() {
       image2: loadedImages[index2] || null,
       imageWeight: interpolationWeight,
       bounds: WIND_BOUNDS,
-      numParticles: 3000,
+      numParticles: 1000,
       maxAge: 100,
       speedFactor: 5,
       width: 2,

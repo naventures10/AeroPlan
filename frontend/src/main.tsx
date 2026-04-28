@@ -1,13 +1,15 @@
-import { lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import './index.css';
 import App from './App.tsx';
 import { HeroUIProvider } from '@heroui/react';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
-import GlobalLoader from './components/GlobalLoader.tsx';
+import { useMapStore } from './store/useMapStore.ts';
 
-const WindTestPage = lazy(() => import('./features/windlayer/WindTestPage.tsx'));
+// Expose useMapStore for E2E testing
+if (import.meta.env.DEV || import.meta.env.VITE_E2E_TEST) {
+  (window as any).useMapStore = useMapStore;
+}
 
 const router = createBrowserRouter([
   {
@@ -18,14 +20,6 @@ const router = createBrowserRouter([
           <App />
         </HeroUIProvider>
       </ErrorBoundary>
-    ),
-  },
-  {
-    path: '/wind-test',
-    element: (
-      <Suspense fallback={<GlobalLoader />}>
-        <WindTestPage />
-      </Suspense>
     ),
   },
 ]);

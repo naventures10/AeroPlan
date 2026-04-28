@@ -9,7 +9,7 @@ import { createAtsRouteLayers } from './createAtsRouteLayers';
 import { createRnpLayers } from '../../terminal/layers/createRnpLayers';
 import { useRnpPath3d } from '../../terminal/layers/useRnpPath3d';
 import { useRnpAnimation } from '../../terminal/layers/useRnpAnimation';
-import { useWindLayer } from '../../windlayer/hooks/useWindLayer';
+import { useWindLayer } from './useWindLayer';
 import type { LayerContext } from './types';
 
 /**

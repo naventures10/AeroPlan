@@ -1,6 +1,6 @@
 import { X } from 'lucide-react';
 import { useMapStore } from '../../../store/useMapStore';
-import type { WindStatus } from '../hooks/useWindLayer';
+import type { WindStatus } from '../layers/useWindLayer';
 
 export function StatusBadge({ status }: { status: WindStatus }) {
   const stateClass = {

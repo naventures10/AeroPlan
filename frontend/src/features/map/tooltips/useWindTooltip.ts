@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useMapStore } from '../../../store/useMapStore';
-import { useWindLayer } from '../../windlayer/hooks/useWindLayer';
+import { useWindLayer } from '../layers/useWindLayer';
 
 export function useWindTooltip() {
   const { activeLayers, viewMode } = useMapStore();
