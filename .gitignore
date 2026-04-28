@@ -71,6 +71,7 @@ backend/data/
 # ============================================================
 backend/logs/
 frontend/coverage/
+**/.coverage
 
 # ============================================================
 # Weather Data & Pipeline Temp Files
