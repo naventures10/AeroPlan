@@ -7,8 +7,13 @@ interface TimelineControlProps {
 }
 
 export function TimelineControl({ timestamps }: TimelineControlProps) {
-  const { windAnimationTime, setWindAnimationTime, windIsPlaying, setWindIsPlaying } =
-    useMapStore();
+  const {
+    windAnimationTime,
+    setWindAnimationTime,
+    windIsPlaying,
+    setWindIsPlaying,
+    toggleWindPlayback,
+  } = useMapStore();
 
   const nowIndex = calculateNowIndex(timestamps);
   const currentIndex = Math.min(
@@ -24,10 +29,7 @@ export function TimelineControl({ timestamps }: TimelineControlProps) {
   const currentPercent = (windAnimationTime / totalSteps) * 100;
 
   const onPlayToggle = () => {
-    if (windAnimationTime >= timestamps.length - 1) {
-      setWindAnimationTime(0);
-    }
-    setWindIsPlaying(!windIsPlaying);
+    toggleWindPlayback(timestamps.length - 1);
   };
 
   return (

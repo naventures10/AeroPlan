@@ -108,6 +108,7 @@ interface MapState {
   setWindAnimationTime: (time: number | ((prev: number) => number)) => void;
   windIsPlaying: boolean;
   setWindIsPlaying: (playing: boolean | ((prev: boolean) => boolean)) => void;
+  toggleWindPlayback: (maxTime: number) => void;
 
   isWindMode: boolean;
   setIsWindMode: (enabled: boolean) => void;
@@ -274,6 +275,15 @@ export const useMapStore = create<MapState>((set, get) => ({
     set((state) => ({
       windIsPlaying: typeof playing === 'function' ? playing(state.windIsPlaying) : playing,
     })),
+
+  toggleWindPlayback: (maxTime) =>
+    set((state) => {
+      const isAtEnd = state.windAnimationTime >= maxTime;
+      return {
+        windAnimationTime: isAtEnd ? 0 : state.windAnimationTime,
+        windIsPlaying: !state.windIsPlaying,
+      };
+    }),
 
   isWindMode: false,
   setIsWindMode: (enabled) =>

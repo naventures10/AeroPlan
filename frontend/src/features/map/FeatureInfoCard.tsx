@@ -116,6 +116,7 @@ export function FeatureInfoCard() {
     <AnimatePresence>
       {isVisible && (
         <motion.div
+          key={selectedFeature?.type}
           data-testid="feature-info-card"
           initial={{ x: 50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}

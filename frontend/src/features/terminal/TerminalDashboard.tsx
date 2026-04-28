@@ -184,7 +184,7 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
           </div>
         ) : (
           <div className="p-6 h-full overflow-y-auto aip-scrollbar w-[500px]">
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               {activeTab === 'CONDITIONS' && (
                 <ConditionsWidget
                   icaoCode={icaoCode}

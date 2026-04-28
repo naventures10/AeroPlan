@@ -6,15 +6,15 @@ import { useLayoutEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import GlobalLoader from './components/GlobalLoader';
 
-const MapView = lazy(() => import('./features/map/MapView'));
-const SearchBar = lazy(() => import('./features/map/controls/SearchBar'));
-const LayerToolbar = lazy(() => import('./features/map/controls/LayerToolbar'));
-const ViewToggle = lazy(() => import('./features/map/controls/ViewToggle'));
+import TerminalDashboard from './features/terminal/TerminalDashboard';
+import SearchBar from './features/map/controls/SearchBar';
+import LayerToolbar from './features/map/controls/LayerToolbar';
+import ViewToggle from './features/map/controls/ViewToggle';
+import AerodromeInfoDropdown from './features/aip/AerodromeInfoDropdown';
+import AerodromeChartViewer from './features/aip/AerodromeChartViewer';
+import SectionModal from './features/aip/SectionModal';
 
-const AerodromeInfoDropdown = lazy(() => import('./features/aip/AerodromeInfoDropdown'));
-const AerodromeChartViewer = lazy(() => import('./features/aip/AerodromeChartViewer'));
-const SectionModal = lazy(() => import('./features/aip/SectionModal'));
-const TerminalDashboard = lazy(() => import('./features/terminal/TerminalDashboard'));
+const MapView = lazy(() => import('./features/map/MapView'));
 const WindControls = lazy(() =>
   import('./features/map/controls/WindControls').then((m) => ({ default: m.WindControls })),
 );
@@ -55,7 +55,7 @@ function AppContent() {
       {/* Overlay Layer (Secondary Chunks) */}
       <Suspense fallback={null}>
         <div className="absolute inset-0 pointer-events-none z-10">
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {!isWindMode ? (
               <motion.div
                 key="primary-ui"

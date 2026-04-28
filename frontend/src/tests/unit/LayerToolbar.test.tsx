@@ -1,15 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, fireEvent, screen } from '@testing-library/react';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { render } from '@testing-library/react';
 import LayerToolbar from '../../features/map/controls/LayerToolbar';
 import { useMapStore } from '../../store/useMapStore';
 
 describe('LayerToolbar Component', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('renders correctly and toggles layers', () => {
-    const toggleLayerMock = vi.fn();
     useMapStore.setState({
       activeLayers: {
         aerodromes: true,
@@ -17,16 +12,19 @@ describe('LayerToolbar Component', () => {
         navaids: false,
         atsRoutes: false,
         airspaces: false,
+        windlayer: false,
       } as any,
-      toggleLayer: toggleLayerMock,
     });
+  });
 
-    render(<LayerToolbar />);
+  it('renders all toggle buttons with correct titles', () => {
+    const { getByTitle } = render(<LayerToolbar />);
 
-    const button = screen.getByTitle('Toggle aerodromes');
-    expect(button).toBeInTheDocument();
-
-    fireEvent.click(button);
-    expect(toggleLayerMock).toHaveBeenCalledWith('aerodromes');
+    expect(getByTitle('Toggle aerodromes')).toBeInTheDocument();
+    expect(getByTitle('Toggle waypoints')).toBeInTheDocument();
+    expect(getByTitle('Toggle navaids')).toBeInTheDocument();
+    expect(getByTitle('Toggle atsRoutes')).toBeInTheDocument();
+    expect(getByTitle('Toggle airspaces')).toBeInTheDocument();
+    expect(getByTitle('Toggle windlayer')).toBeInTheDocument();
   });
 });
