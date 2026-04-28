@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import LayerToolbar from '../../features/map/controls/LayerToolbar';
 import { useMapStore } from '../../store/useMapStore';
 
@@ -26,5 +26,14 @@ describe('LayerToolbar Component', () => {
     expect(getByTitle('Toggle atsRoutes')).toBeInTheDocument();
     expect(getByTitle('Toggle airspaces')).toBeInTheDocument();
     expect(getByTitle('Toggle windlayer')).toBeInTheDocument();
+  });
+
+  it('toggles a layer when clicked', () => {
+    const { getByTitle } = render(<LayerToolbar />);
+    const button = getByTitle('Toggle waypoints');
+
+    fireEvent.click(button);
+
+    expect(useMapStore.getState().activeLayers.waypoints).toBe(true);
   });
 });

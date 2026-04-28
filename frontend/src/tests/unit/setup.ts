@@ -52,22 +52,22 @@ vi.mock('framer-motion', async () => {
     AnimatePresence: ({ children }: any) =>
       React.createElement('div', { 'data-testid': 'mock-animate-presence' }, children),
     motion: {
-      div: ({ children, className, onClick, style }: any) =>
+      div: ({ children, ...props }: any) =>
         React.createElement(
           'div',
-          { className, onClick, style, 'data-testid': 'mock-motion-div' },
+          { ...props, 'data-testid': props['data-testid'] || 'mock-motion-div' },
           children,
         ),
-      button: ({ children, className, onClick }: any) =>
+      button: ({ children, ...props }: any) =>
         React.createElement(
           'button',
-          { className, onClick, 'data-testid': 'mock-motion-button' },
+          { ...props, 'data-testid': props['data-testid'] || 'mock-motion-button' },
           children,
         ),
-      span: ({ children, className, onClick }: any) =>
+      span: ({ children, ...props }: any) =>
         React.createElement(
           'span',
-          { className, onClick, 'data-testid': 'mock-motion-span' },
+          { ...props, 'data-testid': props['data-testid'] || 'mock-motion-span' },
           children,
         ),
     },

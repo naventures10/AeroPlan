@@ -257,7 +257,7 @@ def extract_true_course(course_str: str | None) -> float | None:
         if m:
             try:
                 return float(m.group(1))
-            except ValueError, TypeError:  # pragma: no cover
+            except ValueError, TypeError:
                 pass
 
     # Format 2: "NNN.NN°(NNN.NN°)"
