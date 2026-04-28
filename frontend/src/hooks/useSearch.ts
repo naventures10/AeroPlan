@@ -91,7 +91,7 @@ export function useSearch() {
             setIsLoading(false);
           }
         });
-    }, 250);
+    }, 100);
 
     return () => {
       clearTimeout(timer);
@@ -144,7 +144,8 @@ export function useSearch() {
         });
       }
 
-      resetSearchState();
+      // Defer reset so click events finish before unmount
+      setTimeout(resetSearchState, 50);
 
       // 2. Defer the visual highlight injection until after the flyTo animation (1200ms)
       selectionTimerRef.current = setTimeout(() => {

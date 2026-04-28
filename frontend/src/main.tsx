@@ -1,5 +1,5 @@
-import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import './index.css';
 import App from './App.tsx';
 import { HeroUIProvider } from '@heroui/react';
@@ -11,12 +11,17 @@ if (import.meta.env.DEV || import.meta.env.VITE_E2E_TEST) {
   (window as any).useMapStore = useMapStore;
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ErrorBoundary>
-      <HeroUIProvider>
-        <App />
-      </HeroUIProvider>
-    </ErrorBoundary>
-  </StrictMode>,
-);
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: (
+      <ErrorBoundary>
+        <HeroUIProvider>
+          <App />
+        </HeroUIProvider>
+      </ErrorBoundary>
+    ),
+  },
+]);
+
+createRoot(document.getElementById('root')!).render(<RouterProvider router={router} />);

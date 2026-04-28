@@ -21,6 +21,7 @@ describe('useMapStore', () => {
         airspaceControl: true,
         airspaceUpr: true,
         ercMap: false,
+        windlayer: false,
       },
       selectedRouteIds: [],
       selectedRouteType: null,
@@ -37,6 +38,10 @@ describe('useMapStore', () => {
       selectedRnpChartKey: null,
       selectedRnpBounds: null,
       selectedRnpApproachId: null,
+      windAltitude: 0,
+      windAnimationTime: 0,
+      windIsPlaying: false,
+      isWindMode: false,
     });
   });
 

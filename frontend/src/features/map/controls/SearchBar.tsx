@@ -48,7 +48,7 @@ export default function SearchBar({
       <div className="relative rounded-full shadow-2xl">
         <div className="flex items-center w-full glass-morphism h-14 px-4 bg-zinc-950/40 hover:bg-zinc-950/60 focus-within:!bg-zinc-950/40 border-zinc-800/60 rounded-full transition-colors duration-300">
           <div className="relative w-5 h-5 flex items-center justify-center shrink-0">
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               {isLoading ? (
                 <motion.div
                   key="loader"
@@ -87,7 +87,7 @@ export default function SearchBar({
               if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
               blurTimeoutRef.current = setTimeout(() => {
                 setIsSearchFocused(false);
-              }, 200);
+              }, 500);
             }}
             onKeyDown={handleSearchKeyDown}
           />
@@ -145,6 +145,7 @@ export default function SearchBar({
                   {suggestions.map((item: SearchResult, index: number) => (
                     <div
                       key={`${item.type}-${item.id}`}
+                      data-testid="search-result-item"
                       className={`px-4 py-3 cursor-pointer flex items-center justify-between transition-colors border-l-2 ${
                         index === searchSelectedIndex
                           ? 'bg-zinc-800/80 border-cyan-400'

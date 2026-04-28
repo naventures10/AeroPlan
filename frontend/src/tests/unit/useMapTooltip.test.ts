@@ -26,7 +26,7 @@ describe('useMapTooltip', () => {
           icao_code: 'VAAU',
           aerodrome_name: 'Test',
           elevation: '100',
-          communications: '[{"service":"TWR","frequency":"118.1"}]',
+          communications: '[{"service_type":"TWR","frequency":"118.1"}]',
         },
       },
       layer: { id: 'aerodromes-layer' },
@@ -35,8 +35,48 @@ describe('useMapTooltip', () => {
     });
 
     expect(tooltip).toBeDefined();
-    // Instead of exact html string, check contains
+    expect(tooltip).toBeDefined();
+    // Instead of exact html string, check for parts
     expect(tooltip!.html).toContain('VAAU');
+    expect(tooltip!.html).toContain('TWR');
+    expect(tooltip!.html).toContain('118.1');
+  });
+
+  it('handles aerodromes layer with metadata elevation and complex comms', () => {
+    useMapStore.setState({
+      activeAerodromeMetadata: {
+        geographical_data: { elevation_reference_temp: '150.5 FT' },
+      } as any,
+      activeLayers: {} as any,
+      selectedRouteIds: [],
+    });
+    const { result } = renderHook(() => useMapTooltip({ current: null }));
+
+    const tooltip = result.current({
+      object: {
+        properties: {
+          icao_code: 'VABB',
+          communications: [
+            { service_type: 'TWR', frequency: '118.1', call_sign: 'MUMBAI TOWER' },
+            { service_type: 'APP', frequency: '127.9', call_sign: 'MUMBAI APPROACH' },
+          ],
+          magnetic_variation: '1W',
+          remarks: 'Test Remarks',
+        },
+      },
+      layer: { id: 'aerodromes-layer' },
+    });
+
+    expect(tooltip!.html).toContain('VABB');
+    expect(tooltip!.html).toContain('150.5 FT');
+    expect(tooltip!.html).toContain('TWR');
+    expect(tooltip!.html).toContain('118.1 (MUMBAI TOWER)');
+    expect(tooltip!.html).toContain('APP');
+    expect(tooltip!.html).toContain('127.9 (MUMBAI APPROACH)');
+    expect(tooltip!.html).toContain('MAG VAR');
+    expect(tooltip!.html).toContain('1W');
+    expect(tooltip!.html).toContain('REMARKS');
+    expect(tooltip!.html).toContain('Test Remarks');
   });
 
   it('handles navaids layer', () => {
@@ -95,6 +135,7 @@ describe('useMapTooltip', () => {
           lower_limit: 'FL150',
           upper_limit: 'FL400',
           distance_nm: '100',
+          track_magnetic: '090',
         },
       },
       layer: { id: 'atsRoutes-geom-layer' },
@@ -106,6 +147,27 @@ describe('useMapTooltip', () => {
     expect(tooltip!.html).toContain('L333');
     expect(tooltip!.html).toContain('FL150');
     expect(tooltip!.html).toContain('FL400');
+    expect(tooltip!.html).toContain('100 NM');
+  });
+
+  it('handles airspace metadata layer', () => {
+    const { result } = renderHook(() => useMapTooltip({ current: null }));
+
+    const tooltip = result.current({
+      object: {
+        properties: {
+          name: 'MUMBAI TMA',
+          airspace_type: 'CONTROL_AREA',
+          lower_limit: 'FL070',
+          upper_limit: 'FL245',
+        },
+      },
+      layer: { id: 'airspace-metadata-layer' },
+    });
+
+    expect(tooltip!.html).toContain('MUMBAI TMA');
+    expect(tooltip!.html).toContain('CONTROL AREA');
+    expect(tooltip!.html).toContain('FL070 - FL245');
   });
 
   it('handles ats route waypoints layer', () => {
@@ -274,6 +336,58 @@ describe('useMapTooltip', () => {
     // The tooltip will render at least the names and types based on how it's structured
     expect(tooltip!.html).toContain('IABC');
     expect(tooltip!.html).toContain('09');
+  });
+
+  it('handles maplibre map hits for ARP and Obstacles', () => {
+    const mockMetadata = {
+      data: {
+        obstacles: [
+          {
+            obstacle_type: 'TOWER',
+            elevation: '450 FT',
+            area_affected: 'RWY 09',
+            marking_lgt: 'RED LGT',
+            remarks: 'OBST REMARK',
+          },
+        ],
+      },
+    };
+
+    useMapStore.setState({
+      activeAerodromeMetadata: mockMetadata as any,
+      activeLayers: {} as any,
+      selectedRouteIds: [],
+    });
+    const mockMapRef = {
+      current: {
+        getMap: vi.fn(() => ({
+          getStyle: vi.fn(() => ({
+            layers: [{ id: 'mvt-points' }],
+          })),
+          queryRenderedFeatures: vi.fn(() => [
+            {
+              layer: { id: 'mvt-points' },
+              properties: { category: 'ARP', name: 'ARP VABB' },
+              geometry: { type: 'Point', coordinates: [72.8, 19.1] },
+            },
+            {
+              layer: { id: 'mvt-points' },
+              properties: { category: 'OBSTACLE', name: 'TOWER', height: 450 },
+            },
+          ]),
+        })),
+      },
+    };
+
+    const { result } = renderHook(() => useMapTooltip(mockMapRef as any));
+
+    const tooltip = result.current({ object: null, layer: null, x: 10, y: 10 });
+
+    expect(tooltip!.html).toContain('ARP VABB');
+    expect(tooltip!.html).toContain('19.10000, 72.80000'); // Category display for ARP
+    expect(tooltip!.html).toContain('TOWER');
+    expect(tooltip!.html).toContain('OBST REMARK');
+    expect(tooltip!.html).toContain('RED LGT');
   });
 
   it('returns null when nothing picked', () => {

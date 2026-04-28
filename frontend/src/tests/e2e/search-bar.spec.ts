@@ -139,7 +139,7 @@ test.describe('Search Bar Userflow', () => {
     await expect(suggestions).not.toBeVisible();
 
     // 6. Verify Info Card appears (after flyTo delay)
-    const infoCard = page.getByTestId('feature-info-card');
+    const infoCard = page.getByTestId('feature-info-card').first();
     await expect(infoCard).toBeVisible({ timeout: 10000 });
 
     // Check for content inside the card

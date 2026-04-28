@@ -37,6 +37,8 @@ export class MapPage {
     await expect(this.page.locator('#placeholder').first()).not.toBeVisible({ timeout: 30000 });
     // Ensure map is visible
     await expect(this.mapCanvas).toBeVisible();
+    // Ensure UI has faded in (important for framer-motion animations)
+    await expect(this.searchInput).toBeVisible({ timeout: 10000 });
   }
 
   async toggleLayer(layerName: string) {
@@ -54,13 +56,17 @@ export class MapPage {
   }
 
   async search(query: string, resultText?: string) {
+    await this.searchInput.focus();
     await this.searchInput.fill(query);
     // Use resultText if provided (more unique), otherwise use the query
     const targetText = resultText || query;
-    const result = this.page.getByText(targetText).first();
+    const result = this.page
+      .locator('[data-testid="search-result-item"]')
+      .filter({ hasText: targetText })
+      .first();
 
     // Wait for results to appear (auto-retries)
-    await expect(result).toBeVisible();
+    await expect(result).toBeVisible({ timeout: 20000 });
     await result.click();
   }
 }

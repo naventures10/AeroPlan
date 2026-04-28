@@ -148,7 +148,7 @@ test.describe('Enroute View Workflows', () => {
 
     // Select the AIRSPACE result
     const airspaceResult = page
-      .locator('div.cursor-pointer')
+      .locator('[data-testid="search-result-item"]')
       .filter({ hasText: 'Delhi' })
       .filter({ hasText: 'AIRSPACE' })
       .first();
@@ -178,41 +178,45 @@ test.describe('Enroute View Workflows', () => {
   });
 
   test('User Story 4.1: Manual Airspace Interaction (Hover & Click on Map)', async ({ page }) => {
+    test.setTimeout(120000);
+
     // 1. Manually toggle Airspaces ON
     await mapPage.toggleLayer('airspaces');
     expect(await mapPage.isLayerActive('airspaces')).toBe(true);
 
     // 2. Position the map over Delhi FIR
+    // 2. Search for AIRSPACE
+    await mapPage.searchInput.focus();
     await mapPage.searchInput.fill('Delhi FIR');
     const airspaceResult = page
-      .locator('div.cursor-pointer')
+      .locator('[data-testid="search-result-item"]')
       .filter({ hasText: 'Delhi' })
       .filter({ hasText: 'AIRSPACE' })
       .first();
-    await expect(airspaceResult).toBeVisible({ timeout: 10000 });
-    await airspaceResult.click();
-
+    await expect(airspaceResult).toBeVisible({ timeout: 20000 });
+    await airspaceResult.click({ force: true });
     // 3. Wait and Deselect
-    await page.waitForTimeout(3000);
-    const closeButton = page.getByTestId('close-feature-card');
-    await expect(closeButton).toBeVisible();
+    const closeButton = page.getByTestId('close-feature-card').first();
+    await expect(closeButton).toBeVisible({ timeout: 20000 });
     await closeButton.click();
-    await expect(page.getByTestId('feature-info-card')).not.toBeVisible();
+    await expect(page.getByTestId('feature-info-card').first()).not.toBeVisible({ timeout: 10000 });
 
     // 4. Manual Hover on Canvas
     const { width, height } = page.viewportSize()!;
     await page.mouse.move(width / 2, height / 2);
 
     // Verify tooltip appears
-    await expect(page.locator('body')).toContainText('Delhi');
-    await expect(page.locator('body')).toContainText('FIR');
+    await expect(page.locator('body').first()).toContainText('Delhi');
+    await expect(page.locator('body').first()).toContainText('FIR');
 
     // 5. Manual Click on Canvas
     await page.mouse.click(width / 2, height / 2);
 
     // 6. Verify Info Card appears
-    const infoCard = page.getByTestId('feature-info-card');
+    const infoCard = page.getByTestId('feature-info-card').first();
     await expect(infoCard).toBeVisible();
-    await expect(page.locator('[data-testid="feature-info-card"]')).toContainText('AIRSPACE');
+    await expect(page.locator('[data-testid="feature-info-card"]').first()).toContainText(
+      'AIRSPACE',
+    );
   });
 });

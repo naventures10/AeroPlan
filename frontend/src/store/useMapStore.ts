@@ -35,6 +35,7 @@ interface MapState {
     airspaceControl: boolean;
     airspaceUpr: boolean;
     ercMap: boolean;
+    windlayer: boolean;
   };
 
   selectedRouteIds: string[];
@@ -99,6 +100,18 @@ interface MapState {
 
   terminalPivot: [number, number] | null;
   setTerminalPivot: (coords: [number, number] | null) => void;
+
+  // Wind Layer Parameters
+  windAltitude: number;
+  setWindAltitude: (alt: number | ((prev: number) => number)) => void;
+  windAnimationTime: number;
+  setWindAnimationTime: (time: number | ((prev: number) => number)) => void;
+  windIsPlaying: boolean;
+  setWindIsPlaying: (playing: boolean | ((prev: boolean) => boolean)) => void;
+  toggleWindPlayback: (maxTime: number) => void;
+
+  isWindMode: boolean;
+  setIsWindMode: (enabled: boolean) => void;
 }
 
 export const DEFAULT_VIEW = {
@@ -121,6 +134,8 @@ export const TERMINAL_EXIT_ZOOM_THRESHOLD = 5.5;
 export const useMapStore = create<MapState>((set, get) => ({
   // Default starting view (High-level India)
   viewState: DEFAULT_VIEW,
+
+  terminalPivot: null,
 
   viewMode: 'ENROUTE',
   setViewMode: (mode) =>
@@ -154,6 +169,7 @@ export const useMapStore = create<MapState>((set, get) => ({
     airspaceControl: false,
     airspaceUpr: false,
     ercMap: false,
+    windlayer: false,
   },
 
   toggleLayer: (layer) =>
@@ -241,10 +257,40 @@ export const useMapStore = create<MapState>((set, get) => ({
   animationConfig: null,
   setAnimationConfig: (config) => set({ animationConfig: config }),
 
-  terminalPivot: null,
   setTerminalPivot: (coords) => {
     set({ terminalPivot: coords });
   },
+
+  // Wind Layer Actions
+  windAltitude: 0,
+  setWindAltitude: (alt) =>
+    set((state) => ({ windAltitude: typeof alt === 'function' ? alt(state.windAltitude) : alt })),
+  windAnimationTime: 0,
+  setWindAnimationTime: (time) =>
+    set((state) => ({
+      windAnimationTime: typeof time === 'function' ? time(state.windAnimationTime) : time,
+    })),
+  windIsPlaying: false,
+  setWindIsPlaying: (playing) =>
+    set((state) => ({
+      windIsPlaying: typeof playing === 'function' ? playing(state.windIsPlaying) : playing,
+    })),
+
+  toggleWindPlayback: (maxTime) =>
+    set((state) => {
+      const isAtEnd = state.windAnimationTime >= maxTime;
+      return {
+        windAnimationTime: isAtEnd ? 0 : state.windAnimationTime,
+        windIsPlaying: !state.windIsPlaying,
+      };
+    }),
+
+  isWindMode: false,
+  setIsWindMode: (enabled) =>
+    set((state) => ({
+      isWindMode: enabled,
+      activeLayers: { ...state.activeLayers, windlayer: enabled },
+    })),
 
   // Basic Setters
   setViewState: (viewState) => set({ viewState }),

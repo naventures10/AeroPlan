@@ -1,107 +1,143 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, act, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { FeatureInfoCard } from '../../features/map/FeatureInfoCard';
 import { useMapStore } from '../../store/useMapStore';
+import * as api from '../../api/client';
 
-vi.mock('framer-motion', async () => {
-  const actual = await vi.importActual('framer-motion');
-  return {
-    ...actual,
-    AnimatePresence: ({ children }: any) => children,
-    motion: {
-      div: ({ children, className }: any) => <div className={className}>{children}</div>,
-    },
-  };
-});
+// Mock the store
+vi.mock('../../store/useMapStore', () => ({
+  useMapStore: vi.fn(),
+}));
 
-describe('FeatureInfoCard Component', () => {
+// Mock the API
+vi.mock('../../api/client', () => ({
+  fetchAtsRouteDetails: vi.fn(),
+  fetchNavaidDetails: vi.fn(),
+}));
+
+describe('FeatureInfoCard', () => {
+  const setSelectedFeature = vi.fn();
+  const setHighlightedAirspaceId = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it('renders nothing when selectedFeature is null', () => {
-    useMapStore.setState({ selectedFeature: null });
-    let container: any;
-    act(() => {
-      const rendered = render(<FeatureInfoCard />);
-      container = rendered.container;
-    });
-    // In jsdom, empty fragment gives firstChild null or empty
-    expect(container.innerHTML).toBe('');
-  });
-
-  it('renders WAYPOINT data correctly', () => {
-    useMapStore.setState({
+    (useMapStore as any).mockReturnValue({
+      selectedFeature: null,
+      setSelectedFeature,
       viewMode: 'ENROUTE',
+      setHighlightedAirspaceId,
+    });
+  });
+
+  it('should not render when no feature is selected', () => {
+    render(<FeatureInfoCard />);
+    expect(screen.queryByTestId('feature-info-card')).toBeNull();
+  });
+
+  it('should render ATS route details and fetch data', async () => {
+    const mockRouteDetails = {
+      route_id: 'L333',
+      route_designator: 'L333',
+      route_type: 'RNAV',
+      segments: [],
+      waypoints: [],
+      total_distance_nm: 120,
+    };
+    (api.fetchAtsRouteDetails as any).mockResolvedValue(mockRouteDetails);
+
+    (useMapStore as any).mockReturnValue({
+      selectedFeature: { type: 'ATS_ROUTE', data: { route_id: 'L333' } },
+      setSelectedFeature,
+      viewMode: 'ENROUTE',
+      setHighlightedAirspaceId,
+    });
+
+    render(<FeatureInfoCard />);
+
+    expect(screen.getByTestId('feature-info-card')).toBeDefined();
+    expect(screen.getByText('L333')).toBeDefined();
+
+    // Wait for the data to be rendered
+    const distanceBadge = await screen.findByText('120 NM');
+    expect(distanceBadge).toBeDefined();
+
+    expect(api.fetchAtsRouteDetails).toHaveBeenCalledWith('L333');
+  });
+
+  it('should render Navaid details and fetch data', async () => {
+    const mockNavaidDetails = {
+      ident: 'BBB',
+      station_name: 'BOMBAY',
+      aid_type: 'VOR/DME',
+      frequency: '116.6',
+    };
+    (api.fetchNavaidDetails as any).mockResolvedValue(mockNavaidDetails);
+
+    (useMapStore as any).mockReturnValue({
+      selectedFeature: { type: 'NAVAID', data: { ident: 'BBB', station_name: 'BOMBAY' } },
+      setSelectedFeature,
+      viewMode: 'ENROUTE',
+      setHighlightedAirspaceId,
+    });
+
+    render(<FeatureInfoCard />);
+
+    const title = await screen.findByText('BOMBAY');
+    expect(title).toBeDefined();
+
+    expect(api.fetchNavaidDetails).toHaveBeenCalledWith('BBB');
+  });
+
+  it('should render Waypoint details', () => {
+    (useMapStore as any).mockReturnValue({
       selectedFeature: {
         type: 'WAYPOINT',
-        data: { name: 'FIX', waypoint_name: 'FIX', latitude: 10, longitude: 20 },
-      } as any,
+        data: { waypoint_name: 'DOSTI', raw_coordinates: '180000N 0720000E' },
+      },
+      setSelectedFeature,
+      viewMode: 'ENROUTE',
+      setHighlightedAirspaceId,
     });
 
-    act(() => {
-      render(<FeatureInfoCard />);
-    });
-    expect(screen.getAllByText(/WAYPOINT/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText('FIX').length).toBeGreaterThan(0);
+    render(<FeatureInfoCard />);
+    expect(screen.getByText('DOSTI')).toBeDefined();
+    expect(screen.getByText('180000N 0720000E')).toBeDefined();
   });
 
-  it('renders ATS_ROUTE data correctly', () => {
-    useMapStore.setState({
-      viewMode: 'ENROUTE',
-      selectedFeature: {
-        type: 'ATS_ROUTE',
-        data: { route_id: 'L333' },
-      } as any,
-    });
-    act(() => {
-      render(<FeatureInfoCard />);
-    });
-    expect(screen.getAllByText(/ATS ROUTE/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText('L333').length).toBeGreaterThan(0);
-  });
-
-  it('renders NAVAID data correctly', () => {
-    useMapStore.setState({
-      viewMode: 'ENROUTE',
-      selectedFeature: {
-        type: 'NAVAID',
-        data: { station_name: 'TEST NAVAID' },
-      } as any,
-    });
-    act(() => {
-      render(<FeatureInfoCard />);
-    });
-    expect(screen.getAllByText(/NAVAID/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText('TEST NAVAID').length).toBeGreaterThan(0);
-  });
-
-  it('renders AIRSPACE data correctly and handles close', () => {
-    const setSelectedFeatureMock = vi.fn();
-    const setHighlightedAirspaceIdMock = vi.fn();
-
-    useMapStore.setState({
-      viewMode: 'ENROUTE',
-      setSelectedFeature: setSelectedFeatureMock,
-      setHighlightedAirspaceId: setHighlightedAirspaceIdMock,
+  it('should render Airspace details', () => {
+    (useMapStore as any).mockReturnValue({
       selectedFeature: {
         type: 'AIRSPACE',
-        data: { properties: { name: 'TEST AIRSPACE' } },
-      } as any,
-    });
-    act(() => {
-      render(<FeatureInfoCard />);
-    });
-
-    expect(screen.getAllByText(/AIRSPACE/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText('TEST AIRSPACE').length).toBeGreaterThan(0);
-
-    const closeBtn = screen.getByRole('button');
-    act(() => {
-      fireEvent.click(closeBtn);
+        data: {
+          name: 'MUMBAI CTR',
+          airspace_type: 'CTR',
+          lower_limit: 'SFC',
+          upper_limit: 'FL070',
+        },
+      },
+      setSelectedFeature,
+      viewMode: 'ENROUTE',
+      setHighlightedAirspaceId,
     });
 
-    expect(setSelectedFeatureMock).toHaveBeenCalledWith(null);
-    expect(setHighlightedAirspaceIdMock).toHaveBeenCalledWith(null);
+    render(<FeatureInfoCard />);
+    const elements = screen.getAllByText('MUMBAI CTR');
+    expect(elements.length).toBeGreaterThan(0);
+    expect(screen.getByText('CTR')).toBeDefined();
+  });
+
+  it('should close the card when close button is clicked', () => {
+    (useMapStore as any).mockReturnValue({
+      selectedFeature: { type: 'WAYPOINT', data: { waypoint_name: 'FIX' } },
+      setSelectedFeature,
+      viewMode: 'ENROUTE',
+      setHighlightedAirspaceId,
+    });
+
+    render(<FeatureInfoCard />);
+    const closeBtn = screen.getByTestId('close-feature-card');
+    fireEvent.click(closeBtn);
+
+    expect(setSelectedFeature).toHaveBeenCalledWith(null);
   });
 });

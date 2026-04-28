@@ -18,6 +18,8 @@ import { InterleavedDeckGL } from './InterleavedDeckGL';
 import { useMapTooltip } from './tooltips/useMapTooltip';
 import { POLYGON_PAINT, POINT_PAINT } from './layers/mapStyles';
 import { FeatureInfoCard } from './FeatureInfoCard';
+import { WindTooltip } from './tooltips/WindTooltip';
+import { useWindTooltip } from './tooltips/useWindTooltip';
 
 const TERMINAL_TERRAIN = { source: 'maptiler-terrain', exaggeration: 1 };
 const TERMINAL_INTERACTIVE_LAYERS = ['mvt-points', 'mvt-polygons'];
@@ -126,6 +128,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
   const overlayRef = useRef<MapboxOverlay | null>(null);
   const hoveredRnpApproachIdRef = useRef<string | null>(null);
   const [hoveredRnpApproachId, setHoveredRnpApproachId] = useState<string | null>(null);
+  const { windHoverInfo, handleWindHover } = useWindTooltip();
 
   const { overlaidLayers, interleavedLayers } = useDeckLayers({
     aerodromes,
@@ -266,17 +269,24 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     [setSelectedFeature, setHighlightedAirspaceId],
   );
 
-  const handleDeckHover = useCallback((info: any) => {
-    if (!overlayRef.current) return;
+  const handleDeckHover = useCallback(
+    (info: any) => {
+      // 1. Wind Hover Logic
+      handleWindHover(info);
 
-    const picked = overlayRef.current.pickObject({ x: info.x, y: info.y, radius: 5 });
-    const pickedId = picked?.object?.entry_waypoint ?? null;
+      // 2. RNP Hover Logic
+      if (!overlayRef.current) return;
 
-    if (hoveredRnpApproachIdRef.current === pickedId) return;
+      const picked = overlayRef.current.pickObject({ x: info.x, y: info.y, radius: 5 });
+      const pickedId = picked?.object?.entry_waypoint ?? null;
 
-    hoveredRnpApproachIdRef.current = pickedId;
-    setHoveredRnpApproachId(pickedId);
-  }, []);
+      if (hoveredRnpApproachIdRef.current === pickedId) return;
+
+      hoveredRnpApproachIdRef.current = pickedId;
+      setHoveredRnpApproachId(pickedId);
+    },
+    [handleWindHover],
+  );
 
   const onOverlayCreated = useCallback((o: MapboxOverlay | null) => {
     overlayRef.current = o;
@@ -357,6 +367,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
         </Map>
       </DeckGL>
       <FeatureInfoCard />
+      {windHoverInfo && <WindTooltip {...windHoverInfo} />}
     </div>
   );
 }

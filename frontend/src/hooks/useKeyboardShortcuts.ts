@@ -24,6 +24,8 @@ export function useKeyboardShortcuts({
     setSelectedRouteIds,
     selectedFeature,
     setSelectedFeature,
+    isWindMode,
+    setIsWindMode,
   } = useMapStore();
 
   useEffect(() => {
@@ -33,6 +35,8 @@ export function useKeyboardShortcuts({
       if (e.key === 'Escape') {
         if (sectionModalOpen) {
           onCloseSectionModal();
+        } else if (isWindMode) {
+          setIsWindMode(false);
         } else if (viewMode === 'TERMINAL' || activeAirport) {
           returnToEnroute();
         } else if (selectedRouteIds?.length > 0 || selectedFeature) {
@@ -58,5 +62,7 @@ export function useKeyboardShortcuts({
     selectedFeature,
     setSelectedFeature,
     cancelPendingSelection,
+    isWindMode,
+    setIsWindMode,
   ]);
 }

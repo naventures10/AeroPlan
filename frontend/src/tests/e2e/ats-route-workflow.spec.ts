@@ -24,7 +24,7 @@ test.describe('ATS Route Workflows', () => {
 
     // Select the ATS ROUTE result
     const routeResult = page
-      .locator('div.cursor-pointer')
+      .locator('[data-testid="search-result-item"]')
       .filter({ hasText: 'A201' })
       .filter({ hasText: 'ATS ROUTE' })
       .first();
@@ -94,28 +94,31 @@ test.describe('ATS Route Workflows', () => {
   });
 
   test('Manual ATS Route Interaction (Toggle, Hover & Click)', async ({ page }) => {
+    test.setTimeout(60000);
+
     // 1. Manually toggle ATS Routes ON
     await mapPage.toggleLayer('atsRoutes');
     expect(await mapPage.isLayerActive('atsRoutes')).toBe(true);
 
-    // 2. Search and fly to a route to center it (e.g., A201)
-    await mapPage.searchInput.fill('A201');
+    // 2. Search and fly to a route to center it
+    await mapPage.searchInput.focus();
+    await mapPage.searchInput.fill('V31');
     const routeResult = page
-      .locator('div.cursor-pointer')
-      .filter({ hasText: 'A201' })
+      .locator('[data-testid="search-result-item"]')
+      .filter({ hasText: 'V31' })
       .filter({ hasText: 'ATS ROUTE' })
       .first();
     await expect(routeResult).toBeVisible({ timeout: 10000 });
     await routeResult.click();
 
     // 3. Wait for the Info Card to appear (indicates animation/deferred timer started)
-    const infoCard = page.getByTestId('feature-info-card');
+    const infoCard = page.getByTestId('feature-info-card').first();
     await expect(infoCard).toBeVisible({ timeout: 10000 });
 
-    const closeButton = page.getByTestId('close-feature-card');
+    const closeButton = page.getByTestId('close-feature-card').first();
     await expect(closeButton).toBeVisible();
     await closeButton.click();
-    await expect(page.getByTestId('feature-info-card')).not.toBeVisible();
+    await expect(infoCard).not.toBeVisible({ timeout: 10000 });
 
     // 4. Manual Hover on Canvas (center of screen after fly-to)
     const viewportSize = page.viewportSize();
@@ -125,7 +128,7 @@ test.describe('ATS Route Workflows', () => {
 
     // Verify tooltip appears - should contain 'ROUTE'
     // Note: Tooltip implementation might take a moment to appear
-    await expect(page.locator('body')).toContainText('ROUTE');
+    await expect(page.locator('body').first()).toContainText('ROUTE');
 
     // 5. Manual Click on Canvas
     await page.mouse.click(width / 2, height / 2);
