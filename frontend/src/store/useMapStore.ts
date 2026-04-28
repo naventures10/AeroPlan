@@ -139,16 +139,22 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   viewMode: 'ENROUTE',
   setViewMode: (mode) =>
-    set({
-      viewMode: mode,
-      ...(mode === 'ENROUTE'
-        ? {
-            selectedRnpProcedureId: null,
-            selectedRnpChartKey: null,
-            selectedRnpBounds: null,
-            selectedRnpApproachId: null,
-          }
-        : {}),
+    set((state) => {
+      return {
+        viewMode: mode,
+        ...(mode === 'ENROUTE'
+          ? {
+              selectedRnpProcedureId: null,
+              selectedRnpChartKey: null,
+              selectedRnpBounds: null,
+              selectedRnpApproachId: null,
+            }
+          : {
+              // Automatically disable wind layer when entering Terminal mode
+              isWindMode: false,
+              activeLayers: { ...state.activeLayers, windlayer: false },
+            }),
+      };
     }),
 
   activeAerodromeMetadata: null,
@@ -175,7 +181,21 @@ export const useMapStore = create<MapState>((set, get) => ({
   toggleLayer: (layer) =>
     set((state) => {
       const newActiveLayers = { ...state.activeLayers };
+
+      // Prevent enabling windlayer if in TERMINAL mode or if map is tilted
+      if (
+        layer === 'windlayer' &&
+        !newActiveLayers.windlayer &&
+        (state.viewMode === 'TERMINAL' || state.viewState.pitch > 0)
+      ) {
+        return state;
+      }
+
       newActiveLayers[layer] = !newActiveLayers[layer];
+
+      if (layer === 'windlayer') {
+        return { activeLayers: newActiveLayers, isWindMode: newActiveLayers.windlayer };
+      }
 
       if (layer === 'wacMap' && newActiveLayers.wacMap) {
         newActiveLayers.ercMap = false;
@@ -203,13 +223,21 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   activeAirport: null,
   setActiveAirport: (code) =>
-    set({
+    set((state) => ({
       activeAirport: code,
       selectedRnpProcedureId: null,
       selectedRnpChartKey: null,
       selectedRnpBounds: null,
       selectedRnpApproachId: null,
-    }),
+      // Selecting an airport implies moving towards Terminal view/details
+      ...(code
+        ? {
+            viewMode: 'TERMINAL',
+            isWindMode: false,
+            activeLayers: { ...state.activeLayers, windlayer: false },
+          }
+        : {}),
+    })),
 
   selectedRnpProcedureId: null,
   selectedRnpChartKey: null,
@@ -218,13 +246,17 @@ export const useMapStore = create<MapState>((set, get) => ({
   setSelectedRnpApproachId: (id) => set({ selectedRnpApproachId: id }),
 
   setSelectedRnpProcedure: (payload) =>
-    set(
+    set((state) =>
       payload
         ? {
             selectedRnpProcedureId: payload.procedureId,
             selectedRnpChartKey: payload.chartKey,
             selectedRnpBounds: payload.bounds,
             selectedRnpApproachId: null, // Reset approach ID on new procedure
+            // RNP procedures are Terminal-only
+            viewMode: 'TERMINAL',
+            isWindMode: false,
+            activeLayers: { ...state.activeLayers, windlayer: false },
           }
         : {
             selectedRnpProcedureId: null,
@@ -287,16 +319,32 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   isWindMode: false,
   setIsWindMode: (enabled) =>
-    set((state) => ({
-      isWindMode: enabled,
-      activeLayers: { ...state.activeLayers, windlayer: enabled },
-    })),
+    set((state) => {
+      // Prevent enabling if in TERMINAL mode or if map is tilted
+      if (enabled && (state.viewMode === 'TERMINAL' || state.viewState.pitch > 0)) {
+        return state;
+      }
+      return {
+        isWindMode: enabled,
+        activeLayers: { ...state.activeLayers, windlayer: enabled },
+      };
+    }),
 
   // Basic Setters
-  setViewState: (viewState) => set({ viewState }),
+  setViewState: (viewState) =>
+    set((state) => {
+      const nextPitch = viewState.pitch ?? state.viewState.pitch;
+      const shouldDisableWind = nextPitch > 0 && state.isWindMode;
+      return {
+        viewState,
+        ...(shouldDisableWind
+          ? { isWindMode: false, activeLayers: { ...state.activeLayers, windlayer: false } }
+          : {}),
+      };
+    }),
 
   toggleViewMode: () => {
-    const { viewMode, viewState } = get();
+    const { viewMode, viewState, activeLayers } = get();
     const newMode = viewMode === 'ENROUTE' ? 'TERMINAL' : 'ENROUTE';
     set({
       viewMode: newMode,
@@ -307,7 +355,11 @@ export const useMapStore = create<MapState>((set, get) => ({
             selectedRnpBounds: null,
             selectedRnpApproachId: null,
           }
-        : {}),
+        : {
+            // Automatically disable wind layer when entering Terminal mode
+            isWindMode: false,
+            activeLayers: { ...activeLayers, windlayer: false },
+          }),
       viewState: {
         ...viewState,
         pitch: newMode === 'TERMINAL' ? 45 : 0,
@@ -340,8 +392,15 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   // The "Search & Fly" Logic
   flyToLocation: (lng, lat, zoom = 14, pitch = 0, forceViewMode) => {
-    set({
-      viewMode: forceViewMode || (pitch > 0 ? 'TERMINAL' : 'ENROUTE'),
+    const targetMode = forceViewMode || (pitch > 0 ? 'TERMINAL' : 'ENROUTE');
+    set((state) => ({
+      viewMode: targetMode,
+      ...(targetMode === 'TERMINAL'
+        ? {
+            isWindMode: false,
+            activeLayers: { ...state.activeLayers, windlayer: false },
+          }
+        : {}),
       viewState: {
         longitude: lng,
         latitude: lat,
@@ -352,6 +411,6 @@ export const useMapStore = create<MapState>((set, get) => ({
         transitionDuration: 1200,
         transitionType: 'FLY',
       },
-    });
+    }));
   },
 }));
