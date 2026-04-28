@@ -52,14 +52,14 @@ export default function MapPage() {
       {/* Overlay Layer (Secondary Chunks) */}
       <Suspense fallback={null}>
         <div className="absolute inset-0 pointer-events-none z-10">
-          <AnimatePresence>
-            {!isWindMode ? (
+          <AnimatePresence mode="wait">
+            {!isWindMode || viewState.pitch > 0 ? (
               <motion.div
                 key="primary-ui"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.4 }}
+                transition={{ duration: 0.3 }}
                 className="absolute inset-0 pointer-events-none"
               >
                 {(activeAirport || viewMode === 'TERMINAL') && (
