@@ -12,7 +12,7 @@ frontend: ## Start the Vite dev server (React + TypeScript)
 	cd frontend && npm run dev
 
 backend: ## Start the FastAPI server (uvicorn with hot-reload)
-	cd backend && /Users/naveendevapalan/.local/bin/uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+	cd backend && /Users/naveendevapalan/.local/bin/uv run python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 
 test: ## Run all tests (frontend and backend)
@@ -32,7 +32,7 @@ test-build: ## Run frontend build
 # ── Profiling & Debugging ────────────────────────────────────────────────────
 
 debug: ## Start backend in DEBUG mode (yappi + OTel console tracing)
-	cd backend && DEBUG=true OTEL_EXPORTER=console uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+	cd backend && DEBUG=true OTEL_EXPORTER=console uv run python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 profile-start: ## Start backend profiling session (requires `make debug` running)
 	curl -X POST http://localhost:8000/api/debug/profiling/start
@@ -72,7 +72,7 @@ profile-db: ## Show top-10 slowest queries (pg_stat_statements)
 profile-jaeger: ## Start Jaeger + backend with OTLP tracing (UI at :16686)
 	@docker start jaeger 2>/dev/null || docker run -d --name jaeger -p 16686:16686 -p 4318:4318 jaegertracing/jaeger:latest
 	@echo "\033[36mJaeger UI:\033[0m http://localhost:16686"
-	cd backend && OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+	cd backend && OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 uv run python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 refresh-mv: ## Refresh the ATS route labels materialized view
 	@docker exec eaip-postgres psql -U postgres -d aeronautical_information_system -c \
@@ -106,4 +106,3 @@ etl-metadata: ## Run the Airspace Metadata enrichment ETL
 	cd eaip_scrapper && uv run src/ETL/etl_airspace_metadata.py
 
 etl-all: etl-airspaces etl-metadata ## Run full Airspace ETL pipeline (Geom + Metadata)
-

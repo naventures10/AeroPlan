@@ -1,6 +1,7 @@
 import glob
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -26,6 +27,41 @@ os.environ.setdefault("MINIO_SECRET_KEY", "dummy")
 from app.core.config import settings
 
 logger = structlog.get_logger(__name__)
+
+
+def _resolve_gdal_cmd() -> str:
+    """Resolve the GDAL binary for non-interactive environments like cron/launchd."""
+    configured_cmd = settings.GDAL_CMD
+
+    # Respect an explicit absolute/relative path first.
+    if os.path.sep in configured_cmd:
+        if os.path.isfile(configured_cmd) and os.access(configured_cmd, os.X_OK):
+            return configured_cmd
+        raise FileNotFoundError(
+            f"Configured GDAL command does not exist or is not executable: {configured_cmd}"
+        )
+
+    resolved_cmd = shutil.which(configured_cmd)
+    if resolved_cmd:
+        return resolved_cmd
+
+    fallback_paths = [
+        f"/opt/homebrew/bin/{configured_cmd}",
+        f"/usr/local/bin/{configured_cmd}",
+    ]
+    for fallback in fallback_paths:
+        if os.path.isfile(fallback) and os.access(fallback, os.X_OK):
+            logger.warning(
+                "gdal_cmd_resolved_from_fallback",
+                configured_cmd=configured_cmd,
+                resolved_cmd=fallback,
+            )
+            return fallback
+
+    raise FileNotFoundError(
+        f"Unable to locate GDAL command '{configured_cmd}'. "
+        "Set GDAL_CMD to an absolute path or ensure it is available on PATH."
+    )
 
 
 def cleanup_old_files(output_dir: str, manifest_data: dict):
@@ -96,10 +132,11 @@ def _get_run_and_steps(now: datetime) -> tuple[int, datetime, list[int]]:
     return run_hour, run_time, steps
 
 
-def run_pipeline():
+def run_pipeline() -> bool:
     logger.info("starting_weather_pipeline")
 
     os.makedirs(settings.WEATHER_OUTPUT_DIR, exist_ok=True)
+    gdal_cmd = _resolve_gdal_cmd()
 
     now = datetime.now(UTC)
     timestamp_str = now.strftime("%Y%m%d_%H%M%S")
@@ -142,7 +179,7 @@ def run_pipeline():
         logger.error("download_failed", error=str(e))
         safe_remove_grib(raw_sfc_file)
         safe_remove_grib(raw_pl_file)
-        return
+        return False
 
     # --- STEP 2: Interpolate & Generate COGs ---
     logger.info("processing_and_interpolating_data")
@@ -255,7 +292,7 @@ def run_pipeline():
                 final_cog_path = os.path.join(settings.WEATHER_OUTPUT_DIR, final_cog_filename)
 
                 gdal_args = [
-                    settings.GDAL_CMD,
+                    gdal_cmd,
                     "-of",
                     "COG",
                     "-ot",
@@ -295,7 +332,7 @@ def run_pipeline():
         logger.error("processing_failed", error=str(e))
         safe_remove_grib(raw_pl_file)
         safe_remove_grib(raw_sfc_file)
-        return
+        return False
 
     # --- STEP 3: Generate Manifest ---
     logger.info("updating_manifest", path=manifest_path)
@@ -314,7 +351,8 @@ def run_pipeline():
 
     cleanup_old_files(settings.WEATHER_OUTPUT_DIR, manifest_data)
     logger.info("pipeline_completed_successfully")
+    return True
 
 
 if __name__ == "__main__":
-    run_pipeline()
+    raise SystemExit(0 if run_pipeline() else 1)

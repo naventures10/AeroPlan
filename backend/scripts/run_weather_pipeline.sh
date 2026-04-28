@@ -22,6 +22,9 @@ if [ -f .env ]; then
   export $(grep -v '^#' .env | xargs)
 fi
 
+# Cron/launchd often start with a minimal PATH that excludes Homebrew.
+export PATH="/opt/homebrew/bin:/usr/local/bin:/Users/naveendevapalan/.local/bin:$PATH"
+
 # Run the pipeline using uv
 # We use the full path to uv if needed, or assume it's in the PATH
 /Users/naveendevapalan/.local/bin/uv run python -m app.services.weather_pipeline >> "$LOG_FILE" 2>&1

@@ -25,8 +25,11 @@ def mock_weather_output_dir(tmp_path, monkeypatch):
 
 @pytest.fixture(autouse=True)
 def mock_gdal(monkeypatch):
-    """Mock subprocess.run for GDAL commands."""
+    """Mock GDAL command resolution and subprocess.run for pipeline tests."""
     mock_run = MagicMock()
+    monkeypatch.setattr(
+        "app.services.weather_pipeline.shutil.which", lambda cmd: f"/mock/bin/{cmd}"
+    )
     # If the process output needs to be read, we can mock it here
     monkeypatch.setattr("subprocess.run", mock_run)
     yield mock_run

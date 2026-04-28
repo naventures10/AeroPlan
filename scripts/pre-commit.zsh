@@ -50,7 +50,7 @@ run_check "Backend pyrefly" "uv run pyrefly check" "backend"
 # 2. Automated Testing
 echo "\n[2/3] Phase 2: Automated Testing..."
 run_check "Frontend Tests" "npm test" "frontend"
-run_check "Backend Tests" "uv run pytest" "backend"
+run_check "Backend Tests" "uv run python -m pytest" "backend"
 
 # 3. Build Verification
 echo "\n[3/3] Phase 3: Build Verification..."
