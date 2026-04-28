@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { Plane, Map as MapIcon, FlaskConical, ChevronRight } from 'lucide-react';
 import { Button } from '@heroui/react';
 
@@ -14,7 +14,7 @@ export default function LandingPage() {
     <div className="relative w-screen h-screen bg-[#020617] overflow-hidden flex items-center justify-center font-sans">
       {/* Background Image with Cinematic Overlay */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105 animate-subtle-zoom"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat animate-subtle-zoom"
         style={{ backgroundImage: 'url("/images/hero-bg.png")' }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/80 via-[#020617]/40 to-[#020617]/90" />

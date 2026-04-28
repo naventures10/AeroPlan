@@ -1,5 +1,5 @@
 import { useLayoutEffect } from 'react';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router';
 import LandingPage from './pages/LandingPage';
 import MapPage from './pages/MapPage';
 import ShaderLab from './pages/ShaderLab';

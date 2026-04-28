@@ -73,6 +73,9 @@ describe('MapPage Component', () => {
     act(() => {
       render(<MapPage />);
     });
+    // Check for loader during suspense
+    expect(screen.getByTestId('global-loader-mock')).toBeInTheDocument();
+
     await waitFor(() => {
       expect(screen.getByTestId('map-view-mock')).toBeInTheDocument();
     });

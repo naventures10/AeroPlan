@@ -73,6 +73,7 @@ export default function ShaderLab() {
       });
 
       let msaaTexture: GPUTexture | null = null;
+      let rafId: number;
 
       const render = () => {
         if (!context || !canvas) return;
@@ -116,7 +117,7 @@ export default function ShaderLab() {
         pass2.end();
 
         device.queue.submit([commandEncoder.finish()]);
-        requestAnimationFrame(render);
+        rafId = requestAnimationFrame(render);
       };
 
       const handleResize = () => {
@@ -141,6 +142,7 @@ export default function ShaderLab() {
 
       return () => {
         window.removeEventListener('resize', handleResize);
+        cancelAnimationFrame(rafId);
         msaaTexture?.destroy();
       };
     };

@@ -72,7 +72,7 @@ export default function MapPage() {
                 )}
 
                 {activeAirport && (viewMode === 'TERMINAL' || viewState.pitch > 0) && (
-                  <div className="absolute top-6 right-6 pointer-events-none z-40">
+                  <div className="absolute top-6 right-6 pointer-events-auto z-40">
                     <TerminalDashboard icaoCode={activeAirport} />
                   </div>
                 )}
