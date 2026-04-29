@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { MapPage } from './pages/MapPage';
 
 test.describe('Wind Layer Userflows', () => {
   test.beforeEach(async ({ page }) => {
+    const mapPage = new MapPage(page);
+
     // Intercept weather manifest to ensure stable test data
     await page.route('**/weather/weather_manifest.json', async (route) => {
       await route.fulfill({
@@ -27,13 +30,8 @@ test.describe('Wind Layer Userflows', () => {
       });
     });
 
-    await page.goto('/');
-
-    // Wait for the loader to be removed from DOM (native loader in index.html)
-    await page.waitForSelector('#loader-wrapper', { state: 'hidden', timeout: 30000 });
-
-    // Wait for the map to be ready
-    await expect(page.locator('#deckgl-overlay')).toBeVisible({ timeout: 20000 });
+    await mapPage.goto();
+    await mapPage.waitForReady();
   });
 
   test('Toggle Wind Layer and verify controls appear', async ({ page }) => {
@@ -53,6 +51,26 @@ test.describe('Wind Layer Userflows', () => {
     // 4. Close Wind Layer via the badge X button
     await page.locator('.wind-status button').click();
     await expect(page.locator('.wind-status')).not.toBeVisible();
+  });
+
+  test('Escape closes wind layer immediately after enabling it', async ({ page }) => {
+    const windToggle = page.getByTitle('Toggle windlayer');
+    await expect(windToggle).toBeVisible({ timeout: 15000 });
+
+    await windToggle.click();
+    await page.keyboard.press('Escape');
+
+    await expect(page.locator('.wind-status')).not.toBeVisible();
+
+    const windState = await page.evaluate(() => {
+      const store = (window as any).useMapStore.getState();
+      return {
+        isWindMode: store.isWindMode,
+        windlayer: store.activeLayers.windlayer,
+      };
+    });
+
+    expect(windState).toEqual({ isWindMode: false, windlayer: false });
   });
 
   test('Altitude Slider interaction', async ({ page }) => {

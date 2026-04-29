@@ -187,6 +187,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 40 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            data-testid="chart-carousel"
             className="relative flex items-center gap-2"
           >
             {/* Scroll Left */}

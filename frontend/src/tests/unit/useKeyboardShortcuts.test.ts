@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { useMapStore } from '../../store/useMapStore';
 
@@ -85,6 +85,32 @@ describe('useKeyboardShortcuts', () => {
     expect(onCloseSectionModalMock).toHaveBeenCalled();
   });
 
+  it('should disable the wind layer on Escape using the latest store state', () => {
+    renderHook(() =>
+      useKeyboardShortcuts({
+        sectionModalOpen: false,
+        onCloseSectionModal: onCloseSectionModalMock,
+        cancelPendingSelection: cancelPendingSelectionMock,
+      }),
+    );
+
+    act(() => {
+      useMapStore.setState((state) => ({
+        isWindMode: false,
+        activeLayers: { ...state.activeLayers, windlayer: true },
+      }));
+    });
+
+    const escEvent = new KeyboardEvent('keydown', { key: 'Escape' });
+    act(() => {
+      window.dispatchEvent(escEvent);
+    });
+
+    const state = useMapStore.getState();
+    expect(state.isWindMode).toBe(false);
+    expect(state.activeLayers.windlayer).toBe(false);
+  });
+
   it('should ignore input when focused in an input field', () => {
     renderHook(() =>
       useKeyboardShortcuts({
@@ -98,10 +124,14 @@ describe('useKeyboardShortcuts', () => {
     document.body.appendChild(inputElement);
     inputElement.focus();
 
-    useMapStore.setState({ viewMode: 'TERMINAL' });
+    act(() => {
+      useMapStore.setState({ viewMode: 'TERMINAL' });
+    });
 
     const escEvent = new KeyboardEvent('keydown', { key: 'Escape' });
-    window.dispatchEvent(escEvent);
+    act(() => {
+      window.dispatchEvent(escEvent);
+    });
 
     expect(returnToEnrouteMock).not.toHaveBeenCalled();
   });

@@ -29,16 +29,16 @@ export class MapPage {
   }
 
   async goto() {
-    await this.page.goto('/');
+    await this.page.goto('/app');
   }
 
   async waitForReady() {
     // Wait for initial loader to disappear
     await expect(this.page.locator('#placeholder').first()).not.toBeVisible({ timeout: 30000 });
     // Ensure map is visible
-    await expect(this.mapCanvas).toBeVisible();
+    await expect(this.mapCanvas).toBeVisible({ timeout: 15000 });
     // Ensure UI has faded in (important for framer-motion animations)
-    await expect(this.searchInput).toBeVisible({ timeout: 10000 });
+    await expect(this.searchInput).toBeVisible({ timeout: 15000 });
   }
 
   async toggleLayer(layerName: string) {

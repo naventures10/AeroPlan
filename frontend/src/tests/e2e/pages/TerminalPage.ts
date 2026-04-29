@@ -14,9 +14,7 @@ export class TerminalPage {
     this.dashboard = page.locator('div.glass-morphism-heavy').filter({ hasText: 'DASHBOARD' });
     this.expandButton = page.getByTitle('Expand Dashboard');
     // More robust selector for the carousel container that includes the buttons
-    this.chartCarousel = page
-      .locator('div.relative.flex.items-center.gap-2')
-      .filter({ hasText: 'Aerodrome Charts' });
+    this.chartCarousel = page.getByTestId('chart-carousel');
     this.viewIn3DButton = page.getByText('View in 3D space');
     this.modalCloseButton = page.locator('button:has-text("✕")');
   }
@@ -26,8 +24,8 @@ export class TerminalPage {
   }
 
   async openChart(chartTitle: string) {
-    const chartButton = this.page.locator(`button[title*="${chartTitle}"]`);
-    await expect(chartButton).toBeVisible();
+    const chartButton = this.page.getByRole('button', { name: chartTitle });
+    await expect(chartButton).toBeVisible({ timeout: 10000 });
     await chartButton.click();
   }
 

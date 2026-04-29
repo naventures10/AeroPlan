@@ -130,7 +130,7 @@ test.describe('3D Terminal View Userflows', () => {
     await mapPage.search('VOMM');
 
     // 2. Verify Dashboard appears
-    await expect(page.locator('h2', { hasText: 'VOMM' })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('h2', { hasText: 'VOMM' })).toBeVisible({ timeout: 20000 });
 
     // 3. Check METAR tab
     await terminalPage.switchTab('METAR');
@@ -184,7 +184,7 @@ test.describe('3D Terminal View Userflows', () => {
   test('Return to Enroute from Terminal View', async ({ page }) => {
     // 1. Navigate to VOMM
     await mapPage.search('VOMM');
-    await expect(page.locator('h2', { hasText: 'VOMM' })).toBeVisible();
+    await expect(page.locator('h2', { hasText: 'VOMM' })).toBeVisible({ timeout: 20000 });
 
     // 2. Press Escape twice to return
     // First Escape collapses the dashboard

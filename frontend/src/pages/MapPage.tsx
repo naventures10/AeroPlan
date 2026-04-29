@@ -52,7 +52,7 @@ export default function MapPage() {
       {/* Overlay Layer (Secondary Chunks) */}
       <Suspense fallback={null}>
         <div className="absolute inset-0 pointer-events-none z-10">
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {!isWindMode || viewState.pitch > 0 ? (
               <motion.div
                 key="primary-ui"

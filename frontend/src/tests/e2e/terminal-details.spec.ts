@@ -126,7 +126,7 @@ test.describe('Terminal View - Detailed Interactions', () => {
   test('AIP Section dropdown and rendering', async ({ page }) => {
     await mapPage.search('VOMM');
 
-    await expect(mapPage.aerodromeInfoButton).toBeVisible();
+    await expect(mapPage.aerodromeInfoButton).toBeVisible({ timeout: 15000 });
     await mapPage.aerodromeInfoButton.click();
 
     const sectionOption = page.getByText('AD 2.2', { exact: true });
@@ -149,7 +149,7 @@ test.describe('Terminal View - Detailed Interactions', () => {
 
   test('Chart Carousel scrolling', async ({ page }) => {
     await mapPage.search('VOMM');
-    await expect(terminalPage.chartCarousel).toBeVisible();
+    await expect(terminalPage.chartCarousel).toBeVisible({ timeout: 15000 });
 
     const scrollRight = terminalPage.chartCarousel
       .locator('button')

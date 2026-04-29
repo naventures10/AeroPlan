@@ -16,26 +16,33 @@ export function useKeyboardShortcuts({
   onCloseSectionModal: () => void;
   cancelPendingSelection: () => void;
 }) {
-  const {
-    viewMode,
-    activeAirport,
-    returnToEnroute,
-    selectedRouteIds,
-    setSelectedRouteIds,
-    selectedFeature,
-    setSelectedFeature,
-    isWindMode,
-    setIsWindMode,
-  } = useMapStore();
+  const { returnToEnroute, setSelectedRouteIds, setSelectedFeature, setIsWindMode } = useMapStore();
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const activeElement = document.activeElement;
+      if (
+        activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement ||
+        activeElement instanceof HTMLSelectElement ||
+        activeElement?.getAttribute('contenteditable') === 'true'
+      ) {
+        return;
+      }
 
       if (e.key === 'Escape') {
+        const {
+          viewMode,
+          activeAirport,
+          selectedRouteIds,
+          selectedFeature,
+          isWindMode,
+          activeLayers,
+        } = useMapStore.getState();
+
         if (sectionModalOpen) {
           onCloseSectionModal();
-        } else if (isWindMode) {
+        } else if (isWindMode || activeLayers.windlayer) {
           setIsWindMode(false);
         } else if (viewMode === 'TERMINAL' || activeAirport) {
           returnToEnroute();
@@ -52,17 +59,12 @@ export function useKeyboardShortcuts({
       window.removeEventListener('keydown', handleGlobalKeyDown);
     };
   }, [
-    viewMode,
-    activeAirport,
     returnToEnroute,
     sectionModalOpen,
     onCloseSectionModal,
-    selectedRouteIds,
     setSelectedRouteIds,
-    selectedFeature,
     setSelectedFeature,
     cancelPendingSelection,
-    isWindMode,
     setIsWindMode,
   ]);
 }
