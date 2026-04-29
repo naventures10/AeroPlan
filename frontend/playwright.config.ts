@@ -48,6 +48,9 @@ export default defineConfig({
     command: 'npm run dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
+    env: {
+      VITE_E2E: 'true',
+    },
   },
 
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */

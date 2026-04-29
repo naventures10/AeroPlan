@@ -36,8 +36,30 @@ const RASTER_PAINT = {
 };
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
-const MAP_STYLE = `https://api.maptiler.com/maps/hybrid/style.json?key=${MAPTILER_KEY}`;
-const TERRAIN_SOURCE_URL = `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${MAPTILER_KEY}`;
+const IS_E2E = import.meta.env.VITE_E2E === 'true';
+
+// Mock style for E2E tests to save MapTiler quota
+const MOCK_STYLE = {
+  version: 8 as const,
+  sources: {},
+  layers: [
+    {
+      id: 'background',
+      type: 'background' as const,
+      paint: { 'background-color': '#0a0f1e' },
+    },
+  ],
+};
+
+const MAP_STYLE =
+  IS_E2E || !MAPTILER_KEY
+    ? (MOCK_STYLE as any)
+    : `https://api.maptiler.com/maps/hybrid/style.json?key=${MAPTILER_KEY}`;
+
+const TERRAIN_SOURCE_URL =
+  IS_E2E || !MAPTILER_KEY
+    ? ''
+    : `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${MAPTILER_KEY}`;
 
 /**
  * Custom Map Controller to:
@@ -314,7 +336,9 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
             viewMode === 'TERMINAL' ? TERMINAL_INTERACTIVE_LAYERS : EMPTY_INTERACTIVE_LAYERS
           }
         >
-          <Source id="maptiler-terrain" type="raster-dem" url={TERRAIN_SOURCE_URL} />
+          {TERRAIN_SOURCE_URL && (
+            <Source id="maptiler-terrain" type="raster-dem" url={TERRAIN_SOURCE_URL} />
+          )}
 
           {hasInterleavedLayers && (
             <InterleavedDeckGL layers={interleavedLayers} onOverlayCreated={onOverlayCreated} />
