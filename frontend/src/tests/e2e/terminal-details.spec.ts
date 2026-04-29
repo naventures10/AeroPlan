@@ -139,7 +139,7 @@ test.describe('Terminal View - Detailed Interactions', () => {
     await expect(modal).toContainText('AERODROME GEOGRAPHICAL AND ADMINISTRATIVE DATA');
     await expect(modal).toContainText('Mock Value 1');
 
-    await page
+    await modal
       .locator('button')
       .filter({ has: page.locator('svg.lucide-x') })
       .first()

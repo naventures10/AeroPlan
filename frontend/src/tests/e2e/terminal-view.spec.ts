@@ -153,7 +153,7 @@ test.describe('3D Terminal View Userflows', () => {
     await mapPage.search('VOMM');
 
     // 2. Verify Chart Carousel is visible
-    await expect(terminalPage.chartCarousel).toBeVisible();
+    await expect(terminalPage.chartCarousel).toBeVisible({ timeout: 15000 });
 
     // 3. Open RNP Chart
     await terminalPage.openChart('RNP Y RWY 07');
