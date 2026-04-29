@@ -28,7 +28,7 @@ echo "✅ Branch is current."
 
 echo "➜ Running E2E Integration Tests (Playwright)..."
 # We run from root so we need to enter frontend
-(cd frontend && npm run test:e2e)
+(cd frontend && npm run test:e2e -- --reporter=list)
 EXIT_CODE_E2E=$?
 
 if [ $EXIT_CODE_E2E -ne 0 ]; then

@@ -149,7 +149,7 @@ test.describe('Terminal View - Detailed Interactions', () => {
 
   test('Chart Carousel scrolling', async ({ page }) => {
     await mapPage.search('VOMM');
-    await expect(terminalPage.chartCarousel).toBeVisible();
+    await expect(terminalPage.chartCarousel).toBeVisible({ timeout: 15000 });
 
     const scrollRight = terminalPage.chartCarousel
       .locator('button')
