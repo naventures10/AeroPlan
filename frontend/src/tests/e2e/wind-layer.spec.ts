@@ -87,14 +87,17 @@ test.describe('Wind Layer Userflows', () => {
 
     await expect(page.locator('.wind-altitude')).toBeVisible();
 
-    // Check initial altitude display
-    await expect(page.locator('.wind-altitude__display')).toHaveText('Surface');
+    // Check initial altitude display — should show Surface
+    await expect(page.getByTestId('wind-altitude-display')).toContainText('SFC');
 
-    // Change altitude via slider
-    const slider = page.locator('.wind-altitude__input');
-    await slider.fill('10'); // Should be FL100
+    // Step up through levels by clicking the up button
+    const upBtn = page.getByTestId('altitude-up');
+    // Click up 10 times to reach FL100 (each click is 1000ft)
+    for (let i = 0; i < 10; i++) {
+      await upBtn.click();
+    }
 
-    await expect(page.locator('.wind-altitude__display')).toHaveText('FL100');
+    await expect(page.getByTestId('wind-altitude-display')).toContainText('FL100');
   });
 
   test('Timeline playback interaction', async ({ page }) => {

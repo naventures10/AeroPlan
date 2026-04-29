@@ -19,6 +19,8 @@ describe('Wind UI Controls', () => {
     it('renders and displays correct altitude label', () => {
       const { getByText, rerender } = render(<AltitudeSlider />);
 
+      // Default is 0 = SFC / Surface
+      expect(getByText('SFC')).toBeInTheDocument();
       expect(getByText('Surface')).toBeInTheDocument();
 
       act(() => {
@@ -31,15 +33,31 @@ describe('Wind UI Controls', () => {
         useMapStore.setState({ windAltitude: 3 });
       });
       rerender(<AltitudeSlider />);
-      expect(getByText('3000 ft')).toBeInTheDocument();
+      expect(getByText('3000')).toBeInTheDocument();
     });
 
-    it('calls setWindAltitude on slider change', () => {
-      const { getByRole } = render(<AltitudeSlider />);
-      const slider = getByRole('slider');
+    it('steps altitude up when clicking the up button', () => {
+      const { getByTestId } = render(<AltitudeSlider />);
+      const upBtn = getByTestId('altitude-up');
 
-      fireEvent.change(slider, { target: { value: '25' } });
-      expect(useMapStore.getState().windAltitude).toBe(25);
+      // Starting at 0 (Surface), step up to 1 (1000 ft)
+      fireEvent.click(upBtn);
+      expect(useMapStore.getState().windAltitude).toBe(1);
+
+      // Step up again to 2 (2000 ft)
+      fireEvent.click(upBtn);
+      expect(useMapStore.getState().windAltitude).toBe(2);
+    });
+
+    it('steps altitude down when clicking the down button', () => {
+      act(() => {
+        useMapStore.setState({ windAltitude: 3 });
+      });
+      const { getByTestId } = render(<AltitudeSlider />);
+      const downBtn = getByTestId('altitude-down');
+
+      fireEvent.click(downBtn);
+      expect(useMapStore.getState().windAltitude).toBe(2);
     });
   });
 
