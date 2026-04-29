@@ -197,7 +197,7 @@ test.describe('Search Bar Userflow', () => {
     await expect(mapPage.searchInput).toHaveValue('VATLA');
 
     // 2. Verify clear button (X) is visible
-    const clearButton = page.locator('button').filter({ has: page.locator('svg.lucide-x') });
+    const clearButton = page.getByTestId('search-clear-button');
     await expect(clearButton).toBeVisible();
 
     // 3. Click clear button

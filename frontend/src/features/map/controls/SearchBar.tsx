@@ -104,6 +104,7 @@ export default function SearchBar({
                   size="sm"
                   variant="light"
                   radius="full"
+                  data-testid="search-clear-button"
                   onPress={() => {
                     setSearchInput('');
                   }}
