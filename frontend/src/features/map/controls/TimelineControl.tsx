@@ -37,27 +37,30 @@ export function TimelineControl({ timestamps }: TimelineControlProps) {
       <div className="wind-timeline__header">
         <button className="wind-timeline__play-circle" onClick={onPlayToggle}>
           {windIsPlaying ? (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M6 4h4v16H6zm8 0h4v16h-4z" />
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="6" y="4" width="4" height="16" rx="1" />
+              <rect x="14" y="4" width="4" height="16" rx="1" />
             </svg>
           ) : (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <path d="M8 5v14l11-7z" />
             </svg>
           )}
         </button>
 
         <div className="wind-timeline__info-center">
-          <span className="wind-timeline__title-main">Wind Speed</span>
+          <span className="wind-timeline__title-main">WIND FORECAST</span>
           <span className="wind-timeline__date-main">{activeTime.date}</span>
         </div>
 
         <div className="wind-timeline__header-right" />
       </div>
 
+      {/* Slider track area */}
       <div className="wind-timeline__interactive-track">
         <div className="wind-timeline__track-base">
           <div className="wind-timeline__track-fill" style={{ width: `${currentPercent}%` }} />
+          {/* Now marker — thin line on the track itself */}
           <div className="wind-timeline__now-pointer" style={{ left: `${nowPercent}%` }} />
         </div>
 
@@ -73,19 +76,24 @@ export function TimelineControl({ timestamps }: TimelineControlProps) {
             setWindIsPlaying(false);
           }}
         />
+      </div>
 
-        <div className="wind-timeline__ticks-labels">
-          {timestamps.map((t, i) => (
-            <div key={i} className="wind-timeline__tick-wrapper">
-              <span className={`wind-timeline__tick-text ${i === currentIndex ? 'active' : ''}`}>
-                {t.label}
-              </span>
-            </div>
-          ))}
-
-          <div className="wind-timeline__now-label-container" style={{ left: `${nowPercent}%` }}>
-            <span className="wind-timeline__now-text">Now</span>
+      {/* Time labels row — separate from the track */}
+      <div className="wind-timeline__ticks-labels">
+        {timestamps.map((t, i) => (
+          <div key={i} className="wind-timeline__tick-wrapper">
+            <span className={`wind-timeline__tick-text ${i === currentIndex ? 'active' : ''}`}>
+              {t.label}
+            </span>
           </div>
+        ))}
+      </div>
+
+      {/* NOW label — completely below everything, using absolute left % */}
+      <div className="wind-timeline__now-row">
+        <div className="wind-timeline__now-label-container" style={{ left: `${nowPercent}%` }}>
+          <div className="wind-timeline__now-diamond" />
+          <span className="wind-timeline__now-text">NOW</span>
         </div>
       </div>
     </div>

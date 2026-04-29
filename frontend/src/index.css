@@ -225,70 +225,122 @@ body,
   transform: translateY(50%);
 }
 
-/* ── Vertical Altitude Slider ── */
+/* ── Vertical Altitude Stepper (Right-Center) ── */
 .wind-altitude {
   position: absolute;
-  top: 20px;
+  top: 50%;
   right: 20px;
+  transform: translateY(-50%);
   z-index: 20;
-  padding: 16px 12px;
+  padding: 12px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 240px;
-  width: 70px;
+  gap: 4px;
+  width: 52px;
+  max-height: 90vh;
 }
 
 .wind-altitude__title {
-  font-size: 10px;
+  font-size: 8px;
   font-weight: 800;
-  color: #94a3b8;
-  margin-bottom: 8px;
+  color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.15em;
   text-align: center;
+  margin-bottom: 2px;
+}
+
+.wind-altitude__step-btn {
+  width: 32px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wind-altitude__step-btn:hover:not(.disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.wind-altitude__step-btn:active:not(.disabled) {
+  transform: scale(0.92);
+}
+
+.wind-altitude__step-btn.disabled {
+  opacity: 0.2;
+  cursor: default;
 }
 
 .wind-altitude__display {
-  font-size: 11px;
-  font-weight: 800;
-  color: #3b82f6;
-  margin-bottom: 12px;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.wind-altitude__slider-wrapper {
-  position: relative;
-  flex-grow: 1;
-  width: 100%;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  padding-bottom: 10px;
+  gap: 0px;
+  padding: 2px 0;
 }
 
-.wind-altitude__input {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 140px;
+.wind-altitude__value {
+  font-size: 13px;
+  font-weight: 900;
+  color: #3b82f6;
+  font-family: 'Inter', system-ui, monospace;
+  letter-spacing: 0.05em;
+  line-height: 1.1;
+}
+
+.wind-altitude__sublabel {
+  font-size: 7px;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Altitude Dot Indicators ── */
+.wind-altitude__dots {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 0;
+  overflow-y: auto;
+  /* Hide scrollbar but allow scrolling if ever needed */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.wind-altitude__dots::-webkit-scrollbar {
+  display: none;
+}
+
+.wind-altitude__dot {
+  width: 4px;
   height: 4px;
+  border-radius: 50%;
+  border: none;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-  transform: rotate(-90deg);
   cursor: pointer;
-  margin: 0;
-  outline: none;
+  padding: 0;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
-.wind-altitude__input::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #fff;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+.wind-altitude__dot:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.5);
+}
+
+.wind-altitude__dot.active {
+  background: #3b82f6;
+  box-shadow: 0 0 4px rgba(59, 130, 246, 0.6);
+  transform: scale(1.5);
 }
 
 /* ── Bottom Timeline Control ── */
@@ -299,24 +351,25 @@ body,
   transform: translateX(-50%);
   z-index: 20;
   width: 90%;
-  max-width: 750px;
-  padding: 12px 20px;
+  max-width: 700px;
+  padding: 14px 24px 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 .wind-timeline__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 2px;
 }
 
 .wind-timeline__play-circle {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  width: 36px;
-  height: 36px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -327,7 +380,8 @@ body,
 }
 
 .wind-timeline__play-circle:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .wind-timeline__info-center {
@@ -337,29 +391,31 @@ body,
 }
 
 .wind-timeline__title-main {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 800;
   color: #f8fafc;
+  letter-spacing: 0.12em;
 }
 
 .wind-timeline__date-main {
-  font-size: 11px;
-  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 500;
+  color: #64748b;
   margin-top: 1px;
+  letter-spacing: 0.03em;
 }
 
 .wind-timeline__header-right {
-  width: 36px;
+  width: 34px;
 }
 
 /* ── Interactive Track Layering ── */
 .wind-timeline__interactive-track {
   position: relative;
   width: 100%;
-  height: 32px;
+  height: 28px;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  align-items: center;
 }
 
 .wind-timeline__track-base {
@@ -376,17 +432,18 @@ body,
 
 .wind-timeline__track-fill {
   height: 100%;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.5);
   border-radius: 1.5px;
 }
 
-/* ── Now Pointer (Subtle Blue Line) ── */
+/* ── Now Pointer (Thin blue line on track) ── */
 .wind-timeline__now-pointer {
   position: absolute;
-  top: 0;
+  top: -6px;
+  bottom: -6px;
   width: 2px;
-  height: 100%;
   background: #3b82f6;
+  border-radius: 1px;
   z-index: 5;
   pointer-events: none;
 }
@@ -394,6 +451,9 @@ body,
 .wind-timeline__range-overlay {
   -webkit-appearance: none;
   appearance: none;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   background: transparent;
@@ -405,32 +465,29 @@ body,
 /* ── Triangle Handle (Thumb) ── */
 .wind-timeline__range-overlay::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 12px;
-  height: 10px;
+  width: 14px;
+  height: 8px;
   background: #fff;
   clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
   cursor: pointer;
-  transform: translateY(-8px);
-  /* Float above the track */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .wind-timeline__range-overlay::-moz-range-thumb {
-  width: 12px;
-  height: 10px;
+  width: 14px;
+  height: 8px;
   background: #fff;
   clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
   border: none;
   cursor: pointer;
 }
 
-/* ── Ticks and Labels ── */
+/* ── Time Labels ── */
 .wind-timeline__ticks-labels {
-  position: relative;
   width: 100%;
   display: flex;
   justify-content: space-between;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .wind-timeline__tick-wrapper {
@@ -441,28 +498,48 @@ body,
 
 .wind-timeline__tick-text {
   font-size: 10px;
-  color: #64748b;
-  font-weight: 500;
+  color: #475569;
+  font-weight: 600;
   white-space: nowrap;
+  transition: color 0.15s;
 }
 
 .wind-timeline__tick-text.active {
-  color: #fff;
+  color: #f1f5f9;
+}
+
+/* ── NOW Row (below labels, completely separate) ── */
+.wind-timeline__now-row {
+  position: relative;
+  width: 100%;
+  height: 16px;
 }
 
 .wind-timeline__now-label-container {
   position: absolute;
   top: 0;
-  /* Align with other labels */
   transform: translateX(-50%);
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.wind-timeline__now-diamond {
+  width: 6px;
+  height: 6px;
+  background: #3b82f6;
+  transform: rotate(45deg);
+  border-radius: 1px;
 }
 
 .wind-timeline__now-text {
-  font-size: 10px;
+  font-size: 8px;
   font-weight: 900;
   color: #3b82f6;
   text-transform: uppercase;
+  letter-spacing: 0.15em;
 }
 
 /* ── Hover Tooltip ── */
