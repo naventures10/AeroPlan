@@ -31,7 +31,6 @@ test.describe('Wind Layer Userflows', () => {
     });
 
     await mapPage.goto();
-    await page.getByRole('button', { name: 'Launch Application' }).click();
     await mapPage.waitForReady();
   });
 

@@ -29,7 +29,7 @@ export class MapPage {
   }
 
   async goto() {
-    await this.page.goto('/');
+    await this.page.goto('/app');
   }
 
   async waitForReady() {
