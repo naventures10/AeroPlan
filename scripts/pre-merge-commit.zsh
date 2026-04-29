@@ -26,6 +26,19 @@ fi
 echo "✅ Branch is current."
 
 
+echo "➜ Running E2E Integration Tests (Playwright)..."
+# We run from root so we need to enter frontend
+(cd frontend && npm run test:e2e)
+EXIT_CODE_E2E=$?
+
+if [ $EXIT_CODE_E2E -ne 0 ]; then
+    echo "❌ E2E Tests Failed!"
+    echo "   Please fix regressions before merging."
+    exit 1
+fi
+echo "✅ E2E Tests passed."
+
+
 echo "➜ Starting CodeRabbit Autonomous Review (Live Progress)..."
 
 # Run CodeRabbit review and capture output
