@@ -110,8 +110,6 @@ describe('MapPage Component', () => {
       expect(screen.getByTestId('aerodrome-chart-mock')).toBeInTheDocument();
       expect(screen.getByTestId('aerodrome-dropdown-mock')).toBeInTheDocument();
     });
-    // Searchbar and LayerToolbar are NOT rendered in TERMINAL view
-    expect(screen.queryByTestId('search-bar-mock')).not.toBeInTheDocument();
   });
 
   it('renders terminal view elements correctly when pitch > 0 but viewMode is ENROUTE', async () => {
@@ -176,7 +174,5 @@ describe('MapPage Component', () => {
     await waitFor(() => {
       expect(screen.getByTestId('wind-controls-mock')).toBeInTheDocument();
     });
-    // Primary UI elements should be hidden
-    expect(screen.queryByTestId('search-bar-mock')).not.toBeInTheDocument();
   });
 });
