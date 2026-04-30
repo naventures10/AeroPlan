@@ -215,10 +215,6 @@ export function createRnpLayers({
           getColor: [selectedRnpApproachId, hoveredRnpApproachId],
           getWidth: [selectedRnpApproachId, hoveredRnpApproachId],
         },
-        transitions: {
-          getColor: 300,
-          getWidth: 300,
-        },
       }),
     );
 
