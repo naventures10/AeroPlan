@@ -1,7 +1,8 @@
-struct ShaderUniforms {
+struct Uniforms {
     resolution: vec2<f32>,
     cursor: vec2<f32>,
     metadata: vec4<f32>,
+    metadata2: vec4<f32>,
 };
 
 struct OutlineInstance {
@@ -17,17 +18,17 @@ struct VertexOutput {
     @location(3) world_pos: vec2<f32>,
 };
 
-@group(0) @binding(0) var<uniform> uniforms: ShaderUniforms;
+@group(0) @binding(0) var<uniform> ubo: Uniforms;
 
 const TWO_PI: f32 = 6.28318530718;
 const PI: f32 = 3.14159265359;
 
-fn aspectify(point: vec2<f32>, aspect: f32) -> vec2<f32> {
-    return (point - 0.5) * vec2<f32>(aspect, 1.0);
+fn aspectify(point: vec2<f32>) -> vec2<f32> {
+    return point * 2.0 - 1.0;
 }
 
 fn world_to_clip(point: vec2<f32>, aspect: f32) -> vec4<f32> {
-    return vec4<f32>(point.x / aspect * 2.0, point.y * 2.0, 0.0, 1.0);
+    return vec4<f32>(point.x / aspect, point.y, 0.0, 1.0);
 }
 
 @vertex
@@ -45,9 +46,9 @@ fn vs_main(
     );
 
     let local = corners[vertex_index];
-    let aspect = uniforms.resolution.x / max(uniforms.resolution.y, 1.0);
-    let a_world = aspectify(instance.start, aspect);
-    let b_world = aspectify(instance.end, aspect);
+    let aspect = ubo.resolution.x / max(ubo.resolution.y, 1.0);
+    let a_world = aspectify(instance.start);
+    let b_world = aspectify(instance.end);
     let delta = b_world - a_world;
     let length_delta = max(length(delta), 0.0001);
     let tangent = delta / length_delta;
@@ -66,7 +67,7 @@ fn vs_main(
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    let time = uniforms.metadata.x;
+    let time = ubo.metadata.x;
     
     // Core line profile
     let line_core = smoothstep(1.0, 0.2, abs(in.local.y));

@@ -1,0 +1,23 @@
+{
+  "count": 166,
+  "min_lon": 69.655703,
+  "max_lon": 96.133333,
+  "min_lat": 8.474722,
+  "max_lat": 34.132639,
+  "max_range": 26.47762999999999,
+  "layout": [
+    "X",
+    "Y",
+    "Size",
+    "Type"
+  ],
+  "type_mapping": {
+    "VOR": 0.0,
+    "VOR/DME": 1.0,
+    "NDB": 2.0,
+    "DME": 3.0,
+    "DVOR": 4.0,
+    "DVOR/DME": 5.0,
+    "UNKNOWN": 6.0
+  }
+}
