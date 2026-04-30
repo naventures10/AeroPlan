@@ -149,4 +149,21 @@ describe('createRnpLayers', () => {
     expect(scatter.props.getFillColor({ role: 'iaf' })).toEqual([255, 100, 200, 255]); // roleColor
     expect(scatter.props.getFillColor({ role: 'something_else' })).toEqual([255, 191, 0, 220]); // COLOR_WAYPOINT
   });
+
+  it('approach linestrings PathLayer should not have transitions (flicker fix)', () => {
+    const ctx = {
+      pathData: mockPathData,
+      selectedRnpApproachId: null,
+      hoveredRnpApproachId: null,
+      setSelectedRnpApproachId: vi.fn(),
+      rnpCurrentTime: 0,
+      approachDist: 0,
+    };
+
+    const layers = createRnpLayers(ctx as any);
+    const linestring = layers[0];
+    expect(linestring.id).toBe('rnp-approach-linestrings-layer');
+    // transitions cause flicker — they must not be present
+    expect(linestring.props.transitions).toBeFalsy();
+  });
 });

@@ -108,10 +108,10 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
   return (
     <motion.div
       ref={containerRef}
-      initial={{ x: 500, opacity: 0 }}
-      animate={{ opacity: 1, x: isCollapsed ? 500 : 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      exit={{ x: 500, opacity: 0 }}
+      exit={{ opacity: 0 }}
       className="h-fit max-h-[calc(100vh-22rem)] flex pointer-events-none"
     >
       <motion.div
@@ -171,12 +171,19 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
       </motion.div>
 
       <motion.div
-        animate={{ opacity: isCollapsed ? 0 : 1 }}
+        animate={{
+          width: isCollapsed ? 0 : 500,
+          opacity: isCollapsed ? 0 : 1,
+          paddingLeft: isCollapsed ? 0 : 16,
+          borderWidth: isCollapsed ? 0 : 1,
+        }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className={`bg-zinc-900/40 relative flex flex-col shrink-0 w-[500px] border border-l-0 border-zinc-800/60 rounded-r-3xl glass-morphism-heavy shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] z-10 ${
-          isCollapsed ? 'pointer-events-none' : 'pointer-events-auto'
+        className={`bg-zinc-900/40 relative flex flex-col shrink-0 overflow-hidden border-l-0 border-zinc-800/60 rounded-r-3xl glass-morphism-heavy z-10 ${
+          isCollapsed
+            ? 'pointer-events-none shadow-none'
+            : 'pointer-events-auto shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)]'
         }`}
-        style={{ marginLeft: -16, paddingLeft: 16 }}
+        style={{ marginLeft: -16 }}
       >
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center">

@@ -29,6 +29,21 @@ export class MapPage {
   }
 
   async goto() {
+    // Intercept and fulfill/abort MapTiler requests to prevent actual API calls during testing
+    await this.page.route('**/*maptiler.com*/**', async (route) => {
+      const url = route.request().url();
+      if (url.includes('style.json')) {
+        // MapLibre requires a valid style JSON to initialize without crashing
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ version: 8, sources: {}, layers: [] }),
+        });
+      } else {
+        await route.abort();
+      }
+    });
+
     await this.page.goto('/app');
   }
 
