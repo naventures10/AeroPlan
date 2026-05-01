@@ -323,7 +323,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
         onViewStateChange={onViewStateChange}
         getTooltip={getTooltip}
         pickingRadius={5}
-        useDevicePixels={false}
+        useDevicePixels={Math.min(window.devicePixelRatio, 1.5)}
         onClick={handleDeckClick}
         onHover={handleDeckHover}
       >

@@ -82,32 +82,44 @@ function inferAirspaceType(feature: any): string {
 }
 
 function getTextForFeature(f: any, zoom: number, layers: any): string {
+  const props = f.properties;
+  if (!props) return '';
+
   const type = inferAirspaceType(f);
   const h = getHierarchy(type);
 
   // Progressive disclosure check
   if (zoom < h.minZoom) return '';
 
+  // Layer Toggle Logic - early exit before expensive string work
   const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = layers;
+  if (type === 'FIR') {
+    if (!airspaceFIR) return '';
+  } else if (['DANGER', 'PROHIBITED', 'RESTRICTED', 'TRA', 'TSA', 'ADIZ'].includes(type)) {
+    if (!airspaceRegulated) return '';
+  } else if (['CTR', 'CTA_LOWER', 'CTA_UPPER'].includes(type)) {
+    if (!airspaceControl) return '';
+  } else if (type === 'UPR_ZONE') {
+    if (!airspaceUpr) return '';
+  }
 
-  // Layer Toggle Logic
-  if (type === 'FIR' && !airspaceFIR) return '';
-  if (
-    ['DANGER', 'PROHIBITED', 'RESTRICTED', 'TRA', 'TSA', 'ADIZ'].includes(type) &&
-    !airspaceRegulated
-  )
-    return '';
-  if (['CTR', 'CTA_LOWER', 'CTA_UPPER'].includes(type) && !airspaceControl) return '';
-  if (type === 'UPR_ZONE' && !airspaceUpr) return '';
-
-  const rawName = (f.properties?.identification || f.properties?.name || '').toString().trim();
+  const rawName = props.identification || props.name || '';
   if (!rawName) return '';
 
-  // Truncate long descriptive names - more aggressively (20 chars)
-  const processedName = rawName.split(/\||\n|I Area bounded/)[0].trim();
-  const cleanName = processedName.substring(0, 20);
+  const nameStr = String(rawName);
+  // Faster truncation without heavy regex if possible
+  let processedName = nameStr;
+  const splitIdx = nameStr.search(/\||\n|I Area/);
+  if (splitIdx !== -1) {
+    processedName = nameStr.substring(0, splitIdx).trim();
+  } else {
+    processedName = nameStr.trim();
+  }
 
-  return processedName.length > 20 ? `${cleanName}...` : cleanName;
+  if (processedName.length > 20) {
+    return processedName.substring(0, 20) + '...';
+  }
+  return processedName;
 }
 
 // ── Factory ──────────────────────────────────────────────────────────
@@ -218,7 +230,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       backgroundPadding: [4, 2],
       fontWeight: 600,
       fontStyle: 'italic',
-      textFontSettings: { sdf: true },
+      textFontSettings: { sdf: false },
       textFontFamily: 'Inter, sans-serif',
       minZoom: 2,
       updateTriggers: {
@@ -228,7 +240,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
         getBackgroundColor: [ctx.highlightedAirspaceId, effectiveZoom],
         getBorderColor: [ctx.highlightedAirspaceId, effectiveZoom],
       },
-      binary: true,
+      binary: false,
     }),
   ];
 }

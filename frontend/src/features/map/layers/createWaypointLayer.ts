@@ -69,7 +69,7 @@ export function createWaypointLayer(ctx: LayerContext): any[] {
         getIconSize: [selectedFeature],
         getTextSize: [isZoomWaypoints, activeLayers.atsRoutes],
       },
-      binary: true,
+      binary: false,
       transitions: {
         getIconColor: 300,
         getIconSize: 300,
