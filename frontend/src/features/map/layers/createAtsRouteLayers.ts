@@ -154,6 +154,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         getLineColor: [selectedRouteIds, activeLayers.atsRoutes],
         getLineWidth: [selectedRouteIds, activeLayers.atsRoutes],
       },
+      binary: true,
       transitions: {
         getLineColor: 300,
         getLineWidth: 300,
@@ -376,6 +377,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         getTextColor: [selectedRouteIds, selectedRouteType, activeLayers.atsRoutes],
         getTextSize: [isZoomAtsWaypoints, selectedRouteIds, activeLayers.atsRoutes],
       },
+      binary: true,
       transitions: {
         getIconColor: 300,
         getIconSize: 300,
