@@ -52,6 +52,7 @@ postgres:
       geometry_column: wkb_geometry
       srid: 4326
       buffer: 256
+      minzoom: 2
       properties:
         airspace_type: "varchar"
         layer_name: "varchar"
@@ -63,6 +64,7 @@ postgres:
       geometry_column: geom
       srid: 4326
       buffer: 256
+      minzoom: 2
       properties:
         airspace_type: "varchar"
         name: "varchar"
