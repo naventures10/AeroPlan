@@ -59,6 +59,7 @@ export function createNavaidLayer(ctx: LayerContext): any[] {
         getIconSize: [selectedFeature],
         getTextSize: [isZoomNavaids],
       },
+      binary: false,
       transitions: {
         getIconColor: 300,
         getIconSize: 300,

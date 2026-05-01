@@ -1,5 +1,5 @@
 import { MVTLayer } from '@deck.gl/geo-layers';
-import { CollisionFilterExtension } from '@deck.gl/extensions';
+import { EXTENSIONS } from './constants';
 import type { LayerContext } from './types';
 
 // ── Per-type RGBA theming ────────────────────────────────────────────
@@ -40,6 +40,8 @@ const AIRSPACE_HIERARCHY: Record<string, { minZoom: number; priority: number }> 
 
 const DEFAULT_HIERARCHY = { minZoom: 7.5, priority: 10 };
 
+const ZOOM_THRESHOLDS = [2.0, 2.5, 4.0, 4.5, 6.0, 6.5, 7.0, 7.5];
+
 const DEFAULT_STROKE: [number, number, number, number] = [128, 128, 128, 60];
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -48,53 +50,86 @@ function getHierarchy(type: string) {
   return AIRSPACE_HIERARCHY[type] || DEFAULT_HIERARCHY;
 }
 
+// Small cache for identification-based type inference to avoid regex overhead on every feature
+const TYPE_CACHE = new Map<string, string>();
+
 function inferAirspaceType(feature: any): string {
-  const rawType = (feature.properties?.airspace_type || '').toString().trim().toUpperCase();
-  if (rawType) return rawType;
+  const props = feature.properties;
+  if (!props) return '';
 
-  const ident = (feature.properties?.identification || '').toString().toUpperCase();
-  if (ident.match(/\bV[AEOI]D\b/)) return 'DANGER';
-  if (ident.match(/\bV[AEOI]P\b/)) return 'PROHIBITED';
-  if (ident.match(/\bV[AEOI]R\b/)) return 'RESTRICTED';
-  if (ident.includes('TSA')) return 'TSA';
-  if (ident.includes('TRA')) return 'TRA';
+  const rawType = props.airspace_type;
+  if (rawType) return String(rawType).toUpperCase();
 
-  return '';
+  const ident = props.identification;
+  if (!ident) return '';
+
+  const identStr = String(ident).toUpperCase();
+  if (TYPE_CACHE.has(identStr)) return TYPE_CACHE.get(identStr)!;
+
+  let type = '';
+  if (identStr.match(/\bV[AEOI]D\b/)) type = 'DANGER';
+  else if (identStr.match(/\bV[AEOI]P\b/)) type = 'PROHIBITED';
+  else if (identStr.match(/\bV[AEOI]R\b/)) type = 'RESTRICTED';
+  else if (identStr.includes('TSA')) type = 'TSA';
+  else if (identStr.includes('TRA')) type = 'TRA';
+
+  // Limit cache size to prevent memory leaks if idents are unique/infinite
+  if (TYPE_CACHE.size < 1000) {
+    TYPE_CACHE.set(identStr, type);
+  }
+
+  return type;
 }
 
-function getTextForFeature(f: any, zoom: number, layers: any): string | null {
+function getTextForFeature(f: any, zoom: number, layers: any): string {
+  const props = f.properties;
+  if (!props) return '';
+
   const type = inferAirspaceType(f);
   const h = getHierarchy(type);
 
   // Progressive disclosure check
-  if (zoom < h.minZoom) return null;
+  if (zoom < h.minZoom) return '';
 
+  // Layer Toggle Logic - early exit before expensive string work
   const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = layers;
+  if (type === 'FIR') {
+    if (!airspaceFIR) return '';
+  } else if (['DANGER', 'PROHIBITED', 'RESTRICTED', 'TRA', 'TSA', 'ADIZ'].includes(type)) {
+    if (!airspaceRegulated) return '';
+  } else if (['CTR', 'CTA_LOWER', 'CTA_UPPER'].includes(type)) {
+    if (!airspaceControl) return '';
+  } else if (type === 'UPR_ZONE') {
+    if (!airspaceUpr) return '';
+  }
 
-  // Layer Toggle Logic
-  if (type === 'FIR' && !airspaceFIR) return null;
-  if (
-    ['DANGER', 'PROHIBITED', 'RESTRICTED', 'TRA', 'TSA', 'ADIZ'].includes(type) &&
-    !airspaceRegulated
-  )
-    return null;
-  if (['CTR', 'CTA_LOWER', 'CTA_UPPER'].includes(type) && !airspaceControl) return null;
-  if (type === 'UPR_ZONE' && !airspaceUpr) return null;
+  const rawName = props.identification || props.name || '';
+  if (!rawName) return '';
 
-  const rawName = (f.properties?.identification || f.properties?.name || '').toString().trim();
-  if (!rawName) return null;
+  const nameStr = String(rawName);
+  // Faster truncation without heavy regex if possible
+  let processedName = nameStr;
+  const splitIdx = nameStr.search(/\||\n|I Area/);
+  if (splitIdx !== -1) {
+    processedName = nameStr.substring(0, splitIdx).trim();
+  } else {
+    processedName = nameStr.trim();
+  }
 
-  // Truncate long descriptive names - more aggressively (20 chars)
-  const processedName = rawName.split(/\||\n|I Area bounded/)[0].trim();
-  const cleanName = processedName.substring(0, 20);
-
-  return processedName.length > 20 ? `${cleanName}...` : cleanName;
+  if (processedName.length > 20) {
+    return processedName.substring(0, 20) + '...';
+  }
+  return processedName;
 }
 
 // ── Factory ──────────────────────────────────────────────────────────
 
 export function createAirspaceLayers(ctx: LayerContext): any[] {
   const currentZoom = ctx.viewState?.zoom || 0;
+  const effectiveZoom =
+    ZOOM_THRESHOLDS.slice()
+      .reverse()
+      .find((z) => currentZoom >= z) || 0;
 
   return [
     new MVTLayer({
@@ -105,12 +140,12 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       stroked: true,
       pickable: false,
       getLineColor: (f: any) => {
-        const type: string = (f.properties?.airspace_type || '').toString().trim().toUpperCase();
+        const type = inferAirspaceType(f);
         const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = ctx.activeLayers;
         const h = getHierarchy(type);
 
         // Hierarchical progressive disclosure for lines
-        if (currentZoom < h.minZoom) return [0, 0, 0, 0];
+        if (effectiveZoom < h.minZoom) return [0, 0, 0, 0];
 
         // Layer Toggle Logic
         if (type === 'FIR' && !airspaceFIR) return [0, 0, 0, 0];
@@ -128,9 +163,11 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       },
       getLineWidth: 2,
       lineWidthMinPixels: 1,
+      minZoom: 2,
       updateTriggers: {
-        getLineColor: [ctx.viewMode, ctx.activeLayers, currentZoom],
+        getLineColor: [ctx.viewMode, ctx.activeLayers, effectiveZoom],
       },
+      binary: true,
     }),
 
     new MVTLayer({
@@ -140,16 +177,16 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       pickable: true,
       autoHighlight: false,
       pointType: 'text',
-      extensions: [new CollisionFilterExtension()],
+      extensions: EXTENSIONS,
       collisionEnabled: true,
       collisionGroup: 'airspaces',
       getCollisionPriority: (f: any) => {
-        const type: string = (f.properties?.airspace_type || '').toString().trim().toUpperCase();
+        const type = inferAirspaceType(f);
         return getHierarchy(type).priority;
       },
-      getText: (f: any) => getTextForFeature(f, currentZoom, ctx.activeLayers),
+      getText: (f: any) => getTextForFeature(f, effectiveZoom, ctx.activeLayers),
       getTextSize: (f: any) => {
-        const text = getTextForFeature(f, currentZoom, ctx.activeLayers);
+        const text = getTextForFeature(f, effectiveZoom, ctx.activeLayers);
         return text ? 12 : 0;
       },
       getTextColor: (f: any) => {
@@ -164,7 +201,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       },
       background: true,
       getBackgroundColor: (f: any) => {
-        const text = getTextForFeature(f, currentZoom, ctx.activeLayers);
+        const text = getTextForFeature(f, effectiveZoom, ctx.activeLayers);
         if (!text) return [0, 0, 0, 0];
 
         const id = f.properties?.id ?? f.id;
@@ -175,7 +212,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       },
       getBorderWidth: 2,
       getBorderColor: (f: any) => {
-        const text = getTextForFeature(f, currentZoom, ctx.activeLayers);
+        const text = getTextForFeature(f, effectiveZoom, ctx.activeLayers);
         if (!text) return [0, 0, 0, 0];
 
         const id = f.properties?.id ?? f.id;
@@ -195,28 +232,15 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       fontStyle: 'italic',
       textFontSettings: { sdf: false },
       textFontFamily: 'Inter, sans-serif',
+      minZoom: 2,
       updateTriggers: {
-        getText: [ctx.activeLayers, currentZoom >= 2.0, currentZoom >= 5.0, currentZoom >= 6.5],
-        getTextSize: [ctx.activeLayers, currentZoom >= 2.0, currentZoom >= 5.0, currentZoom >= 6.5],
-        getTextColor: [
-          ctx.highlightedAirspaceId,
-          currentZoom >= 2.0,
-          currentZoom >= 5.0,
-          currentZoom >= 6.5,
-        ],
-        getBackgroundColor: [
-          ctx.highlightedAirspaceId,
-          currentZoom >= 2.0,
-          currentZoom >= 5.0,
-          currentZoom >= 6.5,
-        ],
-        getBorderColor: [
-          ctx.highlightedAirspaceId,
-          currentZoom >= 2.0,
-          currentZoom >= 5.0,
-          currentZoom >= 6.5,
-        ],
+        getText: [ctx.activeLayers, effectiveZoom],
+        getTextSize: [ctx.activeLayers, effectiveZoom],
+        getTextColor: [ctx.highlightedAirspaceId, effectiveZoom],
+        getBackgroundColor: [ctx.highlightedAirspaceId, effectiveZoom],
+        getBorderColor: [ctx.highlightedAirspaceId, effectiveZoom],
       },
+      binary: false,
     }),
   ];
 }

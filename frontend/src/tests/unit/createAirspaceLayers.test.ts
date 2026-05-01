@@ -52,7 +52,7 @@ describe('createAirspaceLayers', () => {
 
     // Missing identification and type
     const emptyFeature = { properties: {} };
-    expect(metaLayer.props.getText(emptyFeature)).toBeNull();
+    expect(metaLayer.props.getText(emptyFeature)).toBe('');
 
     // Check highlight logic
     const highlightCtx = { ...ctx, highlightedAirspaceId: '123' };
@@ -97,7 +97,7 @@ describe('createAirspaceLayers', () => {
 
     const firFeature = { properties: { airspace_type: 'FIR', name: 'FIR' } };
     expect(layers[0].props.getLineColor(firFeature)).toEqual([0, 0, 0, 0]); // Transparent when hidden
-    expect(layers[1].props.getText(firFeature)).toBeNull();
+    expect(layers[1].props.getText(firFeature)).toBe('');
 
     const dangerFeature = { properties: { airspace_type: 'DANGER', name: 'D' } };
     expect(layers[0].props.getLineColor(dangerFeature)).toEqual([0, 0, 0, 0]);
