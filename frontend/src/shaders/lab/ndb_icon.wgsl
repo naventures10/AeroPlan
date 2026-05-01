@@ -41,7 +41,7 @@ fn sdf_dot_ring(p: vec2<f32>, r: f32, dot_r: f32, count: f32, rotation: f32) -> 
     return length(p - dot_pos) - dot_r;
 }
 
-fn sdf_radio_nav(p: vec2<f32>) -> f32 {
+fn sdf_ndb(p: vec2<f32>) -> f32 {
     let time = ubo.metadata.x;
     let ringCount = i32(ubo.metadata.y);
     let ringSpacing = ubo.metadata.z;
@@ -97,7 +97,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let p = vec2<f32>(in.uv.x * aspect, in.uv.y);
 
     let color = vec4<f32>(1.0, 1.0, 1.0, 1.0);
-    let d = sdf_radio_nav(p);
+    let d = sdf_ndb(p);
     
     let edge_softness = fwidth(d);
     let alpha = 1.0 - smoothstep(-edge_softness, edge_softness, d);

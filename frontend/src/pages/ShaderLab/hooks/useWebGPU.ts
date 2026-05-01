@@ -4,7 +4,7 @@ import type {
   GPUInfo,
   GPUMetrics,
   PresentationSize,
-  NavIconConfig,
+  NdbIconConfig,
   NetworkNode,
 } from '../types';
 import {
@@ -18,7 +18,7 @@ import { writeFullscreenUniforms } from '../utils/gpu-utils';
 
 export function useWebGPU(
   activeShader: LoadedShaderDefinition,
-  navIconConfigRef: MutableRefObject<NavIconConfig>,
+  ndbIconConfigRef: MutableRefObject<NdbIconConfig>,
 ) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'unsupported' | 'error'>('loading');
@@ -72,24 +72,32 @@ export function useWebGPU(
     const updateUniforms = (gpuDevice: GPUDevice, elapsed: number) => {
       if (!uniformBuffer) return;
 
-      let metadata: [number, number, number, number, number, number, number, number] = [
-        elapsed,
-        -1,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-      ];
+      let metadata: [
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+      ] = [elapsed, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-      if (activeShader.id === 'radio-nav-icons') {
+      if (activeShader.category === 'Lab') {
         metadata = [
           elapsed,
-          navIconConfigRef.current.ringCount,
-          navIconConfigRef.current.ringSpacing,
-          navIconConfigRef.current.rotation,
-          navIconConfigRef.current.dotDensity,
+          ndbIconConfigRef.current.ringCount,
+          ndbIconConfigRef.current.ringSpacing,
+          ndbIconConfigRef.current.rotation,
+          ndbIconConfigRef.current.dotDensity,
+          ndbIconConfigRef.current.circleRadius,
+          ndbIconConfigRef.current.lineLength,
+          ndbIconConfigRef.current.tickCount,
+          ndbIconConfigRef.current.tickLength,
           0,
           0,
           0,
@@ -100,6 +108,10 @@ export function useWebGPU(
           hoverState.hoveredIndex,
           hoverState.hoverMix,
           hoverState.pulseStartTime,
+          0,
+          0,
+          0,
+          0,
           0,
           0,
           0,
@@ -490,7 +502,7 @@ export function useWebGPU(
       uniformBuffer?.destroy();
       nodeBuffer?.destroy();
     };
-  }, [activeShader, navIconConfigRef]);
+  }, [activeShader, ndbIconConfigRef]);
 
   return { canvasRef, status, gpuInfo, metrics, currentPresentationSize };
 }

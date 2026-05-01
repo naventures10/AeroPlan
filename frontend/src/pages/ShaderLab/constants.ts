@@ -10,7 +10,7 @@ export const airwayNetworkBackgroundPath = '../../shaders/airway_network/airway-
 export const airwayNetworkNodesPath = '../../shaders/airway_network/airway-network-nodes.wgsl';
 
 export const defaultCursorPosition: [number, number] = [0.5, 0.52];
-export const fullscreenUniformByteLength = 48;
+export const fullscreenUniformByteLength = 64;
 
 export const shaderDefinitions: ShaderDefinition[] = [
   {
@@ -122,15 +122,38 @@ export const shaderDefinitions: ShaderDefinition[] = [
     tags: ['Barycentric', 'MSAA', 'Geometry'],
   },
   {
-    id: 'radio-nav-icons',
-    label: 'Radio Nav Icons',
+    id: 'ndb-icon',
+    label: 'NDB Icon',
     category: 'Lab',
     kind: 'fullscreen',
-    shaderPath: '../../shaders/lab/radio_nav_icons.wgsl',
+    shaderPath: '../../shaders/lab/ndb_icon.wgsl',
     accent: 'from-cyan-400 via-blue-500 to-indigo-600',
-    summary: 'SDF-based radio navigation icons including VOR, DME, and VORTAC patterns.',
+    summary: 'SDF-based Non-Directional Beacon (NDB) icons.',
     detail:
       'Renders precise aeronautical icons using Signed Distance Fields (SDF) with consistent line weight.',
     tags: ['SDF', 'Icons', 'Aeronautical'],
+  },
+  {
+    id: 'dvor-icon',
+    label: 'DVOR Icon',
+    category: 'Lab',
+    kind: 'fullscreen',
+    shaderPath: '../../shaders/lab/dvor_icon.wgsl',
+    accent: 'from-blue-400 via-sky-500 to-cyan-600',
+    summary: 'SDF-based Doppler VOR (DVOR) hexagon icon.',
+    detail: 'Renders a precise hexagonal navigation symbol with interactive rotation controls.',
+    tags: ['SDF', 'Icons', 'Hexagon'],
+  },
+  {
+    id: 'soft-shadows-2d',
+    label: 'Soft Shadows 2D',
+    category: 'Examples',
+    kind: 'fullscreen',
+    shaderPath: '../../shaders/examples/soft-shadows-2d.wgsl',
+    accent: 'from-amber-400 via-orange-500 to-red-600',
+    summary: 'High-fidelity 2D soft shadows using cone-marching and SDF geometry.',
+    detail:
+      'Replicates the Shadertoy soft shadow playground with procedural lighting, smooth SDF unions, and interactive mouse-driven shadows.',
+    tags: ['Shadows', 'Lighting', 'SDF'],
   },
 ];

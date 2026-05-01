@@ -21,7 +21,20 @@ export type LoadedShaderDefinition = ShaderDefinition & {
 export type FullscreenUniforms = {
   resolution: [number, number];
   cursor: [number, number];
-  metadata: [number, number, number, number, number, number, number, number];
+  metadata: [
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+  ];
 };
 
 export type NetworkNode = {
@@ -49,9 +62,13 @@ export type PresentationSize = {
   height: number;
 };
 
-export type NavIconConfig = {
+export type NdbIconConfig = {
   ringCount: number;
   ringSpacing: number;
   rotation: number;
   dotDensity: number;
+  circleRadius: number;
+  lineLength: number;
+  tickCount: number;
+  tickLength: number;
 };

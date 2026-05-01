@@ -37,6 +37,14 @@ function run_with_retry() {
   while [[ $attempt -le $max_attempts ]]; do
     echo "[$(date)] Starting weather pipeline (Attempt $attempt/$max_attempts)..." >> "$LOG_FILE"
     
+    # Cleanup any stale pipeline processes from previous runs
+    STALE_PIDS=$(pgrep -f "app.services.weather_pipeline" | grep -v $$)
+    if [ -n "$STALE_PIDS" ]; then
+      echo "[$(date)] Found stale weather pipeline processes. Cleaning up..." >> "$LOG_FILE"
+      pkill -f "app.services.weather_pipeline"
+      sleep 2
+    fi
+
     # Wait for network if needed
     if ! check_network; then
       echo "[$(date)] Network not available. Waiting 30s..." >> "$LOG_FILE"
@@ -48,19 +56,34 @@ function run_with_retry() {
       fi
     fi
 
-    # Run the pipeline using uv
-    uv run python -m app.services.weather_pipeline >> "$LOG_FILE" 2>&1
+    # Run the pipeline using uv with a 10-minute hard timeout
+    # We use python3 to implement timeout since timeout/gtimeout are missing on macOS
+    echo "[$(date)] Running pipeline with 10m timeout..." >> "$LOG_FILE"
+    python3 -c "
+import subprocess, sys
+try:
+    subprocess.run(['uv', 'run', 'python', '-m', 'app.services.weather_pipeline'], timeout=600, check=True)
+except subprocess.TimeoutExpired:
+    print('ERROR: Weather pipeline timed out after 10 minutes', file=sys.stderr)
+    sys.exit(124)
+except subprocess.CalledProcessError as e:
+    sys.exit(e.returncode)
+" >> "$LOG_FILE" 2>&1
+    
     local exit_code=$?
 
     if [[ $exit_code -eq 0 ]]; then
       echo "[$(date)] Weather pipeline completed successfully." >> "$LOG_FILE"
       return 0
+    elif [[ $exit_code -eq 124 ]]; then
+      echo "[$(date)] Weather pipeline timed out." >> "$LOG_FILE"
     else
       echo "[$(date)] Weather pipeline failed with exit code $exit_code." >> "$LOG_FILE"
-      if [[ $attempt -lt $max_attempts ]]; then
-        echo "[$(date)] Retrying in $wait_time seconds..." >> "$LOG_FILE"
-        sleep $wait_time
-      fi
+    fi
+
+    if [[ $attempt -lt $max_attempts ]]; then
+      echo "[$(date)] Retrying in $wait_time seconds..." >> "$LOG_FILE"
+      sleep $wait_time
     fi
     ((attempt++))
   done

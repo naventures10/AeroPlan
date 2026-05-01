@@ -18,6 +18,10 @@ export function writeFullscreenUniforms(
     uniforms.metadata[5],
     uniforms.metadata[6],
     uniforms.metadata[7],
+    uniforms.metadata[8],
+    uniforms.metadata[9],
+    uniforms.metadata[10],
+    uniforms.metadata[11],
   ]);
   device.queue.writeBuffer(buffer, 0, data);
 }

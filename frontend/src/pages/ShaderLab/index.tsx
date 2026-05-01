@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { shaderDefinitions, shaderSources } from './constants';
-import type { LoadedShaderDefinition, NavIconConfig } from './types';
+import type { LoadedShaderDefinition, NdbIconConfig } from './types';
 import { useWebGPU } from './hooks/useWebGPU';
 
 // Components
@@ -18,17 +18,21 @@ export default function ShaderLab() {
   const [showStats, setShowStats] = useState(false);
 
   // Lab Controls State
-  const [navIconConfig, setNavIconConfig] = useState<NavIconConfig>({
+  const [ndbIconConfig, setNdbIconConfig] = useState<NdbIconConfig>({
     ringCount: 2,
     ringSpacing: 0.35,
     rotation: 0,
     dotDensity: 1.0,
+    circleRadius: 0.55,
+    lineLength: 0.1,
+    tickCount: 12,
+    tickLength: 0.04,
   });
-  const navIconConfigRef = useRef(navIconConfig);
+  const ndbIconConfigRef = useRef(ndbIconConfig);
 
   useEffect(() => {
-    navIconConfigRef.current = navIconConfig;
-  }, [navIconConfig]);
+    ndbIconConfigRef.current = ndbIconConfig;
+  }, [ndbIconConfig]);
 
   // Resolve active shader with code
   const activeShader = useMemo((): LoadedShaderDefinition => {
@@ -50,7 +54,7 @@ export default function ShaderLab() {
 
   const { canvasRef, status, gpuInfo, metrics, currentPresentationSize } = useWebGPU(
     activeShader,
-    navIconConfigRef,
+    ndbIconConfigRef,
   );
 
   return (
@@ -84,7 +88,7 @@ export default function ShaderLab() {
         </div>
 
         {/* Mid-Left Section (Shader-specific controls) */}
-        <LabControls shaderId={activeShaderId} config={navIconConfig} onChange={setNavIconConfig} />
+        <LabControls shaderId={activeShaderId} config={ndbIconConfig} onChange={setNdbIconConfig} />
 
         {/* Bottom Section */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
