@@ -181,7 +181,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       collisionEnabled: true,
       collisionGroup: 'airspaces',
       getCollisionPriority: (f: any) => {
-        const type: string = (f.properties?.airspace_type || '').toString().trim().toUpperCase();
+        const type = inferAirspaceType(f);
         return getHierarchy(type).priority;
       },
       getText: (f: any) => getTextForFeature(f, effectiveZoom, ctx.activeLayers),
