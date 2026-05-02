@@ -1,264 +1,359 @@
-void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
-    vec2 uv = fragCoord / iResolution.xy * 2. - 1.;
-    uv.x *= iResolution.x / iResolution.y;
-    
-    float dist = length(uv);
-    float pulse = 0.75 + 0.75 * sin(iTime * 3.0);
-    
-    float intensity = exp(-dist * 4.0) + 0.2 * pulse;
-    
-    vec3 color = mix(vec3(1.0, 0.2, 0.0), vec3(1.0, 1.0, 0.0), intensity);
-    
-    fragColor = vec4(color * intensity, 1.);
-}
+/**
 
-vec3 hsb2rgb(in vec3 c)
+	Hi all,
+
+	This is just my playground for a bunch of 2D stuff:
+
+	Some distance functions and blend functions
+	Cone marched 2D Soft shadows
+	Use the mouse to control the 3rd light
+
+*/
+
+
+
+//////////////////////////////////////
+// Combine distance field functions //
+//////////////////////////////////////
+
+
+float smoothMerge(float d1, float d2, float k)
 {
-    vec3 rgb = clamp(abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),
-                             6.0)-3.0)-1.0,
-                     0.0,
-                     1.0 );
-    rgb = rgb*rgb*(3.0-2.0*rgb);
-    return c.z * mix( vec3(1.0), rgb, c.y);
+    float h = clamp(0.5 + 0.5*(d2 - d1)/k, 0.0, 1.0);
+    return mix(d2, d1, h) - k * h * (1.0-h);
 }
 
-void mainImage( out vec4 fragColor, in vec2 fragCoord )
-{   
-    vec2 p = (2.0*fragCoord.xy-iResolution.xy)/iResolution.y;
-    
-    float r = length(p) * 0.9;
-	vec3 color = hsb2rgb(vec3(0.24, 0.7, 0.4));
-    
-    float a = pow(r, 2.0);
-    float b = sin(r * 0.8 - 1.6);
-    float c = sin(r - 0.010);
-    float s = sin(a - iTime * 3.0 + b) * c;
-    
-    color *= abs(1.0 / (s * 10.8)) - 0.01;
-	fragColor = vec4(color, 1.);
-}
 
-//Author: asmith13
-//Free to use as you wish. Have fun
-
-#define green vec3(0.0,1.0,0.0)
-
-// returns a vec3 color from every pixel requested.
-// Generates a BnW Ping on normalized 2d coordinate system
-vec3 RadarPing(in vec2 uv, in vec2 center, in float innerTail, 
-               in float frontierBorder, in float timeResetSeconds, 
-               in float radarPingSpeed, in float fadeDistance)
+float merge(float d1, float d2)
 {
-    vec2 diff = center-uv;
-    float r = length(diff);
-    float time = mod(iTime, timeResetSeconds) * radarPingSpeed;
-   
-    float circle;
-    // r is the distance to the center.
-    // circle = BipCenter---//---innerTail---time---frontierBorder
-    //illustration
-    //https://sketch.io/render/sk-14b54f90080084bad1602f81cadd4d07.jpeg
-    circle += smoothstep(time - innerTail, time, r) * smoothstep(time + frontierBorder,time, r);
-	circle *= smoothstep(fadeDistance, 0.0, r); // fade to 0 after fadeDistance
+	return min(d1, d2);
+}
+
+
+float mergeExclude(float d1, float d2)
+{
+	return min(max(-d1, d2), max(-d2, d1));
+}
+
+
+float substract(float d1, float d2)
+{
+	return max(-d1, d2);
+}
+
+
+float intersect(float d1, float d2)
+{
+	return max(d1, d2);
+}
+
+
+//////////////////////////////
+// Rotation and translation //
+//////////////////////////////
+
+
+vec2 rotateCCW(vec2 p, float a)
+{
+	mat2 m = mat2(cos(a), sin(a), -sin(a), cos(a));
+	return p * m;	
+}
+
+
+vec2 rotateCW(vec2 p, float a)
+{
+	mat2 m = mat2(cos(a), -sin(a), sin(a), cos(a));
+	return p * m;
+}
+
+
+vec2 translate(vec2 p, vec2 t)
+{
+	return p - t;
+}
+
+
+//////////////////////////////
+// Distance field functions //
+//////////////////////////////
+
+
+float pie(vec2 p, float angle)
+{
+	angle = radians(angle) / 2.0;
+	vec2 n = vec2(cos(angle), sin(angle));
+	return abs(p).x * n.x + p.y*n.y;
+}
+
+
+float circleDist(vec2 p, float radius)
+{
+	return length(p) - radius;
+}
+
+
+float triangleDist(vec2 p, float radius)
+{
+	return max(	abs(p).x * 0.866025 + 
+			   	p.y * 0.5, -p.y) 
+				-radius * 0.5;
+}
+
+
+float triangleDist(vec2 p, float width, float height)
+{
+	vec2 n = normalize(vec2(height, width / 2.0));
+	return max(	abs(p).x*n.x + p.y*n.y - (height*n.y), -p.y);
+}
+
+
+float semiCircleDist(vec2 p, float radius, float angle, float width)
+{
+	width /= 2.0;
+	radius -= width;
+	return substract(pie(p, angle), 
+					 abs(circleDist(p, radius)) - width);
+}
+
+
+float boxDist(vec2 p, vec2 size, float radius)
+{
+	size -= vec2(radius);
+	vec2 d = abs(p) - size;
+  	return min(max(d.x, d.y), 0.0) + length(max(d, 0.0)) - radius;
+}
+
+
+float lineDist(vec2 p, vec2 start, vec2 end, float width)
+{
+	vec2 dir = start - end;
+	float lngth = length(dir);
+	dir /= lngth;
+	vec2 proj = max(0.0, min(lngth, dot((start - p), dir))) * dir;
+	return length( (start - p) - proj ) - (width / 2.0);
+}
+
+
+///////////////////////
+// Masks for drawing //
+///////////////////////
+
+
+float fillMask(float dist)
+{
+	return clamp(-dist, 0.0, 1.0);
+}
+
+
+float innerBorderMask(float dist, float width)
+{
+	//dist += 1.0;
+	float alpha1 = clamp(dist + width, 0.0, 1.0);
+	float alpha2 = clamp(dist, 0.0, 1.0);
+	return alpha1 - alpha2;
+}
+
+
+float outerBorderMask(float dist, float width)
+{
+	//dist += 1.0;
+	float alpha1 = clamp(dist, 0.0, 1.0);
+	float alpha2 = clamp(dist - width, 0.0, 1.0);
+	return alpha1 - alpha2;
+}
+
+
+///////////////
+// The scene //
+///////////////
+
+
+float sceneDist(vec2 p)
+{
+	float c = circleDist(		translate(p, vec2(100, 250)), 40.0);
+	float b1 =  boxDist(		translate(p, vec2(200, 250)), vec2(40, 40), 	0.0);
+	float b2 =  boxDist(		translate(p, vec2(300, 250)), vec2(40, 40), 	10.0);
+	float l = lineDist(			p, 			 vec2(370, 220),  vec2(430, 280),	10.0);
+	float t1 = triangleDist(	translate(p, vec2(500, 210)), 80.0, 			80.0);
+	float t2 = triangleDist(	rotateCW(translate(p, vec2(600, 250)), iTime), 40.0);
+	
+	float m = 	merge(c, b1);
+	m = 		merge(m, b2);
+	m = 		merge(m, l);
+	m = 		merge(m, t1);
+	m = 		merge(m, t2);
+	
+	float b3 = boxDist(		translate(p, vec2(100, sin(iTime * 3.0 + 1.0) * 40.0 + 100.0)), 
+					   		vec2(40, 15), 	0.0);
+	float c2 = circleDist(	translate(p, vec2(100, 100)),	30.0);
+	float s = substract(b3, c2);
+	
+	float b4 = boxDist(		translate(p, vec2(200, sin(iTime * 3.0 + 2.0) * 40.0 + 100.0)), 
+					   		vec2(40, 15), 	0.0);
+	float c3 = circleDist(	translate(p, vec2(200, 100)), 	30.0);
+	float i = intersect(b4, c3);
+	
+	float b5 = boxDist(		translate(p, vec2(300, sin(iTime * 3.0 + 3.0) * 40.0 + 100.0)), 
+					   		vec2(40, 15), 	0.0);
+	float c4 = circleDist(	translate(p, vec2(300, 100)), 	30.0);
+	float a = merge(b5, c4);
+	
+	float b6 = boxDist(		translate(p, vec2(400, 100)),	vec2(40, 15), 	0.0);
+	float c5 = circleDist(	translate(p, vec2(400, 100)), 	30.0);
+	float sm = smoothMerge(b6, c5, 10.0);
+	
+	float sc = semiCircleDist(translate(p, vec2(500,100)), 40.0, 90.0, 10.0);
+    
+    float b7 = boxDist(		translate(p, vec2(600, sin(iTime * 3.0 + 3.0) * 40.0 + 100.0)), 
+					   		vec2(40, 15), 	0.0);
+	float c6 = circleDist(	translate(p, vec2(600, 100)), 	30.0);
+	float e = mergeExclude(b7, c6);
+    
+	m = merge(m, s);
+	m = merge(m, i);
+	m = merge(m, a);
+	m = merge(m, sm);
+	m = merge(m, sc);
+    m = merge(m, e);
+	
+	return m;
+}
+
+
+float sceneSmooth(vec2 p, float r)
+{
+	float accum = sceneDist(p);
+	accum += sceneDist(p + vec2(0.0, r));
+	accum += sceneDist(p + vec2(0.0, -r));
+	accum += sceneDist(p + vec2(r, 0.0));
+	accum += sceneDist(p + vec2(-r, 0.0));
+	return accum / 5.0;
+}
+
+
+//////////////////////
+// Shadow and light //
+//////////////////////
+
+
+float shadow(vec2 p, vec2 pos, float radius)
+{
+	vec2 dir = normalize(pos - p);
+	float dl = length(p - pos);
+	
+	// fraction of light visible, starts at one radius (second half added in the end);
+	float lf = radius * dl;
+	
+	// distance traveled
+	float dt = 0.01;
+
+	for (int i = 0; i < 64; ++i)
+	{				
+		// distance to scene at current position
+		float sd = sceneDist(p + dir * dt);
+
+        // early out when this ray is guaranteed to be full shadow
+        if (sd < -radius) 
+            return 0.0;
         
-    return vec3(circle);
+		// width of cone-overlap at light
+		// 0 in center, so 50% overlap: add one radius outside of loop to get total coverage
+		// should be '(sd / dt) * dl', but '*dl' outside of loop
+		lf = min(lf, sd / dt);
+		
+		// move ahead
+		dt += max(1.0, abs(sd));
+		if (dt > dl) break;
+	}
+
+	// multiply by dl to get the real projected overlap (moved out of loop)
+	// add one radius, before between -radius and + radius
+	// normalize to 1 ( / 2*radius)
+	lf = clamp((lf*dl + radius) / (2.0 * radius), 0.0, 1.0);
+	lf = smoothstep(0.0, 1.0, lf);
+	return lf;
 }
 
-void mainImage( out vec4 fragColor, in vec2 fragCoord )
-{	
-    //normalize coordinates 
-    vec2 uv = fragCoord.xy / iResolution.xy; //move coordinates to 0..1
-    uv = uv.xy*2.; // translate to the center
-    uv += vec2(-1.0, -1.0);
-    uv.x *= iResolution.x/iResolution.y; //correct the aspect ratio
-    
-	vec3 color;
-    // generate some radar pings
-    float fadeDistance = 1.0;
-    float resetTimeSec = 4.0;
-    float radarPingSpeed = 0.3;
-    vec2 greenPing = vec2(0.0, 0.0);
-    color += RadarPing(uv, greenPing, 0.25, 0.025, resetTimeSec, radarPingSpeed, fadeDistance) * green;
-    
-    //return the new color
-	fragColor = vec4(color,1.0);
+
+
+vec4 drawLight(vec2 p, vec2 pos, vec4 color, float dist, float range, float radius)
+{
+	// distance to light
+	float ld = length(p - pos);
+	
+	// out of range
+	if (ld > range) return vec4(0.0);
+	
+	// shadow and falloff
+	float shad = shadow(p, pos, radius);
+	float fall = (range - ld)/range;
+	fall *= fall;
+	float source = fillMask(circleDist(p - pos, radius));
+	return (shad * fall + source) * color;
 }
 
-#define SF 1./min(iResolution.x,iResolution.y)
+
+float luminance(vec4 col)
+{
+	return 0.2126 * col.r + 0.7152 * col.g + 0.0722 * col.b;
+}
+
+
+void setLuminance(inout vec4 col, float lum)
+{
+	lum /= luminance(col);
+	col *= lum;
+}
+
+
+float AO(vec2 p, float dist, float radius, float intensity)
+{
+	float a = clamp(dist / radius, 0.0, 1.0) - 1.0;
+	return 1.0 - (pow(abs(a), 5.0) + 1.0) * intensity + (1.0 - intensity);
+	return smoothstep(0.0, 1.0, dist / radius);
+}
+
+
+/////////////////
+// The program //
+/////////////////
+
 
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
-    
-    vec2 ouv = fragCoord/iResolution.xy;
-    vec2 uv = (fragCoord - .5*iResolution.xy)/iResolution.y;    
-        
-    vec3 activeCol= texture(iChannel0, ouv).rgb;
-    
-    float l = length(uv);
-    
-    float m = 0.;
-    
-    float i = .1*round(l/.1);
-    m += smoothstep(SF*2., 0., abs(i-l));            
+	vec2 p = fragCoord.xy + vec2(0.5);
+	vec2 c = iResolution.xy / 2.0;
+	
+	//float dist = sceneSmooth(p, 5.0);
+	float dist = sceneDist(p);
+	
+	vec2 light1Pos = iMouse.xy;
+	vec4 light1Col = vec4(0.75, 1.0, 0.5, 1.0);
+	setLuminance(light1Col, 0.4);
+	
+	vec2 light2Pos = vec2(iResolution.x * (sin(iTime + 3.1415) + 1.2) / 2.4, 175.0);
+	vec4 light2Col = vec4(1.0, 0.75, 0.5, 1.0);
+	setLuminance(light2Col, 0.5);
+	
+	vec2 light3Pos = vec2(iResolution.x * (sin(iTime) + 1.2) / 2.4, 340.0);
+	vec4 light3Col = vec4(0.5, 0.75, 1.0, 1.0);
+	setLuminance(light3Col, 0.6);
+	
+	// gradient
+	vec4 col = vec4(0.5, 0.5, 0.5, 1.0) * (1.0 - length(c - p)/iResolution.x);
+	// grid
+	col *= clamp(min(mod(p.y, 10.0), mod(p.x, 10.0)), 0.9, 1.0);
+	// ambient occlusion
+	col *= AO(p, sceneSmooth(p, 10.0), 40.0, 0.4);
+	//col *= 1.0-AO(p, sceneDist(p), 40.0, 1.0);
+	// light
+	col += drawLight(p, light1Pos, light1Col, dist, 150.0, 6.0);
+	col += drawLight(p, light2Pos, light2Col, dist, 200.0, 8.0);
+	col += drawLight(p, light3Pos, light3Col, dist, 300.0, 12.0);
+	// shape fill
+	col = mix(col, vec4(1.0, 0.4, 0.0, 1.0), fillMask(dist));
+	// shape outline
+	col = mix(col, vec4(0.1, 0.1, 0.1, 1.0), innerBorderMask(dist, 1.5));
 
-    m += smoothstep(SF, 0., abs(SF-uv.x));   
-    m += smoothstep(SF, 0., abs(SF-uv.y));    
-    
-    vec3 col = activeCol + vec3(0, 0.25, 0.) * m;
-    col *= step(l, .51);
-    
-    fragColor = vec4(col, 1.);
+	fragColor = clamp(col, 0.0, 1.0);
 }
-
-// Author: asmith13
-// mainly from https://www.shadertoy.com/view/MsG3WW - mlkn
-// Free to use
-
-// i finally understood polar coordinates..
-// http://mathworld.wolfram.com/PolarCoordinates.html
-
-#define green vec3(0.0,1.0,0.0)
-#define red vec3(1.0,0.0,0.0)
-const float PI = 3.1415926535897932384626433832795;
-const float TWOPI = 6.283185307179586476925286766559;
-
-float RadarSweep(in float time, in vec2 c, in vec2 center, in float radius, in float speed, in bool dir_cw, in float tailLength){
-    
-    time *= speed; // adjust speed by multiplying the time
-    
-    c -= center; //adjust pixel by asuming we are in the center at 0,0 !polar coordinate system!    
-    if(!dir_cw) c.xy = c.yx; // simple hack i still don't understand it myself
-    
-    // x,y - polar coords see header
-    float x = length(c); // x = length of 0,0 to current pixel
-    // y is the angle of our coord system. i mod it to TWO PI to reduce doubler effects
-    float y = mod(atan(c.y, c.x) + time, TWOPI);// see header or build in function
-
-    y /= tailLength;// 1.0 - angle ... so we divide instead of multiplying
-    
-    float result = 0.0;
-    if(x < radius) result += 1.0 - y;// if pixel is in radius x
-       
-    return result;
-}
-
-void mainImage( out vec4 fragColor, in vec2 fragCoord )
-{
-    vec2 Resolution = iResolution.xy; //resolution
-    vec2 coords = (2.0 * fragCoord - Resolution) / Resolution.y; // aspectfixed coordinates [-1,1]2d
-    
-    //settings
-    vec2 left = vec2(-1.0, 0.0);
-    vec2 right = vec2(1.0, 0.0);
-    float radius = PI / 4.0;
-    float speed = 1.5;
-    float tailLength = PI / 2.0;
-    bool dir_cw = true;
-    float time = iTime;
-       
-    fragColor += vec4(green * RadarSweep(time, coords, left,  radius, speed,  dir_cw, tailLength), 1.0);
-    fragColor += vec4(red *   RadarSweep(time, coords, right, radius, speed, !dir_cw, tailLength), 1.0);
-}
-
-//Author: asmith13
-//Free to use as you wish. Have fun
-
-// Radar Bip
-//https://www.shadertoy.com/view/4s2SRt by ndel
-//https://www.shadertoy.com/view/Xsy3zG by Andre
-// mainly from https://www.shadertoy.com/view/MtdGW7 runekill
-
-#define green vec3(0.0,1.0,0.0)
-#define red vec3(1.0,0.0,0.0)
-#define blue vec3(0.0,0.0,1.0)
-
-// returns a vec3 color from every pixel requested.
-// Generates a BnW Ping on normalized 2d coordinate system
-vec3 RadarPing(in vec2 uv, in vec2 center, in float innerTail, 
-               in float frontierBorder, in float timeResetSeconds, 
-               in float radarPingSpeed, in float fadeDistance)
-{
-    vec2 diff = center-uv;
-    float r = length(diff);
-    float time = mod(iTime, timeResetSeconds) * radarPingSpeed;
-   
-    float circle;
-    // r is the distance to the center.
-    // circle = BipCenter---//---innerTail---time---frontierBorder
-    //illustration
-    //https://sketch.io/render/sk-14b54f90080084bad1602f81cadd4d07.jpeg
-    circle += smoothstep(time - innerTail, time, r) * smoothstep(time + frontierBorder,time, r);
-	circle *= smoothstep(fadeDistance, 0.0, r); // fade to 0 after fadeDistance
-        
-    return vec3(circle);
-}
-
-void mainImage( out vec4 fragColor, in vec2 fragCoord )
-{	
-    //normalize coordinates 
-    vec2 uv = fragCoord.xy / iResolution.xy; //move coordinates to 0..1
-    uv = uv.xy*2.; // translate to the center
-    uv += vec2(-1.0, -1.0);
-    uv.x *= iResolution.x/iResolution.y; //correct the aspect ratio
-    
-	vec3 color;
-    // generate some radar pings
-    float fadeDistance = 1.0;
-    float resetTimeSec = 4.0;
-    float radarPingSpeed = 0.3;
-    vec2 greenPing = vec2(-1.0, 0.0);
-    vec2 redPing   = vec2( 0.0, 0.0);
-    vec2 bluePing  = vec2( 1.0, 0.0);
-    color += RadarPing(uv, greenPing, 0.25, 0.025, resetTimeSec, radarPingSpeed, fadeDistance) * green;
-    color += RadarPing(uv, redPing, .01, 0.01, resetTimeSec, radarPingSpeed, fadeDistance) * red;
-    color += RadarPing(uv, bluePing, .01, 0.5, resetTimeSec, radarPingSpeed, fadeDistance) * blue;
-    
-    //return the new color
-	fragColor = vec4(color,1.0);
-}
-
-
-#define green vec3(0.0,.3,0.6)
-
-// returns a vec3 color from every pixel requested.
-// Generates a BnW Ping on normalized 2d coordinate system
-vec3 RadarPing(in vec2 uv, in vec2 center, in float innerTail, 
-               in float frontierBorder, in float timeResetSeconds, 
-               in float radarPingSpeed, in float fadeDistance, float t)
-{
-    vec2 diff = center-uv;
-    float r = length(diff);
-    float time = mod(t, timeResetSeconds) * radarPingSpeed;
-   
-    float circle;
-    // r is the distance to the center.
-    // circle = BipCenter---//---innerTail---time---frontierBorder
-    //illustration
-    //https://sketch.io/render/sk-14b54f90080084bad1602f81cadd4d07.jpeg
-    circle += smoothstep(time - innerTail, time, r) * smoothstep(time + frontierBorder,time, r);
-	circle *= smoothstep(fadeDistance, 0.0, r); // fade to 0 after fadeDistance
-        
-    return vec3(circle);
-}
-
-void mainImage( out vec4 fragColor, in vec2 fragCoord )
-{	
-    //normalize coordinates 
-    vec2 uv = fragCoord.xy / iResolution.xy; //move coordinates to 0..1
-    uv = uv.xy*2.; // translate to the center
-    uv += vec2(-1.0, -1.0);
-    uv.x *= iResolution.x/iResolution.y; //correct the aspect ratio
-    
-	vec3 color;
-    // generate some radar pings
-    float fadeDistance = 0.8;
-    float resetTimeSec = 3.0;
-    float radarPingSpeed = 0.2;
-    vec2 greenPing = vec2(0.0, 0.0);
-    color += RadarPing(uv, greenPing, 0.08, 0.00025, resetTimeSec, radarPingSpeed, fadeDistance, iTime) * green;
-    color += RadarPing(uv, greenPing, 0.08, 0.00025, resetTimeSec, radarPingSpeed, fadeDistance, iTime + 1.) * green;
-    color += RadarPing(uv, greenPing, 0.08, 0.00025, resetTimeSec, radarPingSpeed, fadeDistance, iTime + 2.) * green;
-    //return the new color
-	fragColor = vec4(color,1.0);
-}
-

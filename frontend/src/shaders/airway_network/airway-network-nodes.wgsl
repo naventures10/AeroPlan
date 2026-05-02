@@ -1,15 +1,14 @@
-struct ShaderUniforms {
+struct Uniforms {
     resolution: vec2<f32>,
     cursor: vec2<f32>,
     metadata: vec4<f32>,
+    metadata2: vec4<f32>,
 };
 
 struct NodeInstance {
     @location(0) position: vec2<f32>,
     @location(1) size: f32,
     @location(2) node_type: f32,
-    @location(3) node_index: f32,
-    @location(4) frequency_norm: f32,
 };
 
 struct VertexOutput {
@@ -17,121 +16,214 @@ struct VertexOutput {
     @location(0) local: vec2<f32>,
     @location(1) size: f32,
     @location(2) node_type: f32,
-    @location(3) node_index: f32,
-    @location(4) center_world: vec2<f32>,
-    @location(5) frequency_norm: f32,
 };
 
-@group(0) @binding(0) var<uniform> uniforms: ShaderUniforms;
+@group(0) @binding(0) var<uniform> ubo: Uniforms;
 
-const NODE_COUNT: u32 = 14u;
-const TWO_PI: f32 = 6.28318530718;
-const PI: f32 = 3.14159265359;
+// --- Helpers ---
 
-fn aspectify(point: vec2<f32>, aspect: f32) -> vec2<f32> {
-    return (point - 0.5) * vec2<f32>(aspect, 1.0);
+fn aspectify(point: vec2<f32>) -> vec2<f32> {
+    return point * 2.0 - 1.0;
 }
 
 fn world_to_clip(point: vec2<f32>, aspect: f32) -> vec4<f32> {
-    return vec4<f32>(point.x / aspect * 2.0, point.y * 2.0, 0.0, 1.0);
-}
-
-fn node_position(index: u32) -> vec2<f32> {
-    let points = array<vec2<f32>, 14>(
-        vec2<f32>(0.12, 0.68),
-        vec2<f32>(0.23, 0.61),
-        vec2<f32>(0.36, 0.57),
-        vec2<f32>(0.48, 0.63),
-        vec2<f32>(0.63, 0.59),
-        vec2<f32>(0.79, 0.66),
-        vec2<f32>(0.21, 0.38),
-        vec2<f32>(0.35, 0.42),
-        vec2<f32>(0.53, 0.44),
-        vec2<f32>(0.67, 0.40),
-        vec2<f32>(0.82, 0.32),
-        vec2<f32>(0.43, 0.25),
-        vec2<f32>(0.61, 0.21),
-        vec2<f32>(0.77, 0.18)
-    );
-    return points[index];
+    return vec4<f32>(point.x / aspect, point.y, 0.0, 1.0);
 }
 
 fn node_color(node_type: f32) -> vec3<f32> {
-    if (node_type < 0.5) {
-        return vec3<f32>(0.42, 0.82, 1.0);
-    }
-    if (node_type < 1.5) {
-        return vec3<f32>(0.98, 0.76, 0.36);
-    }
-    if (node_type < 2.5) {
-        return vec3<f32>(0.95, 0.52, 0.62);
-    }
-    return vec3<f32>(0.61, 0.96, 0.74);
+    // #DCF0F5: Light Cyan/White for high contrast on blue background
+    return vec3<f32>(0.8627, 0.9412, 0.9608);
 }
 
-fn band(distance: f32, radius: f32, width: f32) -> f32 {
-    return smoothstep(width, 0.0, abs(distance - radius));
+fn rotate2d(p: vec2<f32>, angle: f32) -> vec2<f32> {
+    let s = sin(angle);
+    let c = cos(angle);
+    return vec2<f32>(p.x * c - p.y * s, p.x * s + p.y * c);
 }
 
-// Shadertoy-style RadarPing ring.
-// 'r'          : distance from node center (local space)
-// 't'          : current time (with optional phase offset for staggering)
-// 'reset_sec'  : how long one full cycle takes (longer = slower, sparser)
-// 'speed'      : units per second the ring expands
-// 'inner_tail' : soft trailing-edge width (creates the phosphor smear)
-// 'frontier'   : hard leading-edge width (sharper front = more ping-like)
-// 'fade_dist'  : ring fades to 0 at this radius, preventing any box clip
-fn radar_ping_ring(
-    r: f32, t: f32,
-    reset_sec: f32, speed: f32,
-    inner_tail: f32, frontier: f32,
-    fade_dist: f32
-) -> f32 {
-    // Current ring radius: linearly expands from 0 to (reset_sec * speed) over each cycle
-    let pt = (t % reset_sec) * speed;
-    // Thin ring band: trailing soft edge, sharp leading edge
-    var c = smoothstep(pt - inner_tail, pt, r) * smoothstep(pt + frontier, pt, r);
-    // Spatial envelope: ring fades to 0 at fade_dist regardless of pt
-    c *= smoothstep(fade_dist, fade_dist * 0.05, r);
-    return c;
+// --- SDF Shapes ---
+
+fn sdBox(p: vec2<f32>, b: f32) -> f32 {
+    let d = abs(p) - vec2<f32>(b);
+    return length(max(d, vec2<f32>(0.0))) + min(max(d.x, d.y), 0.0);
 }
 
-fn signature(distance: f32, local: vec2<f32>, node_type: f32, size: f32, time: f32) -> f32 {
-    if (node_type < 0.5) {
-        return band(distance, size * 2.0, 0.012) + band(distance, size * 3.15, 0.012) * 0.55;
-    }
-    if (node_type < 1.5) {
-        let cross = smoothstep(0.006, 0.0, abs(local.x)) + smoothstep(0.006, 0.0, abs(local.y));
-        return band(distance, size * 2.75, 0.012) * 0.82 + cross * smoothstep(size * 3.0, 0.0, distance) * 0.24;
-    }
-    if (node_type < 2.5) {
-        let flicker = 0.72 + 0.28 * sin(time * 4.0 + distance * 40.0);
-        return smoothstep(size * 4.1, size * 0.75, distance) * flicker * 0.6;
-    }
+fn sdHexagon(p: vec2<f32>, r: f32) -> f32 {
+    let k = vec3<f32>(-0.866025404, 0.5, 0.577350269);
+    var p_abs = abs(p);
+    p_abs -= 2.0 * min(dot(k.xy, p_abs), 0.0) * k.xy;
+    p_abs -= vec2<f32>(clamp(p_abs.x, -k.z * r, k.z * r), r);
+    return length(p_abs) * sign(p_abs.y);
+}
 
-    let diamond = abs(local.x) + abs(local.y);
-    return smoothstep(size * 2.4, size * 0.45, diamond);
+fn sdOctagon(p: vec2<f32>, r: f32) -> f32 {
+    let k = vec3<f32>(-0.9238795325, 0.3826834323, 0.4142135623);
+    var p_abs = abs(p);
+    p_abs -= 2.0 * min(dot(k.xy, p_abs), 0.0) * k.xy;
+    p_abs -= 2.0 * min(dot(vec2<f32>(-k.x, k.y), p_abs), 0.0) * vec2<f32>(-k.x, k.y);
+    p_abs -= vec2<f32>(clamp(p_abs.x, -k.z * r, k.z * r), r);
+    return length(p_abs) * sign(p_abs.y);
+}
+
+fn sdTriangle(p: vec2<f32>, r: f32) -> f32 {
+    let k = sqrt(3.0);
+    var p_mut = p;
+    p_mut.x = abs(p_mut.x) - r;
+    p_mut.y = p_mut.y + r / k;
+    if (p_mut.x + k * p_mut.y > 0.0) {
+        p_mut = vec2<f32>(p_mut.x - k * p_mut.y, -k * p_mut.x - p_mut.y) / 2.0;
+    }
+    p_mut.x -= clamp(p_mut.x, -2.0 * r, 0.0);
+    return -length(p_mut) * sign(p_mut.y);
+}
+
+fn sdDiamond(p: vec2<f32>, r: f32) -> f32 {
+    let p_abs = abs(p);
+    return (p_abs.x + p_abs.y - r) * 0.70710678118;
+}
+
+fn sdCircleOutline(p: vec2<f32>, r: f32, thickness: f32) -> f32 {
+    return abs(length(p) - r) - thickness;
+}
+
+fn sdSegment(p: vec2<f32>, a: vec2<f32>, b: vec2<f32>) -> f32 {
+    let pa = p - a;
+    let ba = b - a;
+    let h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    return length(pa - ba * h);
+}
+
+fn sdNDB(p: vec2<f32>, r: f32, time: f32) -> f32 {
+    let total_scale = 1.25;
+    let p_norm = p / (r * total_scale);
+    let ringCount = 3;
+    let ringSpacing = 0.15; // User parameter
+    let rotationBase = 0.8726646; // 50 degrees in radians
+    let dotDensity = 0.5;
+
+    // Halved center dot size (from 1.0 to 0.5) as requested
+    let dot_r = 0.5; 
+    // Reduced base thickness to avoid huge first-ring dots
+    let thickness = 0.28; 
+    let pulse_cycle = time * 0.7;
+    
+    let f = fract(pulse_cycle);
+    let center_pulse = max(0.0, sin(f * 3.1415926535 * 2.0));
+    var d = length(p_norm) - (dot_r * (1.0 + 0.15 * center_pulse));
+    
+    for (var i: i32 = 1; i <= 3; i = i + 1) {
+        // Further reduced gap for a tighter cluster
+        let r_base = dot_r + 0.15 + f32(i) * ringSpacing; 
+        let dot_count = floor(12.0 * f32(i) * (1.0 + ringSpacing * 0.5) * dotDensity);
+        let rot = rotationBase * f32(i) * 0.5;
+        
+        let phase_offset = f32(i) * 0.2;
+        let ring_trigger = fract(pulse_cycle - phase_offset);
+        
+        // Match source "sequential ping" behavior: dots are only visible during active window
+        let active_window = ring_trigger * 2.0;
+        var growth_envelope = 0.0;
+        if (active_window < 1.0) {
+            growth_envelope = sin(active_window * 3.1415926535);
+        }
+        
+        // Proportional size reduction for outer rings as per source integrity
+        let size_reduction = 1.0 / f32(i);
+        let ring_thickness = thickness * growth_envelope * size_reduction;
+        let ring_r = r_base + ring_trigger * ringSpacing * 0.2;
+        
+        if (ring_thickness > 0.0001) {
+            let angle_step = 6.28318530718 / max(dot_count, 1.0);
+            let angle = atan2(p_norm.y, p_norm.x) - rot;
+            let snapped_angle = (round(angle / angle_step) * angle_step) + rot;
+            let dot_pos = vec2<f32>(cos(snapped_angle), sin(snapped_angle)) * ring_r;
+            let dot_dist = length(p_norm - dot_pos) - ring_thickness;
+            d = min(d, dot_dist);
+        }
+    }
+    return d * (r * 1.25);
+}
+
+fn sdDVOR(p: vec2<f32>, r: f32, time: f32) -> f32 {
+    let circleRadius = 1.4 * r;
+    let lineLength = 0.4 * r;
+    let tickCount = 30.0;
+    let tickLength = 0.15 * r;
+    
+    // Animation Timing
+    let loop_duration = 4.0;
+    let t = time % loop_duration;
+    
+    // Phase 1: Circle grows (0.0 to 1.5s)
+    let circle_progress = clamp(t / 1.5, 0.0, 1.0);
+    // Phase 2: Lines grow (1.5 to 2.5s)
+    let line_progress = clamp((t - 1.5) / 1.0, 0.0, 1.0);
+    
+    // 1. Hexagon (Core)
+    let d_hex = sdHexagon(p, 0.5 * r);
+    
+    // 2. Circle Outline
+    let thickness = 0.12 * r; 
+    let d_circle_raw = sdCircleOutline(p, circleRadius, thickness);
+    
+    // Clockwise Mask for circle
+    let angle = atan2(p.x, p.y); 
+    var angle_norm = (angle / 6.28318530718);
+    if (angle_norm < 0.0) { angle_norm += 1.0; } 
+    let circle_mask = smoothstep(circle_progress + 0.01, circle_progress - 0.01, angle_norm);
+    
+    // Apply mask
+    let d_circle = max(d_circle_raw, -circle_mask + 0.5);
+
+    // 3. Inward Lines
+    let current_line_len = lineLength * line_progress;
+    let current_tick_len = tickLength * line_progress;
+    let inner_r = circleRadius - current_line_len;
+    
+    let d_n = sdSegment(p, vec2<f32>(0.0, circleRadius), vec2<f32>(0.0, inner_r)) - thickness;
+    let d_s = sdSegment(p, vec2<f32>(0.0, -circleRadius), vec2<f32>(0.0, -inner_r)) - thickness;
+    let d_e = sdSegment(p, vec2<f32>(circleRadius, 0.0), vec2<f32>(inner_r, 0.0)) - thickness;
+    let d_w = sdSegment(p, vec2<f32>(-circleRadius, 0.0), vec2<f32>(-inner_r, 0.0)) - thickness;
+    
+    var d_lines = min(min(d_n, d_s), min(d_e, d_w));
+
+    if (tickCount > 0.0 && line_progress > 0.01) {
+        let angle_step = 6.28318530718 / tickCount;
+        let p_angle = atan2(p.y, p.x);
+        let snapped_angle = round(p_angle / angle_step) * angle_step;
+        let tick_dir = vec2<f32>(cos(snapped_angle), sin(snapped_angle));
+        let p1 = tick_dir * circleRadius;
+        let p2 = tick_dir * (circleRadius - current_tick_len);
+        let d_tick = sdSegment(p, p1, p2) - (thickness * 0.7);
+        d_lines = min(d_lines, d_tick);
+    }
+    
+    // Combine everything
+    var res = d_hex;
+    res = min(res, d_circle);
+    if (line_progress > 0.0) {
+        res = min(res, d_lines);
+    }
+    
+    return res;
 }
 
 @vertex
-fn vs_main(
-    @builtin(vertex_index) vertex_index: u32,
-    instance: NodeInstance,
-) -> VertexOutput {
+fn vs_main(@builtin(vertex_index) vertex_index: u32, instance: NodeInstance) -> VertexOutput {
     let corners = array<vec2<f32>, 6>(
-        vec2<f32>(-1.0, -1.0),
-        vec2<f32>( 1.0, -1.0),
-        vec2<f32>(-1.0,  1.0),
-        vec2<f32>(-1.0,  1.0),
-        vec2<f32>( 1.0, -1.0),
-        vec2<f32>( 1.0,  1.0)
+        vec2<f32>(-1.0, -1.0), vec2<f32>( 1.0, -1.0), vec2<f32>(-1.0,  1.0),
+        vec2<f32>(-1.0,  1.0), vec2<f32>( 1.0, -1.0), vec2<f32>( 1.0,  1.0)
     );
 
-    let aspect = uniforms.resolution.x / max(uniforms.resolution.y, 1.0);
-    let center_world = aspectify(instance.position, aspect);
-    // Extend quad enough to contain the full ping fade (max ping radius ~0.30)
-    let ping_max_r = 0.30;
-    let extent = instance.size * 5.2 + ping_max_r + 0.04;
+    let aspect = ubo.resolution.x / max(ubo.resolution.y, 1.0);
+    let center_world = aspectify(instance.position);
+    
+    var extent = instance.size * 1.5;
+    let type_id = u32(instance.node_type + 0.5);
+    if (type_id == 2u || type_id == 4u || type_id == 5u) {
+        extent = instance.size * 3.0; // Reduced extent for smaller symbol
+    }
+    
     let local = corners[vertex_index] * extent;
 
     var out: VertexOutput;
@@ -139,79 +231,33 @@ fn vs_main(
     out.local = local;
     out.size = instance.size;
     out.node_type = instance.node_type;
-    out.node_index = instance.node_index;
-    out.center_world = center_world;
-    out.frequency_norm = instance.frequency_norm;
     return out;
 }
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    let aspect = uniforms.resolution.x / max(uniforms.resolution.y, 1.0);
-    let time = uniforms.metadata.x;
-    let hovered_index = i32(uniforms.metadata.y);
-    let hover_mix = uniforms.metadata.z;
-    let pulse_radius = max(time - uniforms.metadata.w, 0.0) * 0.23;
-
-    var hovered_world = aspectify(uniforms.cursor, aspect);
-    if (hovered_index >= 0 && hovered_index < i32(NODE_COUNT)) {
-        hovered_world = aspectify(node_position(u32(hovered_index)), aspect);
-    }
-
-    let distance = length(in.local);
-    let base = node_color(in.node_type);
-    let hover = select(0.0, 1.0, hovered_index == i32(in.node_index)) * hover_mix;
-    let relay_distance = length(in.center_world - hovered_world);
-    let relay = band(relay_distance, pulse_radius, 0.052) * hover_mix;
-    let pulse_ring = band(distance, pulse_radius, 0.018) * hover_mix;
-    let breathe = 0.76 + 0.24 * sin(time * 1.1 + in.node_index * 1.43);
-    let core = smoothstep(in.size * 1.5, in.size * 0.25, distance);
-    let halo = smoothstep(in.size * 4.5, in.size * 0.72, distance);
-    let ident = signature(distance, in.local, in.node_type, in.size, time);
-
-    // Radar Sweep effect
-    let sweep_speed = 0.15;
-    let angle = atan2(in.center_world.y, in.center_world.x);
-    let normalized_angle = fract((angle + PI) / TWO_PI);
-    let normalized_sweep = fract(time * sweep_speed);
+    let time = ubo.metadata.x;
+    let color = node_color(in.node_type);
     
-    var angle_diff = normalized_sweep - normalized_angle;
-    if (angle_diff < 0.0) {
-        angle_diff += 1.0;
+    let pulse = 0.08 * sin(time * 2.5);
+    let r = in.size * (1.0 + pulse);
+    
+    var alpha = 0.0;
+    let type_id = u32(in.node_type + 0.5);
+
+    switch (type_id) {
+        case 0u: { alpha = smoothstep(0.0, -0.002, sdHexagon(in.local, r)); }
+        case 1u: { alpha = smoothstep(0.0, -0.002, sdOctagon(in.local, r)); }
+        case 2u: { alpha = smoothstep(0.0, -0.002, sdNDB(in.local, r, time)); }
+        case 3u: { alpha = smoothstep(0.0, -0.002, sdBox(in.local, r)); }
+        case 4u, 5u: { 
+            // Sharper softness for DVOR to avoid fading out thick strokes
+            alpha = smoothstep(0.0, -0.001, sdDVOR(in.local, r, time)); 
+        }
+        case 6u: { alpha = smoothstep(0.0, -0.002, sdDiamond(in.local, r)); }
+        default: { alpha = smoothstep(r, r - 0.002, length(in.local)); }
     }
-    let phosphor = pow(1.0 - angle_diff, 6.0) * 0.8; 
-    let head_flash = smoothstep(0.01, 0.0, angle_diff) * 1.5;
-    let sweep_boost = phosphor + head_flash;
-
-    // ---- Radar Ping (Shadertoy-style) --------------------------------
-    // Slow, procedural rings. `frequency_norm` only shifts the reset cycle
-    // length slightly so nearby nodes stay in sync-ish rather than fighting.
-    let ping_reset   = 4.0 + in.frequency_norm * 2.0; // 4-6 s cycle
-    let ping_speed   = 0.055;   // units/second expansion (slow, deliberate)
-    let ping_tail    = 0.08;    // phosphor trailing-edge softness
-    let ping_edge    = 0.003;   // sharp leading edge
-    let ping_fade    = 0.28;    // fade to 0 at this radius (inside the quad)
-
-    // Stagger 3 rings evenly across the reset window so one is always mid-travel
-    let phase_step   = ping_reset / 3.0;
-    let r1 = radar_ping_ring(distance, time,                  ping_reset, ping_speed, ping_tail, ping_edge, ping_fade);
-    let r2 = radar_ping_ring(distance, time + phase_step,     ping_reset, ping_speed, ping_tail, ping_edge, ping_fade);
-    let r3 = radar_ping_ring(distance, time + phase_step * 2.0, ping_reset, ping_speed, ping_tail, ping_edge, ping_fade);
-    // VORs (type 0) show all 3 rings; others show 2, waypoints show 1
-    var total_ping = r1;
-    if (in.node_type < 1.5) { total_ping += r2; }
-    if (in.node_type < 0.5) { total_ping += r3; }
-    // -------------------------------------------------------------------
-
-    var color = base * core * (0.62 + hover * 0.95);
-    color += base * halo * (0.12 + breathe * 0.12 + relay * 0.24);
-    color += base * ident * (0.34 + hover * 0.44);
-    color += vec3<f32>(0.88, 0.98, 1.0) * pulse_ring * (core + ident) * 0.42;
-    color += base * total_ping * 1.6;
-
-    // Boost intensity when sweep passes
-    color += base * sweep_boost;
-
-    let alpha = core * 0.48 + halo * 0.18 + ident * 0.24 + pulse_ring * 0.12 + total_ping * 0.55 + head_flash * core;
+    
+    if (alpha <= 0.0) { discard; }
     return vec4<f32>(color * alpha, alpha);
 }
