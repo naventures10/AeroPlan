@@ -69,10 +69,9 @@ postgres:
         airspace_type: "varchar"
         name: "varchar"
         identification: "varchar"
-        lateral_limits: "varchar"
         upper_limit: "varchar"
         lower_limit: "varchar"
-        remarks: "varchar"
+        remarks: "text"
         source_file: "varchar"
 
     ats_route_waypoints:

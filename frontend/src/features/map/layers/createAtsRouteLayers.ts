@@ -110,7 +110,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
     setSelectedFeature,
   } = ctx;
 
-  const isZoomAtsWaypoints = ctx.viewState.zoom > ZOOM_ATS_WAYPOINTS;
+  const isZoomAtsWaypoints = ctx.zoom > ZOOM_ATS_WAYPOINTS;
   const layers: any[] = [];
 
   // ── 1. Route Segment Geometry ──────────────────────────────────────

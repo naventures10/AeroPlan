@@ -58,7 +58,9 @@ export function AirspaceDetailsPanel({ data }: { data: any }) {
             <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider">
               Remarks
             </span>
-            <div className="text-xs text-white/80 leading-relaxed italic">{p.remarks}</div>
+            <div className="text-xs text-white/80 leading-relaxed italic whitespace-pre-wrap">
+              {p.remarks}
+            </div>
           </div>
         )}
 

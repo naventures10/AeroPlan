@@ -28,6 +28,7 @@ export function useDeckLayers({
   onAerodromeClick: (icao: string, coords: [number, number]) => void;
   hoveredRnpApproachId?: string | null;
 }) {
+  'use no memo';
   const {
     viewMode,
     activeLayers,
@@ -76,6 +77,8 @@ export function useDeckLayers({
     }));
   }, [aerodromes]);
 
+  const zoom = viewState.zoom;
+
   // Build the shared context passed to every layer factory
   const ctx: LayerContext = {
     viewMode,
@@ -83,7 +86,7 @@ export function useDeckLayers({
     selectedRouteIds,
     selectedRouteType,
     selectedFeature,
-    viewState,
+    zoom,
     atsRouteLabels,
     animatedTrips,
     currentTime,
@@ -148,7 +151,7 @@ export function useDeckLayers({
     setSelectedRouteIds,
     setSelectedFeature,
     selectedFeature,
-    viewState,
+    zoom,
     hoveredRnpApproachId,
     isAtsRendered,
     atsRouteLabels,

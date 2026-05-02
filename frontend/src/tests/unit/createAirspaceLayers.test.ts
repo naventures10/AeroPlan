@@ -5,7 +5,7 @@ describe('createAirspaceLayers', () => {
   it('creates geometry and metadata MVT layers', () => {
     const ctx = {
       viewMode: 'ENROUTE',
-      viewState: { zoom: 8 },
+      zoom: 8,
       activeLayers: {
         airspaces: true,
         airspaceFIR: true,
@@ -29,7 +29,7 @@ describe('createAirspaceLayers', () => {
     expect(geomLayer.props.getLineColor(firFeature)).toEqual([255, 165, 0, 80]); // FIR stroke
 
     // Check line color hierarchy zoom hiding
-    const lowZoomCtx = { ...ctx, viewState: { zoom: 1 } };
+    const lowZoomCtx = { ...ctx, zoom: 1 };
     const lowZoomLayers = createAirspaceLayers(lowZoomCtx as any);
     expect(lowZoomLayers[0].props.getLineColor(firFeature)).toEqual([0, 0, 0, 0]);
 
@@ -59,10 +59,8 @@ describe('createAirspaceLayers', () => {
     const highlightLayers = createAirspaceLayers(highlightCtx as any);
 
     const highlightFeature = { properties: { id: '123', airspace_type: 'FIR', name: 'FIR' } };
-    expect(highlightLayers[1].props.getTextColor(highlightFeature)).toEqual([0, 0, 0, 255]);
-    expect(highlightLayers[1].props.getBackgroundColor(highlightFeature)).toEqual([
-      255, 255, 0, 40,
-    ]);
+    expect(highlightLayers[1].props.getTextColor(highlightFeature)).toEqual([255, 255, 0, 255]);
+    expect(highlightLayers[1].props.getBackgroundColor(highlightFeature)).toEqual([0, 0, 0, 180]);
     expect(highlightLayers[1].props.getBorderColor(highlightFeature)).toEqual([255, 255, 0, 255]);
 
     // Check non-highlight borders
@@ -83,7 +81,7 @@ describe('createAirspaceLayers', () => {
   it('respects layer toggles for all types', () => {
     const ctx = {
       viewMode: 'ENROUTE',
-      viewState: { zoom: 8 },
+      zoom: 8,
       activeLayers: {
         airspaces: true,
         airspaceFIR: false,

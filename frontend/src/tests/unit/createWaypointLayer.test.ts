@@ -6,7 +6,7 @@ describe('createWaypointLayer', () => {
     const ctx = {
       viewMode: 'ENROUTE',
       activeLayers: { atsRoutes: false }, // if false, waypoints pickable
-      viewState: { zoom: 8 },
+      zoom: 8,
       selectedFeature: null,
       setSelectedFeature: vi.fn(),
     };
@@ -55,7 +55,7 @@ describe('createWaypointLayer', () => {
     const ctx = {
       viewMode: 'TERMINAL',
       activeLayers: { atsRoutes: false },
-      viewState: { zoom: 8 },
+      zoom: 8,
     };
     const layers = createWaypointLayer(ctx as any);
     expect(layers[0].props.visible).toBe(false);
