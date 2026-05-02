@@ -1,28 +1,23 @@
 import json
 import os
+import subprocess
 import sys
 import tempfile
+import warnings
 
 import boto3
+import fiona
+import geopandas as gpd
+import numpy as np
 import requests
+from joblib import Parallel, delayed
+from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import connected_components
+from shapely import STRtree, line_merge, snap, unary_union, wkb
+from sqlalchemy import create_engine, text
 
-# --- 1. BOOTSTRAP: Initialize Headless QGIS ---
-sys.path.insert(0, "/Applications/QGIS.app/Contents/Resources/python")
-sys.path.insert(0, "/Applications/QGIS.app/Contents/Resources/python/plugins")
-
-from qgis.core import (
-    QgsApplication,
-    QgsVectorLayer,
-    QgsVectorFileWriter,
-    QgsCoordinateReferenceSystem,
-    QgsCoordinateTransform,
-    QgsProject,
-    QgsFeature,
-    QgsField,
-    QgsGeometry,
-    QgsWkbTypes,
-)
-from qgis.PyQt.QtCore import QVariant
+# Suppress harmless Shapely warnings
+warnings.filterwarnings("ignore")
 
 
 # ── Constants ────────────────────────────────────────────────────────────────
@@ -111,6 +106,43 @@ def derive_airspace_type(layer_name: str) -> str:
     return "UNKNOWN"
 
 
+def stitch_cluster(airspace_type, cluster_id, group):
+    """Processes a single airspace cluster: snapping and merging lines."""
+    try:
+        # 1. Force a 50-meter snap on all fragments in this specific cluster
+        union_all = group.geometry.unary_union
+        snapped_lines = [snap(geom, union_all, 50.0) for geom in group.geometry]
+        union_result = unary_union(snapped_lines)
+
+        # 2. Ensure we only have LineStrings/MultiLineStrings for linemerge
+        if union_result.geom_type == "GeometryCollection":
+            lines = [
+                g
+                for g in union_result.geoms
+                if g.geom_type in ["LineString", "MultiLineString"]
+            ]
+            if lines:
+                union_result = unary_union(lines)
+            else:
+                return None
+
+        # 3. Merge them into continuous lines
+        merged = (
+            union_result
+            if union_result.geom_type == "LineString"
+            else line_merge(union_result)
+        )
+
+        return {"airspace_type": airspace_type, "cluster_id": cluster_id, "geometry": merged}
+    except Exception as e:
+        print(f"  [Error] Failed to stitch {airspace_type} cluster {cluster_id}: {e}")
+        return {
+            "airspace_type": airspace_type,
+            "cluster_id": cluster_id,
+            "geometry": group.geometry.unary_union,
+        }
+
+
 # ── MinIO Data Source ────────────────────────────────────────────────────────
 
 
@@ -163,148 +195,181 @@ class MinIOSource:
 
 
 class AirspaceETL:
-    """Headless QGIS engine that extracts airspace geometries from a GeoPDF
+    """Engine that extracts airspace geometries from a GeoPDF using GDAL/GeoPandas
     and loads them into PostGIS."""
 
     def __init__(self):
-        QgsApplication.setPrefixPath("/Applications/QGIS.app/Contents/MacOS", True)
-        print("[*] Starting headless QGIS engine...")
-        self.qgs = QgsApplication([], False)
-        self.qgs.initQgis()
+        print("[*] Initializing Airspace ETL engine...")
+        self.db_url = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+        self.engine = create_engine(self.db_url)
+        self.target_crs = "EPSG:4326"
 
-        self.pg_uri = (
-            f"PG:dbname='{DB_NAME}' host='{DB_HOST}' "
-            f"port='{DB_PORT}' user='{DB_USER}' password='{DB_PASS}'"
-        )
-        self.target_crs = QgsCoordinateReferenceSystem("EPSG:4326")
-
-    def _build_memory_layers(self):
-        """Create typed memory layer for Line geometries."""
-        layers = {
-            QgsWkbTypes.LineGeometry: QgsVectorLayer(
-                "MultiLineString?crs=EPSG:4326", "lines", "memory"
-            ),
-        }
-        for mem in layers.values():
-            pr = mem.dataProvider()
-            pr.addAttributes(
-                [
-                    QgsField("layer_name", QVariant.String),
-                    QgsField("airspace_type", QVariant.String),
-                ]
-            )
-            mem.updateFields()
-        return layers
-
-    def extract(self, pdf_path: str):
-        """Read all whitelisted layers from the PDF into memory layers."""
-        mem_layers = self._build_memory_layers()
-        total_mapped = 0
-
-        print(f"\n[*] Processing {len(WHITELIST)} whitelisted layers...")
+    def extract(self, pdf_path: str) -> gpd.GeoDataFrame:
+        """Read all whitelisted layers from the PDF using system GDAL binaries."""
+        print(f"\n[*] Processing {len(WHITELIST)} whitelisted layers using system GDAL...")
         print("-" * 50)
 
+        # 1. List all available layers in the PDF using ogrinfo
+        try:
+            cmd_info = ["ogrinfo", "-so", pdf_path]
+            output = subprocess.check_output(cmd_info, stderr=subprocess.STDOUT).decode("utf-8")
+            available_layers = []
+            for line in output.splitlines():
+                if ":" in line and not line.startswith("INFO") and not line.startswith("Had to"):
+                    # Extract layer name after the colon and space
+                    parts = line.split(":", 1)
+                    if len(parts) > 1:
+                        available_layers.append(parts[1].strip())
+        except Exception as e:
+            print(f"  [X] Failed to list layers using ogrinfo: {e}")
+            return gpd.GeoDataFrame()
+
+        all_layers = []
         for layer_str in WHITELIST:
-            vlayer = None
-            # If there are duplicate layers with the same name, we explicitly ask for the line geometry ones first
-            for gtype in ["LineString", "MultiLineString", ""]:
-                uri = f"{pdf_path}|layername={layer_str}" + (f"|geometrytype={gtype}" if gtype else "")
-                temp_vlayer = QgsVectorLayer(uri, layer_str, "ogr")
-                
-                if temp_vlayer.isValid():
-                    gt = temp_vlayer.geometryType()
-                    # Accept immediately if it's explicitly line or mixed/unknown, or if it's our last-resort fallback
-                    if gt == QgsWkbTypes.LineGeometry or gt == QgsWkbTypes.UnknownGeometry or gtype == "":
-                        vlayer = temp_vlayer
-                        if gt == QgsWkbTypes.LineGeometry:
-                            break  # perfect match
-
-            if not vlayer or not vlayer.isValid():
-                print(f"  [X] Could not load '{layer_str}'. Skipping...")
+            # Match the whitelisted layer name with the actual layer name in the PDF
+            actual_layer = next((al for al in available_layers if al.upper() == layer_str.upper()), None)
+            
+            if not actual_layer:
+                print(f"  [X] Layer '{layer_str}' not found in PDF. Skipping...")
                 continue
 
-            print(f"  Processing: {layer_str}")
-            transform = QgsCoordinateTransform(
-                vlayer.crs(), self.target_crs, QgsProject.instance()
-            )
-
-            clean_name = sanitize_name(layer_str)
-            derived_type = derive_airspace_type(layer_str)
-
-            counts = {
-                QgsWkbTypes.LineGeometry: 0,
-            }
-            features_by_type = {
-                QgsWkbTypes.LineGeometry: [],
-            }
-
-            for feat in vlayer.getFeatures():
-                geom = feat.geometry()
-                if geom.isNull():
+            print(f"  Processing: {actual_layer}")
+            
+            # 2. Extract specific layer to temporary GeoJSON using ogr2ogr
+            temp_json = os.path.join(tempfile.gettempdir(), f"layer_{sanitize_name(actual_layer)}.json")
+            try:
+                cmd_extract = ["ogr2ogr", "-f", "GeoJSON", temp_json, pdf_path, actual_layer]
+                subprocess.run(cmd_extract, check=True, capture_output=True)
+                
+                # 3. Load the temporary GeoJSON with GeoPandas
+                gdf = gpd.read_file(temp_json)
+                if gdf.empty:
+                    if os.path.exists(temp_json):
+                        os.remove(temp_json)
                     continue
 
-                geom_type = geom.type()
-                if geom_type not in features_by_type:
-                    continue
+                # Clean attributes
+                gdf["layer_name"] = sanitize_name(actual_layer)
+                gdf["airspace_type"] = derive_airspace_type(actual_layer)
 
-                geom.transform(transform)
-                geom.convertToMultiType()
+                # Ensure target CRS (WGS 84)
+                if gdf.crs is None:
+                    gdf.set_crs(self.target_crs, allow_override=True)
+                elif gdf.crs != self.target_crs:
+                    gdf = gdf.to_crs(self.target_crs)
 
-                new_feat = QgsFeature(mem_layers[geom_type].fields())
-                new_feat.setGeometry(geom)
-                new_feat.setAttribute("layer_name", clean_name)
-                new_feat.setAttribute("airspace_type", derived_type)
-
-                features_by_type[geom_type].append(new_feat)
-                counts[geom_type] += 1
-
-            for geom_type, feats in features_by_type.items():
-                if feats:
-                    mem_layers[geom_type].dataProvider().addFeatures(feats)
-                    total_mapped += len(feats)
-
-            print(
-                f"      {counts[QgsWkbTypes.LineGeometry]} lines"
-            )
+                # Filter for line geometries (LineString or MultiLineString)
+                gdf = gdf[gdf.geometry.type.isin(["LineString", "MultiLineString"])]
+                
+                if not gdf.empty:
+                    print(f"      {len(gdf)} lines extracted.")
+                    all_layers.append(gdf)
+                
+            except Exception as e:
+                print(f"      [X] Failed to extract {actual_layer}: {e}")
+            finally:
+                if os.path.exists(temp_json):
+                    os.remove(temp_json)
 
         print("-" * 50)
-        print(f"[+] Extraction complete. {total_mapped} geometries in memory.")
-        return mem_layers
+        if not all_layers:
+            print("[!] No geometries extracted from any layer.")
+            return gpd.GeoDataFrame()
 
-    def load(self, mem_layers: dict):
-        """Export the memory layers into the PostGIS airspaces table."""
-        print(f"[*] Exporting to PostGIS table '{TARGET_TABLE}'...")
+        full_gdf = gpd.pd.concat(all_layers, ignore_index=True)
+        print(f"[+] Extraction complete. {len(full_gdf)} geometries in memory.")
+        return full_gdf
 
-        for geom_type, mem_layer in mem_layers.items():
-            if mem_layer.featureCount() == 0:
+    def reconstruct(self, full_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+        """Consolidates fragmented airspace geometries using clustering and stitching."""
+        if full_gdf.empty:
+            print("  [!] No geometries to reconstruct.")
+            return full_gdf
+
+        print("\n[*] Starting geometry reconstruction pipeline...")
+
+        # 1. Project to metric plane (EPSG:3857) for accurate clustering
+        print("  [Step 1] Projecting to metric plane (EPSG:3857)...")
+        planar_gdf = full_gdf.to_crs(epsg=3857)
+
+        reconstructed_results = []
+        eps = 7000.0  # 7km clustering distance
+
+        # 2. Process each Airspace Type separately
+        for airspace_type, type_group in planar_gdf.groupby("airspace_type"):
+            print(f"  --- Processing {airspace_type} ---")
+
+            # A. Clustering
+            geoms = type_group.geometry.values
+            tree = STRtree(geoms)
+            indices_i, indices_j = tree.query(geoms, predicate="dwithin", distance=eps)
+
+            n = len(type_group)
+            adj_matrix = csr_matrix(
+                (np.ones(len(indices_i)), (indices_i, indices_j)), shape=(n, n)
+            )
+            n_components, labels = connected_components(csgraph=adj_matrix, directed=False)
+
+            type_group = type_group.copy()
+            type_group["cluster_id"] = labels
+            print(f"    Identified {n_components} zones.")
+
+            # B. Stitching in Parallel
+            results = Parallel(n_jobs=-1)(
+                delayed(stitch_cluster)(airspace_type, cid, group)
+                for cid, group in type_group.groupby("cluster_id")
+            )
+
+            stitched_geoms = [r for r in results if r is not None]
+            if not stitched_geoms:
                 continue
 
-            options = QgsVectorFileWriter.SaveVectorOptions()
-            options.driverName = "PostgreSQL"
-            options.layerName = TARGET_TABLE
-            options.actionOnExistingFile = QgsVectorFileWriter.ActionOnExistingFile.CreateOrOverwriteLayer
-            options.ct = QgsCoordinateTransform(
-                mem_layer.crs(), self.target_crs, QgsProject.instance()
-            )
+            stitched_gdf = gpd.GeoDataFrame(stitched_geoms, crs="EPSG:3857")
+            stitched_gdf["geometry"] = stitched_gdf["geometry"].simplify(10.0)
 
-            error, error_string = QgsVectorFileWriter.writeAsVectorFormatV2(
-                mem_layer,
-                self.pg_uri,
-                QgsProject.instance().transformContext(),
-                options,
-            )
+            # C. Post-processing
+            final_type_gdf = stitched_gdf.to_crs(epsg=4326)
+            final_type_gdf["airspace_type"] = airspace_type
+            final_type_gdf["layer_name"] = f"{airspace_type}_RECONSTRUCTED"
 
-            if error != QgsVectorFileWriter.NoError:
-                print(f"  [X] FAILED export ({geom_type}): {error_string}")
-                return False
+            reconstructed_results.append(final_type_gdf)
 
-        print(f"[+] SUCCESS: Data loaded into PostGIS table: {TARGET_TABLE}")
-        return True
+        if not reconstructed_results:
+            return gpd.GeoDataFrame()
+
+        final_gdf = gpd.pd.concat(reconstructed_results, ignore_index=True)
+        if "cluster_id" in final_gdf.columns:
+            final_gdf = final_gdf.drop(columns=["cluster_id"])
+
+        print(f"[+] Reconstruction complete. {len(final_gdf)} consolidated geometries.")
+        return final_gdf
+
+    def load(self, data: gpd.GeoDataFrame):
+        """Export the GeoDataFrame into the PostGIS airspaces table."""
+        if data.empty:
+            print("  [!] No data to load.")
+            return False
+
+        print(f"[*] Exporting to PostGIS table '{TARGET_TABLE}'...")
+        try:
+            # Prepare for PostGIS load
+            sync_gdf = data.copy()
+            sync_gdf = sync_gdf.rename_geometry("wkb_geometry")
+            
+            with self.engine.begin() as conn:
+                # Clean start for the table
+                conn.execute(text(f"DROP TABLE IF EXISTS {TARGET_TABLE} CASCADE"))
+                sync_gdf.to_postgis(TARGET_TABLE, con=conn, if_exists="append", index=False)
+            
+            print(f"[+] SUCCESS: Data loaded into PostGIS table: {TARGET_TABLE}")
+            return True
+        except Exception as e:
+            print(f"  [X] FAILED PostGIS export: {e}")
+            return False
 
     def shutdown(self):
-        """Graceful teardown of the QGIS engine."""
-        print("[*] Shutting down QGIS engine.")
-        self.qgs.exitQgis()
+        """Graceful teardown."""
+        print("[*] ETL process finished.")
 
 
 # ── Main Pipeline ────────────────────────────────────────────────────────────
@@ -322,12 +387,15 @@ def main():
         # Phase 2: Download the PDF to a temp file
         pdf_path = source.download_pdf(pdf_url)
 
-        # Phase 3: QGIS extraction
+        # Phase 3: Extraction using GDAL/GeoPandas
         etl = AirspaceETL()
-        mem_layers = etl.extract(pdf_path)
+        full_gdf = etl.extract(pdf_path)
 
-        # Phase 4: PostGIS load
-        etl.load(mem_layers)
+        # Phase 4: Geometry Reconstruction
+        reconstructed_gdf = etl.reconstruct(full_gdf)
+
+        # Phase 5: PostGIS load
+        etl.load(reconstructed_gdf)
 
     except Exception as e:
         print(f"\n[!] PIPELINE FAILURE: {e}")
