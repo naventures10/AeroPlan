@@ -1,36 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { MapPage } from './pages/MapPage';
 
 test.describe('Chart Overlay Userflows', () => {
   let mapPage: MapPage;
 
   test.beforeEach(async ({ page }) => {
-    // 1. Mock MapTiler to allow map initialization
-    await page.route(/api\.maptiler\.com\/maps\/hybrid\/style\.json/, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          version: 8,
-          name: 'Mock Style',
-          sources: { 'maptiler-terrain': { type: 'raster-dem', tiles: [] } },
-          layers: [{ id: 'background', type: 'background', paint: { 'background-color': '#000' } }],
-        }),
-      });
-    });
-
-    await page.route(/api\.maptiler\.com\/.*/, async (route) => {
-      await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
-    });
-
-    // 2. Mock tile requests
-    await page.route(/\/tiles\/wac_india\//, async (route) => {
-      await route.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from([]) });
-    });
-    await page.route(/\/tiles\/erc_india\//, async (route) => {
-      await route.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from([]) });
-    });
-
     mapPage = new MapPage(page);
     await mapPage.goto();
     await mapPage.waitForReady();

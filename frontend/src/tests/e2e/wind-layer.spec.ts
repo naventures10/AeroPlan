@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { MapPage } from './pages/MapPage';
 
 test.describe('Wind Layer Userflows', () => {
