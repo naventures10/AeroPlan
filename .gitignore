@@ -81,3 +81,8 @@ frontend/public/weather/weather_manifest.json
 backend/temp_*.grib2
 backend/temp_*.idx
 backend/temp_out_*.tif
+
+# ============================================================
+# Local Scratch / Development
+# ============================================================
+backend/scripts/scratch/
