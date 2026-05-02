@@ -25,6 +25,7 @@ function formatAipText(text: any): React.ReactNode {
 export function AirspaceDetailsPanel({ data }: { data: any }) {
   if (!data) return null;
   const p = data;
+  console.log('[AirspaceDetailsPanel] rendering with data:', p);
 
   return (
     <div className="flex flex-col gap-4 px-1 py-1">
@@ -58,7 +59,9 @@ export function AirspaceDetailsPanel({ data }: { data: any }) {
             <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider">
               Remarks
             </span>
-            <div className="text-xs text-white/80 leading-relaxed italic">{p.remarks}</div>
+            <div className="text-xs text-white/80 leading-relaxed italic whitespace-pre-wrap">
+              {p.remarks}
+            </div>
           </div>
         )}
 

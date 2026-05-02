@@ -11,7 +11,7 @@ import type { LayerContext } from './types';
 
 export function createNavaidLayer(ctx: LayerContext): any[] {
   const { viewMode, selectedFeature, setSelectedFeature } = ctx;
-  const isZoomNavaids = ctx.viewState.zoom > ZOOM_NAVAIDS;
+  const isZoomNavaids = ctx.zoom > ZOOM_NAVAIDS;
 
   return [
     new MVTLayer({

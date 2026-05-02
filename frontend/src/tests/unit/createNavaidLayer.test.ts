@@ -6,7 +6,7 @@ describe('createNavaidLayer', () => {
     const ctx = {
       viewMode: 'ENROUTE',
       activeLayers: { navaids: true },
-      viewState: { zoom: 8 },
+      zoom: 8,
       selectedFeature: null,
       setSelectedFeature: vi.fn(),
     };
@@ -49,7 +49,7 @@ describe('createNavaidLayer', () => {
     const ctx = {
       viewMode: 'TERMINAL',
       activeLayers: { navaids: true },
-      viewState: { zoom: 8 },
+      zoom: 8,
     };
     const layers = createNavaidLayer(ctx as any);
     expect(layers[0].props.visible).toBe(false);

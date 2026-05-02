@@ -11,7 +11,7 @@ import type { LayerContext } from './types';
 
 export function createWaypointLayer(ctx: LayerContext): any[] {
   const { viewMode, activeLayers, selectedFeature, setSelectedFeature } = ctx;
-  const isZoomWaypoints = ctx.viewState.zoom > ZOOM_WAYPOINTS;
+  const isZoomWaypoints = ctx.zoom > ZOOM_WAYPOINTS;
 
   return [
     new MVTLayer({
