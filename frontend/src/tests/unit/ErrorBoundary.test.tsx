@@ -42,12 +42,9 @@ describe('ErrorBoundary', () => {
     fireEvent.click(button);
     expect(reloadObj.reload).toHaveBeenCalled();
 
-    // Verify hover events
-    fireEvent.mouseOver(button);
-    expect(button.style.backgroundColor).toBe('rgb(37, 99, 235)'); // #2563eb
-
-    fireEvent.mouseOut(button);
-    expect(button.style.backgroundColor).toBe('rgb(59, 130, 246)'); // #3b82f6
+    // Verify tailwind classes
+    expect(button.className).toContain('bg-blue-500');
+    expect(button.className).toContain('hover:bg-blue-600');
 
     Object.defineProperty(window, 'location', {
       value: originalLocation,

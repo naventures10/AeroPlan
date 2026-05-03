@@ -124,7 +124,7 @@ export function FeatureInfoCard() {
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
           className={`absolute ${cardPosition} z-50 ${cardWidth}`}
         >
-          <Card className="bg-black/60 backdrop-blur-2xl backdrop-saturate-200 border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.6)] max-h-[calc(100vh-180px)] flex flex-col">
+          <Card className="aip-feature-card max-h-[calc(100vh-180px)] flex flex-col">
             <CardHeader className="flex justify-between items-center pb-1.5 pt-3 px-3">
               <div className="flex flex-col">
                 <div className="flex items-center gap-1">
@@ -171,43 +171,6 @@ export function FeatureInfoCard() {
               {type === 'AIRSPACE' && <AirspaceDetailsPanel data={data} />}
             </CardBody>
           </Card>
-
-          {/* Table + Scrollbar styling */}
-          <style
-            dangerouslySetInnerHTML={{
-              __html: `
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 3px;
-          height: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.08);
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.2);
-        }
-        .route-th {
-          padding: 4px 8px;
-          font-size: 8px;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: rgba(161, 161, 170, 0.8);
-          white-space: nowrap;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-        }
-        .route-td {
-          padding: 4px 8px;
-          white-space: nowrap;
-          vertical-align: middle;
-        }
-      `,
-            }}
-          />
         </motion.div>
       )}
     </AnimatePresence>

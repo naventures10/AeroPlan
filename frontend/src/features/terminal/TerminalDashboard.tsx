@@ -115,7 +115,7 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
       className="h-fit max-h-[calc(100vh-22rem)] flex pointer-events-none"
     >
       <motion.div
-        animate={{ width: isCollapsed ? 38 : 78 }}
+        animate={{ width: isCollapsed ? 38 : 78, backdropFilter: 'blur(16px)' }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className="bg-zinc-950/90 border border-zinc-800/60 rounded-3xl flex flex-col items-center relative shrink-0 z-20 pointer-events-auto overflow-hidden glass-morphism-heavy shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)]"
       >
@@ -150,7 +150,7 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
               <div
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative flex flex-col items-center justify-center w-full py-4 cursor-pointer transition-all duration-300 ${
+                className={`relative flex flex-col items-center justify-center w-full py-4 cursor-pointer transition duration-300 ${
                   isActive
                     ? 'text-cyan-400 border-l-2 border-cyan-400 bg-cyan-500/10'
                     : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/30'
@@ -176,14 +176,14 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
           opacity: isCollapsed ? 0 : 1,
           paddingLeft: isCollapsed ? 0 : 16,
           borderWidth: isCollapsed ? 0 : 1,
+          backdropFilter: isCollapsed ? 'blur(0px)' : 'blur(16px)',
         }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className={`bg-zinc-900/40 relative flex flex-col shrink-0 overflow-hidden border-l-0 border-zinc-800/60 rounded-r-3xl glass-morphism-heavy z-10 ${
+        className={`bg-zinc-900/40 relative flex flex-col shrink-0 overflow-hidden border-l-0 border-zinc-800/60 rounded-r-3xl glass-morphism-heavy z-10 -ml-4 ${
           isCollapsed
             ? 'pointer-events-none shadow-none'
             : 'pointer-events-auto shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)]'
         }`}
-        style={{ marginLeft: -16 }}
       >
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center">

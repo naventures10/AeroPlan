@@ -29,7 +29,7 @@ export const PerformanceStats = ({
       <button
         type="button"
         onClick={onToggleUI}
-        className={`flex items-center justify-center h-10 w-10 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-2xl transition-all hover:bg-white/5 active:scale-95 ${!showUI ? 'text-cyan-400 ring-2 ring-cyan-500/20' : 'text-white/40'}`}
+        className={`flex items-center justify-center h-10 w-10 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl transition hover:bg-white/5 active:scale-95 ${!showUI ? 'text-cyan-400 ring-2 ring-cyan-500/20' : 'text-white/40'}`}
       >
         {showUI ? <Layout className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
       </button>
@@ -37,12 +37,12 @@ export const PerformanceStats = ({
       <button
         type="button"
         onClick={onToggle}
-        className={`flex items-center justify-center h-10 w-10 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-2xl transition-all hover:bg-white/5 active:scale-95 ${show ? 'text-cyan-400 ring-2 ring-cyan-500/20' : 'text-white/40'}`}
+        className={`flex items-center justify-center h-10 w-10 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl transition hover:bg-white/5 active:scale-95 ${show ? 'text-cyan-400 ring-2 ring-cyan-500/20' : 'text-white/40'}`}
       >
         <Activity className={`h-4 w-4 ${show ? 'text-cyan-400' : 'text-white/40'}`} />
       </button>
 
-      <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/40 px-3.5 py-2 backdrop-blur-2xl">
+      <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/40 px-3.5 py-2 backdrop-blur-xl">
         <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-white/60">
           <Cpu className="h-3.5 w-3.5" />
           {status === 'ready' ? (
@@ -58,7 +58,7 @@ export const PerformanceStats = ({
     </div>
 
     {show && (
-      <div className="pointer-events-auto w-64 rounded-2xl border border-white/10 bg-black/60 p-4 backdrop-blur-3xl shadow-2xl animate-in fade-in zoom-in duration-200">
+      <div className="pointer-events-auto w-64 rounded-2xl border border-white/10 bg-black/60 p-4 backdrop-blur-xl shadow-2xl animate-in fade-in zoom-in duration-200">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">
             <BarChart3 className="h-3.5 w-3.5" />

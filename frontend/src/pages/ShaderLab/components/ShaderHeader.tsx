@@ -9,13 +9,13 @@ interface ShaderHeaderProps {
 
 export const ShaderHeader = ({ shader, show, onBack }: ShaderHeaderProps) => (
   <div
-    className={`pointer-events-auto flex max-w-md items-start gap-5 rounded-[32px] border border-white/8 bg-black/40 p-5 backdrop-blur-3xl shadow-2xl transition-all duration-700 ease-out ${
+    className={`pointer-events-auto flex max-w-md items-start gap-5 rounded-[32px] border border-white/8 bg-black/40 p-5 backdrop-blur-xl shadow-2xl transition duration-700 ease-out [transition-property:opacity,transform] ${
       show ? 'translate-y-0 opacity-100' : '-translate-y-12 opacity-0'
     }`}
   >
     <button
       onClick={onBack}
-      className="group flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/5 bg-white/5 transition-all hover:bg-white/10 active:scale-95"
+      className="group flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/5 bg-white/5 transition hover:bg-white/10 active:scale-95"
     >
       <ArrowLeft className="h-4 w-4 text-white/40 transition-colors group-hover:text-white" />
     </button>

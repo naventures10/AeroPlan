@@ -68,7 +68,7 @@ export default function AerodromeInfoDropdown({
         onClick={() => {
           setIsOpen(!isOpen);
         }}
-        className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl backdrop-blur-2xl shadow-xl transition-all duration-300 focus:outline-none border ${
+        className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl backdrop-blur-xl shadow-xl transition duration-300 focus:outline-none border ${
           isOpen
             ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300 shadow-[0_0_20px_rgba(99,102,241,0.15)]'
             : 'bg-zinc-950/50 border-zinc-800/60 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900/60 hover:border-zinc-700/60'

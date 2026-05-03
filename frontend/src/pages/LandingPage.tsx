@@ -14,7 +14,7 @@ export default function LandingPage() {
     <div className="relative w-screen h-screen bg-[#020617] overflow-hidden flex items-center justify-center font-sans">
       {/* Background Image with Cinematic Overlay */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat animate-subtle-zoom"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat animate-subtle-zoom will-change-transform"
         style={{ backgroundImage: 'url("/images/hero-bg.png")' }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-[#020617]/80 via-[#020617]/40 to-[#020617]/90" />
@@ -72,7 +72,7 @@ export default function LandingPage() {
         >
           <Button
             size="lg"
-            className="bg-white text-slate-950 font-bold px-8 h-14 rounded-xl hover:bg-blue-50 transition-all flex items-center gap-2 group"
+            className="bg-white text-slate-950 font-bold px-8 h-14 rounded-xl hover:bg-blue-50 transition-colors flex items-center gap-2 group"
             onPress={() => navigate('/app')}
           >
             <MapIcon className="w-5 h-5" />
@@ -102,23 +102,6 @@ export default function LandingPage() {
       <div className="absolute bottom-8 text-slate-600 text-[10px] uppercase tracking-[0.3em] font-bold">
         Next-Gen Aviation Intelligence
       </div>
-
-      <style>{`
-        @keyframes subtle-zoom {
-          0% { transform: scale(1); }
-          100% { transform: scale(1.1); }
-        }
-        .animate-subtle-zoom {
-          animation: subtle-zoom 20s infinite alternate ease-in-out;
-        }
-        @keyframes pulse-slow {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 0.8; }
-        }
-        .animate-pulse-slow {
-          animation: pulse-slow 8s infinite ease-in-out;
-        }
-      `}</style>
     </div>
   );
 }

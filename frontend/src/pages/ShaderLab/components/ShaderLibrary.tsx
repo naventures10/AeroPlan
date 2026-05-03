@@ -10,7 +10,7 @@ interface ShaderLibraryProps {
 
 export const ShaderLibrary = ({ shaders, activeShaderId, show, onSelect }: ShaderLibraryProps) => (
   <div
-    className={`pointer-events-auto max-w-5xl rounded-3xl border border-white/8 bg-black/40 p-3 backdrop-blur-3xl shadow-2xl overflow-hidden transition-all duration-500 ${show ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'}`}
+    className={`pointer-events-auto max-w-5xl rounded-3xl border border-white/8 bg-black/40 p-3 backdrop-blur-xl shadow-2xl overflow-hidden transition duration-500 [transition-property:opacity,transform] ${show ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'}`}
   >
     {show && (
       <>

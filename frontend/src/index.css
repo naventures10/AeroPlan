@@ -15,15 +15,15 @@ body,
 @layer utilities {
   .glass-morphism {
     background: rgba(9, 9, 11, 0.4);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(39, 39, 42, 0.4);
   }
 
   .glass-morphism-heavy {
     background: rgba(9, 9, 11, 0.8);
-    backdrop-filter: blur(32px);
-    -webkit-backdrop-filter: blur(32px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(63, 63, 70, 0.5);
   }
 
@@ -97,7 +97,6 @@ body,
     border-radius: 10px;
     border: 1.5px solid transparent;
     background-clip: padding-box;
-    transition: background 0.2s ease;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
@@ -132,8 +131,8 @@ body,
 /* ── Common Panels (Glassmorphism) ── */
 .wind-panel {
   background: rgba(9, 14, 28, 0.75);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
@@ -289,7 +288,10 @@ body,
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .wind-altitude__step-btn:hover:not(.disabled) {
@@ -355,7 +357,10 @@ body,
   background: rgba(255, 255, 255, 0.1);
   cursor: pointer;
   padding: 0;
-  transition: all 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
   flex-shrink: 0;
 }
 
@@ -403,7 +408,10 @@ body,
   justify-content: center;
   cursor: pointer;
   color: #fff;
-  transition: all 0.2s;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .wind-timeline__play-circle:hover {
@@ -569,7 +577,75 @@ body,
   letter-spacing: 0.15em;
 }
 
-/* ── Hover Tooltip ── */
+/* ── Shared Animations ── */
+@keyframes subtle-zoom {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes pulse-slow {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-subtle-zoom {
+  animation: subtle-zoom 20s infinite alternate ease-in-out;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 8s infinite ease-in-out;
+}
+
+/* ── AIP Feature Card Styles ── */
+.aip-feature-card {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-saturate: 200%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+
+.route-th {
+  padding: 4px 8px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(161, 161, 170, 0.8);
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.route-td {
+  padding: 4px 8px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.error-pre {
+  background: #1e293b;
+  color: #f87171;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  max-width: 600px;
+  overflow: auto;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Wind Tooltip Styles ── */
 .wind-tooltip {
   position: absolute;
   pointer-events: none;
