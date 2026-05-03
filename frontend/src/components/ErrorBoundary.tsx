@@ -15,7 +15,6 @@ interface ErrorBoundaryState {
  * a user-friendly fallback instead of a white screen.
  *
  * Logs the error details and component stack to the console.
- * In the future, this can be wired to Sentry or a telemetry endpoint.
  */
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
@@ -39,73 +38,21 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   render(): ReactNode {
     if (this.state.hasError) {
       return (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100vh',
-            width: '100vw',
-            backgroundColor: '#0f172a',
-            color: '#e2e8f0',
-            fontFamily: 'Inter, system-ui, sans-serif',
-            padding: '2rem',
-            textAlign: 'center',
-          }}
-        >
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-            Something went wrong
-          </h1>
-          <p
-            style={{
-              color: '#94a3b8',
-              fontSize: '0.9rem',
-              maxWidth: '420px',
-              marginBottom: '1.5rem',
-            }}
-          >
+        <div className="flex flex-col items-center justify-center h-screen w-screen bg-[#0f172a] text-slate-200 font-sans p-8 text-center">
+          <div className="text-5xl mb-4">⚠️</div>
+          <h1 className="text-2xl font-semibold mb-2">Something went wrong</h1>
+          <p className="text-slate-400 text-sm max-w-[420px] mb-6">
             An unexpected error occurred in the application. This has been logged for debugging.
           </p>
           {this.state.error && (
-            <pre
-              style={{
-                backgroundColor: '#1e293b',
-                color: '#f87171',
-                padding: '1rem',
-                borderRadius: '0.5rem',
-                fontSize: '0.75rem',
-                maxWidth: '600px',
-                overflow: 'auto',
-                marginBottom: '1.5rem',
-                textAlign: 'left',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-              }}
-            >
+            <pre className="error-pre mb-6">
               {this.state.error.name}: {this.state.error.message}
             </pre>
           )}
           <button
             onClick={this.handleReload}
             type="button"
-            style={{
-              backgroundColor: '#3b82f6',
-              color: '#fff',
-              border: 'none',
-              padding: '0.6rem 1.5rem',
-              borderRadius: '0.4rem',
-              fontSize: '0.9rem',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s',
-            }}
-            onMouseOver={(e) => {
-              (e.target as HTMLButtonElement).style.backgroundColor = '#2563eb';
-            }}
-            onMouseOut={(e) => {
-              (e.target as HTMLButtonElement).style.backgroundColor = '#3b82f6';
-            }}
+            className="bg-blue-500 text-white px-6 py-2.5 rounded-lg text-sm font-medium cursor-pointer transition-colors hover:bg-blue-600"
           >
             Reload Application
           </button>

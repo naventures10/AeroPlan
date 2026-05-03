@@ -72,7 +72,7 @@ export default function LayerToolbar() {
               }
             }}
             title={`Toggle ${id}`}
-            className={`backdrop-blur-2xl shadow-xl transition-all duration-300 ${
+            className={`backdrop-blur-xl shadow-xl transition duration-300 [transition-property:backdrop-filter,-webkit-backdrop-filter] ${
               isActive
                 ? `${bg} ${color} border ${border} shadow-[0_0_15px_rgba(0,0,0,0.2)]`
                 : 'bg-zinc-950/40 border border-zinc-800/60 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60 opacity-80'

@@ -104,12 +104,12 @@ export default function ShaderLab() {
 
       {/* Error Messaging */}
       {status === 'unsupported' && (
-        <div className="absolute bottom-5 inset-x-5 rounded-[24px] border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100 backdrop-blur-xl animate-in slide-in-from-bottom-4 duration-500">
+        <div className="absolute bottom-5 inset-x-5 rounded-[24px] border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100 backdrop-blur-xl animate-in slide-in-from-bottom-4 duration-500 [transition-property:backdrop-filter,-webkit-backdrop-filter]">
           WebGPU is not supported in this browser. Please use a modern browser like Chrome or Edge.
         </div>
       )}
       {status === 'error' && (
-        <div className="absolute bottom-5 inset-x-5 rounded-[24px] border border-rose-400/30 bg-rose-400/10 p-4 text-sm text-rose-100 backdrop-blur-xl animate-in slide-in-from-bottom-4 duration-500">
+        <div className="absolute bottom-5 inset-x-5 rounded-[24px] border border-rose-400/30 bg-rose-400/10 p-4 text-sm text-rose-100 backdrop-blur-xl animate-in slide-in-from-bottom-4 duration-500 [transition-property:backdrop-filter,-webkit-backdrop-filter]">
           Shader initialization failed. Check console for WGSL validation errors.
         </div>
       )}

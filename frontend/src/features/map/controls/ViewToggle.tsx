@@ -32,7 +32,7 @@ export default function ViewToggle() {
         <div className="relative flex flex-col items-end" ref={menuRef}>
           {/* Popover Menu */}
           <div
-            className={`absolute bottom-16 right-0 flex flex-col gap-2 transition-all duration-300 origin-bottom-right ${
+            className={`absolute bottom-16 right-0 flex flex-col gap-2 transition duration-300 origin-bottom-right ${
               isMapMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
             }`}
           >
@@ -44,7 +44,7 @@ export default function ViewToggle() {
                   setViewState({ ...viewState, zoom: 7.5, transitionDuration: 1500 });
                 }
               }}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl backdrop-blur-2xl shadow-xl transition-all duration-300 whitespace-nowrap ${
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl backdrop-blur-xl shadow-xl transition duration-300 [transition-property:backdrop-filter,-webkit-backdrop-filter] whitespace-nowrap ${
                 activeLayers.wacMap
                   ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50'
                   : 'bg-zinc-950/80 text-zinc-400 border border-zinc-800 hover:bg-zinc-800 hover:text-zinc-200'
@@ -62,7 +62,7 @@ export default function ViewToggle() {
                   setViewState({ ...viewState, zoom: 7.5, transitionDuration: 1500 });
                 }
               }}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl backdrop-blur-2xl shadow-xl transition-all duration-300 whitespace-nowrap ${
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl backdrop-blur-xl shadow-xl transition duration-300 [transition-property:backdrop-filter,-webkit-backdrop-filter] whitespace-nowrap ${
                 activeLayers.ercMap
                   ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
                   : 'bg-zinc-950/80 text-zinc-400 border border-zinc-800 hover:bg-zinc-800 hover:text-zinc-200'
@@ -77,7 +77,7 @@ export default function ViewToggle() {
           <button
             onClick={() => setIsMapMenuOpen(!isMapMenuOpen)}
             title="Map Overlays"
-            className={`flex items-center justify-center w-12 h-12 rounded-full backdrop-blur-2xl shadow-xl transition-all duration-300 focus:outline-none ${
+            className={`flex items-center justify-center w-12 h-12 rounded-full backdrop-blur-xl shadow-xl transition duration-300 [transition-property:backdrop-filter,-webkit-backdrop-filter] focus:outline-none ${
               activeLayers.wacMap || activeLayers.ercMap
                 ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
                 : 'bg-zinc-950/40 border border-zinc-800/60 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60 opacity-80'

@@ -203,14 +203,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
             )}
 
             {/* Cards Container */}
-            <div
-              className="relative rounded-2xl overflow-hidden border border-zinc-700/40 shadow-2xl"
-              style={{
-                background: 'rgba(9, 9, 11, 0.65)',
-                backdropFilter: 'blur(24px)',
-                WebkitBackdropFilter: 'blur(24px)',
-              }}
-            >
+            <div className="relative rounded-2xl overflow-hidden border border-zinc-700/40 shadow-2xl glass-morphism">
               {/* Title bar */}
               <div className="px-4 pt-2 pb-0.5">
                 <span className="text-[9px] font-bold tracking-[0.25em] text-zinc-500 uppercase">
@@ -220,8 +213,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
 
               <div
                 ref={scrollRef}
-                className="flex gap-2.5 px-4 pb-2.5 pt-0.5 overflow-x-auto chart-scroll"
-                style={{ maxWidth: '820px' }}
+                className="flex gap-2.5 px-4 pb-2.5 pt-0.5 overflow-x-auto chart-scroll max-w-[820px]"
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center w-full py-6 px-8">
@@ -241,7 +233,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                       onClick={() => {
                         handleChartClick(chart);
                       }}
-                      className="group shrink-0 flex flex-col items-center gap-1.5 p-2 rounded-xl border border-zinc-800/50 hover:border-indigo-500/40 bg-zinc-900/40 hover:bg-indigo-500/10 transition-all duration-200 cursor-pointer w-[82px]"
+                      className="group shrink-0 flex flex-col items-center gap-1.5 p-2 rounded-xl border border-zinc-800/50 hover:border-indigo-500/40 bg-zinc-900/40 hover:bg-indigo-500/10 transition-colors duration-200 cursor-pointer w-[82px]"
                       title={chart.chart_title || undefined}
                     >
                       {/* Chart Icon */}
@@ -294,7 +286,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
             {/* 1. FLOATING CLOSE BUTTON (Top-Right) */}
             <button
               onClick={handleModalClose}
-              className="absolute top-6 right-6 z-[60] w-11 h-11 flex items-center justify-center rounded-full bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/50 text-zinc-400 hover:text-white transition-all backdrop-blur-xl shadow-2xl"
+              className="absolute top-6 right-6 z-[60] w-11 h-11 flex items-center justify-center rounded-full bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/50 text-zinc-400 hover:text-white transition-colors backdrop-blur-xl shadow-2xl"
             >
               <span className="text-xl font-light">✕</span>
             </button>
@@ -332,7 +324,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                 <button
                   type="button"
                   onClick={handleViewIn3D}
-                  className="group relative px-5 py-2.5 rounded-2xl text-[11px] font-black tracking-[0.2em] uppercase text-cyan-100 bg-zinc-950/90 border border-cyan-400/50 shadow-[0_0_24px_rgba(34,211,238,0.45)] hover:shadow-[0_0_36px_rgba(34,211,238,0.65)] transition-all backdrop-blur-xl"
+                  className="group relative px-5 py-2.5 rounded-2xl text-[11px] font-black tracking-[0.2em] uppercase text-cyan-100 bg-zinc-950/90 border border-cyan-400/50 shadow-[0_0_24px_rgba(34,211,238,0.45)] hover:shadow-[0_0_36px_rgba(34,211,238,0.65)] transition backdrop-blur-xl"
                 >
                   <span className="relative z-10">View in 3D space</span>
                   <span
@@ -351,7 +343,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                     setCurrentPage((p) => Math.max(1, p - 1));
                   }}
                   disabled={currentPage <= 1}
-                  className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+                  className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronLeft size={20} />
                 </button>
@@ -365,7 +357,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                     setCurrentPage((p) => Math.min(numPages, p + 1));
                   }}
                   disabled={currentPage >= numPages}
-                  className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+                  className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronRight size={20} />
                 </button>

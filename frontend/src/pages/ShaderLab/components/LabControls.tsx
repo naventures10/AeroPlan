@@ -10,7 +10,7 @@ export const LabControls = ({ shaderId, config, onChange }: LabControlsProps) =>
   if (shaderId !== 'ndb-icon' && shaderId !== 'dvor-icon') return null;
 
   return (
-    <div className="pointer-events-auto absolute left-6 top-1/2 -translate-y-1/2 w-64 space-y-6 rounded-3xl border border-white/10 bg-black/40 p-6 backdrop-blur-3xl shadow-2xl animate-in fade-in slide-in-from-left-4 duration-500">
+    <div className="pointer-events-auto absolute left-6 top-1/2 -translate-y-1/2 w-64 space-y-6 rounded-3xl border border-white/10 bg-black/40 p-6 backdrop-blur-xl shadow-2xl animate-in fade-in slide-in-from-left-4 duration-500 [transition-property:backdrop-filter,-webkit-backdrop-filter]">
       {shaderId === 'ndb-icon' && (
         <>
           <div className="space-y-1.5">
