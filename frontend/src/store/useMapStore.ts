@@ -36,6 +36,7 @@ interface MapState {
     airspaceUpr: boolean;
     ercMap: boolean;
     windlayer: boolean;
+    cloudlayer: boolean;
   };
 
   selectedRouteIds: string[];
@@ -112,6 +113,12 @@ interface MapState {
 
   isWindMode: boolean;
   setIsWindMode: (enabled: boolean) => void;
+
+  isCloudMode: boolean;
+  setIsCloudMode: (enabled: boolean) => void;
+
+  cloudLoadingStatus: { state: string; message?: string };
+  setCloudLoadingStatus: (status: { state: string; message?: string }) => void;
 }
 
 export const DEFAULT_VIEW = {
@@ -150,9 +157,10 @@ export const useMapStore = create<MapState>((set, get) => ({
               selectedRnpApproachId: null,
             }
           : {
-              // Automatically disable wind layer when entering Terminal mode
+              // Automatically disable wind/cloud layer when entering Terminal mode
               isWindMode: false,
-              activeLayers: { ...state.activeLayers, windlayer: false },
+              isCloudMode: false,
+              activeLayers: { ...state.activeLayers, windlayer: false, cloudlayer: false },
             }),
       };
     }),
@@ -176,16 +184,17 @@ export const useMapStore = create<MapState>((set, get) => ({
     airspaceUpr: false,
     ercMap: false,
     windlayer: false,
+    cloudlayer: false,
   },
 
   toggleLayer: (layer) =>
     set((state) => {
       const newActiveLayers = { ...state.activeLayers };
 
-      // Prevent enabling windlayer if in TERMINAL mode or if map is tilted
+      // Prevent enabling windlayer/cloudlayer if in TERMINAL mode or if map is tilted
       if (
-        layer === 'windlayer' &&
-        !newActiveLayers.windlayer &&
+        (layer === 'windlayer' || layer === 'cloudlayer') &&
+        !newActiveLayers[layer] &&
         (state.viewMode === 'TERMINAL' || state.viewState.pitch > 0)
       ) {
         return state;
@@ -195,6 +204,9 @@ export const useMapStore = create<MapState>((set, get) => ({
 
       if (layer === 'windlayer') {
         return { activeLayers: newActiveLayers, isWindMode: newActiveLayers.windlayer };
+      }
+      if (layer === 'cloudlayer') {
+        return { activeLayers: newActiveLayers, isCloudMode: newActiveLayers.cloudlayer };
       }
 
       if (layer === 'wacMap' && newActiveLayers.wacMap) {
@@ -234,7 +246,8 @@ export const useMapStore = create<MapState>((set, get) => ({
         ? {
             viewMode: 'TERMINAL',
             isWindMode: false,
-            activeLayers: { ...state.activeLayers, windlayer: false },
+            isCloudMode: false,
+            activeLayers: { ...state.activeLayers, windlayer: false, cloudlayer: false },
           }
         : {}),
     })),
@@ -256,7 +269,8 @@ export const useMapStore = create<MapState>((set, get) => ({
             // RNP procedures are Terminal-only
             viewMode: 'TERMINAL',
             isWindMode: false,
-            activeLayers: { ...state.activeLayers, windlayer: false },
+            isCloudMode: false,
+            activeLayers: { ...state.activeLayers, windlayer: false, cloudlayer: false },
           }
         : {
             selectedRnpProcedureId: null,
@@ -330,15 +344,40 @@ export const useMapStore = create<MapState>((set, get) => ({
       };
     }),
 
+  isCloudMode: false,
+  setIsCloudMode: (enabled) =>
+    set((state) => {
+      // Prevent enabling if in TERMINAL mode or if map is tilted
+      if (enabled && (state.viewMode === 'TERMINAL' || state.viewState.pitch > 0)) {
+        return state;
+      }
+      return {
+        isCloudMode: enabled,
+        activeLayers: { ...state.activeLayers, cloudlayer: enabled },
+      };
+    }),
+
+  cloudLoadingStatus: { state: 'idle' },
+  setCloudLoadingStatus: (status) => set({ cloudLoadingStatus: status }),
+
   // Basic Setters
   setViewState: (viewState) =>
     set((state) => {
       const nextPitch = viewState.pitch ?? state.viewState.pitch;
       const shouldDisableWind = nextPitch > 0 && state.isWindMode;
+      const shouldDisableCloud = nextPitch > 0 && state.isCloudMode;
       return {
         viewState,
-        ...(shouldDisableWind
-          ? { isWindMode: false, activeLayers: { ...state.activeLayers, windlayer: false } }
+        ...(shouldDisableWind || shouldDisableCloud
+          ? {
+              isWindMode: shouldDisableWind ? false : state.isWindMode,
+              isCloudMode: shouldDisableCloud ? false : state.isCloudMode,
+              activeLayers: {
+                ...state.activeLayers,
+                ...(shouldDisableWind ? { windlayer: false } : {}),
+                ...(shouldDisableCloud ? { cloudlayer: false } : {}),
+              },
+            }
           : {}),
       };
     }),
@@ -358,7 +397,8 @@ export const useMapStore = create<MapState>((set, get) => ({
         : {
             // Automatically disable wind layer when entering Terminal mode
             isWindMode: false,
-            activeLayers: { ...activeLayers, windlayer: false },
+            isCloudMode: false,
+            activeLayers: { ...activeLayers, windlayer: false, cloudlayer: false },
           }),
       viewState: {
         ...viewState,
@@ -398,7 +438,8 @@ export const useMapStore = create<MapState>((set, get) => ({
       ...(targetMode === 'TERMINAL'
         ? {
             isWindMode: false,
-            activeLayers: { ...state.activeLayers, windlayer: false },
+            isCloudMode: false,
+            activeLayers: { ...state.activeLayers, windlayer: false, cloudlayer: false },
           }
         : {}),
       viewState: {

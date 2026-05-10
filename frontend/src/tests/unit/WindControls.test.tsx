@@ -72,14 +72,19 @@ describe('Wind UI Controls', () => {
       expect(getByText('ready')).toBeInTheDocument();
     });
 
-    it('toggles off wind mode when close button is clicked', () => {
+    it('toggles off weather mode when close button is clicked', () => {
       const setIsWindModeMock = vi.fn();
-      useMapStore.setState({ setIsWindMode: setIsWindModeMock });
+      const setIsCloudModeMock = vi.fn();
+      useMapStore.setState({
+        setIsWindMode: setIsWindModeMock,
+        setIsCloudMode: setIsCloudModeMock,
+      });
 
       const { getByTitle } = render(<StatusBadge status={{ state: 'ready' }} />);
-      fireEvent.click(getByTitle('Close Wind Layer'));
+      fireEvent.click(getByTitle('Close Weather Layer'));
 
       expect(setIsWindModeMock).toHaveBeenCalledWith(false);
+      expect(setIsCloudModeMock).toHaveBeenCalledWith(false);
     });
   });
 

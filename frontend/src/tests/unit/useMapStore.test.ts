@@ -22,7 +22,10 @@ describe('useMapStore', () => {
         airspaceUpr: true,
         ercMap: false,
         windlayer: false,
+        cloudlayer: false,
       },
+      isCloudMode: false,
+      cloudLoadingStatus: { state: 'idle' },
       selectedRouteIds: [],
       selectedRouteType: null,
       activeAirport: null,
@@ -119,7 +122,7 @@ describe('useMapStore', () => {
     state.setAnimatedLabels([{ label: 1 }] as any);
     expect(useMapStore.getState().animatedLabels).toEqual([{ label: 1 }]);
 
-    state.setAnimationConfig({ playing: true, duration: 100 } as any);
+    state.setAnimationConfig({ playing: true, duration: 100 });
     expect(useMapStore.getState().animationConfig).toEqual({ playing: true, duration: 100 });
 
     state.setTerminalPivot([5, 5]);

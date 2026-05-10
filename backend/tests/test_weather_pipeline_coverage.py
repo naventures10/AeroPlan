@@ -31,13 +31,14 @@ def test_safe_remove_grib_exception(monkeypatch):
         os.remove(dummy)
 
 
+@patch("app.services.weather_pipeline.cfgrib.open_datasets")
 @patch("app.services.weather_pipeline.xr.open_dataset")
 @patch("app.services.weather_pipeline.Client")
 @patch("app.services.weather_pipeline.os.makedirs")
 def test_run_pipeline_expand_dims(
-    mock_makedirs, mock_client_class, mock_xr_open, tmp_path, monkeypatch
+    mock_makedirs, mock_client_class, mock_xr_open, mock_cfgrib_open, tmp_path, monkeypatch
 ):
-    """Cover lines 165 and 167: expand_dims('step') for single-step datasets."""
+    """Cover lines 236-237 and 240-241: expand_dims('step') for single-step datasets."""
     output_dir = tmp_path / "weather"
     monkeypatch.setattr(settings, "WEATHER_OUTPUT_DIR", str(output_dir))
 
@@ -45,7 +46,9 @@ def test_run_pipeline_expand_dims(
     # Missing 'step' in dims to trigger expand_dims
     mock_ds.dims = ["latitude", "longitude"]
     mock_ds.expand_dims.return_value = mock_ds
+    mock_ds.data_vars = []
     mock_xr_open.return_value = mock_ds
+    mock_cfgrib_open.return_value = [mock_ds]
 
     # Mock retrieve to not do anything
     mock_client = MagicMock()
@@ -58,14 +61,17 @@ def test_run_pipeline_expand_dims(
     assert mock_ds.expand_dims.called
 
 
+@patch("app.services.weather_pipeline.cfgrib.open_datasets")
 @patch("app.services.weather_pipeline.xr.open_dataset")
 @patch("app.services.weather_pipeline.Client")
-def test_run_pipeline_processing_exception(mock_client_class, mock_xr_open, tmp_path, monkeypatch):
-    """Cover lines 294-298: exception handling in COG generation."""
+def test_run_pipeline_processing_exception(
+    mock_client_class, mock_xr_open, mock_cfgrib_open, tmp_path, monkeypatch
+):
+    """Cover exception handling in COG generation."""
     output_dir = tmp_path / "weather"
     monkeypatch.setattr(settings, "WEATHER_OUTPUT_DIR", str(output_dir))
 
-    mock_xr_open.side_effect = Exception("Processing failed")
+    mock_cfgrib_open.side_effect = Exception("Processing failed")
     run_pipeline()
     # Should log error and return safely
 
@@ -97,17 +103,17 @@ def test_run_pipeline_manifest_exception(
 
 
 def test_cleanup_old_files(tmp_path):
-    """Cover lines 31-50: cleanup_old_files logic."""
+    """Cover cleanup_old_files logic."""
     output_dir = tmp_path / "weather"
     output_dir.mkdir()
 
     # Create an active file and a stale file
-    active_tif = output_dir / "wind_active.tif"
-    stale_tif = output_dir / "wind_stale.tif"
+    active_tif = output_dir / "weather_active.tif"
+    stale_tif = output_dir / "weather_stale.tif"
     active_tif.write_text("active")
     stale_tif.write_text("stale")
 
-    manifest = {"forecasts": [{"files": {"surface": "http://example.com/wind_active.tif"}}]}
+    manifest = {"forecasts": [{"files": {"surface": "http://example.com/weather_active.tif"}}]}
 
     from app.services.weather_pipeline import cleanup_old_files
 
@@ -118,10 +124,10 @@ def test_cleanup_old_files(tmp_path):
 
 
 def test_cleanup_old_files_exception(tmp_path, monkeypatch):
-    """Cover line 49: exception in cleanup_old_files."""
+    """Cover exception in cleanup_old_files."""
     output_dir = tmp_path / "weather"
     output_dir.mkdir()
-    stale_tif = output_dir / "wind_stale.tif"
+    stale_tif = output_dir / "weather_stale.tif"
     stale_tif.write_text("stale")
 
     def mock_remove(path):

@@ -34,8 +34,9 @@ describe('useRnpPath3d', () => {
     const mockData = { path: [1], timestamps: [1], waypoints: [] };
     (api.fetchRnpPath3d as any).mockResolvedValue(mockData);
 
-    const { result, rerender } = renderHook(({ id }: { id: number | null }) => useRnpPath3d(id), {
-      initialProps: { id: 2 } as { id: number | null },
+    const initialProps: { id: number | null } = { id: 2 };
+    const { result, rerender } = renderHook(({ id }) => useRnpPath3d(id), {
+      initialProps,
     });
 
     await waitFor(() => {

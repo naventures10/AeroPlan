@@ -96,7 +96,7 @@ describe('MapView Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useMapStore.setState({
-      viewState: { zoom: 10, longitude: 0, latitude: 0, pitch: 0, bearing: 0, maxPitch: 60 } as any,
+      viewState: { zoom: 10, longitude: 0, latitude: 0, pitch: 0, bearing: 0, maxPitch: 60 },
       activeLayers: { wacMap: true, ercMap: true } as any,
       viewMode: 'ENROUTE',
       activeAirport: null,

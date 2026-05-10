@@ -21,8 +21,8 @@ vi.mock('../../features/map/controls/LayerToolbar', () => ({
 vi.mock('../../features/map/controls/ViewToggle', () => ({
   default: () => <div data-testid="view-toggle-mock" />,
 }));
-vi.mock('../../features/map/controls/WindControls', () => ({
-  WindControls: () => <div data-testid="wind-controls-mock" />,
+vi.mock('../../features/map/controls/WeatherControls', () => ({
+  WeatherControls: () => <div data-testid="weather-controls-mock" />,
 }));
 vi.mock('../../features/aip/AerodromeInfoDropdown', () => ({
   default: () => <div data-testid="aerodrome-dropdown-mock" />,
@@ -51,6 +51,7 @@ describe('MapPage Component', () => {
       activeAirport: null,
       viewState: { pitch: 0 },
       isWindMode: false,
+      isCloudMode: false,
     });
     (useAerodromeData as any).mockReturnValue({
       aerodromes: null,
@@ -99,6 +100,7 @@ describe('MapPage Component', () => {
       activeAirport: 'VOBM',
       viewState: { pitch: 60 },
       isWindMode: false,
+      isCloudMode: false,
     });
 
     act(() => {
@@ -118,6 +120,7 @@ describe('MapPage Component', () => {
       activeAirport: 'VOBM',
       viewState: { pitch: 60 },
       isWindMode: false,
+      isCloudMode: false,
     });
 
     act(() => {
@@ -159,12 +162,13 @@ describe('MapPage Component', () => {
     });
   });
 
-  it('renders wind controls when in wind mode', async () => {
+  it('renders weather controls when in wind mode', async () => {
     (useMapStore as any).mockReturnValue({
       viewMode: 'ENROUTE',
       activeAirport: null,
       viewState: { pitch: 0 },
       isWindMode: true,
+      isCloudMode: false,
     });
 
     act(() => {
@@ -172,7 +176,7 @@ describe('MapPage Component', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('wind-controls-mock')).toBeInTheDocument();
+      expect(screen.getByTestId('weather-controls-mock')).toBeInTheDocument();
     });
   });
 });

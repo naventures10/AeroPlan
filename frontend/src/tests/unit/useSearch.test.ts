@@ -117,7 +117,7 @@ describe('useSearch', () => {
         name: 'VAAU',
         type: 'AERODROME',
         center: [70, 20],
-      } as any);
+      });
     });
 
     expect(toggleLayerSpy).toHaveBeenCalledWith('aerodromes');
@@ -137,7 +137,7 @@ describe('useSearch', () => {
         id: 'VAAU',
         name: 'VAAU',
         type: 'AERODROME',
-      } as any);
+      });
     });
     // Should pass without throwing error
   });
@@ -156,7 +156,7 @@ describe('useSearch', () => {
         type: 'ATS_ROUTE',
         bounds: [1, 2, 3, 4],
         properties: { name: 'L333' },
-      } as any);
+      });
     });
 
     expect(fitBoundsSpy).toHaveBeenCalledWith([1, 2, 3, 4]);
@@ -185,7 +185,7 @@ describe('useSearch', () => {
     const { result } = renderHook(() => useSearch());
 
     act(() => {
-      result.current.handleGlobalSearchSelect(feature as any);
+      result.current.handleGlobalSearchSelect(feature);
     });
 
     expect(flyToSpy).toHaveBeenCalledWith(10, 20, 15, 0, 'ENROUTE');
@@ -219,7 +219,7 @@ describe('useSearch', () => {
     const { result } = renderHook(() => useSearch());
 
     act(() => {
-      result.current.handleGlobalSearchSelect(feature as any);
+      result.current.handleGlobalSearchSelect(feature);
     });
 
     // Verify immediate camera animation
