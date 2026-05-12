@@ -57,7 +57,8 @@ describe('useWindLayer', () => {
     (WeatherLayers.loadTextureData as any).mockResolvedValue(mockTextureData);
 
     useMapStore.setState({
-      activeLayers: { windlayer: true } as any,
+      isWeatherMode: true,
+      isWindMode: true,
       viewMode: 'ENROUTE',
       windAltitude: 0,
       windAnimationTime: 0,
@@ -146,7 +147,7 @@ describe('useWindLayer', () => {
   });
 
   it('should not fetch or load if windlayer is inactive', async () => {
-    useMapStore.setState({ activeLayers: { windlayer: false } as any });
+    useMapStore.setState({ isWeatherMode: false, isWindMode: false });
     const { result } = renderHook(() => useWindLayer());
 
     // Wait a bit to ensure useEffect didn't run

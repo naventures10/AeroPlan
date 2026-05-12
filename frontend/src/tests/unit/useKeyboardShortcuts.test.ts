@@ -85,7 +85,7 @@ describe('useKeyboardShortcuts', () => {
     expect(onCloseSectionModalMock).toHaveBeenCalled();
   });
 
-  it('should disable the wind layer on Escape using the latest store state', () => {
+  it('should disable the weather layer on Escape using the latest store state', () => {
     renderHook(() =>
       useKeyboardShortcuts({
         sectionModalOpen: false,
@@ -96,8 +96,8 @@ describe('useKeyboardShortcuts', () => {
 
     act(() => {
       useMapStore.setState((state) => ({
-        isWindMode: false,
-        activeLayers: { ...state.activeLayers, windlayer: true },
+        isWeatherMode: true,
+        activeLayers: { ...state.activeLayers, weather: true },
       }));
     });
 
@@ -107,8 +107,8 @@ describe('useKeyboardShortcuts', () => {
     });
 
     const state = useMapStore.getState();
-    expect(state.isWindMode).toBe(false);
-    expect(state.activeLayers.windlayer).toBe(false);
+    expect(state.isWeatherMode).toBe(false);
+    expect(state.activeLayers.weather).toBe(false);
   });
 
   it('should ignore input when focused in an input field', () => {

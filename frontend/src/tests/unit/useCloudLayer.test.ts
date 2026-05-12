@@ -28,7 +28,8 @@ describe('useCloudLayer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (useMapStore as any).mockReturnValue({
-      activeLayers: { cloudlayer: true },
+      isWeatherMode: true,
+      isCloudMode: true,
       viewMode: 'ENROUTE',
       windAltitude: 0,
       windAnimationTime: 0,
@@ -43,7 +44,8 @@ describe('useCloudLayer', () => {
 
   it('should not fetch manifest if cloud layer is inactive', () => {
     (useMapStore as any).mockReturnValue({
-      activeLayers: { cloudlayer: false },
+      isWeatherMode: false,
+      isCloudMode: false,
       viewMode: 'ENROUTE',
       windAltitude: 0,
       windAnimationTime: 0,

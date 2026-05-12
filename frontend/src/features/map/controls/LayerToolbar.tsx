@@ -1,5 +1,5 @@
 import { Button } from '@heroui/react';
-import { Target, Navigation, Radio, Route, Globe, Wind, Cloud } from 'lucide-react';
+import { Target, Navigation, Radio, Route, Globe, CloudSun } from 'lucide-react';
 import { useMapStore } from '../../../store/useMapStore';
 
 /**
@@ -7,7 +7,7 @@ import { useMapStore } from '../../../store/useMapStore';
  * Visible only in ENROUTE view mode.
  */
 export default function LayerToolbar() {
-  const { activeLayers, toggleLayer, setIsWindMode, setIsCloudMode } = useMapStore();
+  const { activeLayers, toggleLayer, setIsWeatherMode } = useMapStore();
 
   const toggleButtons = [
     {
@@ -46,18 +46,11 @@ export default function LayerToolbar() {
       bg: 'bg-orange-500/20',
     },
     {
-      icon: Wind,
-      id: 'windlayer' as const,
-      color: 'text-blue-400',
-      border: 'border-blue-500/50',
-      bg: 'bg-blue-500/20',
-    },
-    {
-      icon: Cloud,
-      id: 'cloudlayer' as const,
-      color: 'text-slate-200',
-      border: 'border-slate-300/50',
-      bg: 'bg-slate-300/20',
+      icon: CloudSun,
+      id: 'weather' as const,
+      color: 'text-sky-400',
+      border: 'border-sky-500/50',
+      bg: 'bg-sky-500/20',
     },
   ];
 
@@ -72,10 +65,8 @@ export default function LayerToolbar() {
             radius="full"
             variant="flat"
             onPress={() => {
-              if (id === 'windlayer') {
-                setIsWindMode(!isActive);
-              } else if (id === 'cloudlayer') {
-                setIsCloudMode(!isActive);
+              if (id === 'weather') {
+                setIsWeatherMode(!isActive);
               } else {
                 toggleLayer(id);
               }

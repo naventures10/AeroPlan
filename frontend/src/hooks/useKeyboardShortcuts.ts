@@ -16,13 +16,8 @@ export function useKeyboardShortcuts({
   onCloseSectionModal: () => void;
   cancelPendingSelection: () => void;
 }) {
-  const {
-    returnToEnroute,
-    setSelectedRouteIds,
-    setSelectedFeature,
-    setIsWindMode,
-    setIsCloudMode,
-  } = useMapStore();
+  const { returnToEnroute, setSelectedRouteIds, setSelectedFeature, setIsWeatherMode } =
+    useMapStore();
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -42,16 +37,14 @@ export function useKeyboardShortcuts({
           activeAirport,
           selectedRouteIds,
           selectedFeature,
-          isWindMode,
-          isCloudMode,
+          isWeatherMode,
           activeLayers,
         } = useMapStore.getState();
 
         if (sectionModalOpen) {
           onCloseSectionModal();
-        } else if (isWindMode || isCloudMode || activeLayers.windlayer || activeLayers.cloudlayer) {
-          setIsWindMode(false);
-          setIsCloudMode(false);
+        } else if (isWeatherMode || activeLayers.weather) {
+          setIsWeatherMode(false);
         } else if (viewMode === 'TERMINAL' || activeAirport) {
           returnToEnroute();
         } else if (selectedRouteIds?.length > 0 || selectedFeature) {
@@ -73,7 +66,6 @@ export function useKeyboardShortcuts({
     setSelectedRouteIds,
     setSelectedFeature,
     cancelPendingSelection,
-    setIsWindMode,
-    setIsCloudMode,
+    setIsWeatherMode,
   ]);
 }

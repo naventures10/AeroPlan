@@ -172,7 +172,8 @@ function getVerticalScatter(zoom: number): number {
 
 export function useCloudLayer() {
   const {
-    activeLayers,
+    isWeatherMode,
+    isCloudMode,
     viewMode,
     windAltitude,
     windAnimationTime,
@@ -184,7 +185,7 @@ export function useCloudLayer() {
   const [frameData, setFrameData] = useState<Record<number, CloudFrameData>>({});
   const [forecastTimestamps, setForecastTimestamps] = useState<ForecastTimestamp[]>([]);
 
-  const isCloudActive = activeLayers.cloudlayer && viewMode === 'ENROUTE';
+  const isCloudActive = isWeatherMode && isCloudMode && viewMode === 'ENROUTE';
 
   // Ensure the blob texture is created once (harmless if called during SSR — it
   // would just skip because `document` would be undefined, but we're client-only).

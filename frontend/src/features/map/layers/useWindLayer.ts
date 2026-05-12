@@ -19,7 +19,8 @@ export interface WindStatus {
 
 export function useWindLayer() {
   const {
-    activeLayers,
+    isWeatherMode,
+    isWindMode,
     viewMode,
     windAltitude,
     windAnimationTime,
@@ -33,12 +34,11 @@ export function useWindLayer() {
   const [status, setStatus] = useState<WindStatus>({ state: 'idle' });
   const [forecastTimestamps, setForecastTimestamps] = useState<ForecastTimestamp[]>([]);
 
-  const isWindActive = activeLayers.windlayer && viewMode === 'ENROUTE';
+  const isWindActive = isWeatherMode && isWindMode && viewMode === 'ENROUTE';
 
   // Either weather layer being active should trigger manifest loading
   // so the shared controls (timeline, altitude) have timestamps available.
-  const isAnyWeatherActive =
-    (activeLayers.windlayer || activeLayers.cloudlayer) && viewMode === 'ENROUTE';
+  const isAnyWeatherActive = isWeatherMode && viewMode === 'ENROUTE';
 
   // 1. Fetch dynamic manifest
   useEffect(() => {

@@ -22,8 +22,7 @@ const SectionModal = lazy(() => import('../features/aip/SectionModal'));
 const TerminalDashboard = lazy(() => import('../features/terminal/TerminalDashboard'));
 
 export default function MapPage() {
-  const { viewMode, activeAirport, viewState, isWindMode, isCloudMode } = useMapStore();
-  const isWeatherMode = isWindMode || isCloudMode;
+  const { viewMode, activeAirport, viewState, isWeatherMode } = useMapStore();
   const search = useSearch();
 
   const {

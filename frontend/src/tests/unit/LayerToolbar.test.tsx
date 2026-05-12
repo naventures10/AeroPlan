@@ -12,7 +12,7 @@ describe('LayerToolbar Component', () => {
         navaids: false,
         atsRoutes: false,
         airspaces: false,
-        windlayer: false,
+        weather: false,
       } as any,
     });
   });
@@ -25,7 +25,7 @@ describe('LayerToolbar Component', () => {
     expect(getByTitle('Toggle navaids')).toBeInTheDocument();
     expect(getByTitle('Toggle atsRoutes')).toBeInTheDocument();
     expect(getByTitle('Toggle airspaces')).toBeInTheDocument();
-    expect(getByTitle('Toggle windlayer')).toBeInTheDocument();
+    expect(getByTitle('Toggle weather')).toBeInTheDocument();
   });
 
   it('toggles a layer when clicked', () => {
