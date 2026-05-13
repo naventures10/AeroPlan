@@ -97,7 +97,8 @@ describe('createRnpLayers', () => {
     expect(layers.length).toBe(5);
 
     const linestring = layers[0];
-    expect(linestring.props.getColor({ entry_waypoint: 'A1' })).toEqual([255, 0, 255, 0]);
+    expect(linestring.props.data.length).toBe(1); // A1 filtered out
+    expect(linestring.props.getColor({ entry_waypoint: 'A1' })).toEqual([255, 0, 255, 30]);
     expect(linestring.props.getColor({ entry_waypoint: 'A2' })).toEqual([255, 0, 255, 30]);
 
     const trips = layers[1];

@@ -172,10 +172,9 @@ export function createRnpLayers({
     layers.push(
       new PathLayer({
         id: 'rnp-approach-linestrings-layer',
-        data: approachTripData,
+        data: approachTripData.filter((d) => d.entry_waypoint !== selectedRnpApproachId),
         getPath: (d: any) => d.path,
         getColor: (d: any) => {
-          const isSelected = d.entry_waypoint === selectedRnpApproachId;
           const isHovered = d.entry_waypoint === hoveredRnpApproachId;
 
           if (isHovered) {
@@ -187,16 +186,12 @@ export function createRnpLayers({
             return [...RGB_APPROACH, 160] as [number, number, number, number];
           }
 
-          if (isSelected) {
-            // Selected: invisible but pickable (use alpha 0)
-            return [...RGB_APPROACH, 0] as [number, number, number, number];
-          }
-
           // Others: dimmed magenta
           return [...RGB_APPROACH, 30] as [number, number, number, number];
         },
         getWidth: (d: any) => (d.entry_waypoint === hoveredRnpApproachId ? 6 : 2),
         widthMinPixels: 2,
+        billboard: true, // Harmonize with TripsLayer to prevent 3D offset
         parameters: {
           blend: true,
         },
@@ -234,7 +229,7 @@ export function createRnpLayers({
           new TripsLayer({
             id: 'rnp-approach-trips-layer',
             data: [selectedTrip],
-            getPath: (d: any) => d.path,
+            getPath: (d: any) => d.path.map((p: any) => [p[0], p[1], p[2] + 0.5]), // Tiny lift above static paths
             getTimestamps: (d: any) => d.timestamps,
             getColor: RGB_APPROACH,
             opacity: opacity ?? 1,
@@ -287,13 +282,14 @@ export function createRnpLayers({
       layers.push(
         new PathLayer({
           id: 'rnp-missed-approach-ghost-layer',
-          data: allDashes.map((seg) => ({ path: seg })),
+          data: allDashes.map((seg) => ({ path: seg.map((p: any) => [p[0], p[1], p[2] + 0.1]) })), // Tiny lift above static paths
           getPath: (d: any) => d.path,
           getColor: [255, 100, 80, 45],
           opacity: opacity ?? 1,
           getWidth: 4,
           widthMinPixels: 2,
           pickable: false,
+          billboard: true,
           capRounded: true,
           jointRounded: true,
         }),
@@ -305,13 +301,16 @@ export function createRnpLayers({
       layers.push(
         new PathLayer({
           id: 'rnp-missed-approach-revealed-layer',
-          data: revealedDashes.map((seg) => ({ path: seg })),
+          data: revealedDashes.map((seg) => ({
+            path: seg.map((p: any) => [p[0], p[1], p[2] + 0.5]),
+          })), // Stack with TripsLayer
           getPath: (d: any) => d.path,
           getColor: [255, 100, 80, 235],
           opacity: opacity ?? 1,
           getWidth: 6,
           widthMinPixels: 3,
           pickable: false,
+          billboard: true,
           capRounded: true,
           jointRounded: true,
         }),
