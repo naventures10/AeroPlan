@@ -10,7 +10,13 @@ export function StatusBadge({ status }: { status: WindStatus }) {
     error: 'status--error',
   }[status.state];
 
-  const { setIsWindMode } = useMapStore();
+  const { setIsWindMode, setIsCloudMode, setIsWeatherMode } = useMapStore();
+
+  const handleClose = () => {
+    setIsWindMode(false);
+    setIsCloudMode(false);
+    setIsWeatherMode(false);
+  };
 
   return (
     <div className={`wind-status wind-panel ${stateClass}`}>
@@ -20,9 +26,9 @@ export function StatusBadge({ status }: { status: WindStatus }) {
         {status.message || status.state}
       </span>
       <button
-        onClick={() => setIsWindMode(false)}
+        onClick={handleClose}
         className="ml-3 p-1 hover:bg-white/10 rounded-full transition-colors pointer-events-auto flex items-center justify-center text-zinc-400 hover:text-white"
-        title="Close Wind Layer"
+        title="Close Weather Layer"
       >
         <X size={14} />
       </button>

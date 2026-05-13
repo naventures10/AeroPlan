@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures';
 import { MapPage } from './pages/MapPage';
 
-test.describe('Wind Layer Userflows', () => {
+test.describe('Weather Layers Userflows (Wind & Clouds)', () => {
   test.beforeEach(async ({ page }) => {
     const mapPage = new MapPage(page);
 
@@ -34,55 +34,69 @@ test.describe('Wind Layer Userflows', () => {
     await mapPage.waitForReady();
   });
 
-  test('Toggle Wind Layer and verify controls appear', async ({ page }) => {
-    // 1. Initially wind controls should not be visible
+  test('Toggle Weather Layer and switch between Wind and Cloud', async ({ page }) => {
+    // 1. Initially weather controls should not be visible
     await expect(page.locator('.wind-status')).not.toBeVisible();
 
-    // 2. Open Layer Toolbar toggle Wind
-    const windToggle = page.getByTitle('Toggle windlayer');
-    await expect(windToggle).toBeVisible({ timeout: 15000 });
-    await windToggle.click();
+    // 2. Open Layer Toolbar toggle Weather
+    const weatherToggle = page.getByTitle('Toggle weather');
+    await expect(weatherToggle).toBeVisible({ timeout: 15000 });
+    await weatherToggle.click();
 
-    // 3. Verify Wind Mode UI is active
+    // 3. Verify Weather Mode UI is active (defaulting to Wind)
     await expect(page.locator('.wind-status')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('.wind-altitude')).toBeVisible();
     await expect(page.locator('.wind-timeline')).toBeVisible();
+    // Wind legend should be visible
+    await expect(page.locator('.wind-legend-v')).toBeVisible();
 
-    // 4. Close Wind Layer via the badge X button
+    // 4. Switch to Cloud mode (and toggle off wind for exclusive view in test)
+    const cloudBtn = page.getByRole('button', { name: 'Cloud' });
+    await cloudBtn.click();
+    const windBtn = page.getByRole('button', { name: 'Wind' });
+    await windBtn.click();
+
+    // 5. Verify Cloud Mode UI
+    // Status badge still exists (now showing cloud status)
+    await expect(page.locator('.wind-status')).toBeVisible();
+    // Legend should be hidden for clouds
+    await expect(page.locator('.wind-legend-v')).not.toBeVisible();
+    // Common controls still there
+    await expect(page.locator('.wind-altitude')).toBeVisible();
+    await expect(page.locator('.wind-timeline')).toBeVisible();
+
+    // 6. Close Weather Layer via the badge X button
     await page.locator('.wind-status button').click();
     await expect(page.locator('.wind-status')).not.toBeVisible();
+    await expect(page.getByTitle('Toggle weather')).not.toHaveClass(/bg-sky-500/);
   });
 
-  test('Escape closes wind layer immediately after enabling it', async ({ page }) => {
-    const windToggle = page.getByTitle('Toggle windlayer');
-    await expect(windToggle).toBeVisible({ timeout: 15000 });
+  test('Escape closes weather view immediately', async ({ page }) => {
+    const weatherToggle = page.getByTitle('Toggle weather');
+    await expect(weatherToggle).toBeVisible({ timeout: 15000 });
 
-    await windToggle.click();
+    await weatherToggle.click();
+    await expect(page.locator('.wind-status')).toBeVisible();
+
     await page.keyboard.press('Escape');
-
     await expect(page.locator('.wind-status')).not.toBeVisible();
 
-    const windState = await page.evaluate(() => {
+    const weatherState = await page.evaluate(() => {
       const store = (window as any).useMapStore.getState();
       return {
-        isWindMode: store.isWindMode,
-        windlayer: store.activeLayers.windlayer,
+        isWeatherMode: store.isWeatherMode,
+        weather: store.activeLayers.weather,
       };
     });
 
-    expect(windState).toEqual({ isWindMode: false, windlayer: false });
+    expect(weatherState).toEqual({ isWeatherMode: false, weather: false });
   });
 
-  test('Altitude Slider interaction', async ({ page }) => {
-    // Enter Wind Mode via store
+  test('Altitude Slider interaction in Weather mode', async ({ page }) => {
+    // Enter Weather Mode via store
     await page.evaluate(() => {
       const store = (window as any).useMapStore.getState();
-      if (store.setIsWindMode) {
-        store.setIsWindMode(true);
-      } else {
-        (window as any).useMapStore.setState({ isWindMode: true });
-        (window as any).useMapStore.getState().toggleLayer('windlayer');
-      }
+      store.setIsWeatherMode(true);
     });
 
     await expect(page.locator('.wind-altitude')).toBeVisible();
@@ -100,16 +114,11 @@ test.describe('Wind Layer Userflows', () => {
     await expect(page.getByTestId('wind-altitude-display')).toContainText('FL100');
   });
 
-  test('Timeline playback interaction', async ({ page }) => {
-    // Enter Wind Mode via store
+  test('Timeline playback interaction in Weather mode', async ({ page }) => {
+    // Enter Weather Mode via store
     await page.evaluate(() => {
       const store = (window as any).useMapStore.getState();
-      if (store.setIsWindMode) {
-        store.setIsWindMode(true);
-      } else {
-        (window as any).useMapStore.setState({ isWindMode: true });
-        (window as any).useMapStore.getState().toggleLayer('windlayer');
-      }
+      store.setIsWeatherMode(true);
     });
 
     await expect(page.locator('.wind-timeline')).toBeVisible();
@@ -120,7 +129,7 @@ test.describe('Wind Layer Userflows', () => {
     // 2. Toggle Play
     await playButton.click();
 
-    // 3. Verify store state for playing
+    // 3. Verify store state for playing (shared weather playback)
     const isPlaying = await page.evaluate(
       () => (window as any).useMapStore.getState().windIsPlaying,
     );

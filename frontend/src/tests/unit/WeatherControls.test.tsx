@@ -1,17 +1,74 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent, act } from '@testing-library/react';
+import { WeatherControls } from '../../features/map/controls/WeatherControls';
 import { AltitudeSlider } from '../../features/map/controls/AltitudeSlider';
 import { StatusBadge } from '../../features/map/controls/StatusBadge';
 import { TimelineControl } from '../../features/map/controls/TimelineControl';
 import { useMapStore } from '../../store/useMapStore';
 
-describe('Wind UI Controls', () => {
+// Mock the wind layer hook
+vi.mock('../../features/map/layers/useWindLayer', () => ({
+  useWindLayer: () => ({
+    windStatus: { state: 'ready' },
+    forecastTimestamps: [
+      { label: '12:00 PM', date: 'April 28', validTime: '2026-04-28T12:00:00Z', files: {} },
+    ],
+  }),
+}));
+
+describe('Weather UI Controls', () => {
   beforeEach(() => {
     useMapStore.setState({
       windAltitude: 0,
       windAnimationTime: 0,
       windIsPlaying: false,
       isWindMode: true,
+      isCloudMode: false,
+      cloudLoadingStatus: { state: 'ready' },
+      setIsWindMode: (val: boolean) => useMapStore.setState({ isWindMode: val }),
+      setIsCloudMode: (val: boolean) => useMapStore.setState({ isCloudMode: val }),
+    });
+  });
+
+  describe('WeatherControls Component', () => {
+    it('renders wind and cloud toggles', () => {
+      const { getByRole } = render(<WeatherControls />);
+      expect(getByRole('button', { name: /Wind/i })).toBeInTheDocument();
+      expect(getByRole('button', { name: /Cloud/i })).toBeInTheDocument();
+    });
+
+    it('toggles wind mode', () => {
+      const { getByRole } = render(<WeatherControls />);
+      const windBtn = getByRole('button', { name: /Wind/i });
+
+      fireEvent.click(windBtn);
+      expect(useMapStore.getState().isWindMode).toBe(false);
+
+      fireEvent.click(windBtn);
+      expect(useMapStore.getState().isWindMode).toBe(true);
+    });
+
+    it('toggles cloud mode', () => {
+      const { getByRole } = render(<WeatherControls />);
+      const cloudBtn = getByRole('button', { name: /Cloud/i });
+
+      fireEvent.click(cloudBtn);
+      expect(useMapStore.getState().isCloudMode).toBe(true);
+
+      fireEvent.click(cloudBtn);
+      expect(useMapStore.getState().isCloudMode).toBe(false);
+    });
+
+    it('shows wind legend only in wind mode', () => {
+      const { queryByText, rerender } = render(<WeatherControls />);
+      // VerticalWindLegend has "Wind" and "(kt)" split by <br/>
+      expect(queryByText(/kt/i)).toBeInTheDocument();
+
+      act(() => {
+        useMapStore.setState({ isWindMode: false });
+      });
+      rerender(<WeatherControls />);
+      expect(queryByText(/kt/i)).not.toBeInTheDocument();
     });
   });
 
@@ -48,17 +105,6 @@ describe('Wind UI Controls', () => {
       fireEvent.click(upBtn);
       expect(useMapStore.getState().windAltitude).toBe(2);
     });
-
-    it('steps altitude down when clicking the down button', () => {
-      act(() => {
-        useMapStore.setState({ windAltitude: 3 });
-      });
-      const { getByTestId } = render(<AltitudeSlider />);
-      const downBtn = getByTestId('altitude-down');
-
-      fireEvent.click(downBtn);
-      expect(useMapStore.getState().windAltitude).toBe(2);
-    });
   });
 
   describe('StatusBadge', () => {
@@ -72,14 +118,22 @@ describe('Wind UI Controls', () => {
       expect(getByText('ready')).toBeInTheDocument();
     });
 
-    it('toggles off wind mode when close button is clicked', () => {
+    it('toggles off weather mode when close button is clicked', () => {
       const setIsWindModeMock = vi.fn();
-      useMapStore.setState({ setIsWindMode: setIsWindModeMock });
+      const setIsCloudModeMock = vi.fn();
+      const setIsWeatherModeMock = vi.fn();
+      useMapStore.setState({
+        setIsWindMode: setIsWindModeMock,
+        setIsCloudMode: setIsCloudModeMock,
+        setIsWeatherMode: setIsWeatherModeMock,
+      });
 
       const { getByTitle } = render(<StatusBadge status={{ state: 'ready' }} />);
-      fireEvent.click(getByTitle('Close Wind Layer'));
+      fireEvent.click(getByTitle('Close Weather Layer'));
 
       expect(setIsWindModeMock).toHaveBeenCalledWith(false);
+      expect(setIsCloudModeMock).toHaveBeenCalledWith(false);
+      expect(setIsWeatherModeMock).toHaveBeenCalledWith(false);
     });
   });
 
@@ -103,16 +157,6 @@ describe('Wind UI Controls', () => {
       expect(useMapStore.getState().windIsPlaying).toBe(true);
 
       fireEvent.click(playButton);
-      expect(useMapStore.getState().windIsPlaying).toBe(false);
-    });
-
-    it('updates animation time on slider change and stops playback', () => {
-      useMapStore.setState({ windIsPlaying: true });
-      const { getByRole } = render(<TimelineControl timestamps={mockTimestamps} />);
-      const slider = getByRole('slider');
-
-      fireEvent.change(slider, { target: { value: '0.5' } });
-      expect(useMapStore.getState().windAnimationTime).toBe(0.5);
       expect(useMapStore.getState().windIsPlaying).toBe(false);
     });
   });

@@ -10,8 +10,10 @@ const MapView = lazy(() => import('../features/map/MapView'));
 const SearchBar = lazy(() => import('../features/map/controls/SearchBar'));
 const LayerToolbar = lazy(() => import('../features/map/controls/LayerToolbar'));
 const ViewToggle = lazy(() => import('../features/map/controls/ViewToggle'));
-const WindControls = lazy(() =>
-  import('../features/map/controls/WindControls').then((m) => ({ default: m.WindControls })),
+const WeatherControls = lazy(() =>
+  import('../features/map/controls/WeatherControls').then((m) => ({
+    default: m.WeatherControls,
+  })),
 );
 
 const AerodromeInfoDropdown = lazy(() => import('../features/aip/AerodromeInfoDropdown'));
@@ -20,7 +22,7 @@ const SectionModal = lazy(() => import('../features/aip/SectionModal'));
 const TerminalDashboard = lazy(() => import('../features/terminal/TerminalDashboard'));
 
 export default function MapPage() {
-  const { viewMode, activeAirport, viewState, isWindMode } = useMapStore();
+  const { viewMode, activeAirport, viewState, isWeatherMode } = useMapStore();
   const search = useSearch();
 
   const {
@@ -57,7 +59,7 @@ export default function MapPage() {
           <motion.div
             key="primary-ui"
             initial={false}
-            animate={!isWindMode || viewState.pitch > 0 ? 'visible' : 'hidden'}
+            animate={!isWeatherMode || viewState.pitch > 0 ? 'visible' : 'hidden'}
             variants={{
               visible: { opacity: 1, display: 'block' },
               hidden: { opacity: 0, transitionEnd: { display: 'none' } },
@@ -92,9 +94,9 @@ export default function MapPage() {
           </motion.div>
 
           <motion.div
-            key="wind-ui"
+            key="weather-ui"
             initial={false}
-            animate={isWindMode && viewState.pitch === 0 ? 'visible' : 'hidden'}
+            animate={isWeatherMode && viewState.pitch === 0 ? 'visible' : 'hidden'}
             variants={{
               visible: { opacity: 1, display: 'block' },
               hidden: { opacity: 0, transitionEnd: { display: 'none' } },
@@ -102,7 +104,7 @@ export default function MapPage() {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="absolute inset-0 pointer-events-none"
           >
-            <WindControls />
+            <WeatherControls />
           </motion.div>
         </div>
       </Suspense>

@@ -25,6 +25,161 @@ def haversine_nm(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
     return r_nm * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
+def _smooth_darc(
+    p_b, p_c, dist_bc, dx_in, dy_in, dx_out, dy_out, cos_a, forced_dir, lon_to_nm, lat_to_nm
+) -> list[list[Any]]:
+    # ── PROCEDURAL 180° SEMI-CIRCLE D-ARC ─────────────────────────
+    # Replaces the twisted Bezier approach with a mathematically pure
+    # 1.0 NM fly-over and 1.25 NM lateral semicircle arc.
+    smoothed = []
+    dx_in_nm = dx_in * lon_to_nm
+    dy_in_nm = dy_in * lat_to_nm
+    mag_in_nm = math.sqrt(dx_in_nm**2 + dy_in_nm**2)
+    ux_in = dx_in_nm / mag_in_nm if mag_in_nm > 0 else 0
+    uy_in = dy_in_nm / mag_in_nm if mag_in_nm > 0 else 0
+
+    # Determine Turn Direction & Sweep
+    dx_out_nm = dx_out * lon_to_nm
+    dy_out_nm = dy_out * lat_to_nm
+    mag_out_nm = math.sqrt(dx_out_nm**2 + dy_out_nm**2)
+    ux_out = dx_out_nm / mag_out_nm if mag_out_nm > 0 else 0
+    uy_out = dy_out_nm / mag_out_nm if mag_out_nm > 0 else 0
+
+    # Calculate geometric cross product for default "shortest turn"
+    cross = ux_in * uy_out - uy_in * ux_out
+
+    # Respect forced direction if provided, otherwise use geometric cross product
+    is_left = False
+    if forced_dir == "L":
+        is_left = True
+    elif forced_dir == "R":
+        is_left = False
+    else:
+        is_left = cross >= 0
+
+    if is_left:
+        # Left Turn -> Bulge Left, Sweep CCW
+        nx, ny = -uy_in, ux_in
+        sweep_dir = 1.0
+    else:
+        # Right Turn -> Bulge Right, Sweep CW
+        nx, ny = uy_in, -ux_in
+        sweep_dir = -1.0
+
+    arm_nm = 1.0
+    radius_nm = 1.25
+
+    c_lon = p_b[0] + (arm_nm * ux_in + radius_nm * nx) / lon_to_nm
+    c_lat = p_b[1] + (arm_nm * uy_in + radius_nm * ny) / lat_to_nm
+
+    # Start angle points from center back to the end of the overfly arm
+    start_angle = math.atan2(-ny, -nx)
+
+    # The sweep angle should match the actual required turn angle.
+    # If we are forcing a direction that is the "longer" way (e.g. 183°),
+    # we must adjust the angle.
+    angle_rad = math.acos(cos_a)
+    if forced_dir:
+        # If forced direction differs from shortest geometric direction,
+        # use the complementary angle to go the "long way"
+        shortest_is_left = cross >= 0
+        if (forced_dir == "L" and not shortest_is_left) or (forced_dir == "R" and shortest_is_left):
+            angle_rad = 2 * math.pi - angle_rad
+
+    sweep_angle = angle_rad
+
+    smoothed.append(list(p_b))
+
+    # Draw the 1.0 NM straight overfly to establish the turn entry
+    straight_steps = 5
+    for j in range(1, straight_steps + 1):
+        alpha = j / straight_steps
+        # Interpolate altitude if p_c exists and has altitude
+        alt = p_b[2]
+        if dist_bc > 0 and p_c[2] is not None and p_b[2] is not None:
+            # Rough distance-based interpolation
+            dist_from_b = alpha * arm_nm
+            alt = p_b[2] + (p_c[2] - p_b[2]) * (
+                dist_from_b / max(dist_bc, arm_nm + radius_nm * sweep_angle)
+            )
+
+        smoothed.append(
+            [
+                p_b[0] + alpha * (arm_nm * ux_in) / lon_to_nm,
+                p_b[1] + alpha * (arm_nm * uy_in) / lat_to_nm,
+                alt,
+            ]
+        )
+
+    # Draw the clean circular arc sequence
+    arc_steps = 15
+    for j in range(1, arc_steps + 1):
+        fraction = j / arc_steps
+        theta = start_angle + sweep_dir * fraction * sweep_angle
+        x = c_lon + (radius_nm * math.cos(theta)) / lon_to_nm
+        y = c_lat + (radius_nm * math.sin(theta)) / lat_to_nm
+
+        alt = p_b[2]
+        if dist_bc > 0 and p_c[2] is not None and p_b[2] is not None:
+            dist_from_b = arm_nm + (fraction * radius_nm * sweep_angle)
+            alt = p_b[2] + (p_c[2] - p_b[2]) * (
+                dist_from_b / max(dist_bc, arm_nm + radius_nm * sweep_angle)
+            )
+
+        smoothed.append([x, y, alt])
+
+    return smoothed
+
+
+def _smooth_flyby(
+    p_a, p_b, p_c, dist_ab, dist_bc, turn_frac, max_turn_dist_nm, steps, small_cut
+) -> list[list[Any]]:
+    # ── QUADRATIC FLY-BY for small/medium turns ──────────────────────────
+    smoothed = []
+    adaptive_max = small_cut + (max_turn_dist_nm - small_cut) * turn_frac
+    cut_ab = min(adaptive_max, dist_ab * 0.45) if dist_ab > 0 else 0
+    cut_bc = min(adaptive_max, dist_bc * 0.45) if dist_bc > 0 else 0
+
+    alpha_ab = (cut_ab / dist_ab) if dist_ab > 0 else 0
+    alpha_bc = (cut_bc / dist_bc) if dist_bc > 0 else 0
+
+    alt_a = p_a[2] if p_a[2] is not None else 0
+    alt_b = p_b[2] if p_b[2] is not None else 0
+    alt_c = p_c[2] if p_c[2] is not None else 0
+
+    q0 = [
+        p_b[0] + alpha_ab * (p_a[0] - p_b[0]),
+        p_b[1] + alpha_ab * (p_a[1] - p_b[1]),
+        alt_b + alpha_ab * (alt_a - alt_b) if p_a[2] is not None and p_b[2] is not None else p_b[2],
+    ]
+    q2 = [
+        p_b[0] + alpha_bc * (p_c[0] - p_b[0]),
+        p_b[1] + alpha_bc * (p_c[1] - p_b[1]),
+        alt_b + alpha_bc * (alt_c - alt_b) if p_c[2] is not None and p_b[2] is not None else p_b[2],
+    ]
+
+    smoothed.append(q0)
+
+    for j in range(1, steps):
+        t = j / steps
+        inv_t = 1.0 - t
+        x = (inv_t**2) * q0[0] + 2 * inv_t * t * p_b[0] + (t**2) * q2[0]
+        y = (inv_t**2) * q0[1] + 2 * inv_t * t * p_b[1] + (t**2) * q2[1]
+
+        alt_q0 = q0[2] if q0[2] is not None else 0
+        alt_q2 = q2[2] if q2[2] is not None else 0
+
+        if q0[2] is not None and p_b[2] is not None and q2[2] is not None:
+            z = (inv_t**2) * alt_q0 + 2 * inv_t * t * alt_b + (t**2) * alt_q2
+        else:
+            z = p_b[2]
+
+        smoothed.append([x, y, z])
+
+    smoothed.append(q2)
+    return smoothed
+
+
 def smooth_path_3d(
     path: list[list[float]],
     max_turn_dist_nm: float = 2.5,
@@ -33,18 +188,6 @@ def smooth_path_3d(
 ) -> list[list[float]]:
     """
     Angle-adaptive Bezier smoothing with Geometric D-arc for large U-turns.
-
-    Two modes based on local turn angle:
-
-    Small/medium turns (< ~150°):
-      Quadratic fly-by. Cut distance scales linearly with turn_frac.
-
-    Large U-turns (≥ ~150°, typical for missed approach reversals):
-      4-point Cubic Geometric D-arc. Mathematically constructed to bulge outward
-      perpendicularly to the turn direction by 1.25 NM, achieving the standard
-      "teardrop" representation seen on IAP charts instead of a flat hairpin.
-
-    turn_frac = (1-cos θ)/2 : 0 = straight-on, 1 = full 180° reversal.
     """
     if len(path) < 3:
         return path
@@ -85,167 +228,34 @@ def smooth_path_3d(
             cos_a = 1.0
 
         if turn_frac > teardrop_threshold and dist_ab > 0:
-            # ── PROCEDURAL 180° SEMI-CIRCLE D-ARC ─────────────────────────
-            # Replaces the twisted Bezier approach with a mathematically pure
-            # 1.0 NM fly-over and 1.25 NM lateral semicircle arc.
-            dx_in_nm = dx_in * lon_to_nm
-            dy_in_nm = dy_in * lat_to_nm
-            mag_in_nm = math.sqrt(dx_in_nm**2 + dy_in_nm**2)
-            ux_in = dx_in_nm / mag_in_nm if mag_in_nm > 0 else 0
-            uy_in = dy_in_nm / mag_in_nm if mag_in_nm > 0 else 0
-
-            # Determine Turn Direction & Sweep
-            dx_out_nm = dx_out * lon_to_nm
-            dy_out_nm = dy_out * lat_to_nm
-            mag_out_nm = math.sqrt(dx_out_nm**2 + dy_out_nm**2)
-            ux_out = dx_out_nm / mag_out_nm if mag_out_nm > 0 else 0
-            uy_out = dy_out_nm / mag_out_nm if mag_out_nm > 0 else 0
-
-            # Calculate geometric cross product for default "shortest turn"
-            cross = ux_in * uy_out - uy_in * ux_out
-
-            # Respect forced direction if provided, otherwise use geometric cross product
-            is_left = False
-            if forced_dir == "L":
-                is_left = True
-            elif forced_dir == "R":
-                is_left = False
-            else:
-                is_left = cross >= 0
-
-            if is_left:
-                # Left Turn -> Bulge Left, Sweep CCW
-                nx, ny = -uy_in, ux_in
-                sweep_dir = 1.0
-            else:
-                # Right Turn -> Bulge Right, Sweep CW
-                nx, ny = uy_in, -ux_in
-                sweep_dir = -1.0
-
-            arm_nm = 1.0
-            radius_nm = 1.25
-
-            c_lon = p_b[0] + (arm_nm * ux_in + radius_nm * nx) / lon_to_nm
-            c_lat = p_b[1] + (arm_nm * uy_in + radius_nm * ny) / lat_to_nm
-
-            # Start angle points from center back to the end of the overfly arm
-            start_angle = math.atan2(-ny, -nx)
-
-            # The sweep angle should match the actual required turn angle.
-            # If we are forcing a direction that is the "longer" way (e.g. 183°),
-            # we must adjust the angle.
-            angle_rad = math.acos(cos_a)
-            if forced_dir:
-                # If forced direction differs from shortest geometric direction,
-                # use the complementary angle to go the "long way"
-                shortest_is_left = cross >= 0
-                if (forced_dir == "L" and not shortest_is_left) or (
-                    forced_dir == "R" and shortest_is_left
-                ):
-                    angle_rad = 2 * math.pi - angle_rad
-
-            sweep_angle = angle_rad
-
-            smoothed.append(list(p_b))
-
-            # Draw the 1.0 NM straight overfly to establish the turn entry
-            straight_steps = 5
-            for j in range(1, straight_steps + 1):
-                alpha = j / straight_steps
-                # Interpolate altitude if p_c exists and has altitude
-                alt = p_b[2]
-                if dist_bc > 0 and p_c[2] is not None and p_b[2] is not None:
-                    # Rough distance-based interpolation
-                    dist_from_b = alpha * arm_nm
-                    alt = p_b[2] + (p_c[2] - p_b[2]) * (
-                        dist_from_b / max(dist_bc, arm_nm + radius_nm * sweep_angle)
-                    )
-
-                smoothed.append(
-                    [
-                        p_b[0] + alpha * (arm_nm * ux_in) / lon_to_nm,
-                        p_b[1] + alpha * (arm_nm * uy_in) / lat_to_nm,
-                        alt,
-                    ]
+            smoothed.extend(
+                _smooth_darc(
+                    p_b,
+                    p_c,
+                    dist_bc,
+                    dx_in,
+                    dy_in,
+                    dx_out,
+                    dy_out,
+                    cos_a,
+                    forced_dir,
+                    lon_to_nm,
+                    lat_to_nm,
                 )
-
-            # Draw the clean circular arc sequence
-            arc_steps = 15
-            for j in range(1, arc_steps + 1):
-                fraction = j / arc_steps
-                theta = start_angle + sweep_dir * fraction * sweep_angle
-                x = c_lon + (radius_nm * math.cos(theta)) / lon_to_nm
-                y = c_lat + (radius_nm * math.sin(theta)) / lat_to_nm
-
-                alt = p_b[2]
-                if dist_bc > 0 and p_c[2] is not None and p_b[2] is not None:
-                    dist_from_b = arm_nm + (fraction * radius_nm * sweep_angle)
-                    alt = p_b[2] + (p_c[2] - p_b[2]) * (
-                        dist_from_b / max(dist_bc, arm_nm + radius_nm * sweep_angle)
-                    )
-
-                smoothed.append([x, y, alt])
-
-            # Post-arc naturally connects via straight line string to the next fix
-
+            )
         else:
-            # ── QUADRATIC FLY-BY for small/medium turns ──────────────────────────
-            adaptive_max = small_cut + (max_turn_dist_nm - small_cut) * turn_frac
-            cut_ab = min(adaptive_max, dist_ab * 0.45) if dist_ab > 0 else 0
-            cut_bc = min(adaptive_max, dist_bc * 0.45) if dist_bc > 0 else 0
-
-            alpha_ab = (cut_ab / dist_ab) if dist_ab > 0 else 0
-            alpha_bc = (cut_bc / dist_bc) if dist_bc > 0 else 0
-
-            alt_a = p_a[2] if p_a[2] is not None else 0
-            alt_b = p_b[2] if p_b[2] is not None else 0
-            alt_c = p_c[2] if p_c[2] is not None else 0
-
-            q0 = [
-                p_b[0] + alpha_ab * (p_a[0] - p_b[0]),
-                p_b[1] + alpha_ab * (p_a[1] - p_b[1]),
-                alt_b + alpha_ab * (alt_a - alt_b)
-                if p_a[2] is not None and p_b[2] is not None
-                else p_b[2],
-            ]
-            q2 = [
-                p_b[0] + alpha_bc * (p_c[0] - p_b[0]),
-                p_b[1] + alpha_bc * (p_c[1] - p_b[1]),
-                alt_b + alpha_bc * (alt_c - alt_b)
-                if p_c[2] is not None and p_b[2] is not None
-                else p_b[2],
-            ]
-
-            smoothed.append(q0)
-
-            for j in range(1, steps):
-                t = j / steps
-                inv_t = 1.0 - t
-                x = (inv_t**2) * q0[0] + 2 * inv_t * t * p_b[0] + (t**2) * q2[0]
-                y = (inv_t**2) * q0[1] + 2 * inv_t * t * p_b[1] + (t**2) * q2[1]
-
-                alt_q0 = q0[2] if q0[2] is not None else 0
-                alt_q2 = q2[2] if q2[2] is not None else 0
-
-                if q0[2] is not None and p_b[2] is not None and q2[2] is not None:
-                    z = (inv_t**2) * alt_q0 + 2 * inv_t * t * alt_b + (t**2) * alt_q2
-                else:
-                    z = p_b[2]
-
-                smoothed.append([x, y, z])
-
-            smoothed.append(q2)
+            smoothed.extend(
+                _smooth_flyby(
+                    p_a, p_b, p_c, dist_ab, dist_bc, turn_frac, max_turn_dist_nm, steps, small_cut
+                )
+            )
 
     smoothed.append(path[-1])
     return smoothed
 
 
 def extract_true_course(course_str: str | None) -> float | None:
-    """Parses true course in degrees from two common formats:
-    - Slash-separated:   '299.41° Mag /297.66° True'  → 297.66
-    - Parenthesis-style: '266.94°(265.44°)'            → 265.44
-    Returns None if parsing fails.
-    """
+    """Parses true course in degrees from two common formats."""
     if not course_str:
         return None
     s = str(course_str).strip()
@@ -350,6 +360,150 @@ def group_legs(legs_rows: Sequence[Any]) -> list[list[Any]]:
     return groups
 
 
+def _extract_turn_direction(leg: Any) -> str | None:
+    if hasattr(leg, "turn_direction") and leg.turn_direction:
+        return str(leg.turn_direction).strip().upper()
+    elif isinstance(leg, dict) and leg.get("turn_direction") and str(leg["turn_direction"]).strip():
+        return str(leg["turn_direction"]).strip().upper()
+    return None
+
+
+def _extract_path(
+    legs_list: list,
+    start_alt_ft: float = 10000.0,
+    initial_pos: list[float] | None = None,
+    end_alt_ft: float | None = None,
+) -> tuple[list[list[float]], list[float | None], list[str | None]]:
+    path_3d = []
+    leg_indices: list[int | None] = []
+    turn_directions: list[str | None] = []
+
+    if initial_pos:
+        path_3d.append(list(initial_pos))
+        turn_directions.append(None)
+
+    for leg in legs_list:
+        alt_ft = extract_altitude(leg)
+        alt_m = alt_ft * FT_TO_M if alt_ft is not None else None
+
+        # The turn direction in the database (L/R) describes the turn
+        # required to ENTER this leg. Therefore, it applies to the turn
+        # at the PREVIOUS waypoint (the one currently at the end of path_3d).
+        turn_dir = _extract_turn_direction(leg)
+
+        if turn_dir in ["L", "R"] and turn_directions:
+            turn_directions[-1] = turn_dir
+
+        if leg.lon is not None and leg.lat is not None:
+            if not path_3d or (path_3d[-1][0] != leg.lon or path_3d[-1][1] != leg.lat):
+                path_3d.append([leg.lon, leg.lat, alt_m])
+                leg_indices.append(len(path_3d) - 1)
+                turn_directions.append(None)
+            else:
+                if alt_m is not None and path_3d[-1][2] is None:  # pragma: no cover
+                    path_3d[-1][2] = alt_m
+                leg_indices.append(len(path_3d) - 1)
+        else:
+            if path_3d and leg.path_descriptor in ["CA", "VA", "VI", "CF", "DF"]:
+                course_true = extract_true_course(leg.course)
+                if course_true is not None:
+                    dist_nm = None
+                    if leg.distance is not None:
+                        try:
+                            dist_str = (
+                                str(leg.distance).replace("NM", "").replace("min", "").strip()
+                            )
+                            dist_nm = float(dist_str)
+                        except ValueError:
+                            pass
+
+                    if dist_nm is None:
+                        prev_alt_m = path_3d[-1][2]
+                        if prev_alt_m is not None and alt_m is not None:
+                            climb_ft = (alt_m - prev_alt_m) / FT_TO_M
+                            dist_nm = max(climb_ft / 200.0, 2.5) if climb_ft > 0 else 3.0
+                        else:  # pragma: no cover
+                            dist_nm = 3.0
+
+                    v_lon, v_lat = project_point(
+                        path_3d[-1][0], path_3d[-1][1], course_true, dist_nm
+                    )
+                    path_3d.append([v_lon, v_lat, alt_m])
+                    leg_indices.append(len(path_3d) - 1)
+                    turn_directions.append(None)
+                else:
+                    leg_indices.append(None)
+            else:
+                leg_indices.append(None)
+
+    if not path_3d:
+        return [], [], []
+
+    if len(path_3d[0]) < 3:
+        path_3d[0].append(start_alt_ft * FT_TO_M)
+    elif path_3d[0][2] is None:
+        path_3d[0][2] = start_alt_ft * FT_TO_M
+    if path_3d[-1][2] is None:
+        path_3d[-1][2] = end_alt_ft * FT_TO_M if end_alt_ft is not None else path_3d[0][2]
+
+    for i in range(1, len(path_3d) - 1):
+        if path_3d[i][2] is None:
+            prev_idx = i - 1
+            next_idx = i + 1
+            while next_idx < len(path_3d) and path_3d[next_idx][2] is None:
+                next_idx += 1
+
+            alt_prev = path_3d[prev_idx][2]
+            alt_next = path_3d[next_idx][2]
+
+            dist_prev = sum(
+                haversine_nm(path_3d[j][0], path_3d[j][1], path_3d[j + 1][0], path_3d[j + 1][1])
+                for j in range(prev_idx, i)
+            )
+            dist_next = sum(
+                haversine_nm(path_3d[j][0], path_3d[j][1], path_3d[j + 1][0], path_3d[j + 1][1])
+                for j in range(i, next_idx)
+            )
+
+            total_dist = dist_prev + dist_next
+            if total_dist > 0:
+                path_3d[i][2] = alt_prev + (alt_next - alt_prev) * (dist_prev / total_dist)
+            else:  # pragma: no cover
+                path_3d[i][2] = alt_prev
+
+    # Map interpolated altitudes back to the original legs.
+    leg_alts = [path_3d[idx][2] if idx is not None else None for idx in leg_indices]
+
+    return path_3d, leg_alts, turn_directions
+
+
+def _process_path(raw_path, turn_dirs: list[str | None] | None = None):
+    if len(raw_path) < 2:
+        return [], [], 0.0
+    path_smoothed = smooth_path_3d(
+        raw_path, max_turn_dist_nm=2.5, steps=16, turn_directions=turn_dirs
+    )
+    ts = [0.0]
+    for i in range(1, len(path_smoothed)):
+        seg = haversine_nm(
+            path_smoothed[i - 1][0],
+            path_smoothed[i - 1][1],
+            path_smoothed[i][0],
+            path_smoothed[i][1],
+        )
+        seg = max(seg, 0.01)
+        ts.append(round(ts[-1] + seg, 3))
+    return path_smoothed, ts, ts[-1]
+
+
+def _collect_waypoint_alts(
+    legs: list, leg_alts: list[float | None], dest: dict[str, float]
+) -> None:
+    for leg, alt in zip(legs, leg_alts, strict=True):
+        if leg.waypoint_ident and alt is not None:
+            dest[leg.waypoint_ident] = alt
+
+
 def build_3d_paths(
     proc_row: Any, legs_rows: Sequence[Any], runway_threshold: list[float] | None = None
 ) -> RnpPath3dResponse:
@@ -407,140 +561,6 @@ def build_3d_paths(
         raw_missed_approach = []
         initial_groups = [g for g in groups if not (len(g) == 1 and g[0].path_descriptor == "HM")]
 
-    def extract_path(
-        legs_list: list,
-        start_alt_ft: float = 10000.0,
-        initial_pos: list[float] | None = None,
-        end_alt_ft: float | None = None,
-    ) -> tuple[list[list[float]], list[float | None], list[str | None]]:
-        path_3d = []
-        leg_indices: list[int | None] = []
-        turn_directions: list[str | None] = []
-
-        if initial_pos:
-            path_3d.append(list(initial_pos))
-            turn_directions.append(None)
-
-        for leg in legs_list:
-            alt_ft = extract_altitude(leg)
-            alt_m = alt_ft * FT_TO_M if alt_ft is not None else None
-
-            # The turn direction in the database (L/R) describes the turn
-            # required to ENTER this leg. Therefore, it applies to the turn
-            # at the PREVIOUS waypoint (the one currently at the end of path_3d).
-            turn_dir = None
-            if hasattr(leg, "turn_direction") and leg.turn_direction:
-                turn_dir = str(leg.turn_direction).strip().upper()
-            elif (
-                isinstance(leg, dict)
-                and leg.get("turn_direction")
-                and str(leg["turn_direction"]).strip()
-            ):
-                turn_dir = str(leg["turn_direction"]).strip().upper()
-
-            if turn_dir in ["L", "R"] and turn_directions:
-                turn_directions[-1] = turn_dir
-
-            if leg.lon is not None and leg.lat is not None:
-                if not path_3d or (path_3d[-1][0] != leg.lon or path_3d[-1][1] != leg.lat):
-                    path_3d.append([leg.lon, leg.lat, alt_m])
-                    leg_indices.append(len(path_3d) - 1)
-                    turn_directions.append(None)
-                else:
-                    if alt_m is not None and path_3d[-1][2] is None:  # pragma: no cover
-                        path_3d[-1][2] = alt_m
-                    leg_indices.append(len(path_3d) - 1)
-            else:
-                if path_3d and leg.path_descriptor in ["CA", "VA", "VI", "CF", "DF"]:
-                    course_true = extract_true_course(leg.course)
-                    if course_true is not None:
-                        dist_nm = None
-                        if leg.distance is not None:
-                            try:
-                                dist_str = (
-                                    str(leg.distance).replace("NM", "").replace("min", "").strip()
-                                )
-                                dist_nm = float(dist_str)
-                            except ValueError:
-                                pass
-
-                        if dist_nm is None:
-                            prev_alt_m = path_3d[-1][2]
-                            if prev_alt_m is not None and alt_m is not None:
-                                climb_ft = (alt_m - prev_alt_m) / FT_TO_M
-                                dist_nm = max(climb_ft / 200.0, 2.5) if climb_ft > 0 else 3.0
-                            else:  # pragma: no cover
-                                dist_nm = 3.0
-
-                        v_lon, v_lat = project_point(
-                            path_3d[-1][0], path_3d[-1][1], course_true, dist_nm
-                        )
-                        path_3d.append([v_lon, v_lat, alt_m])
-                        leg_indices.append(len(path_3d) - 1)
-                        turn_directions.append(None)
-                    else:
-                        leg_indices.append(None)
-                else:
-                    leg_indices.append(None)
-
-        if not path_3d:
-            return [], [], []
-
-        if len(path_3d[0]) < 3:
-            path_3d[0].append(start_alt_ft * FT_TO_M)
-        elif path_3d[0][2] is None:
-            path_3d[0][2] = start_alt_ft * FT_TO_M
-        if path_3d[-1][2] is None:
-            path_3d[-1][2] = end_alt_ft * FT_TO_M if end_alt_ft is not None else path_3d[0][2]
-
-        for i in range(1, len(path_3d) - 1):
-            if path_3d[i][2] is None:
-                prev_idx = i - 1
-                next_idx = i + 1
-                while next_idx < len(path_3d) and path_3d[next_idx][2] is None:
-                    next_idx += 1
-
-                alt_prev = path_3d[prev_idx][2]
-                alt_next = path_3d[next_idx][2]
-
-                dist_prev = sum(
-                    haversine_nm(path_3d[j][0], path_3d[j][1], path_3d[j + 1][0], path_3d[j + 1][1])
-                    for j in range(prev_idx, i)
-                )
-                dist_next = sum(
-                    haversine_nm(path_3d[j][0], path_3d[j][1], path_3d[j + 1][0], path_3d[j + 1][1])
-                    for j in range(i, next_idx)
-                )
-
-                total_dist = dist_prev + dist_next
-                if total_dist > 0:
-                    path_3d[i][2] = alt_prev + (alt_next - alt_prev) * (dist_prev / total_dist)
-                else:  # pragma: no cover
-                    path_3d[i][2] = alt_prev
-
-        # Map interpolated altitudes back to the original legs.
-        leg_alts = [path_3d[idx][2] if idx is not None else None for idx in leg_indices]
-
-        return path_3d, leg_alts, turn_directions
-
-    def process_path(raw_path, turn_dirs: list[str | None] | None = None):
-        if len(raw_path) < 2:
-            return [], [], 0.0
-        path_smoothed = smooth_path_3d(
-            raw_path, max_turn_dist_nm=2.5, steps=16, turn_directions=turn_dirs
-        )
-        ts = [0.0]
-        for i in range(1, len(path_smoothed)):
-            seg = haversine_nm(
-                path_smoothed[i - 1][0],
-                path_smoothed[i - 1][1],
-                path_smoothed[i][0],
-                path_smoothed[i][1],
-            )
-            seg = max(seg, 0.01)
-            ts.append(round(ts[-1] + seg, 3))
-        return path_smoothed, ts, ts[-1]
-
     approach_paths = []
 
     # SID/STAR context: initial_pos is the runway threshold for SIDs
@@ -550,12 +570,10 @@ def build_3d_paths(
     waypoint_altitudes = {}
 
     if not initial_groups and final_approach:
-        p3d, leg_alts, turn_dirs = extract_path(final_approach, initial_pos=initial_pos)
-        for leg, alt in zip(final_approach, leg_alts, strict=True):
-            if leg.waypoint_ident and alt is not None:
-                waypoint_altitudes[leg.waypoint_ident] = alt
+        p3d, leg_alts, turn_dirs = _extract_path(final_approach, initial_pos=initial_pos)
+        _collect_waypoint_alts(final_approach, leg_alts, waypoint_altitudes)
 
-        smooth_p, ts, dist = process_path(p3d, turn_dirs=turn_dirs)
+        smooth_p, ts, dist = _process_path(p3d, turn_dirs=turn_dirs)
         if smooth_p:
             ident = final_approach[0].waypoint_ident or "START"
             approach_paths.append(
@@ -578,18 +596,16 @@ def build_3d_paths(
                 else:
                     full_legs.extend(final_approach)
 
-            p3d, leg_alts, turn_dirs = extract_path(
+            p3d, leg_alts, turn_dirs = _extract_path(
                 full_legs, initial_pos=initial_pos, end_alt_ft=10000.0 if is_sid else None
             )
 
             if not p3d:
                 continue
 
-            for leg, alt in zip(full_legs, leg_alts, strict=True):
-                if leg.waypoint_ident and alt is not None:
-                    waypoint_altitudes[leg.waypoint_ident] = alt
+            _collect_waypoint_alts(full_legs, leg_alts, waypoint_altitudes)
 
-            smooth_p, ts, dist = process_path(p3d, turn_dirs=turn_dirs)
+            smooth_p, ts, dist = _process_path(p3d, turn_dirs=turn_dirs)
             if smooth_p:
                 # Identification Logic:
                 # For SIDs, use the EXIT waypoint (transition) as the identifier.
@@ -621,14 +637,12 @@ def build_3d_paths(
     missed_approach_path = None
     if raw_missed_approach:
         start_alt_ft = extract_altitude(raw_missed_approach[0]) or 10000.0
-        p3d, leg_alts, turn_dirs = extract_path(
+        p3d, leg_alts, turn_dirs = _extract_path(
             raw_missed_approach, start_alt_ft=start_alt_ft, end_alt_ft=10000.0 if is_sid else 0.0
         )
-        for leg, alt in zip(raw_missed_approach, leg_alts, strict=True):
-            if leg.waypoint_ident and alt is not None:
-                waypoint_altitudes[leg.waypoint_ident] = alt
+        _collect_waypoint_alts(raw_missed_approach, leg_alts, waypoint_altitudes)
 
-        smooth_p, ts, dist = process_path(p3d, turn_dirs=turn_dirs)
+        smooth_p, ts, dist = _process_path(p3d, turn_dirs=turn_dirs)
         if smooth_p:
             missed_approach_path = RnpMissedApproachPath(
                 path=smooth_p, timestamps=ts, total_distance_nm=dist

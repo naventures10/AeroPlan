@@ -21,8 +21,11 @@ describe('useMapStore', () => {
         airspaceControl: true,
         airspaceUpr: true,
         ercMap: false,
-        windlayer: false,
+        weather: false,
       },
+      isWeatherMode: false,
+      isCloudMode: false,
+      cloudLoadingStatus: { state: 'idle' },
       selectedRouteIds: [],
       selectedRouteType: null,
       activeAirport: null,
@@ -119,7 +122,7 @@ describe('useMapStore', () => {
     state.setAnimatedLabels([{ label: 1 }] as any);
     expect(useMapStore.getState().animatedLabels).toEqual([{ label: 1 }]);
 
-    state.setAnimationConfig({ playing: true, duration: 100 } as any);
+    state.setAnimationConfig({ playing: true, duration: 100 });
     expect(useMapStore.getState().animationConfig).toEqual({ playing: true, duration: 100 });
 
     state.setTerminalPivot([5, 5]);
@@ -130,52 +133,52 @@ describe('useMapStore', () => {
   });
 
   describe('Weather Layer State Management', () => {
-    it('should allow enabling wind layer in ENROUTE mode', () => {
+    it('should allow enabling weather layer in ENROUTE mode', () => {
       const state = useMapStore.getState();
       expect(state.viewMode).toBe('ENROUTE');
 
-      state.setIsWindMode(true);
-      expect(useMapStore.getState().isWindMode).toBe(true);
-      expect(useMapStore.getState().activeLayers.windlayer).toBe(true);
+      state.setIsWeatherMode(true);
+      expect(useMapStore.getState().isWeatherMode).toBe(true);
+      expect(useMapStore.getState().activeLayers.weather).toBe(true);
     });
 
-    it('should disable wind layer when switching to TERMINAL mode via setViewMode', () => {
-      useMapStore.getState().setIsWindMode(true);
+    it('should disable weather layer when switching to TERMINAL mode via setViewMode', () => {
+      useMapStore.getState().setIsWeatherMode(true);
       useMapStore.getState().setViewMode('TERMINAL');
       expect(useMapStore.getState().viewMode).toBe('TERMINAL');
-      expect(useMapStore.getState().isWindMode).toBe(false);
-      expect(useMapStore.getState().activeLayers.windlayer).toBe(false);
+      expect(useMapStore.getState().isWeatherMode).toBe(false);
+      expect(useMapStore.getState().activeLayers.weather).toBe(false);
     });
 
-    it('should disable wind layer when switching to TERMINAL mode via toggleViewMode', () => {
-      useMapStore.getState().setIsWindMode(true);
+    it('should disable weather layer when switching to TERMINAL mode via toggleViewMode', () => {
+      useMapStore.getState().setIsWeatherMode(true);
       useMapStore.getState().toggleViewMode();
       expect(useMapStore.getState().viewMode).toBe('TERMINAL');
-      expect(useMapStore.getState().isWindMode).toBe(false);
+      expect(useMapStore.getState().isWeatherMode).toBe(false);
     });
 
-    it('should disable wind layer when pitch becomes > 0 via setViewState', () => {
-      useMapStore.getState().setIsWindMode(true);
+    it('should disable weather layer when pitch becomes > 0 via setViewState', () => {
+      useMapStore.getState().setIsWeatherMode(true);
       useMapStore.getState().setViewState({ ...DEFAULT_VIEW, pitch: 30 });
-      expect(useMapStore.getState().isWindMode).toBe(false);
+      expect(useMapStore.getState().isWeatherMode).toBe(false);
     });
 
-    it('should prevent enabling wind layer if already in TERMINAL mode', () => {
+    it('should prevent enabling weather layer if already in TERMINAL mode', () => {
       useMapStore.getState().setViewMode('TERMINAL');
-      useMapStore.getState().setIsWindMode(true);
-      expect(useMapStore.getState().isWindMode).toBe(false);
+      useMapStore.getState().setIsWeatherMode(true);
+      expect(useMapStore.getState().isWeatherMode).toBe(false);
     });
 
-    it('should prevent enabling wind layer if map is tilted', () => {
+    it('should prevent enabling weather layer if map is tilted', () => {
       useMapStore.getState().setViewState({ ...DEFAULT_VIEW, pitch: 10 });
-      useMapStore.getState().setIsWindMode(true);
-      expect(useMapStore.getState().isWindMode).toBe(false);
+      useMapStore.getState().setIsWeatherMode(true);
+      expect(useMapStore.getState().isWeatherMode).toBe(false);
     });
 
-    it('should disable wind layer when selecting an airport', () => {
-      useMapStore.getState().setIsWindMode(true);
+    it('should disable weather layer when selecting an airport', () => {
+      useMapStore.getState().setIsWeatherMode(true);
       useMapStore.getState().setActiveAirport('VOMM');
-      expect(useMapStore.getState().isWindMode).toBe(false);
+      expect(useMapStore.getState().isWeatherMode).toBe(false);
       expect(useMapStore.getState().viewMode).toBe('TERMINAL');
     });
   });

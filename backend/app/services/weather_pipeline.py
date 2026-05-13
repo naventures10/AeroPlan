@@ -8,6 +8,7 @@ import time
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import cfgrib
 import numpy as np
 import rasterio
 import structlog
@@ -74,7 +75,7 @@ def cleanup_old_files(output_dir: str, manifest_data: dict):
                     filename = os.path.basename(url)
                     active_files.add(filename)
 
-    tif_files = glob.glob(os.path.join(output_dir, "wind_*.tif"))
+    tif_files = glob.glob(os.path.join(output_dir, "weather_*.tif"))
     for f in tif_files:
         basename = os.path.basename(f)
         if basename not in active_files:
@@ -157,20 +158,20 @@ def run_pipeline() -> bool:
             step=steps,
             type="fc",
             levtype="sfc",
-            param=["10u", "10v"],
+            param=["10u", "10v", "2t", "2d", "msl", "tcc", "10fg", "tp"],
             target=raw_sfc_file,
         )
 
         time.sleep(5)  # Avoid SlowDown error
 
-        # Pressure levels (Single call batch approach to avoid 503 Slow Down)
+        # Pressure levels
         client.retrieve(
             time=run_hour,
             step=steps,
             type="fc",
             levtype="pl",
             levelist=[1000, 925, 850, 700, 500, 400, 300, 250, 200, 150],
-            param=["u", "v"],
+            param=["u", "v", "t", "r"],
             target=raw_pl_file,
         )
         logger.info("download_complete", num_steps=len(steps))
@@ -190,20 +191,56 @@ def run_pipeline() -> bool:
             "run_time": run_time.isoformat().replace("+00:00", "Z"),
             "steps": steps,
         },
+        "band_mapping": {
+            "altitude": {
+                "1": "u_wind_ms",
+                "2": "v_wind_ms",
+                "3": "temp_c",
+                "4": "rel_humidity_pct",
+            },
+            "surface": {
+                "1": "u10_wind_ms",
+                "2": "v10_wind_ms",
+                "3": "temp2m_c",
+                "4": "rel_humidity_pct",
+                "5": "wind_gust_ms",
+                "6": "total_precip_m",
+                "7": "total_cloud_cover_0_1",
+                "8": "msl_pressure_pa",
+            },
+        },
         "forecasts": [],
     }
 
     try:
-        ds_sfc_raw = xr.open_dataset(raw_sfc_file, engine="cfgrib")
-        ds_pl = xr.open_dataset(raw_pl_file, engine="cfgrib")
+        # cfgrib.open_datasets auto-splits the GRIB into compatible groups
+        # (one per unique combination of level type / height), avoiding the
+        # DatasetBuildError that occurs when mixing 10m, 2m, and surface data.
+        sfc_datasets = cfgrib.open_datasets(raw_sfc_file)
+        logger.info(
+            "sfc_grib_groups",
+            count=len(sfc_datasets),
+            vars=[list(ds.data_vars) for ds in sfc_datasets],
+        )
 
-        # Ensure 'step' is a dimension even if only 1 step was downloaded
-        if "step" not in ds_sfc_raw.dims:
-            ds_sfc_raw = ds_sfc_raw.expand_dims("step")
+        # Build a lookup: variable name -> dataset that contains it
+        sfc_var_map: dict[str, xr.Dataset] = {}
+        for ds in sfc_datasets:
+            for var_name in ds.data_vars:
+                sfc_var_map[var_name] = ds
+
+        ds_pl = xr.open_dataset(raw_pl_file, engine="cfgrib", backend_kwargs={"indexpath": ""})
+
+        # Ensure 'step' is a dimension
+        for i, ds in enumerate(sfc_datasets):
+            if "step" not in ds.dims:
+                sfc_datasets[i] = ds.expand_dims("step")
+                for var_name in ds.data_vars:
+                    sfc_var_map[var_name] = sfc_datasets[i]
         if "step" not in ds_pl.dims:
             ds_pl = ds_pl.expand_dims("step")
 
-        # Altitude mapping for pressure levels (hPa -> approx feet, std atmosphere)
+        # Altitude mapping (hPa -> approx feet)
         alt_map = {
             1000: 364,
             925: 2500,
@@ -217,30 +254,75 @@ def run_pipeline() -> bool:
             150: 44300,
         }
 
-        # Add altitude coordinate
-        ds_combined = ds_pl[["u", "v"]]
+        # --- Process Pressure Levels ---
+        ds_pl["t"] = ds_pl["t"] - 273.15  # Kelvin to Celsius
+        ds_combined = ds_pl[["u", "v", "t", "r"]]
         ds_combined = ds_combined.assign_coords(
             altitude=(
                 "isobaricInhPa",
                 [alt_map[int(float(p))] for p in ds_combined.isobaricInhPa.values],
             )
-        )
-        ds_combined = ds_combined.swap_dims({"isobaricInhPa": "altitude"})
+        ).swap_dims({"isobaricInhPa": "altitude"})
 
-        # Setup Surface Data (10m)
-        ds_sfc = ds_sfc_raw[["u10", "v10"]].rename({"u10": "u", "v10": "v"})
+        # --- Process Surface ---
+        # Helper to grab a variable from whichever GRIB group contains it.
+        # Strips level-type coords (heightAboveGround, surface, etc.) to
+        # prevent conflicts when assembling into a single Dataset.
+        _level_coords = {
+            "heightAboveGround",
+            "surface",
+            "entireAtmosphere",
+            "meanSea",
+            "nominalTop",
+        }
+
+        def _sfc_var(name: str, fallback: str | None = None) -> xr.DataArray:
+            if name in sfc_var_map:
+                da = sfc_var_map[name][name]
+            elif fallback and fallback in sfc_var_map:
+                da = sfc_var_map[fallback][fallback]
+            else:
+                raise KeyError(
+                    f"Surface var '{name}' (fallback '{fallback}') "
+                    f"not found. Available: {list(sfc_var_map.keys())}"
+                )
+            drop = [c for c in da.coords if c in _level_coords]
+            return da.drop_vars(drop) if drop else da
+
+        t2m_data = _sfc_var("t2m", "2t") - 273.15
+        d2m_data = _sfc_var("d2m", "2d") - 273.15
+        es = 6.112 * np.exp((17.67 * t2m_data) / (t2m_data + 243.5))
+        e = 6.112 * np.exp((17.67 * d2m_data) / (d2m_data + 243.5))
+        rh_sfc = (e / es) * 100.0
+        rh_sfc = rh_sfc.clip(0, 100)
+
+        # Build surface dataset from individual GRIB groups
+        ds_sfc = xr.Dataset(
+            {
+                "u": _sfc_var("u10"),
+                "v": _sfc_var("v10"),
+                "t": t2m_data,
+                "r": rh_sfc,
+                "fg10": _sfc_var("fg10", "10fg"),
+                "tp": _sfc_var("tp"),
+                "tcc": _sfc_var("tcc"),
+                "msl": _sfc_var("msl"),
+            }
+        )
+
         ds_sfc = ds_sfc.assign_coords(altitude=0).expand_dims("altitude")
 
-        # Drop mismatched coordinates before concatenating
+        # Cleanup coords before concat
         keep_coords = ["altitude", "latitude", "longitude", "step", "valid_time"]
         ds_combined = ds_combined.drop_vars([c for c in ds_combined.coords if c not in keep_coords])
         ds_sfc = ds_sfc.drop_vars([c for c in ds_sfc.coords if c not in keep_coords])
 
-        ds_combined = xr.concat([ds_sfc, ds_combined], dim="altitude").sortby("altitude")
+        # Combine
+        ds_full = xr.concat([ds_sfc, ds_combined], dim="altitude").sortby("altitude")
 
-        # Interpolate to 1000ft intervals
+        # Interpolate
         target_alts = np.arange(0, 40000, 1000)
-        ds_interp = ds_combined.interp(altitude=target_alts, method="linear")
+        ds_interp = ds_full.interp(altitude=target_alts, method="linear")
 
         # Export each slice
         # ECMWF Open Data 0.25 degree resolution
@@ -263,33 +345,49 @@ def run_pipeline() -> bool:
 
             for alt in target_alts:
                 alt_slice = ds_step.sel(altitude=alt)
-                u_data = alt_slice["u"].values.astype(np.float32)
-                v_data = alt_slice["v"].values.astype(np.float32)
+
+                # Prepare data bands
+                bands = []
+                # Common 4 bands for all altitudes
+                bands.append(np.nan_to_num(alt_slice["u"].values.astype(np.float32), nan=0.0))
+                bands.append(np.nan_to_num(alt_slice["v"].values.astype(np.float32), nan=0.0))
+                bands.append(np.nan_to_num(alt_slice["t"].values.astype(np.float32), nan=0.0))
+                bands.append(np.nan_to_num(alt_slice["r"].values.astype(np.float32), nan=0.0))
+
+                if alt == 0:
+                    # Add extra surface bands
+                    for var in ["fg10", "tp", "tcc", "msl"]:
+                        bands.append(
+                            np.nan_to_num(alt_slice[var].values.astype(np.float32), nan=0.0)
+                        )
 
                 temp_tif = os.path.join(os.getcwd(), f"temp_out_{int(alt)}_{step_hours}.tif")
-
-                # Handle NaNs
-                u_data = np.nan_to_num(u_data, nan=0.0)
-                v_data = np.nan_to_num(v_data, nan=0.0)
 
                 with rasterio.open(
                     temp_tif,
                     "w",
                     driver="GTiff",
-                    height=u_data.shape[0],
-                    width=u_data.shape[1],
-                    count=2,
-                    dtype=u_data.dtype,
+                    height=bands[0].shape[0],
+                    width=bands[0].shape[1],
+                    count=len(bands),
+                    dtype=bands[0].dtype,
                     crs="+proj=latlong",
                     transform=transform,
                     nodata=0.0,
                 ) as dst:
-                    dst.write(u_data, 1)
-                    dst.write(v_data, 2)
+                    for i, band_data in enumerate(bands):
+                        dst.write(band_data, i + 1)
 
                 level_name = "surface" if alt == 0 else f"{int(alt // 1000):03d}"
-                final_cog_filename = f"wind_{level_name}_{timestamp_str}_step{step_hours:03d}.tif"
+                final_cog_filename = (
+                    f"weather_{level_name}_{timestamp_str}_step{step_hours:03d}.tif"
+                )
                 final_cog_path = os.path.join(settings.WEATHER_OUTPUT_DIR, final_cog_filename)
+
+                # Prepare GDAL bands arguments
+                band_args = []
+                for i in range(len(bands)):
+                    band_args.extend(["-b", str(i + 1)])
 
                 gdal_args = [
                     gdal_cmd,
@@ -297,10 +395,7 @@ def run_pipeline() -> bool:
                     "COG",
                     "-ot",
                     "Float32",
-                    "-b",
-                    "1",
-                    "-b",
-                    "2",
+                    *band_args,
                     "-projwin",
                     "20",
                     "80",

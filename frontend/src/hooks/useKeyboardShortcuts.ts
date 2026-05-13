@@ -5,7 +5,7 @@ import { useMapStore } from '../store/useMapStore';
  * Registers global keyboard shortcuts.
  *
  * Currently handles:
- *  - ESC: close section modal → exit terminal view → return to enroute
+ *  - ESC: close section modal → exit weather mode → exit terminal view → return to enroute
  */
 export function useKeyboardShortcuts({
   sectionModalOpen,
@@ -16,7 +16,8 @@ export function useKeyboardShortcuts({
   onCloseSectionModal: () => void;
   cancelPendingSelection: () => void;
 }) {
-  const { returnToEnroute, setSelectedRouteIds, setSelectedFeature, setIsWindMode } = useMapStore();
+  const { returnToEnroute, setSelectedRouteIds, setSelectedFeature, setIsWeatherMode } =
+    useMapStore();
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -36,14 +37,14 @@ export function useKeyboardShortcuts({
           activeAirport,
           selectedRouteIds,
           selectedFeature,
-          isWindMode,
+          isWeatherMode,
           activeLayers,
         } = useMapStore.getState();
 
         if (sectionModalOpen) {
           onCloseSectionModal();
-        } else if (isWindMode || activeLayers.windlayer) {
-          setIsWindMode(false);
+        } else if (isWeatherMode || activeLayers.weather) {
+          setIsWeatherMode(false);
         } else if (viewMode === 'TERMINAL' || activeAirport) {
           returnToEnroute();
         } else if (selectedRouteIds?.length > 0 || selectedFeature) {
@@ -65,6 +66,6 @@ export function useKeyboardShortcuts({
     setSelectedRouteIds,
     setSelectedFeature,
     cancelPendingSelection,
-    setIsWindMode,
+    setIsWeatherMode,
   ]);
 }

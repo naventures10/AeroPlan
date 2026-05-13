@@ -3,7 +3,7 @@ import { useMapStore } from '../../../store/useMapStore';
 import { useWindLayer } from '../layers/useWindLayer';
 
 export function useWindTooltip() {
-  const { activeLayers, viewMode } = useMapStore();
+  const { isWeatherMode, isWindMode, viewMode } = useMapStore();
   const { getWindAtLngLat } = useWindLayer();
   const [windHoverInfo, setWindHoverInfo] = useState<{
     x: number;
@@ -14,7 +14,7 @@ export function useWindTooltip() {
 
   const handleWindHover = useCallback(
     (info: any) => {
-      if (info.coordinate && activeLayers.windlayer && viewMode === 'ENROUTE') {
+      if (info.coordinate && isWeatherMode && isWindMode && viewMode === 'ENROUTE') {
         const windData = getWindAtLngLat(info.coordinate[0], info.coordinate[1]);
         if (windData) {
           setWindHoverInfo({
@@ -28,7 +28,7 @@ export function useWindTooltip() {
       }
       setWindHoverInfo(null);
     },
-    [activeLayers.windlayer, viewMode, getWindAtLngLat],
+    [isWeatherMode, isWindMode, viewMode, getWindAtLngLat],
   );
 
   return { windHoverInfo, handleWindHover };

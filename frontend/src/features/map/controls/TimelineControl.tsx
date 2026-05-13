@@ -49,7 +49,7 @@ export function TimelineControl({ timestamps }: TimelineControlProps) {
         </button>
 
         <div className="wind-timeline__info-center">
-          <span className="wind-timeline__title-main">WIND FORECAST</span>
+          <span className="wind-timeline__title-main">WEATHER FORECAST</span>
           <span className="wind-timeline__date-main">{activeTime.date}</span>
         </div>
 

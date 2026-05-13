@@ -1,6 +1,5 @@
 import json
 import os
-from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -17,7 +16,7 @@ def test_cleanup_old_files(tmp_path):
     # Create 5 dummy files
     files = []
     for i in range(5):
-        file_path = output_dir / f"wind_surface_{i}.tif"
+        file_path = output_dir / f"weather_surface_{i}.tif"
         file_path.touch()
         files.append(file_path)
 
@@ -26,8 +25,8 @@ def test_cleanup_old_files(tmp_path):
         "forecasts": [
             {
                 "files": {
-                    "surface": "http://example.com/wind_surface_3.tif",
-                    "level_4000": "http://example.com/wind_surface_4.tif",
+                    "surface": "http://example.com/weather_surface_3.tif",
+                    "level_4000": "http://example.com/weather_surface_4.tif",
                 }
             }
         ]
@@ -36,10 +35,10 @@ def test_cleanup_old_files(tmp_path):
     cleanup_old_files(str(output_dir), manifest_data)
 
     # Verify only files 3 and 4 are left
-    remaining_files = sorted(list(output_dir.glob("*.tif")))
+    remaining_files = sorted(list(output_dir.glob("weather_*.tif")))
     assert len(remaining_files) == 2
-    assert remaining_files[0].name == "wind_surface_3.tif"
-    assert remaining_files[1].name == "wind_surface_4.tif"
+    assert remaining_files[0].name == "weather_surface_3.tif"
+    assert remaining_files[1].name == "weather_surface_4.tif"
 
 
 def test_cleanup_old_files_empty_manifest(tmp_path):
@@ -47,12 +46,12 @@ def test_cleanup_old_files_empty_manifest(tmp_path):
     output_dir = tmp_path / "weather"
     output_dir.mkdir()
 
-    file_path = output_dir / "wind_surface_0.tif"
+    file_path = output_dir / "weather_surface_0.tif"
     file_path.touch()
 
     cleanup_old_files(str(output_dir), {"forecasts": []})
 
-    remaining_files = list(output_dir.glob("*.tif"))
+    remaining_files = list(output_dir.glob("weather_*.tif"))
     assert len(remaining_files) == 0
 
 
@@ -74,8 +73,9 @@ def test_cleanup_old_files_delete_error(tmp_path, monkeypatch):
     cleanup_old_files(str(output_dir), {"forecasts": []})
 
 
-@patch("app.services.weather_pipeline.xr.concat")
+@patch("app.services.weather_pipeline.cfgrib.open_datasets")
 @patch("app.services.weather_pipeline.xr.open_dataset")
+@patch("app.services.weather_pipeline.xr.concat")
 @patch("app.services.weather_pipeline.rasterio.open")
 @patch("app.services.weather_pipeline.Client")
 @patch("app.services.weather_pipeline.subprocess.run")
@@ -87,8 +87,9 @@ def test_run_pipeline_success(
     mock_run,
     mock_client_class,
     mock_rasterio,
-    mock_xr_open,
     mock_xr_concat,
+    mock_xr_open,
+    mock_cfgrib_open,
     tmp_path,
     monkeypatch,
 ):
@@ -97,56 +98,84 @@ def test_run_pipeline_success(
     monkeypatch.setattr(settings, "WEATHER_OUTPUT_DIR", str(output_dir))
     monkeypatch.setattr(settings, "WEATHER_BASE_URL", "http://test-weather")
 
-    # Mock arange to return only one altitude to speed up test
+    # Mock arange to return only 0 altitude (surface) to speed up test
     mock_arange.return_value = np.array([0])
 
     # Mock the Client and its retrieve method
     mock_client = MagicMock()
-    mock_result = MagicMock()
-    mock_result.datetime = datetime(2023, 1, 1, 12, 0, 0)
-    mock_client.retrieve.return_value = mock_result
     mock_client_class.return_value = mock_client
 
-    # Mock xarray datasets
-    mock_ds = MagicMock()
-    mock_ds.dims = ["step", "latitude", "longitude"]
-    mock_ds.coords = {
-        "step": np.array([np.timedelta64(0, "h")], dtype="timedelta64[ns]"),
+    # Mock xarray datasets for surface
+    mock_ds_sfc = MagicMock()
+    mock_ds_sfc.data_vars = ["u10", "v10", "t2m", "d2m", "fg10", "tp", "tcc", "msl"]
+    mock_ds_sfc.dims = ["step", "latitude", "longitude"]
+    mock_ds_sfc.coords = {
+        "step": np.array([np.timedelta64(3, "h")], dtype="timedelta64[ns]"),
         "latitude": np.array([90.0, 89.75]),
         "longitude": np.array([-180.0, -179.75]),
-        "isobaricInhPa": np.array([1000, 500]),
         "valid_time": np.array([np.datetime64("2023-01-01T12:00:00")]),
     }
-    mock_ds.__getitem__.side_effect = lambda key: MagicMock(values=np.zeros((1, 2, 2)))
-    mock_ds.isobaricInhPa.values = np.array([1000, 500])
-    mock_ds.drop_vars.return_value = mock_ds
-    mock_ds.assign_coords.return_value = mock_ds
-    mock_ds.swap_dims.return_value = mock_ds
-    mock_ds.rename.return_value = mock_ds
-    mock_ds.expand_dims.return_value = mock_ds
 
-    mock_xr_concat.return_value = mock_ds
-    mock_ds.sortby.return_value = mock_ds
+    # Mock __getitem__ for variables
+    def get_var(key):
+        da = MagicMock()
+        da.values = np.zeros((1, 2, 2))
+        da.coords = {}
+        da.drop_vars.return_value = da
+        da.__sub__.return_value = da
+        da.__truediv__.return_value = da
+        da.__mul__.return_value = da
+        da.clip.return_value = da
+        return da
 
-    # Mock interp and sel chains
-    mock_interp_ds = MagicMock()
-    # Mock only 1 step
-    mock_interp_ds.step.values = np.array([np.timedelta64(9, "h")], dtype="timedelta64[ns]")
-    mock_ds.interp.return_value = mock_interp_ds
+    mock_ds_sfc.__getitem__.side_effect = get_var
+    mock_ds_sfc.drop_vars.return_value = mock_ds_sfc
+    mock_ds_sfc.expand_dims.return_value = mock_ds_sfc
+    mock_ds_sfc.assign_coords.return_value = mock_ds_sfc
+
+    mock_cfgrib_open.return_value = [mock_ds_sfc]
+
+    # Mock PL dataset
+    mock_ds_pl = MagicMock()
+    mock_ds_pl.data_vars = ["u", "v", "t", "r"]
+    mock_ds_pl.dims = ["isobaricInhPa", "step", "latitude", "longitude"]
+    mock_ds_pl.coords = {
+        "isobaricInhPa": np.array([1000]),
+        "step": np.array([np.timedelta64(3, "h")], dtype="timedelta64[ns]"),
+    }
+    mock_ds_pl.isobaricInhPa.values = np.array([1000])
+    mock_ds_pl.__getitem__.side_effect = get_var
+    mock_ds_pl.assign_coords.return_value = mock_ds_pl
+    mock_ds_pl.swap_dims.return_value = mock_ds_pl
+    mock_ds_pl.drop_vars.return_value = mock_ds_pl
+    mock_ds_pl.expand_dims.return_value = mock_ds_pl
+    mock_xr_open.return_value = mock_ds_pl
+
+    # Combined dataset after concat
+    mock_ds_full = MagicMock()
+    mock_ds_full.step.values = np.array([np.timedelta64(3, "h")], dtype="timedelta64[ns]")
+    mock_ds_full.drop_vars.return_value = mock_ds_full
+    mock_ds_full.sortby.return_value = mock_ds_full
+    mock_xr_concat.return_value = mock_ds_full
+
+    # Interpolated dataset
+    mock_ds_interp = MagicMock()
+    mock_ds_interp.step.values = np.array([np.timedelta64(3, "h")], dtype="timedelta64[ns]")
+    mock_ds_full.interp.return_value = mock_ds_interp
 
     mock_step_ds = MagicMock()
-    mock_interp_ds.isel.return_value = mock_step_ds
+    mock_ds_interp.isel.return_value = mock_step_ds
 
     mock_alt_slice = MagicMock()
     mock_alt_slice.__getitem__.side_effect = lambda key: MagicMock(values=np.zeros((2, 2)))
     mock_step_ds.sel.return_value = mock_alt_slice
 
-    mock_xr_open.return_value = mock_ds
-
     # Mock rasterio context manager
     mock_rasterio.return_value.__enter__.return_value = MagicMock()
 
-    run_pipeline()
+    # Mock time.sleep to speed up test
+    with patch("time.sleep"):
+        run_pipeline()
 
     # Verify manifest was created
     manifest_path = output_dir / "weather_manifest.json"
@@ -159,6 +188,8 @@ def test_run_pipeline_success(
         assert len(data["forecasts"]) > 0
         assert "valid_time" in data["forecasts"][0]
         assert "files" in data["forecasts"][0]
+        # Check cloud cover band exists in mapping
+        assert data["band_mapping"]["surface"]["7"] == "total_cloud_cover_0_1"
 
 
 @patch("app.services.weather_pipeline.Client")

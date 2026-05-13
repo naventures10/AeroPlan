@@ -19,7 +19,8 @@ export interface WindStatus {
 
 export function useWindLayer() {
   const {
-    activeLayers,
+    isWeatherMode,
+    isWindMode,
     viewMode,
     windAltitude,
     windAnimationTime,
@@ -29,14 +30,19 @@ export function useWindLayer() {
   } = useMapStore();
 
   const [loadedImages, setLoadedImages] = useState<Record<number, WeatherLayers.TextureData>>({});
+  const [renderImages, setRenderImages] = useState<Record<number, WeatherLayers.TextureData>>({});
   const [status, setStatus] = useState<WindStatus>({ state: 'idle' });
   const [forecastTimestamps, setForecastTimestamps] = useState<ForecastTimestamp[]>([]);
 
-  const isWindActive = activeLayers.windlayer && viewMode === 'ENROUTE';
+  const isWindActive = isWeatherMode && isWindMode && viewMode === 'ENROUTE';
+
+  // Either weather layer being active should trigger manifest loading
+  // so the shared controls (timeline, altitude) have timestamps available.
+  const isAnyWeatherActive = isWeatherMode && viewMode === 'ENROUTE';
 
   // 1. Fetch dynamic manifest
   useEffect(() => {
-    if (!isWindActive) return;
+    if (!isAnyWeatherActive) return;
 
     async function fetchManifest() {
       try {
@@ -66,7 +72,7 @@ export function useWindLayer() {
       }
     }
     fetchManifest();
-  }, [isWindActive, setWindAnimationTime]);
+  }, [isAnyWeatherActive, setWindAnimationTime]);
 
   // 2. Pre-load weather data for current altitude
   useEffect(() => {
@@ -77,6 +83,7 @@ export function useWindLayer() {
 
       setStatus({ state: 'loading', message: 'Pre-loading forecast frames…' });
       setLoadedImages({});
+      setRenderImages({});
 
       const levelKey = windAltitude === 0 ? 'surface' : String(windAltitude).padStart(3, '0');
 
@@ -91,11 +98,28 @@ export function useWindLayer() {
         if (!active) return;
 
         const imageMap: Record<number, WeatherLayers.TextureData> = {};
+        const renderMap: Record<number, WeatherLayers.TextureData> = {};
+
         results.forEach((img, i) => {
           imageMap[i] = img;
+
+          const components = img.data.length / (img.width * img.height);
+          if (components >= 2) {
+            // WebGL ParticleLayer expects exactly 2 channels for U and V.
+            const numPixels = img.width * img.height;
+            const renderData = new Float32Array(numPixels * 2);
+            for (let p = 0; p < numPixels; p++) {
+              renderData[p * 2] = img.data[p * components] ?? 0;
+              renderData[p * 2 + 1] = img.data[p * components + 1] ?? 0;
+            }
+            renderMap[i] = { width: img.width, height: img.height, data: renderData };
+          } else {
+            renderMap[i] = img;
+          }
         });
 
         setLoadedImages(imageMap);
+        setRenderImages(renderMap);
         setStatus({ state: 'ready', message: 'All frames ready' });
       } catch (err) {
         if (!active) return;
@@ -110,9 +134,9 @@ export function useWindLayer() {
     };
   }, [isWindActive, windAltitude, forecastTimestamps]);
 
-  // 3. Animation Loop
+  // 3. Animation Loop — drives the shared timeline for any weather layer
   useEffect(() => {
-    if (!isWindActive || !windIsPlaying || forecastTimestamps.length === 0) return;
+    if (!isAnyWeatherActive || !windIsPlaying || forecastTimestamps.length === 0) return;
 
     let lastTime = performance.now();
     let frameId: number;
@@ -139,7 +163,7 @@ export function useWindLayer() {
     frameId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frameId);
   }, [
-    isWindActive,
+    isAnyWeatherActive,
     windIsPlaying,
     forecastTimestamps.length,
     setWindAnimationTime,
@@ -153,12 +177,12 @@ export function useWindLayer() {
   const interpolationWeight = windAnimationTime - index1;
 
   const windLayer = useMemo(() => {
-    if (!isWindActive || !loadedImages[index1]) return null;
+    if (!isWindActive || !renderImages[index1]) return null;
 
     return new WeatherLayers.ParticleLayer({
       id: 'wind-particles',
-      image: loadedImages[index1],
-      image2: loadedImages[index2] || null,
+      image: renderImages[index1],
+      image2: renderImages[index2] || null,
       imageWeight: interpolationWeight,
       bounds: WIND_BOUNDS,
       numParticles: 1000,
@@ -169,7 +193,7 @@ export function useWindLayer() {
       extensions: [new ClipExtension()],
       clipBounds: CLIP_BOUNDS,
     });
-  }, [isWindActive, loadedImages, index1, index2, interpolationWeight]);
+  }, [isWindActive, renderImages, index1, index2, interpolationWeight]);
 
   // 5. Tooltip Helper
   const getWindAtLngLat = useCallback(
@@ -187,6 +211,7 @@ export function useWindLayer() {
       const components = img1.data.length / (img1.width * img1.height);
       const idx = (y * img1.width + x) * components;
 
+      // Ensure we extract U and V exactly from the first two bands of the master array
       const u1 = Number(img1.data[idx]);
       const v1 = Number(img1.data[idx + 1]);
 

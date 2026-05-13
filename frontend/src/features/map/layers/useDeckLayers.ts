@@ -10,6 +10,7 @@ import { createRnpLayers } from '../../terminal/layers/createRnpLayers';
 import { useRnpPath3d } from '../../terminal/layers/useRnpPath3d';
 import { useRnpAnimation } from '../../terminal/layers/useRnpAnimation';
 import { useWindLayer } from './useWindLayer';
+import { useCloudLayer } from './useCloudLayer';
 import type { LayerContext } from './types';
 
 /**
@@ -67,6 +68,7 @@ export function useDeckLayers({
   const rnpCurrentTime = useRnpAnimation(totalAnimDist);
 
   const { windLayer } = useWindLayer();
+  const { cloudLayers } = useCloudLayer();
 
   // Pre-compute aerodrome text data
   const textData = useMemo(() => {
@@ -139,6 +141,10 @@ export function useDeckLayers({
       overlaidLayers.push(windLayer);
     }
 
+    if (cloudLayers.length > 0) {
+      overlaidLayers.push(...cloudLayers);
+    }
+
     return { overlaidLayers, interleavedLayers };
   }, [
     aerodromes,
@@ -165,6 +171,7 @@ export function useDeckLayers({
     approachDist,
     missedDist,
     windLayer,
+    cloudLayers,
   ]);
 
   return layers;
