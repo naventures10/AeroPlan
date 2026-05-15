@@ -25,8 +25,6 @@ export const POLYGON_PAINT = {
     GET_SEARCH_STRING,
     [
       'case',
-      ['>=', ['index-of', 'RUNWAY', ['var', 's']], 0],
-      '#3f3f46',
       ['>=', ['index-of', 'TAXIWAY', ['var', 's']], 0],
       '#52525b',
       ['>=', ['index-of', 'APRON', ['var', 's']], 0],

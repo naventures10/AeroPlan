@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useMapStore } from '../../../store/useMapStore';
-import type { FeatureCollection, Feature, Polygon } from 'geojson';
+import type { FeatureCollection, Feature, Polygon, Point } from 'geojson';
 
 /** Default runway width in meters when dimensions data is unavailable */
 const DEFAULT_WIDTH_M = 45;
@@ -18,6 +18,11 @@ interface RunwayEntry {
   thr_elevation?: string;
 }
 
+export interface RunwaySpatialData {
+  polygons: FeatureCollection<Polygon>;
+  labels: FeatureCollection<Point>;
+}
+
 /**
  * Parse the width in meters from a dimensions string like "1850 x 45 M".
  * Returns the second number (width). Falls back to DEFAULT_WIDTH_M.
@@ -32,12 +37,6 @@ function parseWidthM(dimensions?: string): number {
  * Extract a numeric elevation (meters) from a threshold elevation string
  * like "THR: 1126.6FT\nTDZ:". Returns elevation in feet divided by 3.28084 to meters.
  */
-function parseElevationM(thrElev?: string): number {
-  if (!thrElev) return 0;
-  const match = thrElev.match(/([\d.]+)\s*FT/i);
-  return match ? Number(match[1]) / 3.28084 : 0;
-}
-
 /**
  * Compute the reciprocal runway designation.
  *   08  → 26    (number + 18, wrap at 36)
@@ -101,45 +100,38 @@ function buildRunwayRect(
   const SUBDIVISIONS = 8;
   const ring: [number, number][] = [c1];
 
-  // Edge c1→c4 (left side)
-  // Edge c2→c3 (right side) — we'll build right side separately
-  // Build: c1 → c2 (short end), c2 → c3 (long, subdivided), c3 → c4 (short end), c4 → c1 (long, subdivided)
+  // Edge c1→c2 (short end), c2→c3 (long, subdivided), c3→c4 (short end), c4→c1 (long, subdivided)
+  ring.push(c2);
 
-  ring.push(c2); // short end
-
-  // c2 → c3 (long edge, subdivided)
   for (let i = 1; i <= SUBDIVISIONS; i++) {
     const t = i / (SUBDIVISIONS + 1);
     ring.push([c2[0] + (c3[0] - c2[0]) * t, c2[1] + (c3[1] - c2[1]) * t]);
   }
 
-  ring.push(c3); // corner
-  ring.push(c4); // short end
+  ring.push(c3);
+  ring.push(c4);
 
-  // c4 → c1 (long edge, subdivided)
   for (let i = 1; i <= SUBDIVISIONS; i++) {
     const t = i / (SUBDIVISIONS + 1);
     ring.push([c4[0] + (c1[0] - c4[0]) * t, c4[1] + (c1[1] - c4[1]) * t]);
   }
 
-  ring.push(c1); // close ring
-
+  ring.push(c1);
   return ring;
 }
 
 /**
  * Fetches runway physical characteristics for the active airport,
- * pairs reciprocal thresholds, and returns a GeoJSON FeatureCollection
- * of rectangular runway polygons.
+ * pairs reciprocal thresholds, and returns both polygons and label points.
  */
-export function useRunwayPolygons(): FeatureCollection<Polygon> | null {
+export function useRunwayPolygons(): RunwaySpatialData | null {
   const activeAirport = useMapStore((s) => s.activeAirport);
   const viewMode = useMapStore((s) => s.viewMode);
-  const [geojson, setGeojson] = useState<FeatureCollection<Polygon> | null>(null);
+  const [data, setData] = useState<RunwaySpatialData | null>(null);
 
   useEffect(() => {
     if (!activeAirport || viewMode !== 'TERMINAL') {
-      setGeojson(null);
+      setData(null);
       return;
     }
 
@@ -149,7 +141,7 @@ export function useRunwayPolygons(): FeatureCollection<Polygon> | null {
       try {
         const res = await fetch(`/api/v1/aerodromes/${activeAirport}/section/AD_2_12`);
         if (!res.ok) {
-          setGeojson(null);
+          setData(null);
           return;
         }
 
@@ -157,18 +149,18 @@ export function useRunwayPolygons(): FeatureCollection<Polygon> | null {
         const runways: RunwayEntry[] = json.data ?? [];
 
         if (runways.length === 0) {
-          setGeojson(null);
+          setData(null);
           return;
         }
 
-        // Index by designation for fast lookup
         const byDesignation = new Map<string, RunwayEntry>();
         for (const rwy of runways) {
           byDesignation.set(rwy.designation, rwy);
         }
 
         const paired = new Set<string>();
-        const features: Feature<Polygon>[] = [];
+        const polygonFeatures: Feature<Polygon>[] = [];
+        const labelFeatures: Feature<Point>[] = [];
 
         for (const rwy of runways) {
           if (paired.has(rwy.designation)) continue;
@@ -178,10 +170,10 @@ export function useRunwayPolygons(): FeatureCollection<Polygon> | null {
 
           if (
             !recipRwy ||
-            !rwy.coordinates.decimal_lat ||
-            !rwy.coordinates.decimal_lng ||
-            !recipRwy.coordinates.decimal_lat ||
-            !recipRwy.coordinates.decimal_lng
+            rwy.coordinates.decimal_lat === null ||
+            rwy.coordinates.decimal_lng === null ||
+            recipRwy.coordinates.decimal_lat === null ||
+            recipRwy.coordinates.decimal_lng === null
           ) {
             continue;
           }
@@ -190,10 +182,6 @@ export function useRunwayPolygons(): FeatureCollection<Polygon> | null {
           paired.add(recipDesig);
 
           const widthM = parseWidthM(rwy.dimensions);
-          const elevA = parseElevationM(rwy.thr_elevation);
-          const elevB = parseElevationM(recipRwy.thr_elevation);
-          const avgElevM = (elevA + elevB) / 2;
-
           const ring = buildRunwayRect(
             rwy.coordinates.decimal_lat,
             rwy.coordinates.decimal_lng,
@@ -202,29 +190,66 @@ export function useRunwayPolygons(): FeatureCollection<Polygon> | null {
             widthM,
           );
 
-          features.push({
+          // Calculate bearings for labels (0-360)
+          const midLat = (rwy.coordinates.decimal_lat + recipRwy.coordinates.decimal_lat) / 2;
+          const metersPerDegLng = METERS_PER_DEG_LAT * Math.cos(midLat * (Math.PI / 180));
+
+          const dLat =
+            (recipRwy.coordinates.decimal_lat - rwy.coordinates.decimal_lat) * METERS_PER_DEG_LAT;
+          const dLng =
+            (recipRwy.coordinates.decimal_lng - rwy.coordinates.decimal_lng) * metersPerDegLng;
+
+          // Bearing from THR A to THR B
+          const bearingAToB = (Math.atan2(dLng, dLat) * 180) / Math.PI;
+          const bearingBToA = (bearingAToB + 180) % 360;
+
+          polygonFeatures.push({
             type: 'Feature',
             properties: {
               designation: `${rwy.designation}/${recipDesig}`,
               width_m: widthM,
-              elevation_m: avgElevM,
             },
             geometry: {
               type: 'Polygon',
               coordinates: [ring],
             },
           });
+
+          // Add threshold points for labels
+          labelFeatures.push({
+            type: 'Feature',
+            properties: {
+              label: rwy.designation,
+              bearing: bearingAToB,
+            },
+            geometry: {
+              type: 'Point',
+              coordinates: [rwy.coordinates.decimal_lng, rwy.coordinates.decimal_lat],
+            },
+          });
+
+          labelFeatures.push({
+            type: 'Feature',
+            properties: {
+              label: recipDesig,
+              bearing: bearingBToA,
+            },
+            geometry: {
+              type: 'Point',
+              coordinates: [recipRwy.coordinates.decimal_lng, recipRwy.coordinates.decimal_lat],
+            },
+          });
         }
 
         if (!cancelled) {
-          setGeojson({
-            type: 'FeatureCollection',
-            features,
+          setData({
+            polygons: { type: 'FeatureCollection', features: polygonFeatures },
+            labels: { type: 'FeatureCollection', features: labelFeatures },
           });
         }
       } catch (err) {
         console.error('[useRunwayPolygons] Failed to fetch runway data:', err);
-        if (!cancelled) setGeojson(null);
+        if (!cancelled) setData(null);
       }
     }
 
@@ -234,5 +259,5 @@ export function useRunwayPolygons(): FeatureCollection<Polygon> | null {
     };
   }, [activeAirport, viewMode]);
 
-  return geojson;
+  return data;
 }

@@ -12,8 +12,31 @@ import { TERMINAL_ICONS } from './terminalIcons';
 import { useRunwayPolygons } from './useRunwayPolygons';
 
 export const SPATIAL_TILES = [`${window.location.origin}/tiles/spatial_features/{z}/{x}/{y}`];
-export const SPATIAL_POLYGON_FILTER: FilterSpecification = ['==', ['geometry-type'], 'Polygon'];
-export const SPATIAL_POINT_FILTER: FilterSpecification = ['==', ['geometry-type'], 'Point'];
+/**
+ * Expression to get a normalized search string for filtering.
+ * Similar to GET_SEARCH_STRING but usable in FilterSpecification.
+ */
+const SEARCH_EXPR = [
+  'upcase',
+  [
+    'concat',
+    ['coalesce', ['get', 'name'], ['get', 'feature_name'], ''],
+    ' ',
+    ['coalesce', ['get', 'category'], ['get', 'feature_category'], ''],
+  ],
+];
+
+export const SPATIAL_POLYGON_FILTER: FilterSpecification = [
+  'all',
+  ['==', ['geometry-type'], 'Polygon'],
+  ['!', ['>=', ['index-of', 'RUNWAY', SEARCH_EXPR], 0]],
+] as any;
+
+export const SPATIAL_POINT_FILTER: FilterSpecification = [
+  'all',
+  ['==', ['geometry-type'], 'Point'],
+  ['!', ['>=', ['index-of', 'RUNWAY', SEARCH_EXPR], 0]],
+] as any;
 
 export const TERMINAL_INTERACTIVE_LAYERS = ['mvt-points', 'mvt-polygons'];
 
@@ -22,7 +45,7 @@ const EMPTY_FC: GeoJSON.FeatureCollection = { type: 'FeatureCollection', feature
 
 export function TerminalSpatialLayers() {
   const { current: map } = useMap();
-  const runwayGeojson = useRunwayPolygons();
+  const runwayData = useRunwayPolygons();
 
   useEffect(() => {
     if (!map) return;
@@ -39,9 +62,32 @@ export function TerminalSpatialLayers() {
   return (
     <>
       {/* Runway strips — flat fill drapes on terrain, outline for definition */}
-      <Source id="runway-polygons-source" type="geojson" data={runwayGeojson ?? EMPTY_FC}>
+      <Source id="runway-polygons-source" type="geojson" data={runwayData?.polygons ?? EMPTY_FC}>
         <Layer id="runway-fill" type="fill" paint={RUNWAY_FILL_PAINT} />
         <Layer id="runway-outline" type="line" paint={RUNWAY_OUTLINE_PAINT} />
+      </Source>
+
+      {/* Runway threshold designators (labels) */}
+      <Source id="runway-labels-source" type="geojson" data={runwayData?.labels ?? EMPTY_FC}>
+        <Layer
+          id="runway-threshold-labels"
+          type="symbol"
+          layout={{
+            'text-field': ['get', 'label'],
+            'text-size': 18,
+            'text-font': ['Inter Bold', 'Arial Unicode MS Regular'],
+            'text-offset': [0, 1.5],
+            'text-rotate': ['get', 'bearing'],
+            'text-rotation-alignment': 'map',
+            'text-allow-overlap': true,
+            'text-ignore-placement': true,
+          }}
+          paint={{
+            'text-color': '#ffffff',
+            'text-halo-color': 'rgba(0,0,0,0.8)',
+            'text-halo-width': 1.5,
+          }}
+        />
       </Source>
 
       {/* MVT spatial features (buildings, obstacles, points) */}

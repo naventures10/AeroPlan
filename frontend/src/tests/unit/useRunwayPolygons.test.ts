@@ -52,9 +52,11 @@ describe('useRunwayPolygons', () => {
 
     await waitFor(() => expect(result.current).not.toBeNull());
 
-    const fc = result.current!;
-    expect(fc.features.length).toBe(1);
-    const feature = fc.features[0];
+    const data = result.current!;
+    expect(data.polygons.features.length).toBe(1);
+    expect(data.labels.features.length).toBe(2);
+
+    const feature = data.polygons.features[0];
     if (!feature) throw new Error('Expected feature');
     expect(feature.properties?.designation).toBe('10/28');
     const geom = feature.geometry;
@@ -65,6 +67,12 @@ describe('useRunwayPolygons', () => {
 
     expect(ring.length).toBeGreaterThan(5);
     expect(ring[0]).toEqual(ring[ring.length - 1]);
+
+    // Check labels
+    const label0 = data.labels.features[0];
+    const label1 = data.labels.features[1];
+    expect(label0?.properties?.label).toBe('10');
+    expect(label1?.properties?.label).toBe('28');
   });
 
   it('handles reciprocal logic correctly (L/R swap)', async () => {
@@ -89,8 +97,11 @@ describe('useRunwayPolygons', () => {
     const { result } = renderHook(() => useRunwayPolygons());
 
     await waitFor(() => expect(result.current).not.toBeNull());
-    const firstFeature = result.current?.features[0];
+    const firstFeature = result.current?.polygons.features[0];
     expect(firstFeature?.properties?.designation).toBe('09L/27R');
+
+    const firstLabel = result.current?.labels.features[0];
+    expect(firstLabel?.properties?.label).toBe('09L');
   });
 
   it('returns null on fetch error', async () => {

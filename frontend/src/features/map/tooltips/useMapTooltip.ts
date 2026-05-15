@@ -1,14 +1,12 @@
 import { useCallback } from 'react';
 import type { MapRef } from 'react-map-gl/maplibre';
-import { tooltipStyle } from './tooltipStyles';
 import { useMapStore } from '../../../store/useMapStore';
 import { sanitizeHtml } from '../../../utils/sanitize';
 
 /**
  * The massive tooltip callback for DeckGL + MapLibre features.
  *
- * Extracted verbatim from App.tsx (lines 478-701) to declutter the
- * main component while preserving every tooltip branch.
+ * Refactored to use global CSS classes from index.css instead of inline styles.
  */
 export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
   const { activeAerodromeMetadata, activeLayers, selectedRouteIds } = useMapStore();
@@ -26,11 +24,10 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
           if (elevMatch) enrouteElev = elevMatch[1];
         }
 
-        const divider =
-          '<div style="margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">';
+        const divider = '<div class="aip-tooltip-divider">';
         const row = (label: string, val: string) =>
           val
-            ? `<span style="color:#a1a1aa;font-size:10px;font-weight:500;display:block;white-space:normal;">${label}: <span style="color:#f4f4f5;">${val.replace(/\\n/g, '<br/>')}</span></span>`
+            ? `<span class="aip-tooltip-row">${label}: <span class="aip-tooltip-row-val">${val.replace(/\\n/g, '<br/>')}</span></span>`
             : '';
 
         const magVarStr = row('MAG VAR', p.magnetic_variation);
@@ -63,57 +60,54 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
             : '';
 
         return {
-          html: sanitizeHtml(`<div style="display:flex;flex-direction:column;gap:4px;max-width:300px;">
-            <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">${p.name || p.icao_code}</span>
-            <span style="color:#a1a1aa;font-size:10px;font-weight:500;">
-              ICAO: <span style="color:#6366f1;font-weight:700;">${p.icao_code}</span> | ELEV: <span style="color:#6366f1;font-weight:700;">${enrouteElev ? enrouteElev + ' FT' : 'N/A'}</span>
+          html: sanitizeHtml(`<div class="aip-tooltip-container" style="max-width:300px;">
+            <span class="aip-tooltip-title">${p.name || p.icao_code}</span>
+            <span class="aip-tooltip-subtitle">
+              ICAO: <span class="aip-tooltip-accent">${p.icao_code}</span> | ELEV: <span class="aip-tooltip-accent">${enrouteElev ? enrouteElev + ' FT' : 'N/A'}</span>
             </span>
-            <span style="color:#a1a1aa;font-size:9px;text-transform:uppercase;font-weight:600;letter-spacing:.2em;margin-top:2px;color:#10b981;">
+            <span class="aip-tooltip-status">
               CLICK TO ENTER TERMINAL VIEW
             </span>
             ${extraInfo}
           </div>`),
-          style: tooltipStyle,
         };
       } else if (object && layer?.id === 'waypoints-layer') {
         const p = object.properties ?? {};
         const routes = p.routes ? p.routes.replace(/[{"'}]/g, '').split(',') : [];
         const routesDisplay =
           routes.length > 0 && routes[0] !== ''
-            ? `<div style="margin-top:6px; font-size:10px; color:#a1a1aa;">ROUTES: <span style="color:#d8b4fe; font-weight:600;">${routes.join(', ')}</span></div>`
+            ? `<div style="margin-top:6px;" class="aip-tooltip-subtitle">ROUTES: <span style="color:#d8b4fe; font-weight:600;">${routes.join(', ')}</span></div>`
             : '';
 
         return {
-          html: sanitizeHtml(`<div style="display:flex;flex-direction:column;gap:4px;max-width:250px;">
-              <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">${p.waypoint_name || 'WAYPOINT'}</span>
-              <span style="color:#a1a1aa;font-size:10px;font-weight:600;letter-spacing:.1em;">SIGNIFICANT POINT</span>
-              <span style="color:#a1a1aa;font-size:9px;font-family:monospace;margin-top:2px;">${p.raw_coordinates?.replace(/\\\\n/g, '') || ''}</span>
+          html: sanitizeHtml(`<div class="aip-tooltip-container" style="max-width:250px;">
+              <span class="aip-tooltip-title">${p.waypoint_name || 'WAYPOINT'}</span>
+              <span class="aip-tooltip-subtitle" style="font-weight:600;letter-spacing:.1em;">SIGNIFICANT POINT</span>
+              <span class="aip-tooltip-mono">${p.raw_coordinates?.replace(/\\\\n/g, '') || ''}</span>
               ${routesDisplay}
             </div>`),
-          style: tooltipStyle,
         };
       } else if (object && layer?.id === 'navaids-layer') {
         const p = object.properties ?? {};
         const hours =
           p.hours_of_operation && p.hours_of_operation !== 'None'
-            ? `<div style="color:#a1a1aa;font-size:9px;margin-top:4px;">HOURS: ${p.hours_of_operation}</div>`
+            ? `<div class="aip-tooltip-mono" style="margin-top:4px;">HOURS: ${p.hours_of_operation}</div>`
             : '';
         const elev =
           p.elevation && p.elevation !== 'None'
-            ? `<span style="color:#a1a1aa;font-size:9px;margin-left:8px;">ELEV: ${p.elevation.replace(/\\\\n/g, '')}</span>`
+            ? `<span class="aip-tooltip-mono" style="margin-left:8px;">ELEV: ${p.elevation.replace(/\\\\n/g, '')}</span>`
             : '';
 
         return {
-          html: sanitizeHtml(`<div style="display:flex;flex-direction:column;gap:4px;max-width:260px;">
-              <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">${p.station_name || ''} <span style="color:#a1a1aa;">${p.aid_type || ''}</span></span>
+          html: sanitizeHtml(`<div class="aip-tooltip-container" style="max-width:260px;">
+              <span class="aip-tooltip-title">${p.station_name || ''} <span class="aip-tooltip-subtitle" style="font-size:inherit;">${p.aid_type || ''}</span></span>
               <div style="display:flex;align-items:center;margin-top:2px;">
-                  <span style="color:#a1a1aa;font-size:10px;font-weight:600;background:#065f46;color:#6ee7b7;padding:2px 6px;border-radius:4px;margin-right:8px;">${p.ident || 'UNK'}</span>
+                  <span class="aip-tooltip-badge">${p.ident || 'UNK'}</span>
                   <span style="color:#f4f4f5;font-size:11px;font-weight:700;">${p.frequency || ''}</span>
               </div>
-              <span style="color:#a1a1aa;font-size:9px;font-family:monospace;margin-top:2px;">${p.raw_coordinates?.replace(/\\\\n/g, '') || ''}${elev}</span>
+              <span class="aip-tooltip-mono">${p.raw_coordinates?.replace(/\\\\n/g, '') || ''}${elev}</span>
               ${hours}
             </div>`),
-          style: tooltipStyle,
         };
       } else if (object && layer?.id === 'atsRoutes-geom-layer') {
         const p = object.properties ?? {};
@@ -126,32 +120,31 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
           : '↔ TWO-WAY';
         const meainfo =
           p.mea && p.mea !== 'None'
-            ? `<span style="color:#a1a1aa;font-size:10px;font-weight:600;color:#22c55e;">MEA: <span style="color:#f4f4f5;">${p.mea}</span></span>`
+            ? `<span class="aip-tooltip-subtitle" style="font-weight:600;color:#22c55e;">MEA: <span class="aip-tooltip-row-val">${p.mea}</span></span>`
             : '';
         const limitStr =
           (p.upper_limit && p.upper_limit !== 'None') || (p.lower_limit && p.lower_limit !== 'None')
-            ? `<span style="color:#a1a1aa;font-size:9px;margin-top:2px;">LIMITS: ${p.lower_limit || 'SFC'} - ${p.upper_limit || 'UNL'}</span>`
+            ? `<span class="aip-tooltip-subtitle" style="margin-top:2px;">LIMITS: ${p.lower_limit || 'SFC'} - ${p.upper_limit || 'UNL'}</span>`
             : '';
         const trackStr =
           p.track_magnetic &&
           p.track_magnetic !== 'None' &&
           p.distance_nm &&
           p.distance_nm !== 'None'
-            ? `<span style="color:#a1a1aa;font-size:9px;">SEGMENT: ${p.distance_nm} NM | TR: ${p.track_magnetic}</span>`
+            ? `<span class="aip-tooltip-subtitle">SEGMENT: ${p.distance_nm} NM | TR: ${p.track_magnetic}</span>`
             : '';
 
         return {
-          html: sanitizeHtml(`<div style="display:flex;flex-direction:column;gap:4px;max-width:250px;">
-              <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">ROUTE ${p.route_designator || p.route_id || 'UNKNOWN'}</span>
+          html: sanitizeHtml(`<div class="aip-tooltip-container" style="max-width:250px;">
+              <span class="aip-tooltip-title">ROUTE ${p.route_designator || p.route_id || 'UNKNOWN'}</span>
               <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <span style="color:#a1a1aa;font-size:10px;font-weight:600;letter-spacing:.1em;color:#22d3ee;">${p.route_type || 'AIRWAY'}</span>
-                  <span style="color:#a1a1aa;font-size:9px;font-weight:700;">${directionStr}</span>
+                  <span class="aip-tooltip-subtitle" style="font-weight:600;letter-spacing:.1em;color:#22d3ee;">${p.route_type || 'AIRWAY'}</span>
+                  <span class="aip-tooltip-subtitle" style="font-weight:700;">${directionStr}</span>
               </div>
               ${meainfo}
               ${limitStr}
               ${trackStr}
             </div>`),
-          style: tooltipStyle,
         };
       } else if (object && layer?.id === 'atsRoutes-waypoints-layer') {
         const p = object.properties ?? {};
@@ -163,11 +156,10 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
         if (!activeLayers.atsRoutes && !routes.some((r: string) => selectedRouteIds.includes(r)))
           return null;
         return {
-          html: sanitizeHtml(`<div style="display:flex;flex-direction:column;gap:4px;max-width:250px;">
-              <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">${p.waypoint_name || 'WAYPOINT'}</span>
-              <span style="color:#a1a1aa;font-size:10px;font-weight:600;letter-spacing:.1em;color:#22d3ee;">INTERSECTING: ${routes.join(', ')}</span>
+          html: sanitizeHtml(`<div class="aip-tooltip-container" style="max-width:250px;">
+              <span class="aip-tooltip-title">${p.waypoint_name || 'WAYPOINT'}</span>
+              <span class="aip-tooltip-subtitle" style="font-weight:600;letter-spacing:.1em;color:#22d3ee;">INTERSECTING: ${routes.join(', ')}</span>
             </div>`),
-          style: tooltipStyle,
         };
       } else if (object && layer?.id === 'airspace-metadata-layer') {
         const p = object.properties ?? {};
@@ -176,12 +168,11 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
         const limits = `${p.lower_limit || 'SFC'} - ${p.upper_limit || 'UNL'}`;
 
         return {
-          html: sanitizeHtml(`<div style="display:flex;flex-direction:column;gap:4px;max-width:250px;">
-              <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">${name}</span>
-              <span style="color:#a1a1aa;font-size:10px;font-weight:600;letter-spacing:.1em;color:#fbbf24;">${type.replace(/_/g, ' ')}</span>
-              <span style="color:#a1a1aa;font-size:9px;margin-top:2px;">LIMITS: <span style="color:#f4f4f5;">${limits}</span></span>
+          html: sanitizeHtml(`<div class="aip-tooltip-container" style="max-width:250px;">
+              <span class="aip-tooltip-title">${name}</span>
+              <span class="aip-tooltip-subtitle" style="font-weight:600;letter-spacing:.1em;color:#fbbf24;">${type.replace(/_/g, ' ')}</span>
+              <span class="aip-tooltip-subtitle" style="margin-top:2px;">LIMITS: <span class="aip-tooltip-row-val">${limits}</span></span>
             </div>`),
-          style: tooltipStyle,
         };
       }
 
@@ -225,11 +216,10 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
 
               if (activeAerodromeMetadata) {
                 const docs = activeAerodromeMetadata.data || activeAerodromeMetadata;
-                const divider =
-                  '<div style="margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">';
+                const divider = '<div class="aip-tooltip-divider">';
                 const row = (label: string, val: string) =>
                   val
-                    ? `<span style="color:#a1a1aa;font-size:10px;font-weight:500;display:block;white-space:normal;">${label}: <span style="color:#f4f4f5;">${val.replace(/\\\\n/g, '<br/>')}</span></span>`
+                    ? `<span class="aip-tooltip-row">${label}: <span class="aip-tooltip-row-val">${val.replace(/\\\\n/g, '<br/>')}</span></span>`
                     : '';
 
                 if (category === 'ARP') {
@@ -309,19 +299,18 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
                 k > 0
                   ? 'margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 12px;'
                   : '';
-              htmlContent += `<div style="${separator} display:flex;flex-direction:column;gap:4px;">
-                <span style="font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:#f4f4f5;">${name}</span>
-                <span style="color:#a1a1aa;font-size:10px;font-weight:500;">ELEVATION: <span style="color:#6366f1;font-weight:700;">${elevStr}</span></span>
-                <span style="color:#a1a1aa;font-size:9px;text-transform:uppercase;font-weight:600;letter-spacing:.2em;margin-top:2px;">${categoryDisplay}</span>
+              htmlContent += `<div style="${separator}" class="aip-tooltip-container">
+                <span class="aip-tooltip-title">${name}</span>
+                <span class="aip-tooltip-subtitle">ELEVATION: <span class="aip-tooltip-accent">${elevStr}</span></span>
+                <span class="aip-tooltip-status">${categoryDisplay}</span>
                 ${extraInfo}
               </div>`;
             }
 
             return {
               html: sanitizeHtml(
-                `<div style="max-height: 400px; overflow-y: auto; max-width:300px; padding-right: 4px;">${htmlContent}</div>`,
+                `<div class="aip-scrollbar" style="max-height: 400px; overflow-y: auto; max-width:300px; padding-right: 8px;">${htmlContent}</div>`,
               ),
-              style: tooltipStyle,
             };
           }
         } catch (e) {

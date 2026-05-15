@@ -13,7 +13,10 @@ vi.mock('react-map-gl/maplibre', () => ({
 
 // Mock useRunwayPolygons
 vi.mock('../../features/terminal/layers/useRunwayPolygons', () => ({
-  useRunwayPolygons: vi.fn(() => ({ type: 'FeatureCollection', features: [] })),
+  useRunwayPolygons: vi.fn(() => ({
+    polygons: { type: 'FeatureCollection', features: [] },
+    labels: { type: 'FeatureCollection', features: [] },
+  })),
 }));
 
 describe('TerminalSpatialLayers Component', () => {
@@ -25,16 +28,21 @@ describe('TerminalSpatialLayers Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useMap).mockReturnValue({ current: mockMap } as any);
-    vi.mocked(useRunwayPolygons).mockReturnValue({ type: 'FeatureCollection', features: [] });
+    vi.mocked(useRunwayPolygons).mockReturnValue({
+      polygons: { type: 'FeatureCollection', features: [] },
+      labels: { type: 'FeatureCollection', features: [] },
+    });
   });
 
   it('renders runway and spatial sources', () => {
     const { getByTestId } = render(<TerminalSpatialLayers />);
 
     expect(getByTestId('source-runway-polygons-source')).toBeInTheDocument();
+    expect(getByTestId('source-runway-labels-source')).toBeInTheDocument();
     expect(getByTestId('source-spatial-features-source')).toBeInTheDocument();
 
     expect(getByTestId('layer-runway-fill')).toBeInTheDocument();
+    expect(getByTestId('layer-runway-threshold-labels')).toBeInTheDocument();
     expect(getByTestId('layer-mvt-polygons')).toBeInTheDocument();
     expect(getByTestId('layer-mvt-points')).toBeInTheDocument();
   });
