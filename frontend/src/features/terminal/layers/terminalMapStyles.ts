@@ -63,13 +63,6 @@ export const POINT_LAYOUT = {
       ],
       'navaid-icon',
       [
-        'any',
-        ['>=', ['index-of', 'BUILDING', ['var', 's']], 0],
-        ['>=', ['index-of', 'HOUSE', ['var', 's']], 0],
-        ['>=', ['index-of', 'SCHOOL', ['var', 's']], 0],
-      ],
-      'building-icon',
-      [
         'case',
         [
           'all',
@@ -83,6 +76,13 @@ export const POINT_LAYOUT = {
         'obstacle-group-icon',
         ['==', ['get', 'marking_lgt'], 'LGTD'],
         'obstacle-lgt-icon',
+        [
+          'any',
+          ['>=', ['index-of', 'BUILDING', ['var', 's']], 0],
+          ['>=', ['index-of', 'HOUSE', ['var', 's']], 0],
+          ['>=', ['index-of', 'SCHOOL', ['var', 's']], 0],
+        ],
+        'building-icon',
         'obstacle-icon',
       ],
     ],
@@ -135,7 +135,7 @@ export const POINT_PAINT = {
         ['>=', ['index-of', 'POLE', ['var', 's']], 0],
         ['>=', ['index-of', 'CRANE', ['var', 's']], 0],
       ],
-      '#dc2626',
+      '#3b82f6',
       [
         'any',
         ['>=', ['index-of', 'BUILDING', ['var', 's']], 0],
@@ -143,7 +143,7 @@ export const POINT_PAINT = {
         ['>=', ['index-of', 'SCHOOL', ['var', 's']], 0],
       ],
       '#3b82f6',
-      '#f97316',
+      '#3b82f6',
     ],
   ],
   'icon-halo-color': [
