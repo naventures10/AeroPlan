@@ -209,7 +209,10 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
                   docs.geographical_data?.elevation_reference_temp?.match(/(\d+(?:\.\d+)?)\s*FT/i);
                 if (elevMatch) elev = elevMatch[1];
               }
-              const elevStr = elev != null ? Number(elev).toFixed(1) + ' FT' : 'N/A';
+              // The DB now stores elevation_m in meters (converted by ETL)
+              // We display it in FT to match aeronautical standards
+              const elevFt = elev != null ? Number(elev) * 3.28084 : null;
+              const elevStr = elevFt != null ? elevFt.toFixed(1) + ' FT' : 'N/A';
 
               let extraInfo = '';
               let categoryDisplay = category;
@@ -230,13 +233,20 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
                 } else if (category === 'OBSTACLE' && Array.isArray(docs.obstacles)) {
                   let bestObs = null;
                   if (elev != null) {
-                    const targetElev = parseFloat(elev);
+                    const targetElevM = parseFloat(elev);
                     bestObs = docs.obstacles.find((o: any) => {
                       const nameMatch = o.obstacle_type === name || name.includes(o.obstacle_type);
                       if (!nameMatch || !o.elevation) return false;
+
+                      // Extract elevation from JSON and convert to Meters for comparison
                       const docElevMatch = o.elevation.match(/(\d+(?:\.\d+)?)/);
                       if (docElevMatch) {
-                        return Math.abs(parseFloat(docElevMatch[1]) - targetElev) < 1.0;
+                        const docElevRaw = parseFloat(docElevMatch[1]);
+                        const docElevM = o.elevation.toUpperCase().includes('FT')
+                          ? docElevRaw / 3.28084
+                          : docElevRaw;
+
+                        return Math.abs(docElevM - targetElevM) < 2.0; // 2m tolerance
                       }
                       return false;
                     });

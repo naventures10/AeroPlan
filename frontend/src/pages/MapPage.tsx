@@ -20,6 +20,7 @@ const AerodromeInfoDropdown = lazy(() => import('../features/aip/AerodromeInfoDr
 const AerodromeChartViewer = lazy(() => import('../features/aip/AerodromeChartViewer'));
 const SectionModal = lazy(() => import('../features/aip/SectionModal'));
 const TerminalDashboard = lazy(() => import('../features/terminal/TerminalDashboard'));
+const TerminalLegend = lazy(() => import('../features/terminal/components/TerminalLegend'));
 
 export default function MapPage() {
   const { viewMode, activeAirport, viewState, isWeatherMode } = useMapStore();
@@ -68,11 +69,12 @@ export default function MapPage() {
             className="absolute inset-0 pointer-events-none"
           >
             {(activeAirport || viewMode === 'TERMINAL') && (
-              <div className="absolute top-6 left-6 pointer-events-auto z-50">
+              <div className="absolute top-6 left-6 flex flex-col gap-2 pointer-events-auto z-50">
                 <AerodromeInfoDropdown
                   onSectionSelect={handleSectionSelect}
                   activeAirport={activeAirport}
                 />
+                {viewMode === 'TERMINAL' && <TerminalLegend />}
               </div>
             )}
 
@@ -83,7 +85,7 @@ export default function MapPage() {
             )}
 
             {activeAirport && (
-              <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-auto z-40 scale-110 origin-bottom">
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-auto z-40">
                 <AerodromeChartViewer icaoCode={activeAirport} />
               </div>
             )}

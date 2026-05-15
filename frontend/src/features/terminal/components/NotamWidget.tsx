@@ -16,7 +16,7 @@ export function NotamWidget({ notams }: NotamWidgetProps) {
       className="flex flex-col h-full gap-4"
     >
       <h3 className="text-xl font-black text-white tracking-widest mb-4 flex items-center gap-2">
-        <AlertTriangle className="text-amber-500" /> ACTIVE NOTAMS
+        <AlertTriangle className="text-amber-500" /> Active NOTAMs
         <span className="bg-zinc-800 text-xs px-3 py-1 rounded-full ml-auto">
           {notams.length} Total
         </span>
@@ -26,7 +26,7 @@ export function NotamWidget({ notams }: NotamWidgetProps) {
           notams.map((n) => (
             <div
               key={n.notam_id}
-              className="bg-zinc-950 p-5 rounded-2xl border border-zinc-800/50 hover:border-zinc-700 transition"
+              className="bg-white/[0.03] p-5 rounded-2xl border border-white/[0.05] hover:border-white/10 transition"
             >
               <div className="flex justify-between items-center mb-3">
                 <span className="text-amber-400 font-bold tracking-widest text-sm flex items-center gap-2">
@@ -68,7 +68,7 @@ export function NotamWidget({ notams }: NotamWidgetProps) {
             </div>
           ))
         ) : (
-          <div className="bg-zinc-950 p-6 rounded-2xl border border-zinc-800/50 text-center">
+          <div className="bg-white/[0.03] p-6 rounded-2xl border border-white/[0.05] text-center">
             <p className="text-zinc-500 italic">No active NOTAMs found.</p>
           </div>
         )}

@@ -217,7 +217,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center w-full py-6 px-8">
-                    <div className="w-5 h-5 border-2 border-zinc-700 border-t-indigo-400 rounded-full animate-spin" />
+                    <div className="w-5 h-5 border-2 border-white/10 border-t-cyan-400 rounded-full animate-spin" />
                   </div>
                 ) : charts.length === 0 ? (
                   <div className="text-zinc-500 text-[11px] font-medium tracking-wide py-4 px-6 whitespace-nowrap">
@@ -233,14 +233,14 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                       onClick={() => {
                         handleChartClick(chart);
                       }}
-                      className="group shrink-0 flex flex-col items-center gap-1.5 p-2 rounded-xl border border-zinc-800/50 hover:border-indigo-500/40 bg-zinc-900/40 hover:bg-indigo-500/10 transition-colors duration-200 cursor-pointer w-[82px]"
+                      className="group shrink-0 flex flex-col items-center gap-1.5 p-2 rounded-xl border border-white/[0.06] hover:border-cyan-500/40 bg-white/[0.02] hover:bg-cyan-500/10 transition-colors duration-200 cursor-pointer w-[82px]"
                       title={chart.chart_title || undefined}
                     >
                       {/* Chart Icon */}
-                      <div className="w-10 h-11 rounded-lg bg-gradient-to-br from-teal-400/20 to-cyan-500/20 border border-teal-500/30 group-hover:border-teal-400/50 flex items-center justify-center transition-colors">
+                      <div className="w-10 h-11 rounded-lg bg-white/[0.04] border border-white/[0.07] group-hover:border-cyan-500/40 flex items-center justify-center transition-colors">
                         <FileText
                           size={18}
-                          className="text-teal-400 group-hover:text-teal-300 transition-colors"
+                          className="text-cyan-400 group-hover:text-cyan-300 transition-colors"
                         />
                       </div>
                       {/* Title */}
@@ -390,7 +390,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                     className="shadow-[0_40px_100px_rgba(0,0,0,0.8)]"
                     loading={
                       <div className="flex flex-col items-center justify-center gap-3 py-20">
-                        <div className="w-8 h-8 border-2 border-zinc-700 border-t-teal-400 rounded-full animate-spin" />
+                        <div className="w-8 h-8 border-2 border-white/10 border-t-cyan-400 rounded-full animate-spin" />
                         <span className="text-zinc-500 text-xs font-medium tracking-widest uppercase">
                           Loading Document...
                         </span>
@@ -405,7 +405,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                       renderAnnotationLayer={true}
                       loading={
                         <div className="flex items-center justify-center py-20">
-                          <div className="w-6 h-6 border-2 border-zinc-700 border-t-teal-400 rounded-full animate-spin" />
+                          <div className="w-6 h-6 border-2 border-white/10 border-t-cyan-400 rounded-full animate-spin" />
                         </div>
                       }
                     />

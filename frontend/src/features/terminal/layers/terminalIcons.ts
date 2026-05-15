@@ -52,16 +52,66 @@ const NAVAID_SVG = `
 `.trim();
 
 /**
- * Obstacle (Tower / Mast / Antenna / Pole / Electrical / Tree)
- *
- * Standard ICAO obstacle symbol: a vertical line (the structure) topped
- * with a small filled triangle (the hazard marker).
+ * Obstacle (Standard ICAO)
+ * A triangle without a base and a dot inside.
  */
 const OBSTACLE_SVG = `
 <svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 32 12 L 14 52 M 32 12 L 50 52" stroke="black" stroke-width="4" stroke-linecap="round" fill="none" stroke-linejoin="round"/>
+  <circle cx="32" cy="42" r="3.5" fill="black"/>
+</svg>
+`.trim();
 
-  <line x1="32" y1="56" x2="32" y2="26" stroke="black" stroke-width="3.5" stroke-linecap="round"/>
-  <polygon points="32,10 42,26 22,26" fill="black" stroke="black" stroke-width="1.5" stroke-linejoin="round"/>
+/**
+ * Lighted Obstacle (Standard ICAO)
+ */
+const OBSTACLE_LGT_SVG = `
+<svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 32 24 L 14 54 M 32 24 L 50 54" stroke="black" stroke-width="4" stroke-linecap="round" fill="none" stroke-linejoin="round"/>
+  <circle cx="32" cy="44" r="3.5" fill="black"/>
+  <line x1="32" y1="4" x2="32" y2="14" stroke="black" stroke-width="3" stroke-linecap="round"/>
+  <line x1="22" y1="12" x2="28" y2="18" stroke="black" stroke-width="3" stroke-linecap="round"/>
+  <line x1="42" y1="12" x2="36" y2="18" stroke="black" stroke-width="3" stroke-linecap="round"/>
+</svg>
+`.trim();
+
+/**
+ * Group Obstacles (Standard ICAO)
+ */
+const OBSTACLE_GROUP_SVG = `
+<svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 24 18 L 8 50 M 24 18 L 36 50" stroke="black" stroke-width="3.5" stroke-linecap="round" fill="none" stroke-linejoin="round"/>
+  <circle cx="24" cy="40" r="3" fill="black"/>
+  <path d="M 40 18 L 28 50 M 40 18 L 56 50" stroke="black" stroke-width="3.5" stroke-linecap="round" fill="none" stroke-linejoin="round"/>
+  <circle cx="40" cy="40" r="3" fill="black"/>
+</svg>
+`.trim();
+
+/**
+ * Lighted Group Obstacles (Standard ICAO)
+ */
+const OBSTACLE_GROUP_LGT_SVG = `
+<svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 24 28 L 8 56 M 24 28 L 36 56" stroke="black" stroke-width="3.5" stroke-linecap="round" fill="none" stroke-linejoin="round"/>
+  <circle cx="24" cy="46" r="3" fill="black"/>
+  <path d="M 40 28 L 28 56 M 40 28 L 56 56" stroke="black" stroke-width="3.5" stroke-linecap="round" fill="none" stroke-linejoin="round"/>
+  <circle cx="40" cy="46" r="3" fill="black"/>
+  <line x1="32" y1="4" x2="32" y2="14" stroke="black" stroke-width="3" stroke-linecap="round"/>
+  <line x1="22" y1="10" x2="28" y2="18" stroke="black" stroke-width="3" stroke-linecap="round"/>
+  <line x1="42" y1="10" x2="36" y2="18" stroke="black" stroke-width="3" stroke-linecap="round"/>
+</svg>
+`.trim();
+
+/**
+ * Exceptionally High Lighted Obstacle (Standard ICAO)
+ */
+const OBSTACLE_HIGH_LGT_SVG = `
+<svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 32 24 L 32 44 M 32 44 Q 32 52 22 52 M 32 44 Q 32 52 42 52" stroke="black" stroke-width="4" stroke-linecap="round" fill="none" stroke-linejoin="round"/>
+  <circle cx="32" cy="52" r="3.5" fill="black"/>
+  <line x1="32" y1="4" x2="32" y2="14" stroke="black" stroke-width="3" stroke-linecap="round"/>
+  <line x1="22" y1="10" x2="28" y2="18" stroke="black" stroke-width="3" stroke-linecap="round"/>
+  <line x1="42" y1="10" x2="36" y2="18" stroke="black" stroke-width="3" stroke-linecap="round"/>
 </svg>
 `.trim();
 
@@ -82,5 +132,9 @@ export const TERMINAL_ICONS: Record<string, string> = {
   'airport-icon': AIRPORT_SVG,
   'navaid-icon': NAVAID_SVG,
   'obstacle-icon': OBSTACLE_SVG,
+  'obstacle-lgt-icon': OBSTACLE_LGT_SVG,
+  'obstacle-group-icon': OBSTACLE_GROUP_SVG,
+  'obstacle-group-lgt-icon': OBSTACLE_GROUP_LGT_SVG,
+  'obstacle-high-lgt-icon': OBSTACLE_HIGH_LGT_SVG,
   'building-icon': BUILDING_SVG,
 };

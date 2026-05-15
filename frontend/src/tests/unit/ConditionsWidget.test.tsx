@@ -43,13 +43,16 @@ describe('ConditionsWidget', () => {
       />,
     );
     expect(screen.getByText('VAAU')).toBeInTheDocument();
-    expect(screen.getByText('100°T 10 KT')).toBeInTheDocument();
+    expect(screen.getByText('100°T')).toBeInTheDocument();
+    expect(screen.getByText('10')).toBeInTheDocument();
+    expect(screen.getByText('KT')).toBeInTheDocument();
     expect(screen.getByText('10000')).toBeInTheDocument();
     expect(screen.getByText('FEW010')).toBeInTheDocument();
     expect(screen.getByText('BKN020')).toBeInTheDocument();
     expect(screen.getByText('25°C')).toBeInTheDocument();
     expect(screen.getByText('20°C')).toBeInTheDocument();
-    expect(screen.getByText('1013 hPa')).toBeInTheDocument();
+    expect(screen.getByText('1013')).toBeInTheDocument();
+    expect(screen.getByText('hPa')).toBeInTheDocument();
     expect(screen.getByText('06:00')).toBeInTheDocument();
   });
 
@@ -63,7 +66,8 @@ describe('ConditionsWidget', () => {
         todayStr="2024-01-01"
       />,
     );
-    expect(screen.getByText('VRB°T 10 KT')).toBeInTheDocument();
+    expect(screen.getByText('VRB°T')).toBeInTheDocument();
+    expect(screen.getByText('10')).toBeInTheDocument();
   });
 
   it('renders correctly with empty data', () => {
@@ -83,6 +87,6 @@ describe('ConditionsWidget', () => {
       />,
     );
     expect(screen.getByText('VAAU')).toBeInTheDocument();
-    expect(screen.getAllByText('-').length).toBeGreaterThan(0); // Multiple dash fallbacks
+    expect(screen.getAllByText('–').length).toBeGreaterThan(0); // Multiple dash fallbacks
   });
 });

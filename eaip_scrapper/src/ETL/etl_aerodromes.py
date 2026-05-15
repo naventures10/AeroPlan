@@ -54,11 +54,18 @@ class CoordinateConverter:
 class SpatialRouter:
     @staticmethod
     def extract_number(text):
-        """Helper to extract clean numbers from messy elevation strings like '185 FT'."""
+        """Helper to extract clean numbers from messy strings like '185 FT' and convert to meters if needed."""
         if not text:
             return None
-        match = re.search(r"(\d+(?:\.\d+)?)", str(text))
-        return float(match.group(1)) if match else None
+        text_str = str(text).upper()
+        match = re.search(r"(\d+(?:\.\d+)?)", text_str)
+        if match:
+            val = float(match.group(1))
+            # If the text explicitly mentions FT or FEET, convert to Meters
+            if "FT" in text_str or "FEET" in text_str:
+                return round(val / 3.28084, 1)
+            return val
+        return None
 
     @staticmethod
     def create_point(coord_dict):
@@ -79,13 +86,14 @@ class SpatialRouter:
         # 1. ARP (Aerodrome Reference Point)
         arp_coords = data.get("geographical_data", {}).get("arp_coordinates_site", {})
         arp_geom = cls.create_point(arp_coords)
+        arp_elev = None
         if arp_geom:
             arp_elev_str = data.get("geographical_data", {}).get(
                 "elevation_reference_temp"
             )
             arp_elev = cls.extract_number(arp_elev_str)
             features.append(
-                (icao, "ARP", f"{icao} Reference Point", arp_elev, arp_geom)
+                (icao, "ARP", f"{icao} Reference Point", arp_elev, "NIL", False, 0, arp_geom)
             )
 
         # 2. RUNWAY THRESHOLDS
@@ -100,6 +108,9 @@ class SpatialRouter:
                         "RUNWAY_THRESHOLD",
                         f"RWY {rwy.get('designation', 'Unknown')}",
                         elev,
+                        "NIL",
+                        False,
+                        0,
                         geom,
                     )
                 )
@@ -110,8 +121,21 @@ class SpatialRouter:
             geom = cls.create_point(obs.get("coordinates", {}))
             if geom:
                 elev = cls.extract_number(obs.get("elevation"))
+                marking = obs.get("marking_lgt", "NIL")
+                obs_type = obs.get("obstacle_type", "Unknown")
+                remarks = obs.get("remarks", "")
+                
+                is_grouped = False
+                if "GROUP" in obs_type.upper() or "GROUP" in remarks.upper():
+                    is_grouped = True
+                
+                # Calculate Height relative to Aerodrome elevation
+                height_m = None
+                if elev is not None and arp_elev is not None:
+                    height_m = round(elev - arp_elev, 1)
+
                 features.append(
-                    (icao, "OBSTACLE", obs.get("obstacle_type", "Unknown"), elev, geom)
+                    (icao, "OBSTACLE", obs_type, elev, marking, is_grouped, height_m, geom)
                 )
 
         # 4. NAV AIDS
@@ -121,7 +145,7 @@ class SpatialRouter:
             if geom:
                 name = f"{nav.get('identification', '')} {nav.get('type_of_aid', '')}".strip()
                 elev = cls.extract_number(nav.get("elevation"))
-                features.append((icao, "NAVAID", name, elev, geom))
+                features.append((icao, "NAVAID", name, elev, "NIL", False, 0, geom))
 
         # 5. HELIPADS (TLOF/FATO)
         helipad_coords = data.get("helicopter_landing_area", {}).get(
@@ -132,7 +156,7 @@ class SpatialRouter:
             elev = cls.extract_number(
                 data.get("helicopter_landing_area", {}).get("elevation_tlof_fato")
             )
-            features.append((icao, "HELIPAD", f"{icao} Helipad", elev, heli_geom))
+            features.append((icao, "HELIPAD", f"{icao} Helipad", elev, "NIL", False, 0, heli_geom))
 
         return features
 
@@ -257,11 +281,11 @@ class DBLoader:
                         execute_values(
                             cur,
                             """
-                            INSERT INTO spatial_features (icao_code, feature_category, feature_name, elevation_m, geom)
+                            INSERT INTO spatial_features (icao_code, feature_category, feature_name, elevation_m, marking_lgt, is_grouped, height_m, geom)
                             VALUES %s
                         """,
                             spatial_records,
-                            template="(%s, %s, %s, %s, ST_GeomFromEWKT(%s))",
+                            template="(%s, %s, %s, %s, %s, %s, %s, ST_GeomFromEWKT(%s))",
                         )
                         total_features += len(spatial_records)
 

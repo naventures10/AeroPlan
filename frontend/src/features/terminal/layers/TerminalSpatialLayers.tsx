@@ -32,13 +32,9 @@ export const SPATIAL_POLYGON_FILTER: FilterSpecification = [
   ['!', ['>=', ['index-of', 'RUNWAY', SEARCH_EXPR], 0]],
 ] as any;
 
-export const SPATIAL_POINT_FILTER: FilterSpecification = [
-  'all',
-  ['==', ['geometry-type'], 'Point'],
-  ['!', ['>=', ['index-of', 'RUNWAY', SEARCH_EXPR], 0]],
-] as any;
-
 export const TERMINAL_INTERACTIVE_LAYERS = ['mvt-points', 'mvt-polygons'];
+
+import { useMapStore } from '../../../store/useMapStore';
 
 /** Empty GeoJSON to avoid MapLibre source errors when no data is available */
 const EMPTY_FC: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
@@ -46,6 +42,7 @@ const EMPTY_FC: GeoJSON.FeatureCollection = { type: 'FeatureCollection', feature
 export function TerminalSpatialLayers() {
   const { current: map } = useMap();
   const runwayData = useRunwayPolygons();
+  const terminalSpatialFilters = useMapStore((state) => state.terminalSpatialFilters);
 
   useEffect(() => {
     if (!map) return;
@@ -58,6 +55,95 @@ export function TerminalSpatialLayers() {
       img.src = `data:image/svg+xml;base64,${btoa(svg)}`;
     });
   }, [map]);
+
+  const pointFilter: FilterSpecification = [
+    'all',
+    ['==', ['geometry-type'], 'Point'],
+    ['!', ['>=', ['index-of', 'RUNWAY', SEARCH_EXPR], 0]],
+    [
+      'any',
+      // Always show ARP/Helipads
+      [
+        'any',
+        ['==', ['get', 'feature_category'], 'ARP'],
+        ['==', ['get', 'feature_category'], 'HELIPAD'],
+      ],
+      // Toggleable categories
+      ...(terminalSpatialFilters.buildings
+        ? [
+            [
+              'any',
+              ['>=', ['index-of', 'BUILDING', SEARCH_EXPR], 0],
+              ['>=', ['index-of', 'HOUSE', SEARCH_EXPR], 0],
+              ['>=', ['index-of', 'SCHOOL', SEARCH_EXPR], 0],
+            ],
+          ]
+        : []),
+      ...(terminalSpatialFilters.infrastructure
+        ? [
+            [
+              'any',
+              ['>=', ['index-of', 'TOWER', SEARCH_EXPR], 0],
+              ['>=', ['index-of', 'MAST', SEARCH_EXPR], 0],
+              ['>=', ['index-of', 'ANTENNA', SEARCH_EXPR], 0],
+              ['>=', ['index-of', 'POLE', SEARCH_EXPR], 0],
+              ['>=', ['index-of', 'CRANE', SEARCH_EXPR], 0],
+            ],
+          ]
+        : []),
+      ...(terminalSpatialFilters.natural
+        ? [
+            [
+              'any',
+              ['>=', ['index-of', 'TREE', SEARCH_EXPR], 0],
+              ['>=', ['index-of', 'NATURAL', SEARCH_EXPR], 0],
+            ],
+          ]
+        : []),
+      ...(terminalSpatialFilters.navaids
+        ? [
+            [
+              'any',
+              ['>=', ['index-of', 'NAV', SEARCH_EXPR], 0],
+              ['>=', ['index-of', 'RADIO', SEARCH_EXPR], 0],
+            ],
+          ]
+        : []),
+      ...(terminalSpatialFilters.other
+        ? [
+            [
+              'all',
+              ['==', ['get', 'feature_category'], 'OBSTACLE'],
+              [
+                '!',
+                [
+                  'any',
+                  ['>=', ['index-of', 'BUILDING', SEARCH_EXPR], 0],
+                  ['>=', ['index-of', 'HOUSE', SEARCH_EXPR], 0],
+                  ['>=', ['index-of', 'SCHOOL', SEARCH_EXPR], 0],
+                  ['>=', ['index-of', 'TOWER', SEARCH_EXPR], 0],
+                  ['>=', ['index-of', 'MAST', SEARCH_EXPR], 0],
+                  ['>=', ['index-of', 'ANTENNA', SEARCH_EXPR], 0],
+                  ['>=', ['index-of', 'POLE', SEARCH_EXPR], 0],
+                  ['>=', ['index-of', 'CRANE', SEARCH_EXPR], 0],
+                  ['>=', ['index-of', 'TREE', SEARCH_EXPR], 0],
+                  ['>=', ['index-of', 'NATURAL', SEARCH_EXPR], 0],
+                ],
+              ],
+            ],
+          ]
+        : []),
+    ],
+  ] as any;
+
+  const polygonFilter: FilterSpecification = [
+    'all',
+    ['==', ['geometry-type'], 'Polygon'],
+    ['!', ['>=', ['index-of', 'RUNWAY', SEARCH_EXPR], 0]],
+    terminalSpatialFilters.buildings
+      ? ['literal', true]
+      : ['!', ['>=', ['index-of', 'BUILDING', SEARCH_EXPR], 0]],
+  ] as any;
 
   return (
     <>
@@ -96,14 +182,14 @@ export function TerminalSpatialLayers() {
           id="mvt-polygons"
           type="fill-extrusion"
           source-layer="spatial_features"
-          filter={SPATIAL_POLYGON_FILTER}
+          filter={polygonFilter}
           paint={POLYGON_PAINT as any}
         />
         <Layer
           id="mvt-points"
           type="symbol"
           source-layer="spatial_features"
-          filter={SPATIAL_POINT_FILTER}
+          filter={pointFilter}
           layout={POINT_LAYOUT as any}
           paint={POINT_PAINT as any}
         />

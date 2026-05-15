@@ -54,6 +54,17 @@ describe('useMapStore', () => {
     expect(state.viewMode).toBe('ENROUTE');
   });
 
+  it('should toggle terminal spatial filters', () => {
+    const state = useMapStore.getState();
+    expect(state.terminalSpatialFilters.buildings).toBe(true);
+
+    state.toggleTerminalSpatialFilter('buildings');
+    expect(useMapStore.getState().terminalSpatialFilters.buildings).toBe(false);
+
+    state.toggleTerminalSpatialFilter('buildings');
+    expect(useMapStore.getState().terminalSpatialFilters.buildings).toBe(true);
+  });
+
   it('should toggle map layers accurately', () => {
     let state = useMapStore.getState();
     expect(state.activeLayers.wacMap).toBe(false);

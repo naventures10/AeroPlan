@@ -121,6 +121,16 @@ interface MapState {
 
   cloudLoadingStatus: { state: string; message?: string };
   setCloudLoadingStatus: (status: { state: string; message?: string }) => void;
+
+  // Terminal Spatial Filters
+  terminalSpatialFilters: {
+    buildings: boolean;
+    infrastructure: boolean;
+    natural: boolean;
+    other: boolean;
+    navaids: boolean;
+  };
+  toggleTerminalSpatialFilter: (category: keyof MapState['terminalSpatialFilters']) => void;
 }
 
 export const DEFAULT_VIEW = {
@@ -362,6 +372,21 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   cloudLoadingStatus: { state: 'idle' },
   setCloudLoadingStatus: (status) => set({ cloudLoadingStatus: status }),
+
+  terminalSpatialFilters: {
+    buildings: true,
+    infrastructure: true,
+    natural: true,
+    other: true,
+    navaids: true,
+  },
+  toggleTerminalSpatialFilter: (category) =>
+    set((state) => ({
+      terminalSpatialFilters: {
+        ...state.terminalSpatialFilters,
+        [category]: !state.terminalSpatialFilters[category],
+      },
+    })),
 
   // Basic Setters
   setViewState: (viewState) =>

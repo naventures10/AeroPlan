@@ -3,6 +3,7 @@ import { render } from '@testing-library/react';
 import { TerminalSpatialLayers } from '../../features/terminal/layers/TerminalSpatialLayers';
 import { useMap } from 'react-map-gl/maplibre';
 import { useRunwayPolygons } from '../../features/terminal/layers/useRunwayPolygons';
+import { TERMINAL_ICONS } from '../../features/terminal/layers/terminalIcons';
 
 // Mock react-map-gl/maplibre
 vi.mock('react-map-gl/maplibre', () => ({
@@ -65,7 +66,7 @@ describe('TerminalSpatialLayers Component', () => {
     // Trigger onload for all created images
     mockImages.forEach((img) => img.onload());
 
-    expect(mockMap.addImage).toHaveBeenCalled();
+    expect(mockMap.addImage).toHaveBeenCalledTimes(Object.keys(TERMINAL_ICONS).length);
 
     global.Image = originalImage;
   });

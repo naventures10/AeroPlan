@@ -30,6 +30,9 @@ vi.mock('../../features/aip/AerodromeInfoDropdown', () => ({
 vi.mock('../../features/aip/SectionModal', () => ({
   default: () => <div data-testid="section-modal-mock" />,
 }));
+vi.mock('../../features/terminal/components/TerminalLegend', () => ({
+  default: () => <div data-testid="terminal-legend-mock" />,
+}));
 vi.mock('../../components/GlobalLoader', () => ({
   default: () => <div data-testid="global-loader-mock">Loading...</div>,
 }));
@@ -52,6 +55,14 @@ describe('MapPage Component', () => {
       viewState: { pitch: 0 },
       isWindMode: false,
       isCloudMode: false,
+      terminalSpatialFilters: {
+        buildings: true,
+        infrastructure: true,
+        natural: true,
+        other: true,
+        navaids: true,
+      },
+      toggleTerminalSpatialFilter: vi.fn(),
     });
     (useAerodromeData as any).mockReturnValue({
       aerodromes: null,
@@ -101,6 +112,14 @@ describe('MapPage Component', () => {
       viewState: { pitch: 60 },
       isWindMode: false,
       isCloudMode: false,
+      terminalSpatialFilters: {
+        buildings: true,
+        infrastructure: true,
+        natural: true,
+        other: true,
+        navaids: true,
+      },
+      toggleTerminalSpatialFilter: vi.fn(),
     });
 
     act(() => {
@@ -121,6 +140,14 @@ describe('MapPage Component', () => {
       viewState: { pitch: 60 },
       isWindMode: false,
       isCloudMode: false,
+      terminalSpatialFilters: {
+        buildings: true,
+        infrastructure: true,
+        natural: true,
+        other: true,
+        navaids: true,
+      },
+      toggleTerminalSpatialFilter: vi.fn(),
     });
 
     act(() => {
@@ -169,6 +196,14 @@ describe('MapPage Component', () => {
       viewState: { pitch: 0 },
       isWindMode: true,
       isCloudMode: false,
+      terminalSpatialFilters: {
+        buildings: true,
+        infrastructure: true,
+        natural: true,
+        other: true,
+        navaids: true,
+      },
+      toggleTerminalSpatialFilter: vi.fn(),
     });
 
     act(() => {
