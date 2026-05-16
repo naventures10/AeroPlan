@@ -56,15 +56,15 @@ function run_with_retry() {
       fi
     fi
 
-    # Run the pipeline using uv with a 10-minute hard timeout
+    # Run the pipeline using uv with a 20-minute hard timeout
     # We use python3 to implement timeout since timeout/gtimeout are missing on macOS
-    echo "[$(date)] Running pipeline with 10m timeout..." >> "$LOG_FILE"
+    echo "[$(date)] Running pipeline with 20m timeout..." >> "$LOG_FILE"
     python3 -c "
 import subprocess, sys
 try:
-    subprocess.run(['uv', 'run', 'python', '-m', 'app.services.weather_pipeline'], timeout=600, check=True)
+    subprocess.run(['uv', 'run', 'python', '-m', 'app.services.weather_pipeline'], timeout=1200, check=True)
 except subprocess.TimeoutExpired:
-    print('ERROR: Weather pipeline timed out after 10 minutes', file=sys.stderr)
+    print('ERROR: Weather pipeline timed out after 20 minutes', file=sys.stderr)
     sys.exit(124)
 except subprocess.CalledProcessError as e:
     sys.exit(e.returncode)

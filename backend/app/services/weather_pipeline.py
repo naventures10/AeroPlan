@@ -127,6 +127,7 @@ def _get_run_and_steps(now: datetime) -> tuple[int, datetime, list[int]]:
 
     logger.info(
         "computed_forecast_target",
+        run_date=run_time.strftime("%Y-%m-%d"),
         run_utc=f"{run_hour:02d}Z",
         steps=steps,
     )
@@ -147,13 +148,21 @@ def run_pipeline() -> bool:
     manifest_path = os.path.join(settings.WEATHER_OUTPUT_DIR, "weather_manifest.json")
 
     run_hour, run_time, steps = _get_run_and_steps(now)
+    run_date_str = run_time.strftime("%Y-%m-%d")
 
     # --- STEP 1: Download ---
-    logger.info("downloading_ecmwf_data", source="azure", run=f"{run_hour:02d}Z", steps=steps)
+    logger.info(
+        "downloading_ecmwf_data",
+        source="azure",
+        date=run_date_str,
+        run=f"{run_hour:02d}Z",
+        steps=steps,
+    )
     client = Client(source="azure")
     try:
         # Surface levels
         client.retrieve(
+            date=run_date_str,
             time=run_hour,
             step=steps,
             type="fc",
@@ -166,6 +175,7 @@ def run_pipeline() -> bool:
 
         # Pressure levels
         client.retrieve(
+            date=run_date_str,
             time=run_hour,
             step=steps,
             type="fc",
