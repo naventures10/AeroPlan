@@ -234,11 +234,12 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
                   let bestObs = null;
                   if (elev != null) {
                     const targetElevM = parseFloat(elev);
-                    bestObs = docs.obstacles.find((o: any) => {
-                      const nameMatch = o.obstacle_type === name || name.includes(o.obstacle_type);
-                      if (!nameMatch || !o.elevation) return false;
+                    let minDiff = 2.0; // 2m tolerance
 
-                      // Extract elevation from JSON and convert to Meters for comparison
+                    for (const o of docs.obstacles) {
+                      const nameMatch = o.obstacle_type === name || name.includes(o.obstacle_type);
+                      if (!nameMatch || !o.elevation) continue;
+
                       const docElevMatch = o.elevation.match(/(\d+(?:\.\d+)?)/);
                       if (docElevMatch) {
                         const docElevRaw = parseFloat(docElevMatch[1]);
@@ -246,10 +247,25 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
                           ? docElevRaw / 3.28084
                           : docElevRaw;
 
-                        return Math.abs(docElevM - targetElevM) < 2.0; // 2m tolerance
+                        const diff = Math.abs(docElevM - targetElevM);
+                        // Prefer matching marking_lgt if available in feature properties
+                        const featureLgt = p.marking_lgt;
+                        const docLgt = o.marking_lgt;
+                        const lgtMatch =
+                          featureLgt && docLgt
+                            ? (featureLgt === 'LGTD' && docLgt === 'LGTD') ||
+                              (featureLgt === 'NO' && docLgt === 'NO')
+                            : true;
+
+                        // Give a small "bonus" to the score if lighting matches
+                        const adjustedDiff = lgtMatch ? diff : diff + 0.5;
+
+                        if (adjustedDiff < minDiff) {
+                          minDiff = adjustedDiff;
+                          bestObs = o;
+                        }
                       }
-                      return false;
-                    });
+                    }
                   }
                   const obs =
                     bestObs ||
