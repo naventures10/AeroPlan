@@ -64,21 +64,21 @@ describe('TerminalDashboard', () => {
       if (metarTab) fireEvent.click(metarTab);
     });
 
-    expect(screen.getByText('LATEST METAR')).toBeInTheDocument();
+    expect(screen.getByText('Latest METAR')).toBeInTheDocument();
 
     // Switch to TAF tab
     const tafTab = screen.getByText('TAF').closest('div');
     act(() => {
       if (tafTab) fireEvent.click(tafTab);
     });
-    expect(screen.getByText('LATEST TAF')).toBeInTheDocument();
+    expect(screen.getByText('Latest TAF')).toBeInTheDocument();
 
     // Switch to NOTAM tab
     const notamTab = screen.getByText('NOTAM').closest('div');
     act(() => {
       if (notamTab) fireEvent.click(notamTab);
     });
-    expect(screen.getByText('ACTIVE NOTAMS')).toBeInTheDocument();
+    expect(screen.getByText('Active NOTAMs')).toBeInTheDocument();
 
     // Test collapse functionality via Escape key
     act(() => {

@@ -55,6 +55,12 @@ vi.mock('react-map-gl/maplibre', () => ({
   ),
   Source: ({ children }: any) => <div data-testid="mock-source">{children}</div>,
   Layer: ({ children }: any) => <div data-testid="mock-layer">{children}</div>,
+  useMap: () => ({
+    current: {
+      hasImage: vi.fn().mockReturnValue(false),
+      addImage: vi.fn(),
+    },
+  }),
 }));
 
 // Mock sub-components

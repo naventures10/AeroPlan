@@ -8,7 +8,6 @@ import {
 } from '@deck.gl/core';
 import Map, { Source, Layer } from 'react-map-gl/maplibre';
 import type { MapRef } from 'react-map-gl/maplibre';
-import type { FilterSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { useMapStore, TERMINAL_EXIT_ZOOM_THRESHOLD } from '../../store/useMapStore';
@@ -16,20 +15,18 @@ import type { MapboxOverlay } from '@deck.gl/mapbox';
 import { useDeckLayers } from './layers/useDeckLayers';
 import { InterleavedDeckGL } from './InterleavedDeckGL';
 import { useMapTooltip } from './tooltips/useMapTooltip';
-import { POLYGON_PAINT, POINT_PAINT } from './layers/mapStyles';
 import { FeatureInfoCard } from './FeatureInfoCard';
+import {
+  TerminalSpatialLayers,
+  TERMINAL_INTERACTIVE_LAYERS,
+} from '../terminal/layers/TerminalSpatialLayers';
 import { WindTooltip } from './tooltips/WindTooltip';
 import { useWindTooltip } from './tooltips/useWindTooltip';
 
-const TERMINAL_TERRAIN = { source: 'maptiler-terrain', exaggeration: 1 };
-const TERMINAL_INTERACTIVE_LAYERS = ['mvt-points', 'mvt-polygons'];
 const EMPTY_INTERACTIVE_LAYERS: string[] = [];
 
 const WAC_TILES = [`${window.location.origin}/tiles/wac_india/{z}/{x}/{y}`];
 const ERC_TILES = [`${window.location.origin}/tiles/erc_india/{z}/{x}/{y}`];
-const SPATIAL_TILES = [`${window.location.origin}/tiles/spatial_features/{z}/{x}/{y}`];
-const SPATIAL_POLYGON_FILTER: FilterSpecification = ['==', ['geometry-type'], 'Polygon'];
-const SPATIAL_POINT_FILTER: FilterSpecification = ['==', ['geometry-type'], 'Point'];
 const RASTER_PAINT = {
   'raster-opacity': 1,
   'raster-resampling': 'linear' as const,
@@ -54,7 +51,7 @@ const MOCK_STYLE = {
 const MAP_STYLE =
   IS_E2E || !MAPTILER_KEY
     ? (MOCK_STYLE as any)
-    : `https://api.maptiler.com/maps/hybrid/style.json?key=${MAPTILER_KEY}`;
+    : `https://api.maptiler.com/maps/landscape-v4-dark/style.json?key=${MAPTILER_KEY}`;
 
 const TERRAIN_SOURCE_URL =
   IS_E2E || !MAPTILER_KEY
@@ -357,7 +354,9 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
           mapStyle={MAP_STYLE}
           onLoad={onMapLoad}
           reuseMaps
-          terrain={viewMode === 'TERMINAL' ? TERMINAL_TERRAIN : undefined}
+          terrain={
+            viewMode === 'TERMINAL' ? { source: 'maptiler-terrain', exaggeration: 1 } : undefined
+          }
           interactiveLayerIds={
             viewMode === 'TERMINAL' ? TERMINAL_INTERACTIVE_LAYERS : EMPTY_INTERACTIVE_LAYERS
           }
@@ -396,24 +395,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
             </Source>
           )}
 
-          {viewMode === 'TERMINAL' && (
-            <Source id="spatial-features-source" type="vector" tiles={SPATIAL_TILES}>
-              <Layer
-                id="mvt-polygons"
-                type="fill-extrusion"
-                source-layer="spatial_features"
-                filter={SPATIAL_POLYGON_FILTER}
-                paint={POLYGON_PAINT as any}
-              />
-              <Layer
-                id="mvt-points"
-                type="circle"
-                source-layer="spatial_features"
-                filter={SPATIAL_POINT_FILTER}
-                paint={POINT_PAINT as any}
-              />
-            </Source>
-          )}
+          {viewMode === 'TERMINAL' && <TerminalSpatialLayers />}
         </Map>
       </DeckGL>
       <FeatureInfoCard />

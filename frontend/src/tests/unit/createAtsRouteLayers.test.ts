@@ -81,7 +81,7 @@ describe('createAtsRouteLayers', () => {
     const wpFeature = { properties: { route_ids: '{"A1","B2"}', waypoint_name: 'FIX' } };
     expect(mvtWaypoints.props.getIconColor(wpFeature)).toEqual([50, 205, 50, 255]); // Lime green for selected RNAV
     expect(mvtWaypoints.props.getTextColor(wpFeature)).toEqual([50, 205, 50, 255]);
-    expect(mvtWaypoints.props.getTextSize(wpFeature)).toBe(12);
+    expect(mvtWaypoints.props.getTextSize(wpFeature)).toBe(10);
 
     mvtWaypoints.props.onClick({
       object: { geometry: { coordinates: [0, 0] }, properties: wpFeature.properties },

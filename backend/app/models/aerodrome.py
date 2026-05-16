@@ -1,5 +1,5 @@
 from geoalchemy2 import Geometry
-from sqlalchemy import Column, DateTime, Integer, Numeric, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 
@@ -24,6 +24,9 @@ class SpatialFeature(Base):
     feature_category = Column(String(50))
     feature_name = Column(String(100))
     elevation_m = Column(Numeric)
+    marking_lgt = Column(String(50))
+    is_grouped = Column(Boolean, default=False)
+    height_m = Column(Numeric)
     geom = Column(Geometry("GEOMETRY", srid=4326))
 
 

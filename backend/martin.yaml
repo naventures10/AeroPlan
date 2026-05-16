@@ -28,6 +28,9 @@ postgres:
         feature_category: "varchar"
         feature_name: "varchar"
         elevation_m: "numeric"
+        marking_lgt: "varchar"
+        is_grouped: "bool"
+        height_m: "numeric"
 
     radio_nav_aids:
       schema: public

@@ -50,14 +50,14 @@ body,
   }
 
   .aip-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(63, 63, 70, 0.4);
+    background: rgba(161, 161, 170, 0.3);
     border-radius: 20px;
-    border: 2px solid transparent;
+    border: 1px solid transparent;
     background-clip: content-box;
   }
 
   .aip-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(82, 82, 91, 0.8);
+    background: rgba(161, 161, 170, 0.5);
     background-clip: content-box;
   }
 
@@ -130,12 +130,12 @@ body,
 
 /* ── Common Panels (Glassmorphism) ── */
 .wind-panel {
-  background: rgba(9, 14, 28, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(9, 9, 11, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(39, 39, 42, 0.7);
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
   pointer-events: auto;
 }
 
@@ -608,9 +608,8 @@ body,
 /* ── AIP Feature Card Styles ── */
 .aip-feature-card {
   background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-saturate: 200%;
+  backdrop-filter: blur(16px) saturate(200%);
+  -webkit-backdrop-filter: blur(16px) saturate(200%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
 }
@@ -672,4 +671,94 @@ body,
 .wind-tooltip__value {
   font-weight: 600;
   color: #fff;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Global Tooltip System (DeckGL & Shared)
+───────────────────────────────────────────────────────────────────────────── */
+
+/* DeckGL Tooltip Container Override */
+.deck-tooltip {
+  background: rgba(9, 9, 11, 0.65) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(39, 39, 42, 0.7) !important;
+  border-radius: 16px !important;
+  padding: 12px 16px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
+  color: white !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  z-index: 1000 !important;
+  max-width: 320px;
+}
+
+/* AIP Tooltip Semantic Classes */
+.aip-tooltip-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.aip-tooltip-title {
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #f4f4f5;
+}
+
+.aip-tooltip-subtitle {
+  color: #a1a1aa;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.aip-tooltip-accent {
+  color: #6366f1;
+  font-weight: 700;
+}
+
+.aip-tooltip-status {
+  color: #10b981;
+  font-size: 9px;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  margin-top: 2px;
+}
+
+.aip-tooltip-divider {
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 8px;
+}
+
+.aip-tooltip-row {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  color: #a1a1aa;
+  white-space: normal;
+}
+
+.aip-tooltip-row-val {
+  color: #f4f4f5;
+}
+
+.aip-tooltip-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  color: #a1a1aa;
+  margin-top: 2px;
+}
+
+.aip-tooltip-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  background: #065f46;
+  color: #6ee7b7;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 8px;
 }
