@@ -1,5 +1,6 @@
 import json
 import re
+
 import boto3
 import psycopg2
 from psycopg2.extras import Json, execute_values
@@ -88,9 +89,7 @@ class SpatialRouter:
         arp_geom = cls.create_point(arp_coords)
         arp_elev = None
         if arp_geom:
-            arp_elev_str = data.get("geographical_data", {}).get(
-                "elevation_reference_temp"
-            )
+            arp_elev_str = data.get("geographical_data", {}).get("elevation_reference_temp")
             arp_elev = cls.extract_number(arp_elev_str)
             features.append(
                 (icao, "ARP", f"{icao} Reference Point", arp_elev, "NIL", False, 0, arp_geom)
@@ -122,13 +121,12 @@ class SpatialRouter:
             if geom:
                 elev = cls.extract_number(obs.get("elevation"))
                 marking = obs.get("marking_lgt", "NIL")
-                obs_type = obs.get("obstacle_type", "Unknown")
-                remarks = obs.get("remarks", "")
-                
+                obs_type = str(obs.get("obstacle_type") or "Unknown")
+                remarks = str(obs.get("remarks") or "")
+
                 is_grouped = False
                 if "GROUP" in obs_type.upper() or "GROUP" in remarks.upper():
                     is_grouped = True
-                
                 # Calculate Height relative to Aerodrome elevation
                 height_m = None
                 if elev is not None and arp_elev is not None:
@@ -148,9 +146,7 @@ class SpatialRouter:
                 features.append((icao, "NAVAID", name, elev, "NIL", False, 0, geom))
 
         # 5. HELIPADS (TLOF/FATO)
-        helipad_coords = data.get("helicopter_landing_area", {}).get(
-            "coordinates_tlof_fato", {}
-        )
+        helipad_coords = data.get("helicopter_landing_area", {}).get("coordinates_tlof_fato", {})
         heli_geom = cls.create_point(helipad_coords)
         if heli_geom:
             elev = cls.extract_number(
@@ -223,9 +219,7 @@ class DBLoader:
             print(f"[!] Failed to fetch or parse file from MinIO: {e}")
             return
 
-        print(
-            f"[*] Found {len(master_data)} airports. Commencing segregated DB ingestion..."
-        )
+        print(f"[*] Found {len(master_data)} airports. Commencing segregated DB ingestion...")
 
         # Hard Reset: Truncate existing data to ensure a fresh reload
         print("[!] Dropping all existing records for a complete refresh...")
@@ -258,8 +252,8 @@ class DBLoader:
                         """
                         INSERT INTO aerodrome_documents (icao_code, airport_name, source_url, aip_document)
                         VALUES (%s, %s, %s, %s)
-                        ON CONFLICT (icao_code) 
-                        DO UPDATE SET 
+                        ON CONFLICT (icao_code)
+                        DO UPDATE SET
                             airport_name = EXCLUDED.airport_name,
                             source_url = EXCLUDED.source_url,
                             aip_document = EXCLUDED.aip_document,
@@ -269,12 +263,8 @@ class DBLoader:
                     )
 
                     # B. Clear old child records (Idempotency)
-                    cur.execute(
-                        "DELETE FROM spatial_features WHERE icao_code = %s", (icao,)
-                    )
-                    cur.execute(
-                        "DELETE FROM aerodrome_charts WHERE icao_code = %s", (icao,)
-                    )
+                    cur.execute("DELETE FROM spatial_features WHERE icao_code = %s", (icao,))
+                    cur.execute("DELETE FROM aerodrome_charts WHERE icao_code = %s", (icao,))
 
                     # C. Bulk Insert Spatial Features
                     if spatial_records:
@@ -302,9 +292,7 @@ class DBLoader:
 
                     # Commit the transaction for this airport
                     self.conn.commit()
-                    print(
-                        f"  [✓] {icao} - Segregated {len(spatial_records)} spatial features."
-                    )
+                    print(f"  [✓] {icao} - Segregated {len(spatial_records)} spatial features.")
                     success_count += 1
 
                 except Exception as e:

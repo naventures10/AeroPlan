@@ -7,7 +7,8 @@ export function ObstacleDetailsPanel({ data }: { data: any }) {
   const category = p.category || p.feature_category || 'UNKNOWN';
 
   const elev = p.height ?? p.elevation_m ?? p.elevation ?? null;
-  const elevFt = elev != null ? Number(elev) * 3.28084 : null;
+  const elevNum = elev != null ? Number(elev) : null;
+  const elevFt = elevNum != null && !Number.isNaN(elevNum) ? elevNum * 3.28084 : null;
   const elevStr = elevFt != null ? elevFt.toFixed(1) + ' FT' : 'N/A';
 
   let extraInfo = null;
