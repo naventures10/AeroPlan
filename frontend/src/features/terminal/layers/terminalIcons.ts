@@ -16,47 +16,48 @@ const S = 64; // Canvas size — larger = sharper SDF at all zoom levels
 /**
  * Aerodrome Reference Point (ARP) / Helipad
  *
- * Standard ICAO-inspired symbol: a circle with four extending tick marks
- * radiating outward at cardinal directions, creating a crosshair effect.
+ * Modern Data-Viz: Thick ring with bold pill-shaped ticks for maximum
+ * legibility when rendered as an SDF.
  */
 const AIRPORT_SVG = `
 <svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="32" cy="32" r="10" fill="none" stroke="blue" stroke-width="3.5"/>
-  <circle cx="32" cy="32" r="3" fill="blue"/>
-  <line x1="32" y1="8" x2="32" y2="19" stroke="blue" stroke-width="3" stroke-linecap="round"/>
-  <line x1="32" y1="45" x2="32" y2="56" stroke="blue" stroke-width="3" stroke-linecap="round"/>
-  <line x1="8" y1="32" x2="19" y2="32" stroke="blue" stroke-width="3" stroke-linecap="round"/>
-  <line x1="45" y1="32" x2="56" y2="32" stroke="blue" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="32" cy="32" r="14" fill="none" stroke="black" stroke-width="5"/>
+  <circle cx="32" cy="32" r="5" fill="black"/>
+  <rect x="30" y="4" width="4" height="10" rx="2" fill="black"/>
+  <rect x="30" y="50" width="4" height="10" rx="2" fill="black"/>
+  <rect x="4" y="30" width="10" height="4" rx="2" fill="black"/>
+  <rect x="50" y="30" width="10" height="4" rx="2" fill="black"/>
 </svg>
 `.trim();
 
 /**
  * VOR / NDB / Radio Navaid
  *
- * Hexagonal compass rose: a regular hexagon with a filled center dot
- * and six short radiating tick marks from each vertex outward.
+ * Modern Data-Viz: Bold hexagon with beautifully rounded joints and
+ * thick rounded radiating ticks.
  */
 const NAVAID_SVG = `
 <svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg">
-  <polygon points="32,12 49,22 49,42 32,52 15,42 15,22" fill="none" stroke="blue" stroke-width="3" stroke-linejoin="round"/>
-  <circle cx="32" cy="32" r="4" fill="blue"/>
-  <line x1="32" y1="12" x2="32" y2="6" stroke="blue" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="49" y1="22" x2="54" y2="19" stroke="blue" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="49" y1="42" x2="54" y2="45" stroke="blue" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="32" y1="52" x2="32" y2="58" stroke="blue" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="15" y1="42" x2="10" y2="45" stroke="blue" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="15" y1="22" x2="10" y2="19" stroke="blue" stroke-width="2.5" stroke-linecap="round"/>
+  <polygon points="32,10 51,21 51,43 32,54 13,43 13,21" fill="none" stroke="black" stroke-width="5" stroke-linejoin="round"/>
+  <circle cx="32" cy="32" r="5" fill="black"/>
+  <line x1="32" y1="10" x2="32" y2="4" stroke="black" stroke-width="4" stroke-linecap="round"/>
+  <line x1="51" y1="21" x2="56" y2="18" stroke="black" stroke-width="4" stroke-linecap="round"/>
+  <line x1="51" y1="43" x2="56" y2="46" stroke="black" stroke-width="4" stroke-linecap="round"/>
+  <line x1="32" y1="54" x2="32" y2="60" stroke="black" stroke-width="4" stroke-linecap="round"/>
+  <line x1="13" y1="43" x2="8" y2="46" stroke="black" stroke-width="4" stroke-linecap="round"/>
+  <line x1="13" y1="21" x2="8" y2="18" stroke="black" stroke-width="4" stroke-linecap="round"/>
 </svg>
 `.trim();
 
 /**
  * Obstacle (Standard ICAO)
- * A triangle without a base and a dot inside.
+ *
+ * Modern Data-Viz: Thick 5px stroke open triangle with a large inner dot.
  */
 const OBSTACLE_SVG = `
 <svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg">
-  <path d="M 32 12 L 14 52 M 32 12 L 50 52" stroke="blue" stroke-width="4" stroke-linecap="round" fill="none" stroke-linejoin="round"/>
-  <circle cx="32" cy="42" r="3.5" fill="blue"/>
+  <path d="M 14 52 L 32 16 L 50 52" fill="none" stroke="black" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="40" r="5" fill="black"/>
 </svg>
 `.trim();
 
@@ -65,11 +66,11 @@ const OBSTACLE_SVG = `
  */
 const OBSTACLE_LGT_SVG = `
 <svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg">
-  <path d="M 32 24 L 14 54 M 32 24 L 50 54" stroke="blue" stroke-width="4" stroke-linecap="round" fill="none" stroke-linejoin="round"/>
-  <circle cx="32" cy="44" r="3.5" fill="blue"/>
-  <line x1="32" y1="4" x2="32" y2="14" stroke="blue" stroke-width="3" stroke-linecap="round"/>
-  <line x1="22" y1="12" x2="28" y2="18" stroke="blue" stroke-width="3" stroke-linecap="round"/>
-  <line x1="42" y1="12" x2="36" y2="18" stroke="blue" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 14 54 L 32 20 L 50 54" fill="none" stroke="black" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="42" r="5" fill="black"/>
+  <line x1="32" y1="4" x2="32" y2="12" stroke="black" stroke-width="4" stroke-linecap="round"/>
+  <line x1="20" y1="10" x2="26" y2="16" stroke="black" stroke-width="4" stroke-linecap="round"/>
+  <line x1="44" y1="10" x2="38" y2="16" stroke="black" stroke-width="4" stroke-linecap="round"/>
 </svg>
 `.trim();
 
@@ -78,10 +79,10 @@ const OBSTACLE_LGT_SVG = `
  */
 const OBSTACLE_GROUP_SVG = `
 <svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg">
-  <path d="M 24 18 L 8 50 M 24 18 L 36 50" stroke="blue" stroke-width="3.5" stroke-linecap="round" fill="none" stroke-linejoin="round"/>
-  <circle cx="24" cy="40" r="3" fill="blue"/>
-  <path d="M 40 18 L 28 50 M 40 18 L 56 50" stroke="blue" stroke-width="3.5" stroke-linecap="round" fill="none" stroke-linejoin="round"/>
-  <circle cx="40" cy="40" r="3" fill="blue"/>
+  <path d="M 10 50 L 24 22 L 38 50" fill="none" stroke="black" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="24" cy="42" r="4.5" fill="black"/>
+  <path d="M 26 50 L 40 22 L 54 50" fill="none" stroke="black" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="40" cy="42" r="4.5" fill="black"/>
 </svg>
 `.trim();
 
@@ -90,39 +91,44 @@ const OBSTACLE_GROUP_SVG = `
  */
 const OBSTACLE_GROUP_LGT_SVG = `
 <svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg">
-  <path d="M 24 28 L 8 56 M 24 28 L 36 56" stroke="blue" stroke-width="3.5" stroke-linecap="round" fill="none" stroke-linejoin="round"/>
-  <circle cx="24" cy="46" r="3" fill="blue"/>
-  <path d="M 40 28 L 28 56 M 40 28 L 56 56" stroke="blue" stroke-width="3.5" stroke-linecap="round" fill="none" stroke-linejoin="round"/>
-  <circle cx="40" cy="46" r="3" fill="blue"/>
-  <line x1="32" y1="4" x2="32" y2="14" stroke="blue" stroke-width="3" stroke-linecap="round"/>
-  <line x1="22" y1="10" x2="28" y2="18" stroke="blue" stroke-width="3" stroke-linecap="round"/>
-  <line x1="42" y1="10" x2="36" y2="18" stroke="blue" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 10 54 L 24 26 L 38 54" fill="none" stroke="black" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="24" cy="46" r="4.5" fill="black"/>
+  <path d="M 26 54 L 40 26 L 54 54" fill="none" stroke="black" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="40" cy="46" r="4.5" fill="black"/>
+  <line x1="32" y1="4" x2="32" y2="12" stroke="black" stroke-width="4" stroke-linecap="round"/>
+  <line x1="20" y1="10" x2="26" y2="16" stroke="black" stroke-width="4" stroke-linecap="round"/>
+  <line x1="44" y1="10" x2="38" y2="16" stroke="black" stroke-width="4" stroke-linecap="round"/>
 </svg>
 `.trim();
 
 /**
  * Exceptionally High Lighted Obstacle (Standard ICAO)
+ *
+ * Modern Data-Viz: Strong solid mast with a crossbeam instead of thin curving lines.
  */
 const OBSTACLE_HIGH_LGT_SVG = `
 <svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg">
-  <path d="M 32 24 L 32 44 M 32 44 Q 32 52 22 52 M 32 44 Q 32 52 42 52" stroke="blue" stroke-width="4" stroke-linecap="round" fill="none" stroke-linejoin="round"/>
-  <circle cx="32" cy="52" r="3.5" fill="blue"/>
-  <line x1="32" y1="4" x2="32" y2="14" stroke="blue" stroke-width="3" stroke-linecap="round"/>
-  <line x1="22" y1="10" x2="28" y2="18" stroke="blue" stroke-width="3" stroke-linecap="round"/>
-  <line x1="42" y1="10" x2="36" y2="18" stroke="blue" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 32 20 L 32 46" fill="none" stroke="black" stroke-width="5" stroke-linecap="round"/>
+  <path d="M 20 54 C 26 54 32 50 32 46 C 32 50 38 54 44 54" fill="none" stroke="black" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="24" y1="36" x2="40" y2="36" stroke="black" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="32" cy="54" r="5" fill="black"/>
+  <line x1="32" y1="4" x2="32" y2="12" stroke="black" stroke-width="4" stroke-linecap="round"/>
+  <line x1="20" y1="10" x2="26" y2="16" stroke="black" stroke-width="4" stroke-linecap="round"/>
+  <line x1="44" y1="10" x2="38" y2="16" stroke="black" stroke-width="4" stroke-linecap="round"/>
 </svg>
 `.trim();
 
 /**
  * Building / Structure
  *
- * A filled rounded square with a smaller inset square creating a
- * "window" or "floor plan" effect — reads clearly at all sizes.
+ * Modern Data-Viz: A clean, instantly recognizable city skyline silhouette.
+ * Features three solid vertical columns of varying heights aligned at the base.
  */
 const BUILDING_SVG = `
 <svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg">
-  <rect x="12" y="12" width="40" height="40" rx="4" fill="none" stroke="blue" stroke-width="3.5"/>
-  <rect x="22" y="22" width="20" height="20" rx="2" fill="blue"/>
+  <rect x="9" y="28" width="12" height="26" rx="3" fill="black"/>
+  <rect x="25" y="10" width="14" height="44" rx="3" fill="black"/>
+  <rect x="43" y="20" width="12" height="34" rx="3" fill="black"/>
 </svg>
 `.trim();
 

@@ -328,9 +328,9 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
       getText: (d: any) => d.properties.waypoint_name || '',
       getTextSize: (d: any) => {
         const routes = parseRouteIds(d.properties.route_ids);
-        if (routes.some((r: string) => selectedRouteIds.includes(r))) return 12;
+        if (routes.some((r: string) => selectedRouteIds.includes(r))) return 10;
         if (!activeLayers.atsRoutes) return 0;
-        return isZoomAtsWaypoints ? 10 : 0;
+        return isZoomAtsWaypoints ? 8 : 0;
       },
       getTextColor: (d: any) => {
         const routes = parseRouteIds(d.properties.route_ids);

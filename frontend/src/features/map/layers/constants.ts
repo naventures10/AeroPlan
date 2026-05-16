@@ -35,8 +35,8 @@ export const ZOOM_NAVAIDS = 2.5;
 
 // ── Label Size Constraints (Pixels) ──────────────────────────────────
 
-export const ATS_ROUTE_LABEL_MAX_PIXELS = 32;
-export const ATS_ROUTE_LABEL_TEXT_MAX_PIXELS = 24;
+export const ATS_ROUTE_LABEL_MAX_PIXELS = 24;
+export const ATS_ROUTE_LABEL_TEXT_MAX_PIXELS = 18;
 
 // ── Deck.gl Extensions (singleton instances) ─────────────────────────
 
