@@ -12,7 +12,6 @@
 # Allow the three packages
 !/frontend/
 !/backend/
-!/eaip_scrapper/
 !/scripts/
 !.gitlab-ci.yml
 
