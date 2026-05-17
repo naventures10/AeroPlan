@@ -117,7 +117,7 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
       <motion.div
         animate={{ width: isCollapsed ? 44 : 72, backdropFilter: 'blur(20px)' }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="bg-zinc-950/80 border border-white/[0.06] rounded-3xl flex flex-col items-center relative shrink-0 z-20 pointer-events-auto overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)]"
+        className="terminal-dashboard-sidebar flex flex-col items-center relative shrink-0 z-20 pointer-events-auto overflow-hidden"
       >
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
@@ -150,10 +150,8 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
               <div
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative flex flex-col items-center justify-center w-full py-3.5 mx-1.5 my-0.5 rounded-xl cursor-pointer transition duration-300 ${
-                  isActive
-                    ? 'text-cyan-400 bg-cyan-500/15'
-                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04]'
+                className={`terminal-dashboard-tab mx-1.5 my-0.5 rounded-xl ${
+                  isActive ? 'active' : ''
                 }`}
               >
                 <tab.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
@@ -179,10 +177,8 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
           backdropFilter: isCollapsed ? 'blur(0px)' : 'blur(20px)',
         }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className={`bg-zinc-950/80 relative flex flex-col shrink-0 overflow-hidden border-l-0 border-white/[0.06] rounded-r-3xl z-10 -ml-4 ${
-          isCollapsed
-            ? 'pointer-events-none shadow-none'
-            : 'pointer-events-auto shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)]'
+        className={`terminal-dashboard-panel relative flex flex-col shrink-0 overflow-hidden ${
+          isCollapsed ? 'pointer-events-none shadow-none' : 'pointer-events-auto'
         }`}
       >
         {loading ? (

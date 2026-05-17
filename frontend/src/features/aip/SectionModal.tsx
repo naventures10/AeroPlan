@@ -63,30 +63,20 @@ export default function SectionModal({
             className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none"
           >
             <div
-              className="pointer-events-auto w-full max-w-5xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden border border-zinc-700/50 shadow-2xl"
-              style={{
-                background: 'rgba(9, 9, 11, 0.92)',
-                backdropFilter: 'blur(32px)',
-                WebkitBackdropFilter: 'blur(32px)',
-              }}
+              className="aip-modal-container pointer-events-auto"
               onClick={(e) => {
                 e.stopPropagation();
               }}
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800/60 shrink-0">
+              <div className="aip-modal-header">
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="shrink-0 px-2.5 py-1 rounded-md bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 text-[11px] font-bold tracking-widest">
-                    {sectionId.replace(/_/g, ' ')}
-                  </span>
+                  <span className="aip-modal-badge">{sectionId.replace(/_/g, ' ')}</span>
                   <h2 className="text-zinc-100 font-semibold text-sm tracking-wide truncate uppercase">
                     {title}
                   </h2>
                 </div>
-                <button
-                  onClick={onClose}
-                  className="shrink-0 ml-4 p-2 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/60 transition-colors focus:outline-none"
-                >
+                <button onClick={onClose} className="aip-modal-close-btn focus:outline-none">
                   <X size={18} />
                 </button>
               </div>
