@@ -1244,7 +1244,6 @@ body,
 }
 
 .aip-view-3d-button {
-  position: relative;
   padding: 0.625rem 1.25rem;
   border-radius: 1rem;
   font-size: 11px;
@@ -1255,45 +1254,18 @@ body,
   background: var(--glass-bg-heavy);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--accent-cyan-glow);
-  box-shadow: 0 0 24px var(--accent-cyan-glow);
-  transition: all 0.3s ease;
+  border: 1px solid var(--glass-border);
+  transition: all 0.2s ease;
   cursor: pointer;
-  overflow: hidden;
 }
 
 .aip-view-3d-button:hover {
-  box-shadow: 0 0 36px var(--accent-cyan);
+  background: var(--surface-container-high);
   border-color: var(--accent-cyan);
+  color: var(--primary);
   transform: translateY(-1px);
 }
 
 .aip-view-3d-button:active {
   transform: translateY(0);
-}
-
-.aip-view-3d-glow {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  border-radius: 1rem;
-  opacity: 0.4;
-  filter: blur(1px);
-  background: linear-gradient(
-    90deg,
-    rgba(34, 211, 238, 0.1) 0%,
-    rgba(34, 211, 238, 0.2) 50%,
-    rgba(34, 211, 238, 0.1) 100%
-  );
-  animation: aip-glow-pulse 3s infinite ease-in-out;
-}
-
-@keyframes aip-glow-pulse {
-  0%,
-  100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.6;
-  }
 }

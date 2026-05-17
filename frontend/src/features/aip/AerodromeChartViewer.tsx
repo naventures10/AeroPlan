@@ -322,8 +322,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
             {matchedRnpForModal ? (
               <div className="aip-view-3d-container">
                 <button type="button" onClick={handleViewIn3D} className="aip-view-3d-button">
-                  <span className="relative z-10">View in 3D space</span>
-                  <span className="aip-view-3d-glow" aria-hidden />
+                  View in 3D space
                 </button>
               </div>
             ) : null}
