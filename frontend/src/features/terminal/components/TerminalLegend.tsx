@@ -54,9 +54,9 @@ export default function TerminalLegend() {
     <motion.div
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-center bg-zinc-950/80 backdrop-blur-xl border border-white/[0.06] rounded-full p-1 shadow-2xl pointer-events-auto w-fit"
+      className="obstacle-legend-container flex items-center pointer-events-auto w-fit"
     >
-      <div className="px-3 py-1 flex items-center gap-1 border-r border-white/5 mr-1">
+      <div className="obstacle-legend-header mr-1">
         <span className="text-[9px] font-black tracking-[0.25em] text-zinc-500 uppercase select-none">
           Obstacles
         </span>
@@ -74,7 +74,7 @@ export default function TerminalLegend() {
               delay={400}
               classNames={{
                 content:
-                  'bg-zinc-950 border border-white/10 text-zinc-300 text-[10px] font-bold tracking-wider px-2 py-1 rounded-lg shadow-2xl backdrop-blur-md',
+                  'border border-[var(--glass-border-highlight)] bg-[var(--glass-bg-solid)] text-[var(--primary)] text-[10px] font-bold tracking-wider px-2 py-1 rounded-lg shadow-2xl backdrop-blur-md',
               }}
             >
               <motion.button

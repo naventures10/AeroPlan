@@ -1444,3 +1444,22 @@ body,
   color: var(--primary);
   background: rgba(255, 255, 255, 0.06);
 }
+
+/* --- Obstacle Legend --- */
+.obstacle-legend-container {
+  background: var(--glass-bg-heavy);
+  border: 1px solid var(--glass-border);
+  border-radius: 9999px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--glass-shadow);
+  padding: 0.25rem;
+}
+
+.obstacle-legend-header {
+  border-right: 1px solid var(--glass-border);
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  display: flex;
+  align-items: center;
+}
