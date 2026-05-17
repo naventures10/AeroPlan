@@ -20,7 +20,7 @@ interface SearchBarProps {
 
 /**
  * The global search bar with autocomplete dropdown.
- * Visible only in ENROUTE view mode.
+ * Redesigned according to Obsidian Slate system.
  */
 export default function SearchBar({
   searchInput,
@@ -36,6 +36,7 @@ export default function SearchBar({
   handleSearchKeyDown,
 }: SearchBarProps) {
   const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isExpanded = isSearchFocused || searchInput.length > 0;
 
   useEffect(() => {
     return () => {
@@ -44,159 +45,162 @@ export default function SearchBar({
   }, []);
 
   return (
-    <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-[28rem] max-w-[90vw] pointer-events-auto z-50">
-      <div className="relative rounded-full shadow-2xl">
-        <div className="flex items-center w-full glass-morphism h-14 px-4 bg-zinc-950/40 hover:bg-zinc-950/60 focus-within:!bg-zinc-950/40 border-zinc-800/60 rounded-full transition-colors duration-300">
-          <div className="relative w-5 h-5 flex items-center justify-center shrink-0">
-            <AnimatePresence>
-              {isLoading ? (
-                <motion.div
-                  key="loader"
-                  initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
-                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                  exit={{ opacity: 0, scale: 0.5, rotate: 90 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Loader2 size={18} strokeWidth={2.5} className="text-cyan-400 animate-spin" />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="search"
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.5 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Search size={18} strokeWidth={2} className="text-zinc-400" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+    <div className="aip-search-container">
+      <motion.div
+        layout
+        initial={false}
+        animate={{
+          width: isExpanded ? '28rem' : '8.5rem',
+        }}
+        transition={{ type: 'spring', stiffness: 700, damping: 40, mass: 0.4 }}
+        className="aip-search-bar"
+        onClick={() => {
+          if (!isExpanded) {
+            searchInputRef.current?.focus();
+            setIsSearchFocused(true);
+          }
+        }}
+      >
+        <div className="flex-1 overflow-hidden px-5 flex items-center">
           <input
             ref={searchInputRef}
-            className="flex-1 bg-transparent border-none outline-none shadow-none text-zinc-100 font-semibold text-sm placeholder-zinc-500 uppercase tracking-[0.1em] px-3 h-full w-full"
-            placeholder="SEARCH AIRPORT OR ICAO..."
+            className="aip-search-input !px-0"
+            placeholder="Search"
             value={searchInput}
-            onChange={(e) => {
-              setSearchInput(e.target.value);
-            }}
-            onFocus={() => {
-              setIsSearchFocused(true);
-            }}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onFocus={() => setIsSearchFocused(true)}
             onBlur={() => {
               if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
               blurTimeoutRef.current = setTimeout(() => {
                 setIsSearchFocused(false);
-              }, 500);
+              }, 300);
             }}
             onKeyDown={handleSearchKeyDown}
           />
-          <AnimatePresence>
-            {searchInput && (
+        </div>
+
+        <div className="flex items-center gap-1 pr-4 shrink-0">
+          <AnimatePresence mode="wait">
+            {searchInput && isExpanded ? (
               <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
+                key="clear"
+                initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="flex items-center"
+                exit={{ opacity: 0, scale: 0.5 }}
+                transition={{ duration: 0.1 }}
               >
                 <Button
+                  data-testid="search-clear-button"
                   isIconOnly
                   size="sm"
                   variant="light"
                   radius="full"
-                  data-testid="search-clear-button"
                   onPress={() => {
                     setSearchInput('');
                   }}
-                  className="text-zinc-400 hover:text-zinc-200"
+                  className="text-white/40 hover:text-white/80"
                 >
                   <X size={16} />
                 </Button>
               </motion.div>
-            )}
+            ) : null}
           </AnimatePresence>
-        </div>
 
-        {/* Autocomplete Dropdown */}
-        <AnimatePresence>
-          {isSearchFocused && searchInput.trim().length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ duration: 0.15 }}
-              className="absolute top-full left-0 right-0 mt-2 glass-morphism-heavy rounded-2xl overflow-hidden shadow-2xl border border-zinc-800/60"
-            >
+          <div className="aip-search-icon-wrapper !w-auto">
+            <AnimatePresence mode="wait">
               {isLoading ? (
-                <div className="px-4 py-8 flex flex-col items-center justify-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-zinc-900/50 flex items-center justify-center border border-zinc-800/50">
-                    <Loader2 size={20} className="text-cyan-500 animate-spin" />
-                  </div>
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="text-zinc-300 text-sm font-semibold tracking-wider font-mono">
-                      ELASTIC SEARCHING...
-                    </span>
-                    <span className="text-zinc-500 text-[10px] uppercase tracking-widest">
-                      FASTER THAN A TURBOPROP
-                    </span>
-                  </div>
+                <motion.div
+                  key="loader"
+                  initial={{ opacity: 0, rotate: -90 }}
+                  animate={{ opacity: 1, rotate: 0 }}
+                  exit={{ opacity: 0, rotate: 90 }}
+                >
+                  <Loader2 size={18} className="animate-spin text-white/80" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="search"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                >
+                  <Search size={18} className="text-white/90" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Autocomplete Dropdown */}
+      <AnimatePresence>
+        {isSearchFocused && searchInput.trim().length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="aip-search-results-wrapper"
+          >
+            {isLoading ? (
+              <div className="px-4 py-8 flex flex-col items-center justify-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                  <Loader2 size={24} className="text-white animate-spin" />
                 </div>
-              ) : suggestions.length > 0 ? (
-                <div className="py-2">
-                  {suggestions.map((item: SearchResult, index: number) => (
-                    <div
-                      key={`${item.type}-${item.id}`}
-                      data-testid="search-result-item"
-                      className={`px-4 py-3 cursor-pointer flex items-center justify-between transition-colors border-l-2 ${
-                        index === searchSelectedIndex
-                          ? 'bg-zinc-800/80 border-cyan-400'
-                          : 'hover:bg-zinc-800/50 border-transparent'
-                      } ${index !== suggestions.length - 1 ? 'border-b border-zinc-800/50' : ''}`}
-                      onClick={() => {
-                        handleGlobalSearchSelect(item);
-                      }}
-                      onMouseEnter={() => {
-                        setSearchSelectedIndex(index);
-                      }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-zinc-800/80 flex items-center justify-center">
-                          <Search size={14} className="text-zinc-400" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span
-                            className={`font-mono font-semibold tracking-wider text-[15px] ${
-                              index === searchSelectedIndex ? 'text-cyan-400' : 'text-zinc-100'
-                            }`}
-                          >
-                            {item.id}
-                          </span>
-                          <span className="text-[11px] font-medium tracking-wide text-zinc-400 mt-0.5 uppercase">
-                            {item.name || 'UNKNOWN LOCATION'}
-                          </span>
-                        </div>
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-white text-sm font-bold tracking-widest uppercase">
+                    Searching Database
+                  </span>
+                  <span className="text-white/40 text-[10px] uppercase tracking-[0.2em] font-medium">
+                    Faster than a turboprop
+                  </span>
+                </div>
+              </div>
+            ) : suggestions.length > 0 ? (
+              <div className="py-2">
+                {suggestions.map((item: SearchResult, index: number) => (
+                  <div
+                    key={`${item.type}-${item.id}`}
+                    data-testid="search-result-item"
+                    className={`aip-search-result-item ${
+                      index === searchSelectedIndex ? 'selected' : ''
+                    }`}
+                    onClick={() => handleGlobalSearchSelect(item)}
+                    onMouseEnter={() => setSearchSelectedIndex(index)}
+                  >
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
+                        <Search size={14} className="text-white/60" />
                       </div>
-                      <div className="px-2 py-0.5 rounded-sm bg-zinc-800/50">
-                        <span className="text-[10px] font-bold tracking-widest text-zinc-500">
-                          {item.type.replace('_', ' ')}
+                      <div className="flex flex-col">
+                        <span className="aip-search-result-id">{item.id}</span>
+                        <span className="aip-search-result-name">
+                          {item.name || 'Unknown Location'}
                         </span>
                       </div>
                     </div>
-                  ))}
+                    <div className="aip-search-result-type">{item.type.replace('_', ' ')}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="px-8 py-12 text-center flex flex-col items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center opacity-30">
+                  <Search size={24} className="text-white" />
                 </div>
-              ) : (
-                <div className="px-4 py-8 text-center text-zinc-500 text-sm font-medium tracking-wide leading-relaxed">
-                  NO MATCHING LOCATIONS FOUND
-                  <br />
-                  <span className="text-xs text-zinc-600 mt-2 block">
-                    Search Aerodromes, Waypoints, NavAids, or ATS Routes
+                <div className="flex flex-col gap-1">
+                  <span className="text-white/50 text-sm font-bold tracking-wider uppercase">
+                    No matching locations
+                  </span>
+                  <span className="text-white/20 text-[10px] uppercase tracking-widest font-medium">
+                    Try searching for ICAO codes or Airport names
                   </span>
                 </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

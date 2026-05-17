@@ -68,15 +68,19 @@ export default function MapPage() {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="absolute inset-0 pointer-events-none"
           >
-            {(activeAirport || viewMode === 'TERMINAL') && (
-              <div className="absolute top-6 left-6 flex flex-col gap-2 pointer-events-auto z-50">
-                <AerodromeInfoDropdown
-                  onSectionSelect={handleSectionSelect}
-                  activeAirport={activeAirport}
-                />
-                {viewMode === 'TERMINAL' && <TerminalLegend />}
-              </div>
-            )}
+            <div className="absolute top-6 left-[4.5rem] flex flex-col gap-3 pointer-events-auto z-50">
+              {viewMode === 'ENROUTE' && viewState.pitch === 0 && <SearchBar {...search} />}
+
+              {(activeAirport || viewMode === 'TERMINAL') && (
+                <>
+                  <AerodromeInfoDropdown
+                    onSectionSelect={handleSectionSelect}
+                    activeAirport={activeAirport}
+                  />
+                  {viewMode === 'TERMINAL' && <TerminalLegend />}
+                </>
+              )}
+            </div>
 
             {activeAirport && (viewMode === 'TERMINAL' || viewState.pitch > 0) && (
               <div className="absolute top-6 right-6 pointer-events-auto z-40">
@@ -90,8 +94,7 @@ export default function MapPage() {
               </div>
             )}
 
-            {viewMode === 'ENROUTE' && <SearchBar {...search} />}
-            {viewMode === 'ENROUTE' && <LayerToolbar />}
+            {/* Removed LayerToolbar from here to prevent weather layer hijacking */}
             <ViewToggle />
           </motion.div>
 
@@ -108,6 +111,9 @@ export default function MapPage() {
           >
             <WeatherControls />
           </motion.div>
+
+          {/* Persistently render LayerToolbar outside the crossfade in 2D ENROUTE view */}
+          {viewMode === 'ENROUTE' && viewState.pitch === 0 && <LayerToolbar />}
         </div>
       </Suspense>
 

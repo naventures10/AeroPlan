@@ -6,6 +6,7 @@
  */
 
 import { GeoJsonLayer, TextLayer } from '@deck.gl/layers';
+import { COLOR_NEON_PURPLE } from './constants';
 import type { LayerContext } from './types';
 
 export function createAerodromeLayers(
@@ -14,6 +15,8 @@ export function createAerodromeLayers(
   textData: { position: number[]; text: string }[],
   onAerodromeClick: (icao: string, coords: [number, number]) => void,
 ): any[] {
+  const isLayerActive = ctx.activeLayers.aerodromes;
+
   return [
     new GeoJsonLayer({
       id: 'aerodromes-layer',
@@ -23,16 +26,23 @@ export function createAerodromeLayers(
       pointType: 'icon',
       getIcon: () => ({
         url: '/ARP.svg',
-        width: 339,
-        height: 324,
-        anchorY: 162,
-        mask: false,
+        width: 100,
+        height: 100,
+        anchorY: 50,
+        mask: true,
       }),
-      getIconSize: 20,
+      getIconSize: 24,
       iconSizeUnits: 'pixels',
+      getIconColor: isLayerActive ? COLOR_NEON_PURPLE : [192, 132, 252, 0],
       onClick: (info: any) => {
         if (info.object)
           onAerodromeClick(info.object.properties.icao_code, info.object.geometry.coordinates);
+      },
+      updateTriggers: {
+        getIconColor: [isLayerActive],
+      },
+      transitions: {
+        getIconColor: 300,
       },
     }),
     new TextLayer({
@@ -44,13 +54,21 @@ export function createAerodromeLayers(
       getText: (d: any) => d.text,
       getSize: 12,
       sizeUnits: 'pixels',
-      getColor: [255, 255, 255, 230],
+      getColor: isLayerActive ? [255, 255, 255, 230] : [255, 255, 255, 0],
       getPixelOffset: [0, 20],
       fontFamily: 'Inter, sans-serif',
       fontWeight: 700,
       outlineWidth: 2,
-      outlineColor: [0, 0, 0, 180],
+      outlineColor: isLayerActive ? [0, 0, 0, 180] : [0, 0, 0, 0],
       fontSettings: { sdf: true },
+      updateTriggers: {
+        getColor: [isLayerActive],
+        outlineColor: [isLayerActive],
+      },
+      transitions: {
+        getColor: 300,
+        outlineColor: 300,
+      },
     }),
   ];
 }

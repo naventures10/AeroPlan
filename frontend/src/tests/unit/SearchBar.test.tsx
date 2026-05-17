@@ -23,13 +23,13 @@ describe('SearchBar Component', () => {
 
   it('renders search input', () => {
     render(<SearchBar {...defaultProps} />);
-    expect(screen.getByPlaceholderText(/SEARCH AIRPORT OR ICAO/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Search/i)).toBeInTheDocument();
   });
 
   it('handles input change', () => {
     const setSearchInput = vi.fn();
     render(<SearchBar {...defaultProps} setSearchInput={setSearchInput} />);
-    const input = screen.getByPlaceholderText(/SEARCH AIRPORT OR ICAO/i);
+    const input = screen.getByPlaceholderText(/Search/i);
     fireEvent.change(input, { target: { value: 'test' } });
     expect(setSearchInput).toHaveBeenCalledWith('test');
   });

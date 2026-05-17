@@ -5,7 +5,7 @@ describe('createWaypointLayer', () => {
   it('creates MVT waypoint layer with proper styling', () => {
     const ctx = {
       viewMode: 'ENROUTE',
-      activeLayers: { atsRoutes: false }, // if false, waypoints pickable
+      activeLayers: { atsRoutes: false, waypoints: true }, // if false, waypoints pickable
       zoom: 8,
       selectedFeature: null,
       setSelectedFeature: vi.fn(),
@@ -39,7 +39,7 @@ describe('createWaypointLayer', () => {
     expect(layerProps.getTextSize({ properties: {} })).toBe(11);
 
     // if ATS routes active and has routes, text size 0
-    const atsCtx = { ...ctx, activeLayers: { atsRoutes: true } };
+    const atsCtx = { ...ctx, activeLayers: { atsRoutes: true, waypoints: true } };
     const atsLayers = createWaypointLayer(atsCtx as any);
     expect(atsLayers[0].props.getTextSize({ properties: { routes: 'A1' } })).toBe(0);
 
@@ -54,7 +54,7 @@ describe('createWaypointLayer', () => {
   it('hides layers when viewMode is TERMINAL', () => {
     const ctx = {
       viewMode: 'TERMINAL',
-      activeLayers: { atsRoutes: false },
+      activeLayers: { atsRoutes: false, waypoints: false },
       zoom: 8,
     };
     const layers = createWaypointLayer(ctx as any);

@@ -55,7 +55,7 @@ test.describe('ATS Route Workflows', () => {
     // 1. Search for a route
     await mapPage.searchInput.fill('A201');
     const routeResult = page
-      .locator('div.cursor-pointer')
+      .locator('[data-testid="search-result-item"]')
       .filter({ hasText: 'A201' })
       .filter({ hasText: 'ATS ROUTE' })
       .first();

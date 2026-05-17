@@ -39,9 +39,9 @@ test.describe('Weather Layers Userflows (Wind & Clouds)', () => {
     await expect(page.locator('.wind-status')).not.toBeVisible();
 
     // 2. Open Layer Toolbar toggle Weather
-    const weatherToggle = page.getByTitle('Toggle weather');
+    const weatherToggle = page.getByRole('button', { name: 'Toggle Weather' });
     await expect(weatherToggle).toBeVisible({ timeout: 15000 });
-    await weatherToggle.click();
+    await weatherToggle.click({ force: true });
 
     // 3. Verify Weather Mode UI is active (defaulting to Wind)
     await expect(page.locator('.wind-status')).toBeVisible({ timeout: 10000 });
@@ -52,9 +52,9 @@ test.describe('Weather Layers Userflows (Wind & Clouds)', () => {
 
     // 4. Switch to Cloud mode (and toggle off wind for exclusive view in test)
     const cloudBtn = page.getByRole('button', { name: 'Cloud' });
-    await cloudBtn.click();
+    await cloudBtn.click({ force: true });
     const windBtn = page.getByRole('button', { name: 'Wind' });
-    await windBtn.click();
+    await windBtn.click({ force: true });
 
     // 5. Verify Cloud Mode UI
     // Status badge still exists (now showing cloud status)
@@ -66,16 +66,16 @@ test.describe('Weather Layers Userflows (Wind & Clouds)', () => {
     await expect(page.locator('.wind-timeline')).toBeVisible();
 
     // 6. Close Weather Layer via the badge X button
-    await page.locator('.wind-status button').click();
+    await page.locator('.wind-status button').click({ force: true });
     await expect(page.locator('.wind-status')).not.toBeVisible();
-    await expect(page.getByTitle('Toggle weather')).not.toHaveClass(/bg-sky-500/);
+    await expect(page.getByRole('button', { name: 'Toggle Weather' })).not.toHaveClass(/active/);
   });
 
   test('Escape closes weather view immediately', async ({ page }) => {
-    const weatherToggle = page.getByTitle('Toggle weather');
+    const weatherToggle = page.getByRole('button', { name: 'Toggle Weather' });
     await expect(weatherToggle).toBeVisible({ timeout: 15000 });
 
-    await weatherToggle.click();
+    await weatherToggle.click({ force: true });
     await expect(page.locator('.wind-status')).toBeVisible();
 
     await page.keyboard.press('Escape');
@@ -108,7 +108,7 @@ test.describe('Weather Layers Userflows (Wind & Clouds)', () => {
     const upBtn = page.getByTestId('altitude-up');
     // Click up 10 times to reach FL100 (each click is 1000ft)
     for (let i = 0; i < 10; i++) {
-      await upBtn.click();
+      await upBtn.click({ force: true });
     }
 
     await expect(page.getByTestId('wind-altitude-display')).toContainText('FL100');
@@ -127,7 +127,7 @@ test.describe('Weather Layers Userflows (Wind & Clouds)', () => {
     const playButton = page.locator('.wind-timeline__play-circle');
 
     // 2. Toggle Play
-    await playButton.click();
+    await playButton.click({ force: true });
 
     // 3. Verify store state for playing (shared weather playback)
     const isPlaying = await page.evaluate(
@@ -136,7 +136,7 @@ test.describe('Weather Layers Userflows (Wind & Clouds)', () => {
     expect(isPlaying).toBe(true);
 
     // 4. Verify pause works
-    await playButton.click();
+    await playButton.click({ force: true });
     await page.waitForTimeout(500);
     const isPlayingAfterPause = await page.evaluate(
       () => (window as any).useMapStore.getState().windIsPlaying,

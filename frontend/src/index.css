@@ -1,7 +1,34 @@
 @import 'tailwindcss';
 @config "../tailwind.config.js";
 
-/* Ensure the map fills the viewport */
+:root {
+  /* Obsidian Slate Design Tokens */
+  --surface: #0b1326;
+  --surface-dim: #0b1326;
+  --surface-bright: #31394d;
+  --surface-container-lowest: #060e20;
+  --surface-container-low: #131b2e;
+  --surface-container: #171f33;
+  --surface-container-high: #222a3d;
+  --surface-container-highest: #2d3449;
+  --on-surface: #dae2fd;
+  --on-surface-variant: #c4c7c8;
+  --outline: #8e9192;
+  --outline-variant: #444748;
+  --primary: #ffffff;
+  --on-primary: #2f3131;
+  --secondary: #bcc7de;
+  --on-secondary: #263143;
+  --secondary-container: #3e495d;
+  --on-secondary-container: #aeb9d0;
+  --background: #0b1326;
+  --on-background: #dae2fd;
+  --surface-variant: #2d3449;
+
+  /* Typography */
+  --font-hanken: 'Hanken Grotesk', system-ui, sans-serif;
+}
+
 html,
 body,
 #root {
@@ -10,6 +37,9 @@ body,
   width: 100%;
   height: 100%;
   overflow: hidden;
+  background-color: var(--background);
+  color: var(--on-background);
+  font-family: var(--font-hanken);
 }
 
 @layer utilities {
@@ -143,7 +173,7 @@ body,
 .wind-status {
   position: absolute;
   top: 20px;
-  left: 20px;
+  left: 4.75rem; /* Clear the 3.5rem sidebar */
   z-index: 20;
   display: flex;
   align-items: center;
@@ -195,7 +225,7 @@ body,
 .wind-legend-v {
   position: absolute;
   top: 70px;
-  left: 20px;
+  left: 4.75rem; /* Clear the 3.5rem sidebar */
   z-index: 20;
   padding: 20px 16px;
   display: flex;
@@ -761,4 +791,300 @@ body,
   padding: 2px 6px;
   border-radius: 4px;
   margin-right: 8px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   AIP Search Bar (Obsidian Slate System)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.aip-search-container {
+  z-index: 100;
+  pointer-events: auto;
+}
+
+.aip-search-bar {
+  display: flex;
+  align-items: center;
+  height: 2.75rem;
+  background: rgba(11, 19, 38, 0.5); /* Darker Obsidian Slate base */
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.aip-search-bar:hover {
+  background: rgba(15, 23, 42, 0.5);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.aip-search-bar:focus-within {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+}
+
+.aip-search-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--primary);
+  opacity: 0.9;
+}
+
+.aip-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--primary);
+  font-family: var(--font-hanken);
+  font-weight: 400;
+  font-size: 0.9375rem;
+  width: 100%;
+  letter-spacing: -0.01em;
+}
+
+.aip-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+}
+
+.aip-search-results-wrapper {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  left: 0;
+  right: 0;
+  background: rgba(11, 19, 38, 0.75); /* Translucent but dark */
+  backdrop-filter: blur(32px); /* Extra strong blur for results */
+  -webkit-backdrop-filter: blur(32px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.5rem;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+  z-index: 110;
+}
+
+.aip-search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.625rem 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.aip-search-result-item:last-child {
+  border-bottom: none;
+}
+
+.aip-search-result-item:hover,
+.aip-search-result-item.selected {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.aip-search-result-id {
+  font-family: var(--font-hanken);
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--primary);
+  letter-spacing: 0.02em;
+}
+
+.aip-search-result-name {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.aip-search-result-type {
+  margin-left: auto;
+  padding: 0.25rem 0.625rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   AIP Layer Toolbar (Obsidian Slate System) - VS Code Style
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.aip-layer-toolbar-container {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40; /* Lower than dropdowns/search, but above map */
+  pointer-events: auto;
+  display: flex;
+}
+
+.aip-layer-toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 3.5rem;
+  padding-top: 5rem; /* Space for macOS window controls or other top elements */
+  gap: 0.5rem;
+  background: rgba(11, 19, 38, 0.95); /* Mostly solid Obsidian Slate */
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.3);
+}
+
+.aip-layer-toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 3.5rem;
+  background: transparent;
+  border: none;
+  border-left: 2px solid transparent;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.aip-layer-toggle:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.aip-layer-toggle.active {
+  color: var(--primary);
+  border-left-color: var(--primary); /* Active indicator on the left edge */
+}
+
+/* Layer Toolbar Tooltips */
+.aip-layer-tooltip {
+  position: absolute;
+  left: 100%;
+  margin-left: 0.5rem;
+  padding: 0.3125rem 0.625rem;
+  background: rgba(11, 19, 38, 0.95); /* Deep slate to match sidebar */
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--primary);
+  font-family: var(--font-hanken);
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-10px);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 100;
+  border-radius: 0.25rem; /* Slight curve, close to VS Code */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.aip-layer-toggle:hover .aip-layer-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   AIP Layer Toolbar Centralized Icons (Standard SVG Masks)
+   ───────────────────────────────────────────────────────────────────────────── */
+.aip-layer-icon {
+  width: 1.375rem; /* 22px */
+  height: 1.375rem; /* 22px */
+  background-color: currentColor;
+  display: inline-block;
+  flex-shrink: 0;
+  transition:
+    transform 0.2s ease,
+    -webkit-mask 0.2s ease,
+    mask 0.2s ease;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+/* Aerodromes: Standard ICAO Civilian Aerodrome (Circle with 4 cardinal ticks - Elegant stroke) */
+.aip-icon-aerodromes {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Cline x1='12' y1='6' x2='12' y2='2'/%3E%3Cline x1='12' y1='18' x2='12' y2='22'/%3E%3Cline x1='6' y1='12' x2='2' y2='12'/%3E%3Cline x1='18' y1='12' x2='22' y2='12'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Cline x1='12' y1='6' x2='12' y2='2'/%3E%3Cline x1='12' y1='18' x2='12' y2='22'/%3E%3Cline x1='6' y1='12' x2='2' y2='12'/%3E%3Cline x1='18' y1='12' x2='22' y2='12'/%3E%3C/svg%3E");
+}
+.aip-layer-toggle.active .aip-icon-aerodromes {
+  transform: scale(1.1);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Cline x1='12' y1='6' x2='12' y2='2'/%3E%3Cline x1='12' y1='18' x2='12' y2='22'/%3E%3Cline x1='6' y1='12' x2='2' y2='12'/%3E%3Cline x1='18' y1='12' x2='22' y2='12'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='6'/%3E%3Cline x1='12' y1='6' x2='12' y2='2'/%3E%3Cline x1='12' y1='18' x2='12' y2='22'/%3E%3Cline x1='6' y1='12' x2='2' y2='12'/%3E%3Cline x1='18' y1='12' x2='22' y2='12'/%3E%3C/svg%3E");
+}
+
+/* Waypoints: Solid ICAO Waypoint (Broad Solid Triangle) */
+.aip-icon-waypoints {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Cpolygon points='12,6 2,19 22,19'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'%3E%3Cpolygon points='12,6 2,19 22,19'/%3E%3C/svg%3E");
+}
+.aip-layer-toggle.active .aip-icon-waypoints {
+  transform: scale(1.1);
+}
+
+/* NavAids: Co-located VOR/DME (Horizontal rectangle, snug regular hexagon, tiny dot - Elegant stroke) */
+.aip-icon-navaids {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='1' y='4' width='22' height='16'/%3E%3Cpolygon points='20.5,12 16.25,4.8 7.75,4.8 3.5,12 7.75,19.2 16.25,19.2'/%3E%3Ccircle cx='12' cy='12' r='1.2' fill='black' stroke='none'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='1' y='4' width='22' height='16'/%3E%3Cpolygon points='20.5,12 16.25,4.8 7.75,4.8 3.5,12 7.75,19.2 16.25,19.2'/%3E%3Ccircle cx='12' cy='12' r='1.2' fill='black' stroke='none'/%3E%3C/svg%3E");
+}
+.aip-layer-toggle.active .aip-icon-navaids {
+  transform: scale(1.1);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='1' y='4' width='22' height='16'/%3E%3Cpolygon points='20.5,12 16.25,4.8 7.75,4.8 3.5,12 7.75,19.2 16.25,19.2'/%3E%3Ccircle cx='12' cy='12' r='1.2' fill='black' stroke='none'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='1' y='4' width='22' height='16'/%3E%3Cpolygon points='20.5,12 16.25,4.8 7.75,4.8 3.5,12 7.75,19.2 16.25,19.2'/%3E%3Ccircle cx='12' cy='12' r='1.2' fill='black' stroke='none'/%3E%3C/svg%3E");
+}
+
+/* ATS Routes: Lucide Route equivalent - Elegant stroke */
+.aip-icon-atsRoutes {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='6' cy='19' r='3'/%3E%3Ccircle cx='18' cy='5' r='3'/%3E%3Cpath d='M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='6' cy='19' r='3'/%3E%3Ccircle cx='18' cy='5' r='3'/%3E%3Cpath d='M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15'/%3E%3C/svg%3E");
+}
+.aip-layer-toggle.active .aip-icon-atsRoutes {
+  transform: scale(1.1);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='6' cy='19' r='3'/%3E%3Ccircle cx='18' cy='5' r='3'/%3E%3Cpath d='M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='6' cy='19' r='3'/%3E%3Ccircle cx='18' cy='5' r='3'/%3E%3Cpath d='M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15'/%3E%3C/svg%3E");
+}
+
+/* Airspaces: Concentric Radar Sector Sweep (Option A with thin, spacious stroke) */
+.aip-icon-airspaces {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.42 4.58A10.5 10.5 0 1 0 22.5 12'/%3E%3Cpath d='M16.6 7.4A6.5 6.5 0 1 0 18.5 12'/%3E%3Cline x1='12' y1='12' x2='19.42' y2='4.58'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.42 4.58A10.5 10.5 0 1 0 22.5 12'/%3E%3Cpath d='M16.6 7.4A6.5 6.5 0 1 0 18.5 12'/%3E%3Cline x1='12' y1='12' x2='19.42' y2='4.58'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");
+}
+.aip-layer-toggle.active .aip-icon-airspaces {
+  transform: scale(1.1);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.42 4.58A10.5 10.5 0 1 0 22.5 12'/%3E%3Cpath d='M16.6 7.4A6.5 6.5 0 1 0 18.5 12'/%3E%3Cline x1='12' y1='12' x2='19.42' y2='4.58'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.42 4.58A10.5 10.5 0 1 0 22.5 12'/%3E%3Cpath d='M16.6 7.4A6.5 6.5 0 1 0 18.5 12'/%3E%3Cline x1='12' y1='12' x2='19.42' y2='4.58'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3C/svg%3E");
+}
+
+/* Weather: Lucide CloudSun equivalent - Elegant stroke */
+.aip-icon-weather {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41'/%3E%3Cpath d='M22 17a3 3 0 0 1-3 3H9a5 5 0 0 1-5-5 5 5 0 0 1 5-5h1.23a4 4 0 0 1 7.77 2A3 3 0 0 1 22 17z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41'/%3E%3Cpath d='M22 17a3 3 0 0 1-3 3H9a5 5 0 0 1-5-5 5 5 0 0 1 5-5h1.23a4 4 0 0 1 7.77 2A3 3 0 0 1 22 17z'/%3E%3C/svg%3E");
+}
+.aip-layer-toggle.active .aip-icon-weather {
+  transform: scale(1.1);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41'/%3E%3Cpath d='M22 17a3 3 0 0 1-3 3H9a5 5 0 0 1-5-5 5 5 0 0 1 5-5h1.23a4 4 0 0 1 7.77 2A3 3 0 0 1 22 17z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41'/%3E%3Cpath d='M22 17a3 3 0 0 1-3 3H9a5 5 0 0 1-5-5 5 5 0 0 1 5-5h1.23a4 4 0 0 1 7.77 2A3 3 0 0 1 22 17z'/%3E%3C/svg%3E");
 }

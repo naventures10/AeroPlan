@@ -138,15 +138,17 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
     ZOOM_THRESHOLDS.slice()
       .reverse()
       .find((z) => currentZoom >= z) || 0;
+  const isLayerActive = ctx.activeLayers.airspaces;
 
   return [
     new MVTLayer({
       id: 'airspace-basemap-layer',
       data: `${window.location.origin}/tiles/airspaces_geometry/{z}/{x}/{y}`,
       visible: ctx.viewMode === 'ENROUTE',
-      pickable: true,
+      pickable: isLayerActive,
       autoHighlight: false,
       getFillColor: (f: any) => {
+        if (!isLayerActive) return [0, 0, 0, 0];
         const props = f.properties || {};
         const type = (props.airspace_type || '').toString().toUpperCase();
 
@@ -161,6 +163,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
         return [0, 0, 0, 0];
       },
       getLineColor: (f: any) => {
+        if (!isLayerActive) return [0, 0, 0, 0];
         const type = inferAirspaceType(f);
         const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = ctx.activeLayers;
         const h = getHierarchy(type);
@@ -196,18 +199,34 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       lineWidthMinPixels: 1,
       minZoom: 2,
       updateTriggers: {
-        getFillColor: [ctx.viewMode, ctx.activeLayers, effectiveZoom, ctx.highlightedAirspaceId],
-        getLineColor: [ctx.viewMode, ctx.activeLayers, effectiveZoom, ctx.highlightedAirspaceId],
+        getFillColor: [
+          ctx.viewMode,
+          ctx.activeLayers,
+          effectiveZoom,
+          ctx.highlightedAirspaceId,
+          isLayerActive,
+        ],
+        getLineColor: [
+          ctx.viewMode,
+          ctx.activeLayers,
+          effectiveZoom,
+          ctx.highlightedAirspaceId,
+          isLayerActive,
+        ],
         getLineWidth: [ctx.highlightedAirspaceId],
       },
       binary: true,
+      transitions: {
+        getFillColor: 300,
+        getLineColor: 300,
+      },
     }),
 
     new MVTLayer({
       id: 'airspace-metadata-layer',
       data: `${window.location.origin}/tiles/airspaces_metadata/{z}/{x}/{y}`,
       visible: ctx.viewMode === 'ENROUTE',
-      pickable: true,
+      pickable: isLayerActive,
       autoHighlight: false,
       pointType: 'text',
       // extensions: EXTENSIONS,
@@ -226,19 +245,43 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
         return 12;
       },
       getTextColor: (f: any) => {
+        if (!isLayerActive) return [0, 0, 0, 0];
+        const type = inferAirspaceType(f);
+        const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = ctx.activeLayers;
+        if (type === 'FIR' && !airspaceFIR) return [0, 0, 0, 0];
+        if (
+          ['DANGER', 'PROHIBITED', 'RESTRICTED', 'TRA', 'TSA', 'ADIZ'].includes(type) &&
+          !airspaceRegulated
+        )
+          return [0, 0, 0, 0];
+        if (['CTR', 'CTA_LOWER', 'CTA_UPPER'].includes(type) && !airspaceControl)
+          return [0, 0, 0, 0];
+        if (type === 'UPR_ZONE' && !airspaceUpr) return [0, 0, 0, 0];
+
         const id = f.properties?.id ?? f.id;
         if (ctx.highlightedAirspaceId && String(id) === ctx.highlightedAirspaceId) {
           return [255, 255, 0, 255]; // Bright yellow text for selection
         }
-        const type = inferAirspaceType(f);
+        const typeUpper = inferAirspaceType(f);
 
-        const baseColor = AIRSPACE_COLORS[type]?.stroke ?? DEFAULT_STROKE;
+        const baseColor = AIRSPACE_COLORS[typeUpper]?.stroke ?? DEFAULT_STROKE;
         return [baseColor[0], baseColor[1], baseColor[2], 255];
       },
       background: true,
       getBackgroundColor: (f: any) => {
-        // Fast path check to avoid full string processing
+        if (!isLayerActive) return [0, 0, 0, 0];
         const type = inferAirspaceType(f);
+        const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = ctx.activeLayers;
+        if (type === 'FIR' && !airspaceFIR) return [0, 0, 0, 0];
+        if (
+          ['DANGER', 'PROHIBITED', 'RESTRICTED', 'TRA', 'TSA', 'ADIZ'].includes(type) &&
+          !airspaceRegulated
+        )
+          return [0, 0, 0, 0];
+        if (['CTR', 'CTA_LOWER', 'CTA_UPPER'].includes(type) && !airspaceControl)
+          return [0, 0, 0, 0];
+        if (type === 'UPR_ZONE' && !airspaceUpr) return [0, 0, 0, 0];
+
         if (effectiveZoom < getHierarchy(type).minZoom) return [0, 0, 0, 0];
 
         const props = f.properties || {};
@@ -252,8 +295,19 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       },
       getBorderWidth: 2,
       getBorderColor: (f: any) => {
-        // Fast path check
+        if (!isLayerActive) return [0, 0, 0, 0];
         const type = inferAirspaceType(f);
+        const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = ctx.activeLayers;
+        if (type === 'FIR' && !airspaceFIR) return [0, 0, 0, 0];
+        if (
+          ['DANGER', 'PROHIBITED', 'RESTRICTED', 'TRA', 'TSA', 'ADIZ'].includes(type) &&
+          !airspaceRegulated
+        )
+          return [0, 0, 0, 0];
+        if (['CTR', 'CTA_LOWER', 'CTA_UPPER'].includes(type) && !airspaceControl)
+          return [0, 0, 0, 0];
+        if (type === 'UPR_ZONE' && !airspaceUpr) return [0, 0, 0, 0];
+
         if (effectiveZoom < getHierarchy(type).minZoom) return [0, 0, 0, 0];
 
         const id = f.properties?.id ?? f.id;
@@ -277,11 +331,21 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       updateTriggers: {
         getText: [ctx.activeLayers, effectiveZoom],
         getTextSize: [ctx.activeLayers, effectiveZoom],
-        getTextColor: [ctx.highlightedAirspaceId, effectiveZoom],
-        getBackgroundColor: [ctx.highlightedAirspaceId, effectiveZoom],
-        getBorderColor: [ctx.highlightedAirspaceId, effectiveZoom],
+        getTextColor: [ctx.highlightedAirspaceId, effectiveZoom, ctx.activeLayers, isLayerActive],
+        getBackgroundColor: [
+          ctx.highlightedAirspaceId,
+          effectiveZoom,
+          ctx.activeLayers,
+          isLayerActive,
+        ],
+        getBorderColor: [ctx.highlightedAirspaceId, effectiveZoom, ctx.activeLayers, isLayerActive],
       },
       binary: false,
+      transitions: {
+        getTextColor: 300,
+        getBackgroundColor: 300,
+        getBorderColor: 300,
+      },
     }),
   ];
 }
