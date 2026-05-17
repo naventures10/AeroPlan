@@ -56,7 +56,7 @@ export function createAerodromeLayers(
       sizeUnits: 'pixels',
       getColor: isLayerActive ? [255, 255, 255, 230] : [255, 255, 255, 0],
       getPixelOffset: [0, 20],
-      fontFamily: 'Inter, sans-serif',
+      fontFamily: 'Geist, sans-serif',
       fontWeight: 700,
       outlineWidth: 2,
       outlineColor: isLayerActive ? [0, 0, 0, 180] : [0, 0, 0, 0],

@@ -127,7 +127,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
       getLineColor: (d: any) => {
         const isSelected = selectedRouteIds.includes(d.properties.route_id);
         if (isSelected) {
-          return isLayerActive ? [255, 255, 255, 255] : [255, 255, 255, 0];
+          return [255, 255, 255, 255];
         }
         if (!isLayerActive) return [0, 0, 0, 0];
         return d.properties.route_type === 'RNAV' ? [50, 205, 50, 60] : [34, 211, 238, 60];
@@ -300,7 +300,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
           }
           return glowColor(baseRgb, getLabelIntensity(d, ctx), selectedRouteType);
         },
-        fontFamily: 'Inter, sans-serif',
+        fontFamily: 'Geist, sans-serif',
         fontWeight: 700,
         extensions: EXTENSIONS,
         collisionGroup: 'ats-labels',
@@ -364,7 +364,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         return isLayerActive ? [150, 150, 150, 150] : [0, 0, 0, 0];
       },
       getTextPixelOffset: [0, -18],
-      textFontFamily: 'Inter, sans-serif',
+      textFontFamily: 'Geist, sans-serif',
       textFontWeight: 600,
       onClick: (info: any) => {
         if (info.object && info.object.properties.route_ids) {

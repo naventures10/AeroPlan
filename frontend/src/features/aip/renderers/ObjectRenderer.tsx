@@ -91,8 +91,7 @@ export default function ObjectRenderer({ data, columnConfig }: ObjectRendererPro
                   {row.label}
                 </td>
                 <td
-                  className="px-4 py-3 text-zinc-200 text-[13px] leading-relaxed align-top"
-                  style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                  className="px-4 py-3 text-zinc-200 text-[13px] leading-relaxed align-top whitespace-pre-wrap break-words"
                   dangerouslySetInnerHTML={{
                     __html: sanitizeHtml(
                       displayValue

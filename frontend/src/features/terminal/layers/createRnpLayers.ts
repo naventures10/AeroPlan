@@ -358,7 +358,7 @@ export function createRnpLayers({
         getTextAnchor: 'start',
         getAlignmentBaseline: 'center',
         getPixelOffset: [12, 0],
-        fontFamily: 'Inter, sans-serif',
+        fontFamily: 'Geist, sans-serif',
         fontWeight: 600,
         outlineWidth: 2,
         outlineColor: [0, 0, 0, 200],

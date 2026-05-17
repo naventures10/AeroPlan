@@ -326,7 +326,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       fontWeight: 600,
       fontStyle: 'italic',
       textFontSettings: { sdf: false },
-      textFontFamily: 'Inter, sans-serif',
+      textFontFamily: 'Geist, sans-serif',
       minZoom: 2,
       updateTriggers: {
         getText: [ctx.activeLayers, effectiveZoom],

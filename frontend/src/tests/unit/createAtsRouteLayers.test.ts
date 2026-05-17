@@ -151,6 +151,30 @@ describe('createAtsRouteLayers', () => {
     expect(ctx.setSelectedRouteIds).not.toHaveBeenCalled();
   });
 
+  it('handles selected route when layer is inactive', () => {
+    const ctx = {
+      viewMode: 'ENROUTE',
+      viewState: { zoom: 8 },
+      activeLayers: {
+        atsRoutes: false,
+      },
+      selectedRouteIds: ['A1'],
+      selectedFeature: { type: 'ATS_ROUTE', data: { route_id: 'A1' } },
+      selectedRouteType: 'RNAV',
+      animatedTrips: [],
+      currentTime: 0,
+      atsRouteLabels: null,
+      setSelectedRouteIds: vi.fn(),
+      setSelectedFeature: vi.fn(),
+    };
+
+    const layers = createAtsRouteLayers(ctx as any);
+    const mvtRoutes = layers[0];
+    const feature = { properties: { route_id: 'A1', route_type: 'RNAV' } };
+    expect(mvtRoutes.props.getLineColor(feature)).toEqual([255, 255, 255, 255]); // selected even when inactive
+    expect(mvtRoutes.props.getLineWidth(feature)).toBeGreaterThan(0);
+  });
+
   it('handles selected waypoints in trip colors and icon color', () => {
     const ctx = {
       viewMode: 'ENROUTE',

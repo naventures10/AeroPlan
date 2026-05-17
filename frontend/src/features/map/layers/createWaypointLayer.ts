@@ -60,7 +60,7 @@ export function createWaypointLayer(ctx: LayerContext): any[] {
       },
       getTextColor: isLayerActive ? [220, 220, 220, 255] : [220, 220, 220, 0],
       getTextPixelOffset: [0, -15],
-      textFontFamily: 'Inter, sans-serif',
+      textFontFamily: 'Geist, sans-serif',
       textFontWeight: 600,
       onClick: (info: any) => {
         if (info.object && info.object.properties) {

@@ -55,7 +55,7 @@ export function createNavaidLayer(ctx: LayerContext): any[] {
       getTextSize: isZoomNavaids ? 12 : 0,
       getTextColor: isLayerActive ? [52, 211, 153, 255] : [52, 211, 153, 0],
       getTextPixelOffset: [0, 20],
-      textFontFamily: 'Inter, sans-serif',
+      textFontFamily: 'Geist, sans-serif',
       textFontWeight: 600,
       onClick: (info: any) => {
         if (info.object && info.object.properties) {

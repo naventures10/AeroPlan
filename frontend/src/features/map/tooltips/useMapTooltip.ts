@@ -43,7 +43,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
             );
             if (twrComms.length > 0) {
               commsHtml =
-                '<div style="margin-top:4px;">' +
+                '<div class="aip-tooltip-spacing-sm">' +
                 twrComms
                   .map((c: any) => row(c.service_type || 'FREQ', `${c.frequency} (${c.call_sign})`))
                   .join('') +
@@ -60,7 +60,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
             : '';
 
         return {
-          html: sanitizeHtml(`<div class="aip-tooltip-container" style="max-width:300px;">
+          html: sanitizeHtml(`<div class="aip-tooltip-container aip-tooltip-max-300">
             <span class="aip-tooltip-title">${p.name || p.icao_code}</span>
             <span class="aip-tooltip-subtitle">
               ICAO: <span class="aip-tooltip-accent">${p.icao_code}</span> | ELEV: <span class="aip-tooltip-accent">${enrouteElev ? enrouteElev + ' FT' : 'N/A'}</span>
@@ -76,13 +76,13 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
         const routes = p.routes ? p.routes.replace(/[{"'}]/g, '').split(',') : [];
         const routesDisplay =
           routes.length > 0 && routes[0] !== ''
-            ? `<div style="margin-top:6px;" class="aip-tooltip-subtitle">ROUTES: <span style="color:#d8b4fe; font-weight:600;">${routes.join(', ')}</span></div>`
+            ? `<div class="aip-tooltip-subtitle aip-tooltip-spacing-md">ROUTES: <span class="aip-tooltip-route-list">${routes.join(', ')}</span></div>`
             : '';
 
         return {
-          html: sanitizeHtml(`<div class="aip-tooltip-container" style="max-width:250px;">
+          html: sanitizeHtml(`<div class="aip-tooltip-container aip-tooltip-max-250">
               <span class="aip-tooltip-title">${p.waypoint_name || 'WAYPOINT'}</span>
-              <span class="aip-tooltip-subtitle" style="font-weight:600;letter-spacing:.1em;">SIGNIFICANT POINT</span>
+              <span class="aip-tooltip-subtitle aip-tooltip-sig-point">SIGNIFICANT POINT</span>
               <span class="aip-tooltip-mono">${p.raw_coordinates?.replace(/\\\\n/g, '') || ''}</span>
               ${routesDisplay}
             </div>`),
@@ -91,19 +91,19 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
         const p = object.properties ?? {};
         const hours =
           p.hours_of_operation && p.hours_of_operation !== 'None'
-            ? `<div class="aip-tooltip-mono" style="margin-top:4px;">HOURS: ${p.hours_of_operation}</div>`
+            ? `<div class="aip-tooltip-mono aip-tooltip-spacing-sm">HOURS: ${p.hours_of_operation}</div>`
             : '';
         const elev =
           p.elevation && p.elevation !== 'None'
-            ? `<span class="aip-tooltip-mono" style="margin-left:8px;">ELEV: ${p.elevation.replace(/\\\\n/g, '')}</span>`
+            ? `<span class="aip-tooltip-mono aip-tooltip-spacing-left-sm">ELEV: ${p.elevation.replace(/\\\\n/g, '')}</span>`
             : '';
 
         return {
-          html: sanitizeHtml(`<div class="aip-tooltip-container" style="max-width:260px;">
-              <span class="aip-tooltip-title">${p.station_name || ''} <span class="aip-tooltip-subtitle" style="font-size:inherit;">${p.aid_type || ''}</span></span>
-              <div style="display:flex;align-items:center;margin-top:2px;">
+          html: sanitizeHtml(`<div class="aip-tooltip-container aip-tooltip-max-260">
+              <span class="aip-tooltip-title">${p.station_name || ''} <span class="aip-tooltip-subtitle">${p.aid_type || ''}</span></span>
+              <div class="aip-tooltip-badge-row">
                   <span class="aip-tooltip-badge">${p.ident || 'UNK'}</span>
-                  <span style="color:#f4f4f5;font-size:11px;font-weight:700;">${p.frequency || ''}</span>
+                  <span class="aip-tooltip-badge-val">${p.frequency || ''}</span>
               </div>
               <span class="aip-tooltip-mono">${p.raw_coordinates?.replace(/\\\\n/g, '') || ''}${elev}</span>
               ${hours}
@@ -120,11 +120,11 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
           : '↔ TWO-WAY';
         const meainfo =
           p.mea && p.mea !== 'None'
-            ? `<span class="aip-tooltip-subtitle" style="font-weight:600;color:#22c55e;">MEA: <span class="aip-tooltip-row-val">${p.mea}</span></span>`
+            ? `<span class="aip-tooltip-subtitle aip-tooltip-route-type">MEA: <span class="aip-tooltip-row-val">${p.mea}</span></span>`
             : '';
         const limitStr =
           (p.upper_limit && p.upper_limit !== 'None') || (p.lower_limit && p.lower_limit !== 'None')
-            ? `<span class="aip-tooltip-subtitle" style="margin-top:2px;">LIMITS: ${p.lower_limit || 'SFC'} - ${p.upper_limit || 'UNL'}</span>`
+            ? `<span class="aip-tooltip-subtitle aip-tooltip-spacing-sm">LIMITS: ${p.lower_limit || 'SFC'} - ${p.upper_limit || 'UNL'}</span>`
             : '';
         const trackStr =
           p.track_magnetic &&
@@ -135,11 +135,11 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
             : '';
 
         return {
-          html: sanitizeHtml(`<div class="aip-tooltip-container" style="max-width:250px;">
+          html: sanitizeHtml(`<div class="aip-tooltip-container aip-tooltip-max-250">
               <span class="aip-tooltip-title">ROUTE ${p.route_designator || p.route_id || 'UNKNOWN'}</span>
-              <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <span class="aip-tooltip-subtitle" style="font-weight:600;letter-spacing:.1em;color:#22d3ee;">${p.route_type || 'AIRWAY'}</span>
-                  <span class="aip-tooltip-subtitle" style="font-weight:700;">${directionStr}</span>
+              <div class="aip-tooltip-flex-between">
+                  <span class="aip-tooltip-subtitle aip-tooltip-route-type">${p.route_type || 'AIRWAY'}</span>
+                  <span class="aip-tooltip-subtitle aip-tooltip-bold">${directionStr}</span>
               </div>
               ${meainfo}
               ${limitStr}
@@ -156,9 +156,9 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
         if (!activeLayers.atsRoutes && !routes.some((r: string) => selectedRouteIds.includes(r)))
           return null;
         return {
-          html: sanitizeHtml(`<div class="aip-tooltip-container" style="max-width:250px;">
+          html: sanitizeHtml(`<div class="aip-tooltip-container aip-tooltip-max-250">
               <span class="aip-tooltip-title">${p.waypoint_name || 'WAYPOINT'}</span>
-              <span class="aip-tooltip-subtitle" style="font-weight:600;letter-spacing:.1em;color:#22d3ee;">INTERSECTING: ${routes.join(', ')}</span>
+              <span class="aip-tooltip-subtitle aip-tooltip-route-type">INTERSECTING: ${routes.join(', ')}</span>
             </div>`),
         };
       } else if (object && layer?.id === 'airspace-metadata-layer') {
@@ -168,10 +168,10 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
         const limits = `${p.lower_limit || 'SFC'} - ${p.upper_limit || 'UNL'}`;
 
         return {
-          html: sanitizeHtml(`<div class="aip-tooltip-container" style="max-width:250px;">
+          html: sanitizeHtml(`<div class="aip-tooltip-container aip-tooltip-max-250">
               <span class="aip-tooltip-title">${name}</span>
-              <span class="aip-tooltip-subtitle" style="font-weight:600;letter-spacing:.1em;color:#fbbf24;">${type.replace(/_/g, ' ')}</span>
-              <span class="aip-tooltip-subtitle" style="margin-top:2px;">LIMITS: <span class="aip-tooltip-row-val">${limits}</span></span>
+              <span class="aip-tooltip-subtitle aip-tooltip-airspace-type">${type.replace(/_/g, ' ')}</span>
+              <span class="aip-tooltip-subtitle aip-tooltip-spacing-sm">LIMITS: <span class="aip-tooltip-row-val">${limits}</span></span>
             </div>`),
         };
       }
@@ -305,11 +305,8 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
                 }
               }
 
-              const separator =
-                k > 0
-                  ? 'margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 12px;'
-                  : '';
-              htmlContent += `<div style="${separator}" class="aip-tooltip-container">
+              const separatorClass = k > 0 ? 'aip-tooltip-multi-separator' : '';
+              htmlContent += `<div class="${separatorClass} aip-tooltip-container">
                 <span class="aip-tooltip-title">${name}</span>
                 <span class="aip-tooltip-subtitle">ELEVATION: <span class="aip-tooltip-accent">${elevStr}</span></span>
                 <span class="aip-tooltip-status">${categoryDisplay}</span>
@@ -319,7 +316,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
 
             return {
               html: sanitizeHtml(
-                `<div class="aip-scrollbar" style="max-height: 400px; overflow-y: auto; max-width:300px; padding-right: 8px;">${htmlContent}</div>`,
+                `<div class="aip-scrollbar aip-tooltip-scroll-container">${htmlContent}</div>`,
               ),
             };
           }

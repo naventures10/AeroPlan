@@ -96,16 +96,12 @@ export function FeatureInfoCard() {
 
   // Use wider card for ATS routes to fit the table
   const isRoute = type === 'ATS_ROUTE';
-  const cardWidth = isRoute ? 'w-[560px] max-w-[92vw]' : 'w-72';
-  const cardPosition = 'top-6 right-6';
 
   const routeTypeBadge =
     isRoute && routeDetails?.route_type ? (
       <span
-        className={`ml-2 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider ${
-          routeDetails.route_type === 'RNAV'
-            ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-            : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+        className={`aip-route-badge ${
+          routeDetails.route_type === 'RNAV' ? 'aip-route-badge-rnav' : 'aip-route-badge-ats'
         }`}
       >
         {routeDetails.route_type}
@@ -122,18 +118,16 @@ export function FeatureInfoCard() {
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 50, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className={`absolute ${cardPosition} z-50 ${cardWidth}`}
+          className={`aip-feature-card-wrapper ${isRoute ? 'is-route' : ''}`}
         >
-          <Card className="aip-feature-card max-h-[calc(100vh-180px)] flex flex-col">
-            <CardHeader className="flex justify-between items-center pb-1.5 pt-3 px-3">
+          <Card className="aip-feature-card">
+            <CardHeader className="aip-feature-card-header">
               <div className="flex flex-col">
                 <div className="flex items-center gap-1">
-                  <span className="text-[9px] text-primary-500 font-bold tracking-widest uppercase mb-0.5">
-                    {type.replace('_', ' ')}
-                  </span>
+                  <span className="aip-feature-card-type">{type.replace('_', ' ')}</span>
                   {routeTypeBadge}
                 </div>
-                <h3 className="text-sm font-bold text-white tracking-wide">{title}</h3>
+                <h3 className="aip-feature-card-title">{title}</h3>
               </div>
               <Button
                 data-testid="close-feature-card"
@@ -146,13 +140,13 @@ export function FeatureInfoCard() {
                     setHighlightedAirspaceId(null);
                   }
                 }}
-                className="text-default-400 hover:text-white"
+                className="aip-feature-card-close"
               >
                 <X size={18} />
               </Button>
             </CardHeader>
-            <Divider className="bg-white/10 mx-3 w-auto" />
-            <CardBody className="px-3 py-2.5 max-h-[60vh] overflow-y-auto custom-scrollbar">
+            <Divider className="aip-feature-card-divider" />
+            <CardBody className="aip-feature-card-body custom-scrollbar">
               {type === 'ATS_ROUTE' && (
                 <RouteDetailsPanel
                   isLoadingRoute={isLoadingRoute}
