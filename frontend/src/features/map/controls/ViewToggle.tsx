@@ -44,10 +44,10 @@ export default function ViewToggle() {
                   setViewState({ ...viewState, zoom: 7.5, transitionDuration: 1500 });
                 }
               }}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl backdrop-blur-xl shadow-xl transition duration-300 whitespace-nowrap ${
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl backdrop-blur-xl shadow-xl transition duration-300 whitespace-nowrap border ${
                 activeLayers.wacMap
-                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50'
-                  : 'bg-zinc-950/80 text-zinc-400 border border-zinc-800 hover:bg-zinc-800 hover:text-zinc-200'
+                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                  : 'bg-[var(--glass-bg-heavy)] text-zinc-400 border-[var(--glass-border)] hover:bg-white/[0.04] hover:text-zinc-200'
               }`}
             >
               <MapPin size={16} />
@@ -62,10 +62,10 @@ export default function ViewToggle() {
                   setViewState({ ...viewState, zoom: 7.5, transitionDuration: 1500 });
                 }
               }}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl backdrop-blur-xl shadow-xl transition duration-300 whitespace-nowrap ${
+              className={`flex items-center gap-3 px-4 py-2.5 rounded-xl backdrop-blur-xl shadow-xl transition duration-300 whitespace-nowrap border ${
                 activeLayers.ercMap
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
-                  : 'bg-zinc-950/80 text-zinc-400 border border-zinc-800 hover:bg-zinc-800 hover:text-zinc-200'
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                  : 'bg-[var(--glass-bg-heavy)] text-zinc-400 border-[var(--glass-border)] hover:bg-white/[0.04] hover:text-zinc-200'
               }`}
             >
               <Navigation size={16} />
@@ -77,10 +77,10 @@ export default function ViewToggle() {
           <button
             onClick={() => setIsMapMenuOpen(!isMapMenuOpen)}
             title="Map Overlays"
-            className={`flex items-center justify-center w-12 h-12 rounded-full backdrop-blur-xl shadow-xl transition duration-300 focus:outline-none ${
+            className={`flex items-center justify-center w-12 h-12 rounded-full backdrop-blur-xl shadow-xl transition duration-300 focus:outline-none border ${
               activeLayers.wacMap || activeLayers.ercMap
-                ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
-                : 'bg-zinc-950/40 border border-zinc-800/60 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60 opacity-80'
+                ? 'bg-[var(--accent-cyan-glow)] text-[var(--accent-cyan)] border-[var(--accent-cyan)] shadow-[0_0_15px_var(--accent-cyan-glow)]'
+                : 'bg-[var(--glass-bg)] border-[var(--glass-border)] text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04] opacity-90'
             }`}
           >
             <Layers size={20} strokeWidth={2} />
@@ -98,7 +98,7 @@ export default function ViewToggle() {
               transitionDuration: 1000,
             });
           }}
-          className="relative w-12 h-12 group focus:outline-none"
+          className="relative w-12 h-12 group focus:outline-none transition-transform hover:scale-105 duration-200"
           style={{ perspective: '1000px' }}
           title="Toggle View Mode"
         >
@@ -111,47 +111,48 @@ export default function ViewToggle() {
           >
             {/* 2D Face (Front) */}
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 border border-zinc-700/80 shadow-xl"
+              className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--glass-bg-heavy)] backdrop-blur-xl border border-[var(--glass-border)] rounded-xl shadow-xl transition-all duration-300 group-hover:border-[var(--glass-border-highlight)]"
               style={{ transform: 'translateZ(24px)' }}
             >
               <MapIcon
-                className="text-zinc-200 group-hover:text-white transition-colors"
+                className="text-zinc-300 group-hover:text-white transition-colors"
                 size={20}
                 strokeWidth={2}
               />
-              <span className="text-[10px] font-bold text-zinc-500 tracking-widest mt-0.5">2D</span>
+              <span className="text-[9px] font-bold text-zinc-500 tracking-widest mt-0.5">2D</span>
             </div>
 
             {/* 3D Face (Top) */}
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center bg-indigo-600 border border-indigo-400 shadow-[0_0_20px_rgba(79,70,229,0.3)]"
-              style={{ transform: 'rotateX(90deg) translateZ(24px)' }}
+              className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--glass-bg-heavy)] backdrop-blur-xl border border-[var(--accent-cyan)] rounded-xl transition-all duration-300 shadow-[var(--glass-shadow)]"
+              style={{
+                transform: 'rotateX(90deg) translateZ(24px)',
+                backgroundColor: 'rgba(34, 211, 238, 0.08)',
+              }}
             >
               <Building2
-                className="text-white group-hover:scale-110 transition-transform"
+                className="text-[var(--accent-cyan)] group-hover:scale-110 transition-transform duration-300"
                 size={20}
                 strokeWidth={2}
               />
-              <span className="text-[10px] font-bold text-indigo-100 tracking-widest mt-0.5">
-                3D
-              </span>
+              <span className="text-[9px] font-bold text-cyan-200 tracking-widest mt-0.5">3D</span>
             </div>
 
-            {/* Cube Sides */}
+            {/* Cube Sides (Hollow Glass Panels) */}
             <div
-              className="absolute inset-0 bg-zinc-950 border border-zinc-800/50"
+              className="absolute inset-0 bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] rounded-xl opacity-30"
               style={{ transform: 'rotateX(-90deg) translateZ(24px)' }}
             />
             <div
-              className="absolute inset-0 bg-zinc-900 border border-zinc-800/50"
+              className="absolute inset-0 bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] rounded-xl opacity-30"
               style={{ transform: 'rotateY(90deg) translateZ(24px)' }}
             />
             <div
-              className="absolute inset-0 bg-zinc-900 border border-zinc-800/50"
+              className="absolute inset-0 bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] rounded-xl opacity-30"
               style={{ transform: 'rotateY(-90deg) translateZ(24px)' }}
             />
             <div
-              className="absolute inset-0 bg-zinc-950 border border-zinc-800/50"
+              className="absolute inset-0 bg-[var(--glass-bg)] backdrop-blur-md border border-[var(--glass-border)] rounded-xl opacity-30"
               style={{ transform: 'rotateY(180deg) translateZ(24px)' }}
             />
           </div>
