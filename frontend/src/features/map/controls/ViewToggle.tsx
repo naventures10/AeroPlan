@@ -127,7 +127,7 @@ export default function ViewToggle() {
               className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--glass-bg-heavy)] backdrop-blur-xl border border-[var(--accent-cyan)] rounded-xl transition-all duration-300 shadow-[var(--glass-shadow)]"
               style={{
                 transform: 'rotateX(90deg) translateZ(24px)',
-                backgroundColor: 'rgba(34, 211, 238, 0.08)',
+                backgroundColor: 'var(--accent-cyan-opacity-10)',
               }}
             >
               <Building2

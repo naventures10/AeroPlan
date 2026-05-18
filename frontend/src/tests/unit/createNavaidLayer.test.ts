@@ -34,7 +34,7 @@ describe('createNavaidLayer', () => {
     const highlightLayers = createNavaidLayer(highlightCtx as any);
     // Highlighted icon color (Neon Cyan -> [0, 255, 255, 255])
     expect(highlightLayers[0].props.getIconColor({ properties: { ident: 'TEST' } })).toEqual([
-      0, 255, 255, 255,
+      205, 193, 255, 255,
     ]);
     expect(highlightLayers[0].props.getIconColor({ properties: { ident: 'OTHER' } })).toEqual([
       52, 211, 153, 255,

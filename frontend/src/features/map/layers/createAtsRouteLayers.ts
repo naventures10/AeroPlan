@@ -130,7 +130,9 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
           return [255, 255, 255, 255];
         }
         if (!isLayerActive) return [0, 0, 0, 0];
-        return d.properties.route_type === 'RNAV' ? [50, 205, 50, 60] : [34, 211, 238, 60];
+        return d.properties.route_type === 'RNAV'
+          ? [50, 205, 50, 60]
+          : [RGB_ATS_CYAN[0], RGB_ATS_CYAN[1], RGB_ATS_CYAN[2], 60];
       },
       getLineWidth: (d: any) => {
         const isSelected = selectedRouteIds.includes(d.properties.route_id);
@@ -178,7 +180,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         getTimestamps: (d: any) => d.path.map((p: any) => p[2]),
         getColor: (d: any) => {
           if (selectedRouteType === 'WAYPOINT') return [192, 132, 252];
-          return d.route_type === 'RNAV' ? [50, 205, 50] : [0, 255, 255];
+          return d.route_type === 'RNAV' ? [50, 205, 50] : RGB_ATS_CYAN;
         },
         opacity: 1,
         widthMinPixels: 4,

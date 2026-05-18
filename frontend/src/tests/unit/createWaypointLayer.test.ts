@@ -29,7 +29,7 @@ describe('createWaypointLayer', () => {
     const highlightLayers = createWaypointLayer(highlightCtx as any);
     expect(
       highlightLayers[0].props.getIconColor({ properties: { waypoint_name: 'TEST' } }),
-    ).toEqual([0, 255, 255, 255]);
+    ).toEqual([205, 193, 255, 255]);
     expect(highlightLayers[0].props.getIconSize({ properties: { waypoint_name: 'TEST' } })).toBe(
       16,
     );

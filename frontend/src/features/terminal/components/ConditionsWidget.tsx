@@ -105,7 +105,7 @@ export function ConditionsWidget({
             <div className="w-full bg-white/[0.06] h-1 rounded-full overflow-hidden">
               {parsedMetar.visibility && (
                 <div
-                  className="bg-cyan-400 h-full shadow-[0_0_8px_rgba(34,211,238,0.5)]"
+                  className="bg-cyan-400 h-full shadow-[0_0_8px_var(--accent-cyan-glow)]"
                   style={{
                     width: parsedMetar.visibility.includes('>')
                       ? '100%'

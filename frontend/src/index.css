@@ -34,8 +34,20 @@
   --surface-variant: #2d3449;
 
   /* Accent & Semantic Colors */
-  --accent-cyan: #22d3ee;
-  --accent-cyan-glow: rgba(34, 211, 238, 0.5);
+  --accent-cyan: #cdc1ff;
+  --accent-cyan-glow: rgba(205, 193, 255, 0.5);
+  --accent-cyan-opacity-10: rgba(205, 193, 255, 0.1);
+  --accent-cyan-opacity-20: rgba(205, 193, 255, 0.2);
+  --accent-cyan-opacity-30: rgba(205, 193, 255, 0.3);
+
+  --accent-cyan-50: #f5f3ff;
+  --accent-cyan-100: #ede9fe;
+  --accent-cyan-200: #ddd6fe;
+  --accent-cyan-300: #c4b5fd;
+  --accent-cyan-600: #7c3aed;
+  --accent-cyan-700: #6d28d9;
+  --accent-cyan-800: #5b21b6;
+  --accent-cyan-900: #4c1d95;
 
   --status-success: #10b981;
   --status-warning: #f59e0b;
@@ -43,7 +55,7 @@
   --status-idle: #64748b;
 
   --route-rnav: #4ade80;
-  --route-ats: #22d3ee;
+  --route-ats: var(--accent-cyan);
   --airspace-type: #fbbf24;
 
   /* Glassmorphism Variables */
@@ -1235,9 +1247,9 @@ body,
 }
 
 .aip-route-badge-ats {
-  background: rgba(34, 211, 238, 0.2);
+  background: var(--accent-cyan-opacity-20);
   color: var(--route-ats);
-  border: 1px solid rgba(34, 211, 238, 0.3);
+  border: 1px solid var(--accent-cyan-opacity-30);
 }
 
 .route-th {
@@ -1321,7 +1333,7 @@ body,
   color: var(--primary);
 }
 .aip-dropdown-trigger.active {
-  background: rgba(34, 211, 238, 0.1);
+  background: var(--accent-cyan-opacity-10);
   border-color: var(--accent-cyan-glow);
   color: var(--accent-cyan);
   box-shadow: 0 0 15px var(--accent-cyan-glow);
@@ -1405,7 +1417,7 @@ body,
 }
 .terminal-dashboard-tab.active {
   color: var(--accent-cyan);
-  background: rgba(34, 211, 238, 0.1);
+  background: var(--accent-cyan-opacity-10);
 }
 
 .terminal-dashboard-panel {
@@ -1451,7 +1463,7 @@ body,
   flex-shrink: 0;
   padding: 0.25rem 0.625rem;
   border-radius: 0.375rem;
-  background: rgba(34, 211, 238, 0.1);
+  background: var(--accent-cyan-opacity-10);
   border: 1px solid var(--accent-cyan-glow);
   color: var(--accent-cyan);
   font-size: 11px;

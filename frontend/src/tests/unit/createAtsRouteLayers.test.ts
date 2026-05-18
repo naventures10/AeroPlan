@@ -51,7 +51,7 @@ describe('createAtsRouteLayers', () => {
     expect(mvtRoutes.props.getLineWidth(routeFeature)).toBeGreaterThan(0);
 
     const unselectedFeature = { properties: { route_id: 'B2', route_type: 'CONV' } };
-    expect(mvtRoutes.props.getLineColor(unselectedFeature)).toEqual([34, 211, 238, 60]); // unselected
+    expect(mvtRoutes.props.getLineColor(unselectedFeature)).toEqual([205, 193, 255, 60]); // unselected
 
     // Testing missing lateral limits default
     const noLimitFeature = { properties: { route_id: 'C3', route_type: 'RNAV' } };
@@ -73,7 +73,7 @@ describe('createAtsRouteLayers', () => {
     expect(tripsLayer.props.getPath({ path: [[0, 0, 1]] })).toEqual([[0, 0]]);
     expect(tripsLayer.props.getTimestamps({ path: [[0, 0, 1]] })).toEqual([1]);
     expect(tripsLayer.props.getColor({ route_type: 'RNAV' })).toEqual([50, 205, 50]);
-    expect(tripsLayer.props.getColor({ route_type: 'CONV' })).toEqual([0, 255, 255]);
+    expect(tripsLayer.props.getColor({ route_type: 'CONV' })).toEqual([205, 193, 255]);
 
     const mvtWaypoints = layers[5];
     expect(mvtWaypoints.id).toBe('atsRoutes-waypoints-layer');
@@ -106,7 +106,7 @@ describe('createAtsRouteLayers', () => {
     const labelHexLayer = layers[3]; // ats-route-labels-hex-layer
     expect(
       labelHexLayer.props.getColor({ properties: { route_id: 'B2', route_type: 'CONV' } }),
-    ).toEqual([34, 211, 238, 140]);
+    ).toEqual([205, 193, 255, 140]);
   });
 
   it('handles hidden layer state and unselected logic', () => {
