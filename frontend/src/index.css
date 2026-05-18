@@ -55,7 +55,7 @@
   --status-idle: #64748b;
 
   --route-rnav: #4ade80;
-  --route-ats: var(--accent-cyan);
+  --route-ats: #22d3ee;
   --airspace-type: #fbbf24;
 
   /* Glassmorphism Variables */
@@ -1247,9 +1247,9 @@ body,
 }
 
 .aip-route-badge-ats {
-  background: var(--accent-cyan-opacity-20);
+  background: rgba(34, 211, 238, 0.2);
   color: var(--route-ats);
-  border: 1px solid var(--accent-cyan-opacity-30);
+  border: 1px solid rgba(34, 211, 238, 0.3);
 }
 
 .route-th {

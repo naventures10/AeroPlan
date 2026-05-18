@@ -14,7 +14,7 @@ import { getDistanceNm } from '../utils/routeAnimation';
 import {
   EXTENSIONS,
   ZOOM_ATS_WAYPOINTS,
-  COLOR_NEON_CYAN,
+  COLOR_ATS_CYAN,
   COLOR_NEON_PURPLE,
   COLOR_LIME_GREEN,
   RGB_NEON_PURPLE,
@@ -339,7 +339,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         const isSelected = routes.some((r: string) => selectedRouteIds.includes(r));
         if (isSelected) {
           if (selectedRouteType === 'WAYPOINT') return COLOR_NEON_PURPLE;
-          return selectedRouteType === 'RNAV' ? COLOR_LIME_GREEN : COLOR_NEON_CYAN;
+          return selectedRouteType === 'RNAV' ? COLOR_LIME_GREEN : COLOR_ATS_CYAN;
         }
         return isLayerActive ? [150, 150, 150, 80] : [0, 0, 0, 0];
       },
@@ -361,7 +361,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         const isSelected = routes.some((r: string) => selectedRouteIds.includes(r));
         if (isSelected) {
           if (selectedRouteType === 'WAYPOINT') return COLOR_NEON_PURPLE;
-          return selectedRouteType === 'RNAV' ? COLOR_LIME_GREEN : COLOR_NEON_CYAN;
+          return selectedRouteType === 'RNAV' ? COLOR_LIME_GREEN : COLOR_ATS_CYAN;
         }
         return isLayerActive ? [150, 150, 150, 150] : [0, 0, 0, 0];
       },
