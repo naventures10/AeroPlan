@@ -944,8 +944,29 @@ body,
   border: 1px solid var(--glass-border);
   border-radius: 1.5rem;
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7);
-  overflow: hidden;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--glass-border) transparent;
   z-index: 110;
+}
+
+.aip-search-results-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+.aip-search-results-wrapper::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+}
+.aip-search-results-wrapper::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  background-clip: padding-box;
+}
+.aip-search-results-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--glass-border-highlight);
+  background-clip: padding-box;
 }
 
 .aip-search-result-item {
