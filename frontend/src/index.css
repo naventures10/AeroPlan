@@ -34,20 +34,20 @@
   --surface-variant: #2d3449;
 
   /* Accent & Semantic Colors */
-  --accent-cyan: #cdc1ff;
-  --accent-cyan-glow: rgba(205, 193, 255, 0.5);
-  --accent-cyan-opacity-10: rgba(205, 193, 255, 0.1);
-  --accent-cyan-opacity-20: rgba(205, 193, 255, 0.2);
-  --accent-cyan-opacity-30: rgba(205, 193, 255, 0.3);
+  --accent-cyan: #5df8d8;
+  --accent-cyan-glow: rgba(93, 248, 216, 0.5);
+  --accent-cyan-opacity-10: rgba(93, 248, 216, 0.1);
+  --accent-cyan-opacity-20: rgba(93, 248, 216, 0.2);
+  --accent-cyan-opacity-30: rgba(93, 248, 216, 0.3);
 
-  --accent-cyan-50: #f5f3ff;
-  --accent-cyan-100: #ede9fe;
-  --accent-cyan-200: #ddd6fe;
-  --accent-cyan-300: #c4b5fd;
-  --accent-cyan-600: #7c3aed;
-  --accent-cyan-700: #6d28d9;
-  --accent-cyan-800: #5b21b6;
-  --accent-cyan-900: #4c1d95;
+  --accent-cyan-50: #f0fefc;
+  --accent-cyan-100: #dcfdf9;
+  --accent-cyan-200: #bcfbf1;
+  --accent-cyan-300: #9cf9e9;
+  --accent-cyan-600: #42dfc0;
+  --accent-cyan-700: #33c4a8;
+  --accent-cyan-800: #25a890;
+  --accent-cyan-900: #17816e;
 
   --status-success: #10b981;
   --status-warning: #f59e0b;

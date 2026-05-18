@@ -75,8 +75,8 @@ describe('useMapTooltip', () => {
     expect(tooltip!.html).toContain('127.9 (MUMBAI APPROACH)');
     expect(tooltip!.html).toContain('MAG VAR');
     expect(tooltip!.html).toContain('1W');
-    expect(tooltip!.html).toContain('REMARKS');
-    expect(tooltip!.html).toContain('Test Remarks');
+    expect(tooltip!.html).not.toContain('REMARKS');
+    expect(tooltip!.html).not.toContain('Test Remarks');
   });
 
   it('handles navaids layer', () => {

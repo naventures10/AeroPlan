@@ -31,7 +31,6 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
             : '';
 
         const magVarStr = row('MAG VAR', p.magnetic_variation);
-        const remarksStr = row('REMARKS', p.remarks && p.remarks !== 'None' ? p.remarks : '');
 
         let commsHtml = '';
         try {
@@ -54,10 +53,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
           /* noop */
         }
 
-        const extraInfo =
-          magVarStr || commsHtml || remarksStr
-            ? `${divider}${magVarStr}${commsHtml}${remarksStr}</div>`
-            : '';
+        const extraInfo = magVarStr || commsHtml ? `${divider}${magVarStr}${commsHtml}</div>` : '';
 
         return {
           html: sanitizeHtml(`<div class="aip-tooltip-container aip-tooltip-max-300">

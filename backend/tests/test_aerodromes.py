@@ -303,3 +303,28 @@ async def test_get_all_aerodromes_none_row0(api_client: AsyncClient, db_session)
 
     response = await api_client.get("/api/v1/aerodromes")
     assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_get_all_aerodromes_elevation_query_path(api_client: AsyncClient, db_session) -> None:
+    """Test that the SQL query extracts elevation from data->'geographical_data'->>'elevation_reference_temp'."""
+    from unittest.mock import MagicMock
+
+    captured_query = None
+
+    async def mock_execute(query_obj, *args, **kwargs):
+        nonlocal captured_query
+        captured_query = str(query_obj)
+        mock_result = MagicMock()
+        mock_result.fetchone.return_value = (None,)
+        return mock_result
+
+    db_session.execute.side_effect = mock_execute
+
+    await api_client.get("/api/v1/aerodromes")
+
+    assert captured_query is not None
+    assert (
+        "ad.aip_document->'data'->'geographical_data'->>'elevation_reference_temp'"
+        in captured_query
+    )

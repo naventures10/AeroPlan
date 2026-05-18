@@ -10,7 +10,7 @@ import { CollisionFilterExtension } from '@deck.gl/extensions';
 // ── Color Palette (RGBA tuples) ──────────────────────────────────────
 
 export const COLOR_WHITE: [number, number, number, number] = [255, 255, 255, 255];
-export const COLOR_NEON_CYAN: [number, number, number, number] = [205, 193, 255, 255];
+export const COLOR_NEON_CYAN: [number, number, number, number] = [93, 248, 216, 255];
 export const COLOR_EMERALD: [number, number, number, number] = [52, 211, 153, 255];
 export const COLOR_NEON_PURPLE: [number, number, number, number] = [192, 132, 252, 255];
 export const COLOR_LIME_GREEN: [number, number, number, number] = [50, 205, 50, 255];
