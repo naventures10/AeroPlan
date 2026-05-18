@@ -35,6 +35,8 @@ const RASTER_PAINT = {
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 const IS_E2E = import.meta.env.VITE_E2E === 'true';
 
+const BASE_MAP_LABEL_ZOOM_THRESHOLD = 8;
+
 // Mock style for E2E tests to save MapTiler quota
 const MOCK_STYLE = {
   version: 8 as const,
@@ -229,7 +231,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     }
   }, [boundsToFit, setViewState, viewState, fitBounds, viewMode]);
 
-  // 4. Hide base map labels/roads below zoom 10
+  // 4. Hide base map labels/roads below zoom 8
   const onMapLoad = useCallback((e: any) => {
     const map = e.target;
     const layers = map.getStyle()?.layers;
@@ -242,7 +244,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
           layer.id.includes('label')
         ) {
           try {
-            map.setLayerZoomRange(layer.id, TERMINAL_EXIT_ZOOM_THRESHOLD, 24);
+            map.setLayerZoomRange(layer.id, BASE_MAP_LABEL_ZOOM_THRESHOLD, 24);
           } catch (err) {
             // Some layers might not support zoom range or be removed
             console.warn(`Failed to set zoom range for ${layer.id}`, err);
