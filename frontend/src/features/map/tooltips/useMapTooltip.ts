@@ -134,11 +134,16 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
             ? `<span class="aip-tooltip-subtitle">SEGMENT: ${p.distance_nm} NM | TR: ${p.track_magnetic}</span>`
             : '';
 
+        const routeTypeClass =
+          p.route_type === 'RNAV'
+            ? 'aip-tooltip-subtitle aip-tooltip-route-type aip-tooltip-route-rnav'
+            : 'aip-tooltip-subtitle aip-tooltip-route-type';
+
         return {
           html: sanitizeHtml(`<div class="aip-tooltip-container aip-tooltip-max-250">
               <span class="aip-tooltip-title">ROUTE ${p.route_designator || p.route_id || 'UNKNOWN'}</span>
               <div class="aip-tooltip-flex-between">
-                  <span class="aip-tooltip-subtitle aip-tooltip-route-type">${p.route_type || 'AIRWAY'}</span>
+                  <span class="${routeTypeClass}">${p.route_type || 'AIRWAY'}</span>
                   <span class="aip-tooltip-subtitle aip-tooltip-bold">${directionStr}</span>
               </div>
               ${meainfo}

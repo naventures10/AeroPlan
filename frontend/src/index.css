@@ -416,6 +416,9 @@ body,
   letter-spacing: 0.1em;
   color: var(--route-ats);
 }
+.aip-tooltip-route-rnav {
+  color: var(--route-rnav) !important;
+}
 .aip-tooltip-airspace-type {
   font-weight: 600;
   letter-spacing: 0.1em;

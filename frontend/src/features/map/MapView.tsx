@@ -35,7 +35,7 @@ const RASTER_PAINT = {
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 const IS_E2E = import.meta.env.VITE_E2E === 'true';
 
-const BASE_MAP_LABEL_ZOOM_THRESHOLD = 8;
+const BASE_MAP_LABEL_ZOOM_THRESHOLD = 12;
 
 // Mock style for E2E tests to save MapTiler quota
 const MOCK_STYLE = {
