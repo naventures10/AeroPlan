@@ -63,6 +63,8 @@ describe('useWindLayer', () => {
       windAltitude: 0,
       windAnimationTime: 0,
       windIsPlaying: false,
+      forecastTimestamps: [],
+      weatherStatus: { state: 'idle' },
     });
   });
 

@@ -1,21 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useCloudLayer } from '../../features/map/layers/useCloudLayer';
 import { useMapStore } from '../../store/useMapStore';
 import * as WeatherLayers from 'weatherlayers-gl';
-
-vi.mock('../../store/useMapStore', () => ({
-  useMapStore: vi.fn(),
-}));
 
 vi.mock('weatherlayers-gl', () => ({
   loadTextureData: vi.fn(),
 }));
 
 describe('useCloudLayer', () => {
-  const mockSetWindAnimationTime = vi.fn();
-  const mockSetCloudLoadingStatus = vi.fn();
-
   const defaultViewState = {
     longitude: 78.9629,
     latitude: 20.5937,
@@ -26,32 +19,30 @@ describe('useCloudLayer', () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    (useMapStore as any).mockReturnValue({
+    vi.restoreAllMocks();
+
+    useMapStore.setState({
       isWeatherMode: true,
       isCloudMode: true,
       viewMode: 'ENROUTE',
       windAltitude: 0,
       windAnimationTime: 0,
-      setWindAnimationTime: mockSetWindAnimationTime,
-      setCloudLoadingStatus: mockSetCloudLoadingStatus,
       viewState: defaultViewState,
-    });
-    (useMapStore as any).getState = vi.fn().mockReturnValue({
+      forecastTimestamps: [],
+      weatherStatus: { state: 'idle' },
       cloudLoadingStatus: { state: 'idle' },
     });
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('should not fetch manifest if cloud layer is inactive', () => {
-    (useMapStore as any).mockReturnValue({
+    useMapStore.setState({
       isWeatherMode: false,
       isCloudMode: false,
-      viewMode: 'ENROUTE',
-      windAltitude: 0,
-      windAnimationTime: 0,
-      setWindAnimationTime: mockSetWindAnimationTime,
-      setCloudLoadingStatus: mockSetCloudLoadingStatus,
-      viewState: defaultViewState,
+      forecastTimestamps: [],
     });
 
     const fetchSpy = vi.spyOn(global, 'fetch');
@@ -104,24 +95,20 @@ describe('useCloudLayer', () => {
       height: 2,
       data: new Float32Array(2 * 2 * 8).fill(0),
     };
-    // Set cloud cover in band 6 (surface) on all pixels so viewport
-    // culling always finds at least one cloudy cell.
-    mockImg.data[0 * 8 + 6] = 0.5; // Pixel 0 (row 0, col 0)
-    mockImg.data[1 * 8 + 6] = 1.0; // Pixel 1 (row 0, col 1)
-    mockImg.data[2 * 8 + 6] = 0.8; // Pixel 2 (row 1, col 0)
-    mockImg.data[3 * 8 + 6] = 0.6; // Pixel 3 (row 1, col 1)
+    mockImg.data[0 * 8 + 6] = 0.5; // Pixel 0
+    mockImg.data[1 * 8 + 6] = 1.0; // Pixel 1
+    mockImg.data[2 * 8 + 6] = 0.8; // Pixel 2
+    mockImg.data[3 * 8 + 6] = 0.6; // Pixel 3
 
     (WeatherLayers.loadTextureData as any).mockResolvedValue(mockImg);
 
     const { result } = renderHook(() => useCloudLayer());
 
     await waitFor(() => {
-      expect(mockSetCloudLoadingStatus).toHaveBeenCalledWith({
-        state: 'ready',
-        message: 'All cloud frames ready',
-      });
+      expect(useMapStore.getState().cloudLoadingStatus.state).toBe('ready');
       expect(result.current.cloudLayers).toHaveLength(1);
-      expect(result.current.cloudLayers[0]?.id).toBe('cloud-volume');
+      const activeIdx = Math.floor(useMapStore.getState().windAnimationTime);
+      expect(result.current.cloudLayers[0]?.id).toBe(`cloud-volume-a-${activeIdx}`);
     });
   });
 
@@ -131,17 +118,11 @@ describe('useCloudLayer', () => {
     renderHook(() => useCloudLayer());
 
     await waitFor(() => {
-      expect(mockSetCloudLoadingStatus).toHaveBeenCalledWith({
-        state: 'error',
-        message: 'Failed to load weather manifest',
-      });
+      expect(useMapStore.getState().cloudLoadingStatus.state).toBe('error');
     });
   });
 
   it('should respect the hard particle cap', async () => {
-    // Use default zoom (4.5) so viewport culling covers the full grid in JSDOM.
-    // The test verifies the hook doesn't crash when presented with a large
-    // fully-cloudy dataset and the 50k particle cap is the only limiter.
     const mockManifest = {
       forecasts: [
         {
@@ -155,13 +136,12 @@ describe('useCloudLayer', () => {
       json: () => Promise.resolve(mockManifest),
     } as any);
 
-    // Create a large image where every pixel is cloudy
     const w = 640;
     const h = 360;
     const bands = 8;
     const data = new Float32Array(w * h * bands);
     for (let p = 0; p < w * h; p++) {
-      data[p * bands + 6] = 1.0; // 100% cloud cover everywhere
+      data[p * bands + 6] = 1.0; // 100% cloud cover
     }
     const mockImg = { width: w, height: h, data };
 
@@ -170,14 +150,8 @@ describe('useCloudLayer', () => {
     const { result } = renderHook(() => useCloudLayer());
 
     await waitFor(() => {
-      expect(mockSetCloudLoadingStatus).toHaveBeenCalledWith({
-        state: 'ready',
-        message: 'All cloud frames ready',
-      });
-      // The layer should exist but the point count should be capped
+      expect(useMapStore.getState().cloudLoadingStatus.state).toBe('ready');
       expect(result.current.cloudLayers).toHaveLength(1);
-      // We can't easily inspect the internal data length from the layer,
-      // but the fact that it doesn't crash proves the cap works.
     });
   });
 });

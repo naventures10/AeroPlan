@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { formatIST, calculateNowIndex } from '../features/map/utils/windUtils';
+import type { ForecastTimestamp } from '../features/map/utils/windUtils';
 
 // 1. Define the TypeScript Blueprint
 interface MapState {
@@ -109,6 +111,10 @@ interface MapState {
   windIsPlaying: boolean;
   setWindIsPlaying: (playing: boolean | ((prev: boolean) => boolean)) => void;
   toggleWindPlayback: (maxTime: number) => void;
+
+  forecastTimestamps: ForecastTimestamp[];
+  weatherStatus: { state: 'idle' | 'loading' | 'ready' | 'error'; message?: string };
+  fetchWeatherManifest: () => Promise<void>;
 
   isWeatherMode: boolean;
   setIsWeatherMode: (enabled: boolean) => void;
@@ -346,6 +352,53 @@ export const useMapStore = create<MapState>((set, get) => ({
         windIsPlaying: !state.windIsPlaying,
       };
     }),
+
+  forecastTimestamps: [],
+  weatherStatus: { state: 'idle' },
+
+  fetchWeatherManifest: async () => {
+    const { forecastTimestamps, weatherStatus } = get();
+    // Only fetch if not already loaded or in error state to prevent duplicate parallel fetches
+    if (forecastTimestamps.length > 0 && weatherStatus.state === 'ready') return;
+    if (weatherStatus.state === 'loading') return;
+
+    set({ weatherStatus: { state: 'loading', message: 'Loading weather timeline…' } });
+
+    try {
+      const response = await fetch('/weather/weather_manifest.json');
+      const manifestData = await response.json();
+      if (manifestData && manifestData.forecasts) {
+        const timestamps = manifestData.forecasts.map((f: any) => {
+          const { label, date } = formatIST(f.valid_time);
+          return {
+            label,
+            date,
+            validTime: f.valid_time,
+            files: f.files,
+          };
+        });
+
+        set({
+          forecastTimestamps: timestamps,
+          weatherStatus: { state: 'ready' },
+        });
+
+        // Default windAnimationTime to 'Now' if not already set
+        const currentAnimTime = get().windAnimationTime;
+        if (currentAnimTime === 0) {
+          const nowIdx = calculateNowIndex(timestamps);
+          set({ windAnimationTime: nowIdx });
+        }
+      } else {
+        throw new Error('Invalid manifest format');
+      }
+    } catch (err) {
+      console.error('Failed to load weather manifest in store', err);
+      set({
+        weatherStatus: { state: 'error', message: 'Failed to load weather manifest' },
+      });
+    }
+  },
 
   isWeatherMode: false,
   setIsWeatherMode: (enabled) =>

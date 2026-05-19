@@ -2,14 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import * as WeatherLayers from 'weatherlayers-gl';
 import { ClipExtension } from '@deck.gl/extensions';
 import { useMapStore } from '../../../store/useMapStore';
-import {
-  formatIST,
-  calculateNowIndex,
-  WIND_BOUNDS,
-  CLIP_BOUNDS,
-  WIND_PALETTE,
-} from '../utils/windUtils';
-import type { ForecastTimestamp } from '../utils/windUtils';
+import { WIND_BOUNDS, CLIP_BOUNDS, WIND_PALETTE } from '../utils/windUtils';
 
 export interface WindStatus {
   state: 'idle' | 'loading' | 'ready' | 'error';
@@ -24,57 +17,31 @@ export function useWindLayer() {
     viewMode,
     windAltitude,
     windAnimationTime,
-    setWindAnimationTime,
-    windIsPlaying,
-    setWindIsPlaying,
+    forecastTimestamps,
+    fetchWeatherManifest,
+    weatherStatus,
   } = useMapStore();
 
   const [loadedImages, setLoadedImages] = useState<Record<number, WeatherLayers.TextureData>>({});
   const [renderImages, setRenderImages] = useState<Record<number, WeatherLayers.TextureData>>({});
   const [status, setStatus] = useState<WindStatus>({ state: 'idle' });
-  const [forecastTimestamps, setForecastTimestamps] = useState<ForecastTimestamp[]>([]);
+
+  const windStatus: WindStatus = useMemo(() => {
+    if (weatherStatus.state === 'loading') return weatherStatus;
+    if (weatherStatus.state === 'error') return weatherStatus;
+    return status;
+  }, [weatherStatus, status]);
 
   const isWindActive = isWeatherMode && isWindMode && viewMode === 'ENROUTE';
 
-  // Either weather layer being active should trigger manifest loading
-  // so the shared controls (timeline, altitude) have timestamps available.
-  const isAnyWeatherActive = isWeatherMode && viewMode === 'ENROUTE';
-
-  // 1. Fetch dynamic manifest
+  // Trigger manifest load if active and timestamps aren't loaded yet
   useEffect(() => {
-    if (!isAnyWeatherActive) return;
-
-    async function fetchManifest() {
-      try {
-        const response = await fetch('/weather/weather_manifest.json');
-        const manifestData = await response.json();
-        if (manifestData && manifestData.forecasts) {
-          const timestamps = manifestData.forecasts.map((f: any) => {
-            const { label, date } = formatIST(f.valid_time);
-            return {
-              label,
-              date,
-              validTime: f.valid_time,
-              files: f.files,
-            };
-          });
-          setForecastTimestamps(timestamps);
-
-          // Default animationTime to 'Now' if not already set
-          if (windAnimationTime === 0) {
-            const nowIdx = calculateNowIndex(timestamps);
-            setWindAnimationTime(nowIdx);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load weather manifest', err);
-        setStatus({ state: 'error', message: 'Failed to load weather manifest' });
-      }
+    if (isWindActive && forecastTimestamps.length === 0) {
+      fetchWeatherManifest();
     }
-    fetchManifest();
-  }, [isAnyWeatherActive, setWindAnimationTime]);
+  }, [isWindActive, forecastTimestamps.length, fetchWeatherManifest]);
 
-  // 2. Pre-load weather data for current altitude
+  // 1. Pre-load weather data for current altitude
   useEffect(() => {
     let active = true;
 
@@ -133,42 +100,6 @@ export function useWindLayer() {
       active = false;
     };
   }, [isWindActive, windAltitude, forecastTimestamps]);
-
-  // 3. Animation Loop — drives the shared timeline for any weather layer
-  useEffect(() => {
-    if (!isAnyWeatherActive || !windIsPlaying || forecastTimestamps.length === 0) return;
-
-    let lastTime = performance.now();
-    let frameId: number;
-
-    const tick = (now: number) => {
-      const dt = (now - lastTime) / 1000;
-      lastTime = now;
-
-      // Speed: 10 seconds per frame transition (1 / 10 = 0.1 units per second)
-      const playbackSpeed = 0.1;
-
-      setWindAnimationTime((prev: number) => {
-        let next = prev + dt * playbackSpeed;
-        if (next >= forecastTimestamps.length - 1) {
-          next = forecastTimestamps.length - 1;
-          setWindIsPlaying(false);
-        }
-        return next;
-      });
-
-      frameId = requestAnimationFrame(tick);
-    };
-
-    frameId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frameId);
-  }, [
-    isAnyWeatherActive,
-    windIsPlaying,
-    forecastTimestamps.length,
-    setWindAnimationTime,
-    setWindIsPlaying,
-  ]);
 
   // 4. Calculate Layer
   const maxIndex = Math.max(0, forecastTimestamps.length - 1);
@@ -240,7 +171,7 @@ export function useWindLayer() {
 
   return {
     windLayer,
-    windStatus: status,
+    windStatus,
     forecastTimestamps,
     getWindAtLngLat,
   };
