@@ -41,9 +41,35 @@ echo "✅ E2E Tests passed."
 
 echo "➜ Starting CodeRabbit Autonomous Review (Live Progress)..."
 
-# Run CodeRabbit review and capture output
-CODERABBIT_OUT=$(coderabbit review --agent --base main 2>&1)
+# Run CodeRabbit review in background to parse real-time logs and avoid blocking output
+TEMP_OUT=$(mktemp)
+coderabbit review --agent --base main > "$TEMP_OUT" 2>&1 &
+CODERABBIT_PID=$!
+
+spinner=( '⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏' )
+idx=1
+
+while kill -0 $CODERABBIT_PID 2>/dev/null; do
+    # Try to extract the latest status message from the structured JSON stream
+    current_status=$(grep -o '"status":"[^"]*"' "$TEMP_OUT" | tail -n1 | cut -d'"' -f4)
+    if [[ -n "$current_status" ]]; then
+        # Format snake_case to a clean Title Case string
+        friendly_status=$(echo "$current_status" | tr '_' ' ' | awk '{for(i=1;i<=NF;i++)sub(/./,toupper(substr($i,1,1)),$i)}1')
+        printf "\r\033[K➜ [CodeRabbit] %s  %s..." "${spinner[idx]}" "$friendly_status"
+    else
+        printf "\r\033[K➜ [CodeRabbit] %s  Analyzing changes..." "${spinner[idx]}"
+    fi
+    idx=$(( (idx % 10) + 1 ))
+    sleep 0.15
+done
+wait $CODERABBIT_PID
 EXIT_CODE=$?
+
+CODERABBIT_OUT=$(cat "$TEMP_OUT")
+rm -f "$TEMP_OUT"
+
+# Clear the spinner line
+printf "\r\033[K"
 
 if [ $EXIT_CODE -ne 0 ]; then
     if echo "$CODERABBIT_OUT" | grep -q "rate_limit"; then
