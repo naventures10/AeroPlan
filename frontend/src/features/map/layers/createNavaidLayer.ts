@@ -10,15 +10,16 @@ import { COLOR_NEON_CYAN, COLOR_EMERALD, ZOOM_NAVAIDS } from './constants';
 import type { LayerContext } from './types';
 
 export function createNavaidLayer(ctx: LayerContext): any[] {
-  const { viewMode, selectedFeature, setSelectedFeature } = ctx;
+  const { viewMode, activeLayers, selectedFeature, setSelectedFeature } = ctx;
   const isZoomNavaids = ctx.zoom > ZOOM_NAVAIDS;
+  const isLayerActive = activeLayers.navaids;
 
   return [
     new MVTLayer({
       id: 'navaids-layer',
       data: `${window.location.origin}/tiles/radio_nav_aids/{z}/{x}/{y}`,
       visible: viewMode === 'ENROUTE',
-      pickable: true,
+      pickable: isLayerActive,
       autoHighlight: true,
       highlightColor: [255, 255, 255, 60],
       pointType: 'icon+text',
@@ -39,15 +40,22 @@ export function createNavaidLayer(ctx: LayerContext): any[] {
         return 20;
       },
       getIconColor: (d: any) => {
-        if (selectedFeature?.type === 'NAVAID' && selectedFeature.data.ident === d.properties.ident)
-          return COLOR_NEON_CYAN;
-        return COLOR_EMERALD;
+        const isSelected =
+          selectedFeature?.type === 'NAVAID' && selectedFeature.data.ident === d.properties.ident;
+        if (isSelected) {
+          return isLayerActive
+            ? COLOR_NEON_CYAN
+            : [COLOR_NEON_CYAN[0], COLOR_NEON_CYAN[1], COLOR_NEON_CYAN[2], 0];
+        }
+        return isLayerActive
+          ? COLOR_EMERALD
+          : [COLOR_EMERALD[0], COLOR_EMERALD[1], COLOR_EMERALD[2], 0];
       },
       getText: (d: any) => d.properties.ident || '',
       getTextSize: isZoomNavaids ? 12 : 0,
-      getTextColor: [52, 211, 153, 255],
+      getTextColor: isLayerActive ? [52, 211, 153, 255] : [52, 211, 153, 0],
       getTextPixelOffset: [0, 20],
-      textFontFamily: 'Inter, sans-serif',
+      textFontFamily: 'Geist, sans-serif',
       textFontWeight: 600,
       onClick: (info: any) => {
         if (info.object && info.object.properties) {
@@ -55,9 +63,10 @@ export function createNavaidLayer(ctx: LayerContext): any[] {
         }
       },
       updateTriggers: {
-        getIconColor: [selectedFeature],
+        getIconColor: [selectedFeature, isLayerActive],
         getIconSize: [selectedFeature],
         getTextSize: [isZoomNavaids],
+        getTextColor: [isLayerActive],
       },
       binary: false,
       transitions: {

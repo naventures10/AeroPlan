@@ -18,6 +18,7 @@ vi.mock('../../api/client', () => ({
 describe('FeatureInfoCard', () => {
   const setSelectedFeature = vi.fn();
   const setHighlightedAirspaceId = vi.fn();
+  const setSelectedRouteIds = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -26,6 +27,7 @@ describe('FeatureInfoCard', () => {
       setSelectedFeature,
       viewMode: 'ENROUTE',
       setHighlightedAirspaceId,
+      setSelectedRouteIds,
     });
   });
 
@@ -50,6 +52,7 @@ describe('FeatureInfoCard', () => {
       setSelectedFeature,
       viewMode: 'ENROUTE',
       setHighlightedAirspaceId,
+      setSelectedRouteIds,
     });
 
     render(<FeatureInfoCard />);
@@ -78,6 +81,7 @@ describe('FeatureInfoCard', () => {
       setSelectedFeature,
       viewMode: 'ENROUTE',
       setHighlightedAirspaceId,
+      setSelectedRouteIds,
     });
 
     render(<FeatureInfoCard />);
@@ -97,6 +101,7 @@ describe('FeatureInfoCard', () => {
       setSelectedFeature,
       viewMode: 'ENROUTE',
       setHighlightedAirspaceId,
+      setSelectedRouteIds,
     });
 
     render(<FeatureInfoCard />);
@@ -118,6 +123,7 @@ describe('FeatureInfoCard', () => {
       setSelectedFeature,
       viewMode: 'ENROUTE',
       setHighlightedAirspaceId,
+      setSelectedRouteIds,
     });
 
     render(<FeatureInfoCard />);
@@ -132,6 +138,7 @@ describe('FeatureInfoCard', () => {
       setSelectedFeature,
       viewMode: 'ENROUTE',
       setHighlightedAirspaceId,
+      setSelectedRouteIds,
     });
 
     render(<FeatureInfoCard />);
@@ -139,5 +146,6 @@ describe('FeatureInfoCard', () => {
     fireEvent.click(closeBtn);
 
     expect(setSelectedFeature).toHaveBeenCalledWith(null);
+    expect(setSelectedRouteIds).toHaveBeenCalledWith([]);
   });
 });

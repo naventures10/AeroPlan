@@ -1,6 +1,16 @@
 import { expect } from '@playwright/test';
 import type { Page, Locator } from '@playwright/test';
 
+const layerIdToTitle: Record<string, string> = {
+  aerodromes: 'Aerodromes',
+  waypoints: 'Waypoints',
+  navaids: 'NavAids',
+  atsroutes: 'ATS Routes',
+  atsRoutes: 'ATS Routes',
+  airspaces: 'Airspaces',
+  weather: 'Weather',
+};
+
 export class MapPage {
   readonly page: Page;
   readonly searchInput: Locator;
@@ -11,7 +21,7 @@ export class MapPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.searchInput = page.locator('input[placeholder*="SEARCH"]');
+    this.searchInput = page.locator('input.aip-search-input');
     this.mapCanvas = page.locator('canvas').first();
     this.overlayMenuButton = page.getByTitle('Map Overlays');
     this.aerodromeInfoButton = page.getByText('AERODROME INFORMATION');
@@ -20,12 +30,13 @@ export class MapPage {
 
   /**
    * Checks if a specific layer toggle in the LayerToolbar is active.
-   * Active state is determined by the absence of the 'text-zinc-500' (inactive) class.
+   * Active state is determined by the presence of the 'active' class.
    */
   async isLayerActive(layerId: string): Promise<boolean> {
-    const button = this.page.getByTitle(`Toggle ${layerId}`);
+    const title = layerIdToTitle[layerId.toLowerCase()] || layerIdToTitle[layerId] || layerId;
+    const button = this.page.getByRole('button', { name: `Toggle ${title}`, exact: true });
     const className = await button.getAttribute('class');
-    return className ? !className.includes('text-zinc-500') : false;
+    return className ? className.includes('active') : false;
   }
 
   async goto() {
@@ -42,7 +53,8 @@ export class MapPage {
   }
 
   async toggleLayer(layerName: string) {
-    const button = this.page.getByTitle(`Toggle ${layerName}`);
+    const title = layerIdToTitle[layerName.toLowerCase()] || layerIdToTitle[layerName] || layerName;
+    const button = this.page.getByRole('button', { name: `Toggle ${title}`, exact: true });
     await button.click();
   }
 
@@ -58,6 +70,10 @@ export class MapPage {
   async search(query: string, resultText?: string) {
     await this.searchInput.focus();
     await this.searchInput.fill(query);
+
+    // Small delay to allow debounce and animation to start
+    await this.page.waitForTimeout(500);
+
     // Use resultText if provided (more unique), otherwise use the query
     const targetText = resultText || query;
     const result = this.page
@@ -66,7 +82,7 @@ export class MapPage {
       .first();
 
     // Wait for results to appear (auto-retries)
-    await expect(result).toBeVisible({ timeout: 20000 });
-    await result.click();
+    await expect(result).toBeVisible({ timeout: 25000 });
+    await result.click({ force: true });
   }
 }

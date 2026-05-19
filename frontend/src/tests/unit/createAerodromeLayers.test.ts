@@ -4,7 +4,7 @@ import { createAerodromeLayers } from '../../features/map/layers/createAerodrome
 describe('createAerodromeLayers', () => {
   it('creates layers with proper props and handles click', () => {
     const mockOnClick = vi.fn();
-    const ctx = { viewMode: 'ENROUTE' };
+    const ctx = { viewMode: 'ENROUTE', activeLayers: { aerodromes: true } };
     const layers = createAerodromeLayers(ctx as any, {}, [], mockOnClick);
 
     expect(layers.length).toBe(2);
@@ -29,7 +29,7 @@ describe('createAerodromeLayers', () => {
   });
 
   it('layers are hidden when not in ENROUTE', () => {
-    const ctx = { viewMode: 'TERMINAL' };
+    const ctx = { viewMode: 'TERMINAL', activeLayers: { aerodromes: false } };
     const layers = createAerodromeLayers(ctx as any, {}, [], vi.fn());
 
     expect(layers[0].props.visible).toBe(false);

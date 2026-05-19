@@ -35,6 +35,8 @@ const RASTER_PAINT = {
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 const IS_E2E = import.meta.env.VITE_E2E === 'true';
 
+const BASE_MAP_LABEL_ZOOM_THRESHOLD = 12;
+
 // Mock style for E2E tests to save MapTiler quota
 const MOCK_STYLE = {
   version: 8 as const,
@@ -140,6 +142,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     boundsToFit,
     fitBounds,
     setSelectedFeature,
+    setSelectedRouteIds,
     setHighlightedAirspaceId,
   } = useMapStore();
 
@@ -229,7 +232,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     }
   }, [boundsToFit, setViewState, viewState, fitBounds, viewMode]);
 
-  // 4. Hide base map labels/roads below zoom 10
+  // 4. Hide base map labels/roads below zoom 8
   const onMapLoad = useCallback((e: any) => {
     const map = e.target;
     const layers = map.getStyle()?.layers;
@@ -242,7 +245,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
           layer.id.includes('label')
         ) {
           try {
-            map.setLayerZoomRange(layer.id, TERMINAL_EXIT_ZOOM_THRESHOLD, 24);
+            map.setLayerZoomRange(layer.id, BASE_MAP_LABEL_ZOOM_THRESHOLD, 24);
           } catch (err) {
             // Some layers might not support zoom range or be removed
             console.warn(`Failed to set zoom range for ${layer.id}`, err);
@@ -308,9 +311,10 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
 
       // 3. If we clicked empty space in BOTH contexts, clear selection
       setSelectedFeature(null);
+      setSelectedRouteIds([]);
       setHighlightedAirspaceId(null);
     },
-    [setSelectedFeature, setHighlightedAirspaceId],
+    [setSelectedFeature, setSelectedRouteIds, setHighlightedAirspaceId],
   );
 
   const handleDeckHover = useCallback(

@@ -101,21 +101,12 @@ export function useDeckLayers({
     const overlaidLayers: any[] = [];
     const interleavedLayers: any[] = [];
 
-    if (activeLayers.airspaces) {
-      overlaidLayers.push(...createAirspaceLayers(ctx));
-    }
+    overlaidLayers.push(...createAirspaceLayers(ctx));
 
-    if (activeLayers.aerodromes) {
-      overlaidLayers.push(...createAerodromeLayers(ctx, aerodromes, textData, onAerodromeClick));
-    }
+    overlaidLayers.push(...createAerodromeLayers(ctx, aerodromes, textData, onAerodromeClick));
 
-    if (activeLayers.waypoints) {
-      overlaidLayers.push(...createWaypointLayer(ctx));
-    }
-
-    if (activeLayers.navaids) {
-      overlaidLayers.push(...createNavaidLayer(ctx));
-    }
+    overlaidLayers.push(...createWaypointLayer(ctx));
+    overlaidLayers.push(...createNavaidLayer(ctx));
 
     if (isAtsRendered) {
       overlaidLayers.push(...createAtsRouteLayers(ctx));

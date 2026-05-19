@@ -1,5 +1,3 @@
-import { Button } from '@heroui/react';
-import { Target, Navigation, Radio, Route, Globe, CloudSun } from 'lucide-react';
 import { useMapStore } from '../../../store/useMapStore';
 
 /**
@@ -7,81 +5,41 @@ import { useMapStore } from '../../../store/useMapStore';
  * Visible only in ENROUTE view mode.
  */
 export default function LayerToolbar() {
-  const { activeLayers, toggleLayer, setIsWeatherMode } = useMapStore();
+  const { activeLayers, toggleLayer, isWeatherMode, setIsWeatherMode } = useMapStore();
 
   const toggleButtons = [
-    {
-      icon: Target,
-      id: 'aerodromes' as const,
-      color: 'text-indigo-400',
-      border: 'border-indigo-500/50',
-      bg: 'bg-indigo-500/20',
-    },
-    {
-      icon: Navigation,
-      id: 'waypoints' as const,
-      color: 'text-violet-400',
-      border: 'border-violet-500/50',
-      bg: 'bg-violet-500/20',
-    },
-    {
-      icon: Radio,
-      id: 'navaids' as const,
-      color: 'text-emerald-400',
-      border: 'border-emerald-500/50',
-      bg: 'bg-emerald-500/20',
-    },
-    {
-      icon: Route,
-      id: 'atsRoutes' as const,
-      color: 'text-cyan-400',
-      border: 'border-cyan-500/50',
-      bg: 'bg-cyan-500/20',
-    },
-    {
-      icon: Globe,
-      id: 'airspaces' as const,
-      color: 'text-orange-400',
-      border: 'border-orange-500/50',
-      bg: 'bg-orange-500/20',
-    },
-    {
-      icon: CloudSun,
-      id: 'weather' as const,
-      color: 'text-sky-400',
-      border: 'border-sky-500/50',
-      bg: 'bg-sky-500/20',
-    },
+    { id: 'aerodromes' as const, title: 'Aerodromes', iconClass: 'aip-icon-aerodromes' },
+    { id: 'waypoints' as const, title: 'Waypoints', iconClass: 'aip-icon-waypoints' },
+    { id: 'navaids' as const, title: 'NavAids', iconClass: 'aip-icon-navaids' },
+    { id: 'atsRoutes' as const, title: 'ATS Routes', iconClass: 'aip-icon-atsRoutes' },
+    { id: 'airspaces' as const, title: 'Airspaces', iconClass: 'aip-icon-airspaces' },
+    { id: 'weather' as const, title: 'Weather', iconClass: 'aip-icon-weather' },
   ];
 
   return (
-    <div className="absolute top-1/2 left-6 -translate-y-1/2 flex flex-col gap-3 pointer-events-auto">
-      {toggleButtons.map(({ icon: Icon, id, color, border, bg }) => {
-        const isActive = activeLayers[id];
-        return (
-          <Button
-            key={id}
-            isIconOnly
-            radius="full"
-            variant="flat"
-            onPress={() => {
-              if (id === 'weather') {
-                setIsWeatherMode(!isActive);
-              } else {
-                toggleLayer(id);
-              }
-            }}
-            title={`Toggle ${id}`}
-            className={`backdrop-blur-xl shadow-xl transition duration-300 ${
-              isActive
-                ? `${bg} ${color} border ${border} shadow-[0_0_15px_rgba(0,0,0,0.2)]`
-                : 'bg-zinc-950/40 border border-zinc-800/60 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60 opacity-80'
-            }`}
-          >
-            <Icon size={18} />
-          </Button>
-        );
-      })}
+    <div className="aip-layer-toolbar-container">
+      <div className="aip-layer-toolbar">
+        {toggleButtons.map(({ id, title, iconClass }) => {
+          const isActive = id === 'weather' ? isWeatherMode : activeLayers[id];
+          return (
+            <button
+              key={id}
+              aria-label={`Toggle ${title}`}
+              onClick={() => {
+                if (id === 'weather') {
+                  setIsWeatherMode(!isWeatherMode);
+                } else {
+                  toggleLayer(id);
+                }
+              }}
+              className={`aip-layer-toggle ${isActive ? 'active' : ''}`}
+            >
+              <span className={`aip-layer-icon ${iconClass}`} />
+              <span className="aip-layer-tooltip">{title}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

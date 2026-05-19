@@ -12,6 +12,7 @@ import type { LayerContext } from './types';
 export function createWaypointLayer(ctx: LayerContext): any[] {
   const { viewMode, activeLayers, selectedFeature, setSelectedFeature } = ctx;
   const isZoomWaypoints = ctx.zoom > ZOOM_WAYPOINTS;
+  const isLayerActive = activeLayers.waypoints;
 
   return [
     new MVTLayer({
@@ -19,7 +20,7 @@ export function createWaypointLayer(ctx: LayerContext): any[] {
       data: `${window.location.origin}/tiles/significant_points/{z}/{x}/{y}`,
       visible: viewMode === 'ENROUTE',
       // Disable picking when ATS routes are active to avoid selecting waypoints while viewing routes
-      pickable: !activeLayers.atsRoutes,
+      pickable: !activeLayers.atsRoutes && isLayerActive,
       autoHighlight: true,
       highlightColor: [255, 255, 255, 60],
       pointType: 'icon+text',
@@ -29,13 +30,15 @@ export function createWaypointLayer(ctx: LayerContext): any[] {
       },
       getIcon: () => 'waypoint',
       getIconColor: (d: any) => {
-        if (
+        const isSelected =
           selectedFeature?.type === 'WAYPOINT' &&
-          selectedFeature.data.waypoint_name === d.properties.waypoint_name
-        ) {
-          return COLOR_NEON_CYAN;
+          selectedFeature.data.waypoint_name === d.properties.waypoint_name;
+        if (isSelected) {
+          return isLayerActive
+            ? COLOR_NEON_CYAN
+            : [COLOR_NEON_CYAN[0], COLOR_NEON_CYAN[1], COLOR_NEON_CYAN[2], 0];
         }
-        return [255, 255, 255, 255];
+        return isLayerActive ? [255, 255, 255, 255] : [255, 255, 255, 0];
       },
       getIconSize: (d: any) => {
         if (
@@ -55,9 +58,9 @@ export function createWaypointLayer(ctx: LayerContext): any[] {
         if (activeLayers.atsRoutes && hasRoutes) return 0;
         return 11;
       },
-      getTextColor: [220, 220, 220, 255],
+      getTextColor: isLayerActive ? [220, 220, 220, 255] : [220, 220, 220, 0],
       getTextPixelOffset: [0, -15],
-      textFontFamily: 'Inter, sans-serif',
+      textFontFamily: 'Geist, sans-serif',
       textFontWeight: 600,
       onClick: (info: any) => {
         if (info.object && info.object.properties) {
@@ -65,9 +68,10 @@ export function createWaypointLayer(ctx: LayerContext): any[] {
         }
       },
       updateTriggers: {
-        getIconColor: [selectedFeature],
+        getIconColor: [selectedFeature, isLayerActive],
         getIconSize: [selectedFeature],
         getTextSize: [isZoomWaypoints, activeLayers.atsRoutes],
+        getTextColor: [isLayerActive],
       },
       binary: false,
       transitions: {

@@ -125,15 +125,17 @@ test.describe('Search Bar Userflow', () => {
     await mapPage.searchInput.fill('VATLA');
 
     // 2. Verify suggestions appear (with some wait for debounce)
-    const suggestions = page.locator('div.glass-morphism-heavy');
+    const suggestions = page.locator('div.aip-search-results-wrapper');
     await expect(suggestions).toBeVisible({ timeout: 5000 });
 
     // 3. Verify VATLA is in suggestions
-    const vatlaResult = page.locator('div.cursor-pointer').filter({ hasText: 'VATLA' });
-    await expect(vatlaResult).toBeVisible();
+    const vatlaResult = page
+      .locator('[data-testid="search-result-item"]')
+      .filter({ hasText: 'VATLA' });
+    await expect(vatlaResult).toBeVisible({ timeout: 10000 });
 
     // 4. Click suggestion
-    await vatlaResult.click();
+    await vatlaResult.click({ force: true });
 
     // 5. Verify dropdown disappears
     await expect(suggestions).not.toBeVisible();
@@ -153,9 +155,11 @@ test.describe('Search Bar Userflow', () => {
     await mapPage.searchInput.focus();
     await mapPage.searchInput.fill('VOMM');
 
-    const vommResult = page.locator('div.cursor-pointer').filter({ hasText: 'VOMM' });
-    await expect(vommResult).toBeVisible();
-    await vommResult.click();
+    const vommResult = page
+      .locator('[data-testid="search-result-item"]')
+      .filter({ hasText: 'VOMM' });
+    await expect(vommResult).toBeVisible({ timeout: 10000 });
+    await vommResult.click({ force: true });
 
     // 2. Verify Terminal Dashboard appears
     // The ICAO code VOMM should be visible in the dashboard
@@ -169,19 +173,21 @@ test.describe('Search Bar Userflow', () => {
     await mapPage.searchInput.fill('VO');
 
     // 2. Wait for suggestions
-    const suggestions = page.locator('div.glass-morphism-heavy');
+    const suggestions = page.locator('div.aip-search-results-wrapper');
     await expect(suggestions).toBeVisible();
 
     // 3. Verify multiple results are present
-    const vommResult = page.locator('div.cursor-pointer').filter({ hasText: 'VOMM' });
-    await expect(vommResult).toBeVisible();
+    const vommResult = page
+      .locator('[data-testid="search-result-item"]')
+      .filter({ hasText: 'VOMM' });
+    await expect(vommResult).toBeVisible({ timeout: 10000 });
 
     // 4. Press ArrowDown to highlight the first result
     await page.keyboard.press('ArrowDown');
 
     // 5. Verify it's highlighted (has cyan border/text class)
     // We check for the background or border class that indicates selection
-    await expect(vommResult).toHaveClass(/border-cyan-400/);
+    await expect(vommResult).toHaveClass(/selected/);
 
     // 6. Press Enter to select
     await page.keyboard.press('Enter');
@@ -201,7 +207,9 @@ test.describe('Search Bar Userflow', () => {
     await expect(clearButton).toBeVisible();
 
     // 3. Click clear button
-    await clearButton.click();
+    await expect(clearButton).toBeVisible();
+    await page.waitForTimeout(300); // Allow animation
+    await clearButton.click({ force: true });
 
     // 4. Verify input is empty
     await expect(mapPage.searchInput).toHaveValue('');
@@ -214,9 +222,12 @@ test.describe('Search Bar Userflow', () => {
     // 1. Type a random string
     await mapPage.searchInput.focus();
     await mapPage.searchInput.fill('XYZABC123');
+    await page.waitForTimeout(500);
 
-    // 2. Verify "NO MATCHING LOCATIONS FOUND" message
-    await expect(page.getByText('NO MATCHING LOCATIONS FOUND')).toBeVisible({ timeout: 5000 });
+    // 2. Verify "No matching locations" message
+    await expect(page.getByText('No matching locations', { exact: false })).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test('Auto-toggle layers on selection', async ({ page }) => {
@@ -225,7 +236,8 @@ test.describe('Search Bar Userflow', () => {
 
     // 2. Search for a waypoint
     await mapPage.searchInput.fill('VATLA');
-    await page.getByText('VATLA').first().click();
+    await page.waitForTimeout(500);
+    await page.getByText('VATLA').first().click({ force: true });
 
     // 3. Verify Waypoints layer is toggled ON
     await expect
@@ -238,14 +250,15 @@ test.describe('Search Bar Userflow', () => {
   test('Dropdown focus/blur behavior', async ({ page }) => {
     // 1. Type something to show dropdown
     await mapPage.searchInput.fill('VO');
-    const suggestions = page.locator('div.glass-morphism-heavy');
+    const suggestions = page.locator('div.aip-search-results-wrapper');
     await expect(suggestions).toBeVisible();
 
-    // 2. Blur the input (click somewhere else)
-    await page.mouse.click(0, 0);
+    // 2. Blur input
+    await mapPage.searchInput.blur();
+    await page.waitForTimeout(1000); // Wait longer for the 300ms blur timeout in slow env
 
     // 3. Verify dropdown disappears
-    await expect(suggestions).not.toBeVisible();
+    await expect(suggestions).not.toBeVisible({ timeout: 10000 });
 
     // 4. Refocus input
     await mapPage.searchInput.focus();

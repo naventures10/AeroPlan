@@ -5,7 +5,7 @@ describe('createAtsRouteLayers', () => {
   it('creates layers with correct logic', () => {
     const ctx = {
       viewMode: 'ENROUTE',
-      viewState: { zoom: 8 },
+      zoom: 8,
       activeLayers: {
         atsRoutes: true,
       },
@@ -47,11 +47,11 @@ describe('createAtsRouteLayers', () => {
     const routeFeature = {
       properties: { route_id: 'A1', route_type: 'RNAV', lateral_limits: '10' },
     };
-    expect(mvtRoutes.props.getLineColor(routeFeature)).toEqual([255, 255, 255, 255]); // selected
+    expect(mvtRoutes.props.getLineColor(routeFeature)).toEqual([115, 236, 139, 120]); // selected RNAV
     expect(mvtRoutes.props.getLineWidth(routeFeature)).toBeGreaterThan(0);
 
     const unselectedFeature = { properties: { route_id: 'B2', route_type: 'CONV' } };
-    expect(mvtRoutes.props.getLineColor(unselectedFeature)).toEqual([34, 211, 238, 60]); // unselected
+    expect(mvtRoutes.props.getLineColor(unselectedFeature)).toEqual([68, 172, 255, 60]); // unselected
 
     // Testing missing lateral limits default
     const noLimitFeature = { properties: { route_id: 'C3', route_type: 'RNAV' } };
@@ -72,16 +72,22 @@ describe('createAtsRouteLayers', () => {
     expect(tripsLayer.id).toBe('atsRoutes-trips-layer');
     expect(tripsLayer.props.getPath({ path: [[0, 0, 1]] })).toEqual([[0, 0]]);
     expect(tripsLayer.props.getTimestamps({ path: [[0, 0, 1]] })).toEqual([1]);
-    expect(tripsLayer.props.getColor({ route_type: 'RNAV' })).toEqual([50, 205, 50]);
-    expect(tripsLayer.props.getColor({ route_type: 'CONV' })).toEqual([0, 255, 255]);
+    expect(tripsLayer.props.getColor({ route_type: 'RNAV' })).toEqual([115, 236, 139]);
+    expect(tripsLayer.props.getColor({ route_type: 'CONV' })).toEqual([68, 172, 255]);
 
     const mvtWaypoints = layers[5];
     expect(mvtWaypoints.id).toBe('atsRoutes-waypoints-layer');
 
     const wpFeature = { properties: { route_ids: '{"A1","B2"}', waypoint_name: 'FIX' } };
-    expect(mvtWaypoints.props.getIconColor(wpFeature)).toEqual([50, 205, 50, 255]); // Lime green for selected RNAV
-    expect(mvtWaypoints.props.getTextColor(wpFeature)).toEqual([50, 205, 50, 255]);
+    expect(mvtWaypoints.props.getIconColor(wpFeature)).toEqual([115, 236, 139, 255]); // Mint for selected RNAV
+    expect(mvtWaypoints.props.getTextColor(wpFeature)).toEqual([115, 236, 139, 255]);
     expect(mvtWaypoints.props.getTextSize(wpFeature)).toBe(10);
+
+    // Test conventional route waypoints highlight in cyan
+    const convCtx = { ...ctx, selectedRouteIds: ['B2'], selectedRouteType: 'CONV' };
+    const convLayers = createAtsRouteLayers(convCtx as any);
+    expect(convLayers[5].props.getIconColor(wpFeature)).toEqual([68, 172, 255, 255]); // Blue for selected CONV route waypoints
+    expect(convLayers[5].props.getTextColor(wpFeature)).toEqual([68, 172, 255, 255]);
 
     mvtWaypoints.props.onClick({
       object: { geometry: { coordinates: [0, 0] }, properties: wpFeature.properties },
@@ -106,13 +112,17 @@ describe('createAtsRouteLayers', () => {
     const labelHexLayer = layers[3]; // ats-route-labels-hex-layer
     expect(
       labelHexLayer.props.getColor({ properties: { route_id: 'B2', route_type: 'CONV' } }),
-    ).toEqual([34, 211, 238, 140]);
+    ).toEqual([68, 172, 255, 140]);
+    // selected label is base color when not glowing (Option B)
+    expect(
+      labelHexLayer.props.getColor({ properties: { route_id: 'A1', route_type: 'RNAV' } }),
+    ).toEqual([115, 236, 139, 255]);
   });
 
   it('handles hidden layer state and unselected logic', () => {
     const ctx = {
       viewMode: 'ENROUTE',
-      viewState: { zoom: 8 },
+      zoom: 8,
       activeLayers: {
         atsRoutes: false,
       },
@@ -151,10 +161,34 @@ describe('createAtsRouteLayers', () => {
     expect(ctx.setSelectedRouteIds).not.toHaveBeenCalled();
   });
 
+  it('handles selected route when layer is inactive', () => {
+    const ctx = {
+      viewMode: 'ENROUTE',
+      zoom: 8,
+      activeLayers: {
+        atsRoutes: false,
+      },
+      selectedRouteIds: ['A1'],
+      selectedFeature: { type: 'ATS_ROUTE', data: { route_id: 'A1' } },
+      selectedRouteType: 'RNAV',
+      animatedTrips: [],
+      currentTime: 0,
+      atsRouteLabels: null,
+      setSelectedRouteIds: vi.fn(),
+      setSelectedFeature: vi.fn(),
+    };
+
+    const layers = createAtsRouteLayers(ctx as any);
+    const mvtRoutes = layers[0];
+    const feature = { properties: { route_id: 'A1', route_type: 'RNAV' } };
+    expect(mvtRoutes.props.getLineColor(feature)).toEqual([115, 236, 139, 120]); // selected even when inactive
+    expect(mvtRoutes.props.getLineWidth(feature)).toBeGreaterThan(0);
+  });
+
   it('handles selected waypoints in trip colors and icon color', () => {
     const ctx = {
       viewMode: 'ENROUTE',
-      viewState: { zoom: 8 },
+      zoom: 8,
       activeLayers: { atsRoutes: true },
       selectedRouteIds: ['A1'],
       selectedFeature: null,
@@ -167,6 +201,10 @@ describe('createAtsRouteLayers', () => {
     };
 
     const layers = createAtsRouteLayers(ctx as any);
+
+    // Routes line color matches neon purple under waypoint selection
+    const feature = { properties: { route_id: 'A1', route_type: 'RNAV' } };
+    expect(layers[0].props.getLineColor(feature)).toEqual([192, 132, 252, 120]);
 
     // Trips
     expect(layers[1].props.getColor({})).toEqual([192, 132, 252]);

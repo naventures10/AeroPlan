@@ -319,21 +319,13 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
             </div>
 
             {/* 3a. View in 3D (procedure-linked charts only) */}
-            <div className="absolute bottom-8 right-8 z-[55] pointer-events-auto min-h-[40px] flex items-center justify-end">
-              {matchedRnpForModal ? (
-                <button
-                  type="button"
-                  onClick={handleViewIn3D}
-                  className="group relative px-5 py-2.5 rounded-2xl text-[11px] font-black tracking-[0.2em] uppercase text-cyan-100 bg-zinc-950/90 border border-cyan-400/50 shadow-[0_0_24px_rgba(34,211,238,0.45)] hover:shadow-[0_0_36px_rgba(34,211,238,0.65)] transition backdrop-blur-xl"
-                >
-                  <span className="relative z-10">View in 3D space</span>
-                  <span
-                    className="pointer-events-none absolute inset-0 rounded-2xl opacity-60 blur-[1px] bg-gradient-to-r from-cyan-500/20 via-teal-400/30 to-cyan-500/20 animate-pulse"
-                    aria-hidden
-                  />
+            {matchedRnpForModal ? (
+              <div className="aip-view-3d-container">
+                <button type="button" onClick={handleViewIn3D} className="aip-view-3d-button">
+                  View in 3D space
                 </button>
-              ) : null}
-            </div>
+              </div>
+            ) : null}
 
             {/* 3. FLOATING PAGINATION (Bottom-Center) */}
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
@@ -381,8 +373,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                   dragMomentum={false}
                   animate={{ scale: pdfScale }}
                   transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  style={{ cursor: 'inherit' }}
-                  className="relative"
+                  className="relative cursor-inherit"
                 >
                   <Document
                     file={pdfUrl}

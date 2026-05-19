@@ -11,7 +11,7 @@ export class TerminalPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.dashboard = page.locator('div.glass-morphism-heavy').filter({ hasText: 'DASHBOARD' });
+    this.dashboard = page.locator('div').filter({ hasText: 'CONDITIONS' }).first();
     this.expandButton = page.getByTitle('Expand Dashboard');
     // More robust selector for the carousel container that includes the buttons
     this.chartCarousel = page.getByTestId('chart-carousel');

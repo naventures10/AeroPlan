@@ -42,9 +42,8 @@ describe('ErrorBoundary', () => {
     fireEvent.click(button);
     expect(reloadObj.reload).toHaveBeenCalled();
 
-    // Verify tailwind classes
-    expect(button.className).toContain('bg-blue-500');
-    expect(button.className).toContain('hover:bg-blue-600');
+    // Verify standard stylesheet class name
+    expect(button.className).toContain('error-boundary-button');
 
     Object.defineProperty(window, 'location', {
       value: originalLocation,

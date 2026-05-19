@@ -43,6 +43,7 @@ export function TerminalSpatialLayers() {
   const { current: map } = useMap();
   const runwayData = useRunwayPolygons();
   const terminalSpatialFilters = useMapStore((state) => state.terminalSpatialFilters);
+  const activeAirport = useMapStore((state) => state.activeAirport);
 
   useEffect(() => {
     if (!map) return;
@@ -58,6 +59,7 @@ export function TerminalSpatialLayers() {
 
   const pointFilter: FilterSpecification = [
     'all',
+    ['==', ['upcase', ['coalesce', ['get', 'icao_code'], '']], (activeAirport || '').toUpperCase()],
     ['==', ['geometry-type'], 'Point'],
     ['!', ['>=', ['index-of', 'RUNWAY', SEARCH_EXPR], 0]],
     [
@@ -138,6 +140,7 @@ export function TerminalSpatialLayers() {
 
   const polygonFilter: FilterSpecification = [
     'all',
+    ['==', ['upcase', ['coalesce', ['get', 'icao_code'], '']], (activeAirport || '').toUpperCase()],
     ['==', ['geometry-type'], 'Polygon'],
     ['!', ['>=', ['index-of', 'RUNWAY', SEARCH_EXPR], 0]],
     terminalSpatialFilters.buildings

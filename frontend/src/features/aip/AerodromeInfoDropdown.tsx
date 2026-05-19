@@ -68,10 +68,8 @@ export default function AerodromeInfoDropdown({
         onClick={() => {
           setIsOpen(!isOpen);
         }}
-        className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl backdrop-blur-xl shadow-xl transition duration-300 focus:outline-none border ${
-          isOpen
-            ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-300 shadow-[0_0_20px_rgba(34,211,238,0.12)]'
-            : 'bg-zinc-950/80 border-white/[0.06] text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900/60 hover:border-white/10'
+        className={`aip-dropdown-trigger flex items-center gap-2.5 px-4 py-2.5 focus:outline-none ${
+          isOpen ? 'active' : ''
         }`}
       >
         <BookOpen
@@ -97,12 +95,7 @@ export default function AerodromeInfoDropdown({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.96 }}
             transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-2 w-80 max-h-[60vh] overflow-y-auto rounded-xl border border-white/[0.07] shadow-2xl aip-scrollbar"
-            style={{
-              background: 'rgba(9, 9, 11, 0.92)',
-              backdropFilter: 'blur(32px)',
-              WebkitBackdropFilter: 'blur(32px)',
-            }}
+            className="aip-dropdown-menu mt-2 w-80 max-h-[60vh] aip-scrollbar"
           >
             <div className="py-1.5">
               {AIP_SECTIONS.map((section, idx) => (
@@ -112,16 +105,12 @@ export default function AerodromeInfoDropdown({
                     onSectionSelect(section.id);
                     setIsOpen(false);
                   }}
-                  className={`w-full text-left px-4 py-2.5 flex items-start gap-3 transition-colors hover:bg-zinc-800/50 group ${
+                  className={`aip-dropdown-item ${
                     idx !== AIP_SECTIONS.length - 1 ? 'border-b border-zinc-800/30' : ''
                   }`}
                 >
-                  <span className="shrink-0 mt-0.5 text-[10px] font-mono font-bold tracking-wider text-zinc-500 group-hover:text-cyan-400 transition-colors w-14">
-                    {section.code}
-                  </span>
-                  <span className="text-[12px] font-medium text-zinc-400 group-hover:text-zinc-200 transition-colors leading-snug">
-                    {section.title}
-                  </span>
+                  <span className="aip-dropdown-item-code">{section.code}</span>
+                  <span className="aip-dropdown-item-title">{section.title}</span>
                 </button>
               ))}
             </div>

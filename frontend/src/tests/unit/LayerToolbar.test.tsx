@@ -18,19 +18,19 @@ describe('LayerToolbar Component', () => {
   });
 
   it('renders all toggle buttons with correct titles', () => {
-    const { getByTitle } = render(<LayerToolbar />);
+    const { getByRole } = render(<LayerToolbar />);
 
-    expect(getByTitle('Toggle aerodromes')).toBeInTheDocument();
-    expect(getByTitle('Toggle waypoints')).toBeInTheDocument();
-    expect(getByTitle('Toggle navaids')).toBeInTheDocument();
-    expect(getByTitle('Toggle atsRoutes')).toBeInTheDocument();
-    expect(getByTitle('Toggle airspaces')).toBeInTheDocument();
-    expect(getByTitle('Toggle weather')).toBeInTheDocument();
+    expect(getByRole('button', { name: 'Toggle Aerodromes' })).toBeInTheDocument();
+    expect(getByRole('button', { name: 'Toggle Waypoints' })).toBeInTheDocument();
+    expect(getByRole('button', { name: 'Toggle NavAids' })).toBeInTheDocument();
+    expect(getByRole('button', { name: 'Toggle ATS Routes' })).toBeInTheDocument();
+    expect(getByRole('button', { name: 'Toggle Airspaces' })).toBeInTheDocument();
+    expect(getByRole('button', { name: 'Toggle Weather' })).toBeInTheDocument();
   });
 
   it('toggles a layer when clicked', () => {
-    const { getByTitle } = render(<LayerToolbar />);
-    const button = getByTitle('Toggle waypoints');
+    const { getByRole } = render(<LayerToolbar />);
+    const button = getByRole('button', { name: 'Toggle Waypoints' });
 
     fireEvent.click(button);
 
