@@ -1,5 +1,6 @@
 
 
+
 postgres:
   connection_string: postgres://postgres:postgres@host.docker.internal:5432/aeronautical_information_system
   tables:
@@ -105,9 +106,14 @@ postgres:
         feature_name: varchar
         icao_code: varchar
   functions: {}
-mbtiles:
+pmtiles:
+  access_key_id: "${AWS_ACCESS_KEY_ID}"
+  secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+  region: "us-east-1"
+  endpoint: "http://host.docker.internal:9000"
+  endpoint_url: "http://host.docker.internal:9000"
   sources:
-   #erc_india: /data/ERC-INDIA_raster.mbtiles
+    erc_india: s3://ais/output/ERC-VOMF.pmtiles
 observability:
   metrics:
     listen_address: 0.0.0.0:9091

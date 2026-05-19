@@ -83,6 +83,14 @@ restart-martin: ## Pulls latest Martin and restarts with metrics enabled
 	@docker stop martin || true && docker rm martin || true
 	@docker run -d --name martin \
 		-p 3000:3000 -p 9091:9091 \
+		-e AWS_ACCESS_KEY_ID=ais_admin \
+		-e AWS_SECRET_ACCESS_KEY='AviationData2026!' \
+		-e AWS_ENDPOINT=http://host.docker.internal:9000 \
+		-e AWS_ENDPOINT_URL=http://host.docker.internal:9000 \
+		-e AWS_REGION=us-east-1 \
+		-e AWS_DEFAULT_REGION=us-east-1 \
+		-e AWS_EC2_METADATA_DISABLED=true \
+		-e AWS_ALLOW_HTTP=true \
 		-v $(PWD)/backend/martin.yaml:/config/martin.yaml \
 		-v $(PWD)/backend/data:/data \
 		ghcr.io/maplibre/martin:latest --config /config/martin.yaml

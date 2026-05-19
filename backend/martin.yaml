@@ -1,6 +1,7 @@
 # Martin Tile Server Configuration
 # Docs: https://maplibre.org/martin/config-file.html
 
+
 postgres:
   connection_string: postgres://postgres:postgres@host.docker.internal:5432/aeronautical_information_system
 
@@ -109,9 +110,14 @@ postgres:
         direction_even: "varchar"
 
 
-mbtiles:
+pmtiles:
+  access_key_id: "${AWS_ACCESS_KEY_ID}"
+  secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+  region: "us-east-1"
+  endpoint: "http://host.docker.internal:9000"
+  endpoint_url: "http://host.docker.internal:9000"
   sources:
-    #erc_india: /data/ERC-INDIA_raster.mbtiles
+    erc_india: s3://ais/output/ERC-VOMF.pmtiles
 
 observability:
   metrics:
