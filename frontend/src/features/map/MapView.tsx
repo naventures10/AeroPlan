@@ -25,7 +25,6 @@ import { useWindTooltip } from './tooltips/useWindTooltip';
 
 const EMPTY_INTERACTIVE_LAYERS: string[] = [];
 
-const WAC_TILES = [`${window.location.origin}/tiles/wac_india/{z}/{x}/{y}`];
 const ERC_TILES = [`${window.location.origin}/tiles/erc_india/{z}/{x}/{y}`];
 const RASTER_PAINT = {
   'raster-opacity': 1,
@@ -50,10 +49,18 @@ const MOCK_STYLE = {
   ],
 };
 
-const MAP_STYLE =
-  IS_E2E || !MAPTILER_KEY
-    ? (MOCK_STYLE as any)
-    : `https://api.maptiler.com/maps/landscape-v4-dark/style.json?key=${MAPTILER_KEY}`;
+const getMapStyleUrl = (style: 'dark' | 'light' | 'hybrid', maptilerKey: string) => {
+  if (IS_E2E || !maptilerKey) return MOCK_STYLE as any;
+  switch (style) {
+    case 'light':
+      return `https://api.maptiler.com/maps/base-v4/style.json?key=${maptilerKey}`;
+    case 'hybrid':
+      return `https://api.maptiler.com/maps/hybrid-v4/style.json?key=${maptilerKey}`;
+    case 'dark':
+    default:
+      return `https://api.maptiler.com/maps/landscape-v4-dark/style.json?key=${maptilerKey}`;
+  }
+};
 
 const TERRAIN_SOURCE_URL =
   IS_E2E || !MAPTILER_KEY
@@ -144,6 +151,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     setSelectedFeature,
     setSelectedRouteIds,
     setHighlightedAirspaceId,
+    mapStyle,
   } = useMapStore();
 
   const mapRef = useRef<MapRef>(null);
@@ -355,8 +363,9 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
       >
         <Map
           ref={mapRef}
-          mapStyle={MAP_STYLE}
+          mapStyle={getMapStyleUrl(mapStyle, MAPTILER_KEY)}
           onLoad={onMapLoad}
+          onStyleData={onMapLoad}
           reuseMaps
           terrain={
             viewMode === 'TERMINAL' ? { source: 'maptiler-terrain', exaggeration: 1 } : undefined
@@ -371,19 +380,6 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
 
           {hasInterleavedLayers && (
             <InterleavedDeckGL layers={interleavedLayers} onOverlayCreated={onOverlayCreated} />
-          )}
-
-          {viewMode === 'ENROUTE' && activeLayers.wacMap && (
-            <Source
-              id="wac-source"
-              type="raster"
-              tiles={WAC_TILES}
-              tileSize={256}
-              minzoom={7}
-              maxzoom={12}
-            >
-              <Layer id="wac-layer" type="raster" paint={RASTER_PAINT} />
-            </Source>
           )}
 
           {viewMode === 'ENROUTE' && activeLayers.ercMap && (

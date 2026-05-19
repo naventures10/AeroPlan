@@ -19,6 +19,8 @@ interface MapState {
   // UI & App State
   viewMode: 'ENROUTE' | 'TERMINAL';
   setViewMode: (mode: 'ENROUTE' | 'TERMINAL') => void;
+  mapStyle: 'dark' | 'light' | 'hybrid';
+  setMapStyle: (style: 'dark' | 'light' | 'hybrid') => void;
 
   // Metadata for the active aerodrome
   activeAerodromeMetadata: any | null;
@@ -30,7 +32,6 @@ interface MapState {
     waypoints: boolean;
     navaids: boolean;
     atsRoutes: boolean;
-    wacMap: boolean;
     airspaces: boolean;
     airspaceFIR: boolean;
     airspaceRegulated: boolean;
@@ -185,6 +186,9 @@ export const useMapStore = create<MapState>((set, get) => ({
   activeAerodromeMetadata: null,
   setActiveAerodromeMetadata: (data) => set({ activeAerodromeMetadata: data }),
 
+  mapStyle: 'dark',
+  setMapStyle: (style) => set({ mapStyle: style }),
+
   searchQuery: '',
   setSearchQuery: (query) => set({ searchQuery: query }),
 
@@ -193,7 +197,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     waypoints: false,
     navaids: false,
     atsRoutes: false,
-    wacMap: false,
     airspaces: false,
     airspaceFIR: false,
     airspaceRegulated: false,
@@ -234,12 +237,6 @@ export const useMapStore = create<MapState>((set, get) => ({
         };
       }
 
-      if (layer === 'wacMap' && newActiveLayers.wacMap) {
-        newActiveLayers.ercMap = false;
-      }
-      if (layer === 'ercMap' && newActiveLayers.ercMap) {
-        newActiveLayers.wacMap = false;
-      }
       if (layer === 'airspaces' && newActiveLayers.airspaces) {
         newActiveLayers.airspaceFIR = true;
         newActiveLayers.airspaceRegulated = true;

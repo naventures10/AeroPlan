@@ -107,7 +107,7 @@ postgres:
   functions: {}
 mbtiles:
   sources:
-    wac_india: /data/wac_india.mbtiles
+   #erc_india: /data/ERC-INDIA_raster.mbtiles
 observability:
   metrics:
     listen_address: 0.0.0.0:9091

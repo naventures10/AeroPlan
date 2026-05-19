@@ -14,7 +14,6 @@ describe('useMapStore', () => {
         waypoints: false,
         navaids: false,
         atsRoutes: false,
-        wacMap: false,
         airspaces: false,
         airspaceFIR: true,
         airspaceRegulated: true,
@@ -45,6 +44,7 @@ describe('useMapStore', () => {
       windAnimationTime: 0,
       windIsPlaying: false,
       isWindMode: false,
+      mapStyle: 'dark',
     });
   });
 
@@ -67,20 +67,17 @@ describe('useMapStore', () => {
 
   it('should toggle map layers accurately', () => {
     let state = useMapStore.getState();
-    expect(state.activeLayers.wacMap).toBe(false);
     expect(state.activeLayers.ercMap).toBe(false);
 
-    // Turn wacMap ON, should turn ercMap OFF
-    state.toggleLayer('wacMap');
-    state = useMapStore.getState();
-    expect(state.activeLayers.wacMap).toBe(true);
-    expect(state.activeLayers.ercMap).toBe(false);
-
-    // Turn ercMap ON, should turn wacMap OFF
+    // Turn ercMap ON
     state.toggleLayer('ercMap');
     state = useMapStore.getState();
-    expect(state.activeLayers.wacMap).toBe(false);
     expect(state.activeLayers.ercMap).toBe(true);
+
+    // Turn ercMap OFF
+    state.toggleLayer('ercMap');
+    state = useMapStore.getState();
+    expect(state.activeLayers.ercMap).toBe(false);
   });
 
   it('should test remaining actions correctly', () => {
@@ -241,5 +238,11 @@ describe('useMapStore', () => {
     expect(state.selectedFeature).toBeNull();
     expect(state.terminalPivot).toBeNull();
     expect(state.viewMode).toBe('ENROUTE');
+  });
+
+  it('should update map style via setMapStyle', () => {
+    expect(useMapStore.getState().mapStyle).toBe('dark');
+    useMapStore.getState().setMapStyle('light');
+    expect(useMapStore.getState().mapStyle).toBe('light');
   });
 });

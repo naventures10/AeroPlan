@@ -10,39 +10,11 @@ test.describe('Chart Overlay Userflows', () => {
     await mapPage.waitForReady();
   });
 
-  test('Toggle World Aeronautical Chart (WAC)', async ({ page }) => {
-    await mapPage.openOverlayMenu();
-    const wacButton = page.locator('button', { hasText: 'World Aeronautical Chart' });
-    await expect(wacButton).toBeVisible();
+  test('Toggle Enroute Chart (ERC) directly', async ({ page }) => {
+    await expect(mapPage.ercToggleButton).toBeVisible();
 
     // Toggle ON
-    await wacButton.click({ force: true });
-
-    // Verify UI state (active class)
-    await expect(wacButton).toHaveClass(/bg-amber-500/);
-
-    // Verify Store state
-    const isWacActive = await page.evaluate(() => {
-      // @ts-expect-error - useMapStore is attached to window for testing
-      return window.useMapStore.getState().activeLayers.wacMap;
-    });
-    expect(isWacActive).toBe(true);
-
-    // Toggle OFF
-    await wacButton.click();
-    await expect(wacButton).not.toHaveClass(/bg-amber-500/);
-  });
-
-  test('Toggle Enroute Chart (ERC)', async ({ page }) => {
-    await mapPage.openOverlayMenu();
-    const ercButton = page.locator('button', { hasText: 'Enroute Chart' });
-    await expect(ercButton).toBeVisible();
-
-    // Toggle ON
-    await ercButton.click({ force: true });
-
-    // Verify UI state
-    await expect(ercButton).toHaveClass(/bg-emerald-500/);
+    await mapPage.ercToggleButton.click();
 
     // Verify Store state
     const isErcActive = await page.evaluate(() => {
@@ -52,32 +24,47 @@ test.describe('Chart Overlay Userflows', () => {
     expect(isErcActive).toBe(true);
 
     // Toggle OFF
-    await ercButton.click();
-    await expect(ercButton).not.toHaveClass(/bg-emerald-500/);
+    await mapPage.ercToggleButton.click();
+    const isErcActiveOff = await page.evaluate(() => {
+      // @ts-expect-error - useMapStore is attached to window for testing
+      return window.useMapStore.getState().activeLayers.ercMap;
+    });
+    expect(isErcActiveOff).toBe(false);
   });
 
-  test('Charts are mutually exclusive', async ({ page }) => {
-    await mapPage.openOverlayMenu();
-    const wacButton = page.locator('button', { hasText: 'World Aeronautical Chart' });
-    const ercButton = page.locator('button', { hasText: 'Enroute Chart' });
+  test('Toggle Base Map Styles via cycling (Dark, Light, Hybrid)', async ({ page }) => {
+    await expect(mapPage.baseMapButton).toBeVisible();
 
-    // 1. Enable WAC
-    await wacButton.click({ force: true });
-    await expect(wacButton).toHaveClass(/bg-amber-500/);
-
-    // 2. Enable ERC
-    await ercButton.click({ force: true });
-
-    // 3. Verify ERC is ON and WAC is now OFF
-    await expect(ercButton).toHaveClass(/bg-emerald-500/);
-    await expect(wacButton).not.toHaveClass(/bg-amber-500/);
-
-    const storeLayers = await page.evaluate(() => {
+    // Initial state should be dark
+    const initialStyle = await page.evaluate(() => {
       // @ts-expect-error - useMapStore is attached to window for testing
-      return window.useMapStore.getState().activeLayers;
+      return window.useMapStore.getState().mapStyle;
     });
-    expect(storeLayers.ercMap).toBe(true);
-    expect(storeLayers.wacMap).toBe(false);
+    expect(initialStyle).toBe('dark');
+
+    // 1. Click to cycle to Light Mode
+    await mapPage.cycleBaseMap();
+    const currentStyle1 = await page.evaluate(() => {
+      // @ts-expect-error - useMapStore is attached to window for testing
+      return window.useMapStore.getState().mapStyle;
+    });
+    expect(currentStyle1).toBe('light');
+
+    // 2. Click to cycle to Hybrid Mode
+    await mapPage.cycleBaseMap();
+    const currentStyle2 = await page.evaluate(() => {
+      // @ts-expect-error - useMapStore is attached to window for testing
+      return window.useMapStore.getState().mapStyle;
+    });
+    expect(currentStyle2).toBe('hybrid');
+
+    // 3. Click to cycle back to Dark Mode
+    await mapPage.cycleBaseMap();
+    const currentStyle3 = await page.evaluate(() => {
+      // @ts-expect-error - useMapStore is attached to window for testing
+      return window.useMapStore.getState().mapStyle;
+    });
+    expect(currentStyle3).toBe('dark');
   });
 
   test('Auto-zoom when enabling charts at low zoom levels', async ({ page }) => {
@@ -85,7 +72,7 @@ test.describe('Chart Overlay Userflows', () => {
     await page.evaluate(() => {
       // @ts-expect-error - useMapStore is attached to window for testing
       window.useMapStore.setState({
-        activeLayers: { wacMap: false, ercMap: false },
+        activeLayers: { ercMap: false },
         viewState: {
           longitude: 78.9629,
           latitude: 20.5937,
@@ -97,9 +84,8 @@ test.describe('Chart Overlay Userflows', () => {
       });
     });
 
-    // 2. Open Menu and toggle ERC
-    await mapPage.openOverlayMenu();
-    await page.locator('button', { hasText: 'Enroute Chart' }).click({ force: true });
+    // 2. Toggle ERC
+    await mapPage.ercToggleButton.click();
 
     // 3. Verify zoom level increased (it should jump to 7.5 per implementation)
     await expect
@@ -113,5 +99,26 @@ test.describe('Chart Overlay Userflows', () => {
         { timeout: 10000 },
       )
       .toBeGreaterThan(7);
+  });
+
+  test('Interact with Zoom Slider', async ({ page }) => {
+    // 1. Verify zoom slider is visible
+    await expect(mapPage.zoomSlider).toBeVisible();
+
+    // 2. Set zoom via slider input
+    await mapPage.zoomSlider.fill('12.5');
+
+    // 3. Verify state updated successfully
+    await expect
+      .poll(
+        async () => {
+          return await page.evaluate(() => {
+            // @ts-expect-error - useMapStore is attached to window for testing
+            return window.useMapStore.getState().viewState.zoom;
+          });
+        },
+        { timeout: 5000 },
+      )
+      .toBeCloseTo(12.5, 1);
   });
 });

@@ -10,7 +10,6 @@ export interface ActiveLayers {
   waypoints: boolean;
   navaids: boolean;
   atsRoutes: boolean;
-  wacMap: boolean;
   airspaces: boolean;
   airspaceFIR: boolean;
   airspaceRegulated: boolean;
