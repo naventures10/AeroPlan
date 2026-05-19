@@ -53,69 +53,88 @@ export default function MapPage() {
       </Suspense>
 
       {/* Overlay Layer (Secondary Chunks) */}
-      <Suspense fallback={null}>
-        <div className="absolute inset-0 pointer-events-none z-10">
-          {/* Parallel UI Crossfade Architecture */}
-          {/* Parallel UI Crossfade Architecture */}
-          <motion.div
-            key="primary-ui"
-            initial={false}
-            animate={!isWeatherMode || viewState.pitch > 0 ? 'visible' : 'hidden'}
-            variants={{
-              visible: { opacity: 1, display: 'block' },
-              hidden: { opacity: 0, transitionEnd: { display: 'none' } },
-            }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="absolute inset-0 pointer-events-none"
-          >
-            <div className="absolute top-6 left-[4.5rem] flex flex-col gap-3 pointer-events-auto z-50">
-              {viewMode === 'ENROUTE' && viewState.pitch === 0 && <SearchBar {...search} />}
+      <div className="absolute inset-0 pointer-events-none z-10">
+        {/* Parallel UI Crossfade Architecture */}
+        <motion.div
+          key="primary-ui"
+          initial={false}
+          animate={!isWeatherMode || viewState.pitch > 0 ? 'visible' : 'hidden'}
+          variants={{
+            visible: { opacity: 1, display: 'block' },
+            hidden: { opacity: 0, transitionEnd: { display: 'none' } },
+          }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          className="absolute inset-0 pointer-events-none"
+        >
+          <div className="absolute top-6 left-[4.5rem] flex flex-col gap-3 pointer-events-auto z-50">
+            {viewMode === 'ENROUTE' && viewState.pitch === 0 && (
+              <Suspense fallback={null}>
+                <SearchBar {...search} />
+              </Suspense>
+            )}
 
-              {(activeAirport || viewMode === 'TERMINAL') && (
-                <>
+            {(activeAirport || viewMode === 'TERMINAL') && (
+              <>
+                <Suspense fallback={null}>
                   <AerodromeInfoDropdown
                     onSectionSelect={handleSectionSelect}
                     activeAirport={activeAirport}
                   />
-                  {viewMode === 'TERMINAL' && <TerminalLegend />}
-                </>
-              )}
-            </div>
+                </Suspense>
+                {viewMode === 'TERMINAL' && (
+                  <Suspense fallback={null}>
+                    <TerminalLegend />
+                  </Suspense>
+                )}
+              </>
+            )}
+          </div>
 
-            {activeAirport && (viewMode === 'TERMINAL' || viewState.pitch > 0) && (
-              <div className="absolute top-6 right-6 pointer-events-auto z-40">
+          {activeAirport && (viewMode === 'TERMINAL' || viewState.pitch > 0) && (
+            <div className="absolute top-6 right-6 pointer-events-auto z-40">
+              <Suspense fallback={null}>
                 <TerminalDashboard icaoCode={activeAirport} />
-              </div>
-            )}
+              </Suspense>
+            </div>
+          )}
 
-            {activeAirport && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-auto z-40">
+          {activeAirport && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-auto z-40">
+              <Suspense fallback={null}>
                 <AerodromeChartViewer icaoCode={activeAirport} />
-              </div>
-            )}
+              </Suspense>
+            </div>
+          )}
 
-            {/* Removed LayerToolbar from here to prevent weather layer hijacking */}
+          {/* Removed LayerToolbar from here to prevent weather layer hijacking */}
+          <Suspense fallback={null}>
             <ViewToggle />
-          </motion.div>
+          </Suspense>
+        </motion.div>
 
-          <motion.div
-            key="weather-ui"
-            initial={false}
-            animate={isWeatherMode && viewState.pitch === 0 ? 'visible' : 'hidden'}
-            variants={{
-              visible: { opacity: 1, display: 'block' },
-              hidden: { opacity: 0, transitionEnd: { display: 'none' } },
-            }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="absolute inset-0 pointer-events-none"
-          >
+        <motion.div
+          key="weather-ui"
+          initial={false}
+          animate={isWeatherMode && viewState.pitch === 0 ? 'visible' : 'hidden'}
+          variants={{
+            visible: { opacity: 1, display: 'block' },
+            hidden: { opacity: 0, transitionEnd: { display: 'none' } },
+          }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          className="absolute inset-0 pointer-events-none"
+        >
+          <Suspense fallback={null}>
             <WeatherControls />
-          </motion.div>
+          </Suspense>
+        </motion.div>
 
-          {/* Persistently render LayerToolbar outside the crossfade in 2D ENROUTE view */}
-          {viewMode === 'ENROUTE' && viewState.pitch === 0 && <LayerToolbar />}
-        </div>
-      </Suspense>
+        {/* Persistently render LayerToolbar outside the crossfade in 2D ENROUTE view */}
+        {viewMode === 'ENROUTE' && viewState.pitch === 0 && (
+          <Suspense fallback={null}>
+            <LayerToolbar />
+          </Suspense>
+        )}
+      </div>
 
       <Suspense fallback={null}>
         <SectionModal

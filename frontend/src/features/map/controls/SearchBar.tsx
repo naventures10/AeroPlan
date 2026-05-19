@@ -166,7 +166,10 @@ export default function SearchBar({
                     className={`aip-search-result-item w-full text-left flex items-center justify-between ${
                       index === searchSelectedIndex ? 'selected' : ''
                     }`}
-                    onClick={() => handleGlobalSearchSelect(item)}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleGlobalSearchSelect(item);
+                    }}
                     onMouseEnter={() => setSearchSelectedIndex(index)}
                   >
                     <div className="flex items-center gap-4 flex-1">
