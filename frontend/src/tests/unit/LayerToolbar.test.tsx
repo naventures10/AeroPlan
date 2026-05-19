@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import LayerToolbar from '../../features/map/controls/LayerToolbar';
 import { useMapStore } from '../../store/useMapStore';
@@ -35,5 +35,17 @@ describe('LayerToolbar Component', () => {
     fireEvent.click(button);
 
     expect(useMapStore.getState().activeLayers.waypoints).toBe(true);
+  });
+
+  it('renders the menu button and invokes onMenuClick when clicked', () => {
+    const onMenuClick = vi.fn();
+    const { container } = render(<LayerToolbar onMenuClick={onMenuClick} />);
+    const menuButton = container.querySelector('.aip-icon-menu')?.closest('button');
+
+    expect(menuButton).toBeInTheDocument();
+    if (menuButton) {
+      fireEvent.click(menuButton);
+    }
+    expect(onMenuClick).toHaveBeenCalledTimes(1);
   });
 });
