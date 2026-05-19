@@ -102,6 +102,30 @@ def safe_remove_grib(file_path: str):
         logger.error("failed_to_cleanup_temp_grib", path=file_path, error=str(e))
 
 
+def _get_run_and_steps_for_time(
+    now: datetime, offset_hours: int = 0
+) -> tuple[int, datetime, list[int]]:
+    """
+    Determine the ECMWF run and forecast steps, optionally stepping back
+    by a multiple of 6 hours.
+    """
+    latency_hours = 2 + offset_hours
+    # The target available time snapped back by the offset
+    available_now = now - timedelta(hours=latency_hours)
+    # Snap to the previous 6-hour cycle (00, 06, 12, 18)
+    run_hour = (available_now.hour // 6) * 6
+    run_time = available_now.replace(hour=run_hour, minute=0, second=0, microsecond=0)
+
+    # Calculate steps relative to "now"
+    elapsed_hours = (now - run_time).total_seconds() / 3600
+    # Round to nearest 3-hour step, minimum 3
+    start_step = max(3, round(elapsed_hours / 3) * 3)
+
+    # 5 steps = 12 hour window (0, +3, +6, +9, +12)
+    steps = [start_step + (i * 3) for i in range(5)]
+    return run_hour, run_time, steps
+
+
 def _get_run_and_steps(now: datetime) -> tuple[int, datetime, list[int]]:
     """
     Determine the most recent available ECMWF run and the forecast steps to
@@ -110,21 +134,7 @@ def _get_run_and_steps(now: datetime) -> tuple[int, datetime, list[int]]:
     ECMWF IFS Open Data runs every 6 hours (00, 06, 12, 18 UTC) with a
     ~2-hour publication latency. Forecast steps are available in 3-hour intervals.
     """
-    latency_hours = 2
-    # The most recent run that has had enough time to be published
-    available_now = now - timedelta(hours=latency_hours)
-    # Snap to the previous 6-hour cycle (00, 06, 12, 18)
-    run_hour = (available_now.hour // 6) * 6
-    run_time = available_now.replace(hour=run_hour, minute=0, second=0, microsecond=0)
-
-    # How many hours since that run?
-    elapsed_hours = (now - run_time).total_seconds() / 3600
-    # Round to nearest 3-hour step, minimum 3
-    start_step = max(3, round(elapsed_hours / 3) * 3)
-
-    # 5 steps = 12 hour window (0, +3, +6, +9, +12)
-    steps = [start_step + (i * 3) for i in range(5)]
-
+    run_hour, run_time, steps = _get_run_and_steps_for_time(now, 0)
     logger.info(
         "computed_forecast_target",
         run_date=run_time.strftime("%Y-%m-%d"),
@@ -147,49 +157,72 @@ def run_pipeline() -> bool:
     raw_pl_file = os.path.join(os.getcwd(), f"temp_pl_{timestamp_str}.grib2")
     manifest_path = os.path.join(settings.WEATHER_OUTPUT_DIR, "weather_manifest.json")
 
-    run_hour, run_time, steps = _get_run_and_steps(now)
-    run_date_str = run_time.strftime("%Y-%m-%d")
+    # --- STEP 1: Download with Fallback Loop ---
+    max_backwards_cycles = 4
+    download_success = False
+    run_hour, run_time, steps = _get_run_and_steps_for_time(now, 0)  # default initial values
 
-    # --- STEP 1: Download ---
-    logger.info(
-        "downloading_ecmwf_data",
-        source="azure",
-        date=run_date_str,
-        run=f"{run_hour:02d}Z",
-        steps=steps,
-    )
-    client = Client(source="azure")
-    try:
-        # Surface levels
-        client.retrieve(
+    for cycle_idx in range(max_backwards_cycles):
+        offset_hours = cycle_idx * 6
+        run_hour, run_time, steps = _get_run_and_steps_for_time(now, offset_hours)
+        run_date_str = run_time.strftime("%Y-%m-%d")
+
+        logger.info(
+            "downloading_ecmwf_data",
+            source="aws",
             date=run_date_str,
-            time=run_hour,
-            step=steps,
-            type="fc",
-            levtype="sfc",
-            param=["10u", "10v", "2t", "2d", "msl", "tcc", "10fg", "tp"],
-            target=raw_sfc_file,
+            run=f"{run_hour:02d}Z",
+            steps=steps,
+            attempt=cycle_idx + 1,
         )
 
-        time.sleep(5)  # Avoid SlowDown error
+        client = Client(source="aws")
+        try:
+            # Surface levels
+            client.retrieve(
+                date=run_date_str,
+                time=run_hour,
+                step=steps,
+                type="fc",
+                levtype="sfc",
+                param=["10u", "10v", "2t", "2d", "msl", "tcc", "10fg", "tp"],
+                target=raw_sfc_file,
+            )
 
-        # Pressure levels
-        client.retrieve(
-            date=run_date_str,
-            time=run_hour,
-            step=steps,
-            type="fc",
-            levtype="pl",
-            levelist=[1000, 925, 850, 700, 500, 400, 300, 250, 200, 150],
-            param=["u", "v", "t", "r"],
-            target=raw_pl_file,
-        )
-        logger.info("download_complete", num_steps=len(steps))
+            time.sleep(5)  # Avoid SlowDown error
 
-    except Exception as e:
-        logger.error("download_failed", error=str(e))
-        safe_remove_grib(raw_sfc_file)
-        safe_remove_grib(raw_pl_file)
+            # Pressure levels
+            client.retrieve(
+                date=run_date_str,
+                time=run_hour,
+                step=steps,
+                type="fc",
+                levtype="pl",
+                levelist=[1000, 925, 850, 700, 500, 400, 300, 250, 200, 150],
+                param=["u", "v", "t", "r"],
+                target=raw_pl_file,
+            )
+            logger.info(
+                "download_complete",
+                num_steps=len(steps),
+                run=f"{run_hour:02d}Z",
+                date=run_date_str,
+            )
+            download_success = True
+            break
+        except Exception as e:
+            logger.warning(
+                "download_failed_for_cycle",
+                run=f"{run_hour:02d}Z",
+                date=run_date_str,
+                error=str(e),
+                will_retry_previous_cycle=(cycle_idx + 1 < max_backwards_cycles),
+            )
+            safe_remove_grib(raw_sfc_file)
+            safe_remove_grib(raw_pl_file)
+
+    if not download_success:
+        logger.error("all_download_attempts_failed")
         return False
 
     # --- STEP 2: Interpolate & Generate COGs ---

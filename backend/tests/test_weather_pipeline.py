@@ -210,3 +210,116 @@ def test_run_pipeline_download_fails(mock_os_remove, mock_client_class, tmp_path
     # Verify manifest not created
     manifest_path = output_dir / "weather_manifest.json"
     assert not manifest_path.exists()
+
+
+@patch("app.services.weather_pipeline.cfgrib.open_datasets")
+@patch("app.services.weather_pipeline.xr.open_dataset")
+@patch("app.services.weather_pipeline.xr.concat")
+@patch("app.services.weather_pipeline.rasterio.open")
+@patch("app.services.weather_pipeline.Client")
+@patch("app.services.weather_pipeline.subprocess.run")
+@patch("app.services.weather_pipeline.os.remove")
+@patch("app.services.weather_pipeline.np.arange")
+def test_run_pipeline_fallback_success(
+    mock_arange,
+    mock_os_remove,
+    mock_run,
+    mock_client_class,
+    mock_rasterio,
+    mock_xr_concat,
+    mock_xr_open,
+    mock_cfgrib_open,
+    tmp_path,
+    monkeypatch,
+):
+    output_dir = tmp_path / "weather"
+    output_dir.mkdir()
+    monkeypatch.setattr(settings, "WEATHER_OUTPUT_DIR", str(output_dir))
+    monkeypatch.setattr(settings, "WEATHER_BASE_URL", "http://test-weather")
+
+    mock_arange.return_value = np.array([0])
+
+    mock_client = MagicMock()
+
+    # Fail on first attempt, succeed on second attempt
+    call_count = 0
+
+    def mock_retrieve(*args, **kwargs):
+        nonlocal call_count
+        if call_count < 2:
+            call_count += 1
+            raise Exception("Mock 404 error")
+        call_count += 1
+        return MagicMock()
+
+    mock_client.retrieve.side_effect = mock_retrieve
+    mock_client_class.return_value = mock_client
+
+    # Mock other requirements to complete the pipeline
+    mock_ds_sfc = MagicMock()
+    mock_ds_sfc.data_vars = ["u10", "v10", "t2m", "d2m", "fg10", "tp", "tcc", "msl"]
+    mock_ds_sfc.dims = ["step", "latitude", "longitude"]
+    mock_ds_sfc.coords = {
+        "step": np.array([np.timedelta64(3, "h")], dtype="timedelta64[ns]"),
+        "latitude": np.array([90.0, 89.75]),
+        "longitude": np.array([-180.0, -179.75]),
+        "valid_time": np.array([np.datetime64("2023-01-01T12:00:00")]),
+    }
+
+    def get_var(key):
+        da = MagicMock()
+        da.values = np.zeros((1, 2, 2))
+        da.coords = {}
+        da.drop_vars.return_value = da
+        da.__sub__.return_value = da
+        da.__truediv__.return_value = da
+        da.__mul__.return_value = da
+        da.clip.return_value = da
+        return da
+
+    mock_ds_sfc.__getitem__.side_effect = get_var
+    mock_ds_sfc.drop_vars.return_value = mock_ds_sfc
+    mock_ds_sfc.expand_dims.return_value = mock_ds_sfc
+    mock_ds_sfc.assign_coords.return_value = mock_ds_sfc
+    mock_cfgrib_open.return_value = [mock_ds_sfc]
+
+    mock_ds_pl = MagicMock()
+    mock_ds_pl.data_vars = ["u", "v", "t", "r"]
+    mock_ds_pl.dims = ["isobaricInhPa", "step", "latitude", "longitude"]
+    mock_ds_pl.coords = {
+        "isobaricInhPa": np.array([1000]),
+        "step": np.array([np.timedelta64(3, "h")], dtype="timedelta64[ns]"),
+    }
+    mock_ds_pl.isobaricInhPa.values = np.array([1000])
+    mock_ds_pl.__getitem__.side_effect = get_var
+    mock_ds_pl.assign_coords.return_value = mock_ds_pl
+    mock_ds_pl.swap_dims.return_value = mock_ds_pl
+    mock_ds_pl.drop_vars.return_value = mock_ds_pl
+    mock_ds_pl.expand_dims.return_value = mock_ds_pl
+    mock_xr_open.return_value = mock_ds_pl
+
+    mock_ds_full = MagicMock()
+    mock_ds_full.step.values = np.array([np.timedelta64(3, "h")], dtype="timedelta64[ns]")
+    mock_ds_full.drop_vars.return_value = mock_ds_full
+    mock_ds_full.sortby.return_value = mock_ds_full
+    mock_xr_concat.return_value = mock_ds_full
+
+    mock_ds_interp = MagicMock()
+    mock_ds_interp.step.values = np.array([np.timedelta64(3, "h")], dtype="timedelta64[ns]")
+    mock_ds_full.interp.return_value = mock_ds_interp
+
+    mock_step_ds = MagicMock()
+    mock_ds_interp.isel.return_value = mock_step_ds
+
+    mock_alt_slice = MagicMock()
+    mock_alt_slice.__getitem__.side_effect = lambda key: MagicMock(values=np.zeros((2, 2)))
+    mock_step_ds.sel.return_value = mock_alt_slice
+
+    mock_rasterio.return_value.__enter__.return_value = MagicMock()
+
+    with patch("time.sleep"):
+        success = run_pipeline()
+
+    assert success is True
+    manifest_path = output_dir / "weather_manifest.json"
+    assert manifest_path.exists()
