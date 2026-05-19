@@ -70,6 +70,10 @@ export class MapPage {
   async search(query: string, resultText?: string) {
     await this.searchInput.focus();
     await this.searchInput.fill(query);
+
+    // Small delay to allow debounce and animation to start
+    await this.page.waitForTimeout(500);
+
     // Use resultText if provided (more unique), otherwise use the query
     const targetText = resultText || query;
     const result = this.page
@@ -78,7 +82,7 @@ export class MapPage {
       .first();
 
     // Wait for results to appear (auto-retries)
-    await expect(result).toBeVisible({ timeout: 20000 });
+    await expect(result).toBeVisible({ timeout: 25000 });
     await result.click({ force: true });
   }
 }

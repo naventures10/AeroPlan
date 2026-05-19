@@ -159,7 +159,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
         return {
           html: sanitizeHtml(`<div class="aip-tooltip-container aip-tooltip-max-250">
               <span class="aip-tooltip-title">${p.waypoint_name || 'WAYPOINT'}</span>
-              <span class="aip-tooltip-subtitle aip-tooltip-route-type">INTERSECTING: ${routes.join(', ')}</span>
+              <span class="aip-tooltip-subtitle aip-tooltip-waypoint-accent">INTERSECTING: ${routes.join(', ')}</span>
             </div>`),
         };
       } else if (object && layer?.id === 'airspace-metadata-layer') {

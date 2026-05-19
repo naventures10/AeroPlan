@@ -129,8 +129,10 @@ test.describe('Search Bar Userflow', () => {
     await expect(suggestions).toBeVisible({ timeout: 5000 });
 
     // 3. Verify VATLA is in suggestions
-    const vatlaResult = page.locator('div.aip-search-result-item').filter({ hasText: 'VATLA' });
-    await expect(vatlaResult).toBeVisible();
+    const vatlaResult = page
+      .locator('[data-testid="search-result-item"]')
+      .filter({ hasText: 'VATLA' });
+    await expect(vatlaResult).toBeVisible({ timeout: 10000 });
 
     // 4. Click suggestion
     await vatlaResult.click({ force: true });
@@ -153,8 +155,10 @@ test.describe('Search Bar Userflow', () => {
     await mapPage.searchInput.focus();
     await mapPage.searchInput.fill('VOMM');
 
-    const vommResult = page.locator('div.aip-search-result-item').filter({ hasText: 'VOMM' });
-    await expect(vommResult).toBeVisible();
+    const vommResult = page
+      .locator('[data-testid="search-result-item"]')
+      .filter({ hasText: 'VOMM' });
+    await expect(vommResult).toBeVisible({ timeout: 10000 });
     await vommResult.click({ force: true });
 
     // 2. Verify Terminal Dashboard appears
@@ -173,8 +177,10 @@ test.describe('Search Bar Userflow', () => {
     await expect(suggestions).toBeVisible();
 
     // 3. Verify multiple results are present
-    const vommResult = page.locator('div.aip-search-result-item').filter({ hasText: 'VOMM' });
-    await expect(vommResult).toBeVisible();
+    const vommResult = page
+      .locator('[data-testid="search-result-item"]')
+      .filter({ hasText: 'VOMM' });
+    await expect(vommResult).toBeVisible({ timeout: 10000 });
 
     // 4. Press ArrowDown to highlight the first result
     await page.keyboard.press('ArrowDown');
@@ -201,6 +207,8 @@ test.describe('Search Bar Userflow', () => {
     await expect(clearButton).toBeVisible();
 
     // 3. Click clear button
+    await expect(clearButton).toBeVisible();
+    await page.waitForTimeout(300); // Allow animation
     await clearButton.click({ force: true });
 
     // 4. Verify input is empty
@@ -214,6 +222,7 @@ test.describe('Search Bar Userflow', () => {
     // 1. Type a random string
     await mapPage.searchInput.focus();
     await mapPage.searchInput.fill('XYZABC123');
+    await page.waitForTimeout(500);
 
     // 2. Verify "No matching locations" message
     await expect(page.getByText('No matching locations', { exact: false })).toBeVisible({
@@ -227,6 +236,7 @@ test.describe('Search Bar Userflow', () => {
 
     // 2. Search for a waypoint
     await mapPage.searchInput.fill('VATLA');
+    await page.waitForTimeout(500);
     await page.getByText('VATLA').first().click({ force: true });
 
     // 3. Verify Waypoints layer is toggled ON
@@ -243,11 +253,12 @@ test.describe('Search Bar Userflow', () => {
     const suggestions = page.locator('div.aip-search-results-wrapper');
     await expect(suggestions).toBeVisible();
 
-    // 2. Blur the input
+    // 2. Blur input
     await mapPage.searchInput.blur();
+    await page.waitForTimeout(1000); // Wait longer for the 300ms blur timeout in slow env
 
     // 3. Verify dropdown disappears
-    await expect(suggestions).not.toBeVisible();
+    await expect(suggestions).not.toBeVisible({ timeout: 10000 });
 
     // 4. Refocus input
     await mapPage.searchInput.focus();

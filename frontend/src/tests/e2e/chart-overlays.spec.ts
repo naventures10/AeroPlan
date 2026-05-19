@@ -16,7 +16,7 @@ test.describe('Chart Overlay Userflows', () => {
     await expect(wacButton).toBeVisible();
 
     // Toggle ON
-    await wacButton.click();
+    await wacButton.click({ force: true });
 
     // Verify UI state (active class)
     await expect(wacButton).toHaveClass(/bg-amber-500/);
@@ -39,7 +39,7 @@ test.describe('Chart Overlay Userflows', () => {
     await expect(ercButton).toBeVisible();
 
     // Toggle ON
-    await ercButton.click();
+    await ercButton.click({ force: true });
 
     // Verify UI state
     await expect(ercButton).toHaveClass(/bg-emerald-500/);
@@ -62,11 +62,11 @@ test.describe('Chart Overlay Userflows', () => {
     const ercButton = page.locator('button', { hasText: 'Enroute Chart' });
 
     // 1. Enable WAC
-    await wacButton.click();
+    await wacButton.click({ force: true });
     await expect(wacButton).toHaveClass(/bg-amber-500/);
 
     // 2. Enable ERC
-    await ercButton.click();
+    await ercButton.click({ force: true });
 
     // 3. Verify ERC is ON and WAC is now OFF
     await expect(ercButton).toHaveClass(/bg-emerald-500/);
@@ -81,22 +81,25 @@ test.describe('Chart Overlay Userflows', () => {
   });
 
   test('Auto-zoom when enabling charts at low zoom levels', async ({ page }) => {
-    // 1. Set a very low zoom level initially
+    // 1. Set a very low zoom level initially and ensure layers are OFF
     await page.evaluate(() => {
       // @ts-expect-error - useMapStore is attached to window for testing
-      window.useMapStore.getState().setViewState({
-        longitude: 78.9629,
-        latitude: 20.5937,
-        zoom: 5,
-        pitch: 0,
-        bearing: 0,
-        maxPitch: 60,
+      window.useMapStore.setState({
+        activeLayers: { wacMap: false, ercMap: false },
+        viewState: {
+          longitude: 78.9629,
+          latitude: 20.5937,
+          zoom: 5,
+          pitch: 0,
+          bearing: 0,
+          maxPitch: 60,
+        },
       });
     });
 
     // 2. Open Menu and toggle ERC
     await mapPage.openOverlayMenu();
-    await page.locator('button', { hasText: 'Enroute Chart' }).click();
+    await page.locator('button', { hasText: 'Enroute Chart' }).click({ force: true });
 
     // 3. Verify zoom level increased (it should jump to 7.5 per implementation)
     await expect

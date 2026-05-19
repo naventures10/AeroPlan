@@ -159,10 +159,11 @@ export default function SearchBar({
             ) : suggestions.length > 0 ? (
               <div className="py-2">
                 {suggestions.map((item: SearchResult, index: number) => (
-                  <div
+                  <button
                     key={`${item.type}-${item.id}`}
+                    type="button"
                     data-testid="search-result-item"
-                    className={`aip-search-result-item ${
+                    className={`aip-search-result-item w-full text-left flex items-center justify-between ${
                       index === searchSelectedIndex ? 'selected' : ''
                     }`}
                     onClick={() => handleGlobalSearchSelect(item)}
@@ -180,7 +181,7 @@ export default function SearchBar({
                       </div>
                     </div>
                     <div className="aip-search-result-type">{item.type.replace('_', ' ')}</div>
-                  </div>
+                  </button>
                 ))}
               </div>
             ) : (

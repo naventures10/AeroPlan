@@ -142,6 +142,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     boundsToFit,
     fitBounds,
     setSelectedFeature,
+    setSelectedRouteIds,
     setHighlightedAirspaceId,
   } = useMapStore();
 
@@ -310,9 +311,10 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
 
       // 3. If we clicked empty space in BOTH contexts, clear selection
       setSelectedFeature(null);
+      setSelectedRouteIds([]);
       setHighlightedAirspaceId(null);
     },
-    [setSelectedFeature, setHighlightedAirspaceId],
+    [setSelectedFeature, setSelectedRouteIds, setHighlightedAirspaceId],
   );
 
   const handleDeckHover = useCallback(

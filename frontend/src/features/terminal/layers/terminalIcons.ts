@@ -21,12 +21,9 @@ const S = 64; // Canvas size — larger = sharper SDF at all zoom levels
  */
 const AIRPORT_SVG = `
 <svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="32" cy="32" r="14" fill="none" stroke="black" stroke-width="5"/>
-  <circle cx="32" cy="32" r="5" fill="black"/>
-  <rect x="30" y="4" width="4" height="10" rx="2" fill="black"/>
-  <rect x="30" y="50" width="4" height="10" rx="2" fill="black"/>
-  <rect x="4" y="30" width="10" height="4" rx="2" fill="black"/>
-  <rect x="50" y="30" width="10" height="4" rx="2" fill="black"/>
+  <circle cx="32" cy="32" r="10" fill="none" stroke="black" stroke-width="4"/>
+  <line x1="32" y1="12" x2="32" y2="52" stroke="black" stroke-width="4" stroke-linecap="round"/>
+  <line x1="12" y1="32" x2="52" y2="32" stroke="black" stroke-width="4" stroke-linecap="round"/>
 </svg>
 `.trim();
 
@@ -38,14 +35,8 @@ const AIRPORT_SVG = `
  */
 const NAVAID_SVG = `
 <svg width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg">
-  <polygon points="32,10 51,21 51,43 32,54 13,43 13,21" fill="none" stroke="black" stroke-width="5" stroke-linejoin="round"/>
-  <circle cx="32" cy="32" r="5" fill="black"/>
-  <line x1="32" y1="10" x2="32" y2="4" stroke="black" stroke-width="4" stroke-linecap="round"/>
-  <line x1="51" y1="21" x2="56" y2="18" stroke="black" stroke-width="4" stroke-linecap="round"/>
-  <line x1="51" y1="43" x2="56" y2="46" stroke="black" stroke-width="4" stroke-linecap="round"/>
-  <line x1="32" y1="54" x2="32" y2="60" stroke="black" stroke-width="4" stroke-linecap="round"/>
-  <line x1="13" y1="43" x2="8" y2="46" stroke="black" stroke-width="4" stroke-linecap="round"/>
-  <line x1="13" y1="21" x2="8" y2="18" stroke="black" stroke-width="4" stroke-linecap="round"/>
+  <polygon points="32,10 51,21 51,43 32,54 13,43 13,21" fill="none" stroke="black" stroke-width="8.5" stroke-linejoin="round"/>
+  <circle cx="32" cy="32" r="6.5" fill="black"/>
 </svg>
 `.trim();
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardBody, Button, Divider } from '@heroui/react';
+import { Card, CardHeader, CardBody, Divider } from '@heroui/react';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMapStore } from '../../store/useMapStore';
@@ -12,7 +12,13 @@ import { WaypointDetailsPanel } from './components/WaypointDetailsPanel';
 import { AirspaceDetailsPanel } from './components/AirspaceDetailsPanel';
 
 export function FeatureInfoCard() {
-  const { selectedFeature, setSelectedFeature, viewMode, setHighlightedAirspaceId } = useMapStore();
+  const {
+    selectedFeature,
+    setSelectedFeature,
+    viewMode,
+    setHighlightedAirspaceId,
+    setSelectedRouteIds,
+  } = useMapStore();
 
   const isVisible = viewMode === 'ENROUTE' && selectedFeature !== null;
   const type = selectedFeature?.type || '';
@@ -112,7 +118,7 @@ export function FeatureInfoCard() {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          key={selectedFeature?.type}
+          key="feature-info-card"
           data-testid="feature-info-card"
           initial={{ x: 50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -122,28 +128,34 @@ export function FeatureInfoCard() {
         >
           <Card className="aip-feature-card">
             <CardHeader className="aip-feature-card-header">
-              <div className="flex flex-col">
+              <div className="flex flex-col gap-1.5">
                 <div className="flex items-center gap-1">
-                  <span className="aip-feature-card-type">{type.replace('_', ' ')}</span>
+                  <span
+                    className={`aip-feature-card-type ${
+                      type === 'WAYPOINT' ? 'aip-feature-card-type-waypoint' : ''
+                    }`}
+                  >
+                    {type.replace('_', ' ')}
+                  </span>
                   {routeTypeBadge}
                 </div>
                 <h3 className="aip-feature-card-title">{title}</h3>
               </div>
-              <Button
+              <button
+                type="button"
                 data-testid="close-feature-card"
-                isIconOnly
-                size="sm"
-                variant="light"
                 onClick={() => {
                   setSelectedFeature(null);
+                  setSelectedRouteIds([]);
                   if (type === 'AIRSPACE') {
                     setHighlightedAirspaceId(null);
                   }
                 }}
-                className="aip-feature-card-close"
+                className="aip-feature-card-close p-2 hover:bg-white/5 rounded-full transition-colors"
+                aria-label="Close"
               >
                 <X size={18} />
-              </Button>
+              </button>
             </CardHeader>
             <Divider className="aip-feature-card-divider" />
             <CardBody className="aip-feature-card-body custom-scrollbar">

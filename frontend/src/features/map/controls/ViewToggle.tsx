@@ -38,6 +38,7 @@ export default function ViewToggle() {
           >
             {/* WAC Option */}
             <button
+              type="button"
               onClick={() => {
                 toggleLayer('wacMap');
                 if (!activeLayers.wacMap && viewState.zoom < 7) {
@@ -56,6 +57,7 @@ export default function ViewToggle() {
 
             {/* ERC Option */}
             <button
+              type="button"
               onClick={() => {
                 toggleLayer('ercMap');
                 if (!activeLayers.ercMap && viewState.zoom < 7) {
@@ -75,6 +77,7 @@ export default function ViewToggle() {
 
           {/* Trigger Button */}
           <button
+            type="button"
             onClick={() => setIsMapMenuOpen(!isMapMenuOpen)}
             title="Map Overlays"
             className={`flex items-center justify-center w-12 h-12 rounded-full backdrop-blur-xl shadow-xl transition duration-300 focus:outline-none border ${
@@ -91,6 +94,7 @@ export default function ViewToggle() {
       {/* 2D/3D Toggle Cube */}
       {(activeAirport || viewMode === 'TERMINAL') && (
         <button
+          type="button"
           onClick={() => {
             setViewState({
               ...viewState,

@@ -94,10 +94,26 @@ export const POINT_LAYOUT = {
     [
       'case',
       ['>=', ['index-of', 'ARP', ['var', 's']], 0],
-      0.8,
+      0.7,
       ['>=', ['index-of', 'HELIPAD', ['var', 's']], 0],
       0.6,
-      0.5,
+      [
+        'any',
+        ['>=', ['index-of', 'NAV', ['var', 's']], 0],
+        ['>=', ['index-of', 'RADIO', ['var', 's']], 0],
+      ],
+      0.55,
+      [
+        'interpolate',
+        ['linear'],
+        ['coalesce', ['to-number', ['get', 'height_m']], 0],
+        0,
+        0.35,
+        30,
+        0.48,
+        120,
+        0.68,
+      ],
     ],
   ],
   'icon-allow-overlap': true,
@@ -112,7 +128,7 @@ export const POINT_PAINT = {
     [
       'case',
       ['>=', ['index-of', 'ARP', ['var', 's']], 0],
-      '#facc15',
+      '#c084fc',
       ['>=', ['index-of', 'HELIPAD', ['var', 's']], 0],
       '#0ea5e9',
       [
@@ -120,7 +136,7 @@ export const POINT_PAINT = {
         ['>=', ['index-of', 'NAV', ['var', 's']], 0],
         ['>=', ['index-of', 'RADIO', ['var', 's']], 0],
       ],
-      '#a855f7',
+      '#34d399',
       [
         'any',
         ['>=', ['index-of', 'TREE', ['var', 's']], 0],
@@ -146,25 +162,7 @@ export const POINT_PAINT = {
       '#f97316',
     ],
   ],
-  'icon-halo-color': [
-    'let',
-    's',
-    GET_SEARCH_STRING,
-    [
-      'case',
-      ['>=', ['index-of', 'ARP', ['var', 's']], 0],
-      'rgba(250, 204, 21, 0.4)',
-      ['>=', ['index-of', 'HELIPAD', ['var', 's']], 0],
-      'rgba(14, 165, 233, 0.4)',
-      [
-        'any',
-        ['>=', ['index-of', 'NAV', ['var', 's']], 0],
-        ['>=', ['index-of', 'RADIO', ['var', 's']], 0],
-      ],
-      'rgba(168, 85, 247, 0.4)',
-      'rgba(249, 115, 22, 0.4)',
-    ],
-  ],
+  'icon-halo-color': '#000000',
   'icon-halo-width': [
     'let',
     's',
@@ -177,24 +175,10 @@ export const POINT_PAINT = {
         ['>=', ['index-of', 'HELIPAD', ['var', 's']], 0],
       ],
       2,
-      0, // Disable halo for other icons — SDF buffer can't encode their small centred shapes
+      1.5,
     ],
   ],
-  'icon-halo-blur': [
-    'let',
-    's',
-    GET_SEARCH_STRING,
-    [
-      'case',
-      [
-        'any',
-        ['>=', ['index-of', 'ARP', ['var', 's']], 0],
-        ['>=', ['index-of', 'HELIPAD', ['var', 's']], 0],
-      ],
-      2,
-      0,
-    ],
-  ],
+  'icon-halo-blur': 0,
 };
 
 export const RUNWAY_FILL_PAINT = {

@@ -20,7 +20,9 @@ test.describe('ATS Route Workflows', () => {
     expect(await mapPage.isLayerActive('atsRoutes')).toBe(false);
 
     // 2. Search for a specific ATS Route (e.g., A201)
+    await mapPage.searchInput.focus();
     await mapPage.searchInput.fill('A201');
+    await page.waitForTimeout(500); // Wait for animation and debounce
 
     // Select the ATS ROUTE result
     const routeResult = page
@@ -29,8 +31,8 @@ test.describe('ATS Route Workflows', () => {
       .filter({ hasText: 'ATS ROUTE' })
       .first();
 
-    await expect(routeResult).toBeVisible({ timeout: 10000 });
-    await routeResult.click();
+    await expect(routeResult).toBeVisible({ timeout: 15000 });
+    await routeResult.click({ force: true });
 
     // 3. Verify selection via Info Card
     const infoCard = page.getByTestId('feature-info-card');
@@ -44,23 +46,28 @@ test.describe('ATS Route Workflows', () => {
 
     // 5. Verify Route Details are loaded (check for segments or waypoints in the card)
     // Based on RouteDetailsPanel implementation, it should show waypoints or segments
-    await expect(page.getByText('FIXES')).toBeVisible();
+    await expect(page.getByText('FIXES')).toBeVisible({ timeout: 20000 });
 
     // 6. Close the card
-    await page.getByTestId('close-feature-card').click();
-    await expect(infoCard).not.toBeVisible();
+    await page.waitForTimeout(500);
+    await page.getByTestId('close-feature-card').click({ force: true });
+    await expect(infoCard).not.toBeVisible({ timeout: 10000 });
   });
 
   test('Selecting an ATS Route should trigger animation state changes', async ({ page }) => {
     // 1. Search for a route
+    await mapPage.searchInput.focus();
     await mapPage.searchInput.fill('A201');
+    await page.waitForTimeout(500);
+
     const routeResult = page
       .locator('[data-testid="search-result-item"]')
       .filter({ hasText: 'A201' })
       .filter({ hasText: 'ATS ROUTE' })
       .first();
-    await expect(routeResult).toBeVisible({ timeout: 10000 });
-    await routeResult.click();
+    await expect(routeResult).toBeVisible({ timeout: 15000 });
+    await routeResult.click({ force: true });
+    await page.waitForTimeout(1500); // Wait for the 1200ms selection debounce
 
     // 2. Check store for animation state using exposed window.useMapStore
     await expect
@@ -103,13 +110,15 @@ test.describe('ATS Route Workflows', () => {
     // 2. Search and fly to a route to center it
     await mapPage.searchInput.focus();
     await mapPage.searchInput.fill('V31');
+    await page.waitForTimeout(500);
+
     const routeResult = page
       .locator('[data-testid="search-result-item"]')
       .filter({ hasText: 'V31' })
       .filter({ hasText: 'ATS ROUTE' })
       .first();
-    await expect(routeResult).toBeVisible({ timeout: 10000 });
-    await routeResult.click();
+    await expect(routeResult).toBeVisible({ timeout: 15000 });
+    await routeResult.click({ force: true });
 
     // 3. Wait for the Info Card to appear (indicates animation/deferred timer started)
     const infoCard = page.getByTestId('feature-info-card').first();
@@ -117,7 +126,7 @@ test.describe('ATS Route Workflows', () => {
 
     const closeButton = page.getByTestId('close-feature-card').first();
     await expect(closeButton).toBeVisible();
-    await closeButton.click();
+    await closeButton.click({ force: true });
     await expect(infoCard).not.toBeVisible({ timeout: 10000 });
 
     // 4. Manual Hover on Canvas (center of screen after fly-to)

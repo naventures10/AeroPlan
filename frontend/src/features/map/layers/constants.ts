@@ -13,13 +13,13 @@ export const COLOR_WHITE: [number, number, number, number] = [255, 255, 255, 255
 export const COLOR_NEON_CYAN: [number, number, number, number] = [93, 248, 216, 255];
 export const COLOR_EMERALD: [number, number, number, number] = [52, 211, 153, 255];
 export const COLOR_NEON_PURPLE: [number, number, number, number] = [192, 132, 252, 255];
-export const COLOR_LIME_GREEN: [number, number, number, number] = [50, 205, 50, 255];
-export const COLOR_ATS_CYAN: [number, number, number, number] = [34, 211, 238, 255];
+export const COLOR_RNAV_GREEN: [number, number, number, number] = [115, 236, 139, 255];
+export const COLOR_ATS_BLUE: [number, number, number, number] = [68, 172, 255, 255];
 
 // RGB-only variants (for colour math in label glow calculations)
 export const RGB_NEON_PURPLE: [number, number, number] = [192, 132, 252];
-export const RGB_LIME_GREEN: [number, number, number] = [50, 205, 50];
-export const RGB_ATS_CYAN: [number, number, number] = [34, 211, 238];
+export const RGB_RNAV_GREEN: [number, number, number] = [115, 236, 139];
+export const RGB_ATS_BLUE: [number, number, number] = [68, 172, 255];
 export const RGB_WHITE: [number, number, number] = [255, 255, 255];
 
 // ── Zoom Thresholds ──────────────────────────────────────────────────

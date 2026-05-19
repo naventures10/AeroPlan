@@ -54,8 +54,9 @@
   --status-error: #ef4444;
   --status-idle: #64748b;
 
-  --route-rnav: #4ade80;
-  --route-ats: #22d3ee;
+  --route-rnav: #73ec8b;
+  --route-ats: #44acff;
+  --route-waypoint: #c084fc;
   --airspace-type: #fbbf24;
 
   /* Glassmorphism Variables */
@@ -430,6 +431,11 @@ body,
 }
 .aip-tooltip-route-rnav {
   color: var(--route-rnav) !important;
+}
+.aip-tooltip-waypoint-accent {
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--route-waypoint);
 }
 .aip-tooltip-airspace-type {
   font-weight: 600;
@@ -1207,12 +1213,15 @@ body,
 }
 
 .aip-feature-card-header {
-  @apply flex justify-between items-center pb-1.5 pt-3 px-3;
+  @apply flex justify-between items-center !pb-4 !pt-6 !px-6;
 }
 
 .aip-feature-card-type {
   @apply text-[9px] font-bold tracking-widest uppercase mb-0.5;
   color: var(--primary);
+}
+.aip-feature-card-type-waypoint {
+  color: var(--route-waypoint) !important;
 }
 
 .aip-feature-card-title {
@@ -1228,12 +1237,12 @@ body,
 }
 
 .aip-feature-card-divider {
-  @apply mx-3 w-auto;
+  @apply !mx-6 w-auto;
   background: var(--glass-border);
 }
 
 .aip-feature-card-body {
-  @apply px-3 py-2.5 max-h-[60vh] overflow-y-auto;
+  @apply !px-6 !pt-3 !pb-6 max-h-[60vh] overflow-y-auto;
 }
 
 .aip-route-badge {
@@ -1241,15 +1250,15 @@ body,
 }
 
 .aip-route-badge-rnav {
-  background: rgba(74, 222, 128, 0.2);
+  background: rgba(115, 236, 139, 0.2);
   color: var(--route-rnav);
-  border: 1px solid rgba(74, 222, 128, 0.3);
+  border: 1px solid rgba(115, 236, 139, 0.3);
 }
 
 .aip-route-badge-ats {
-  background: rgba(34, 211, 238, 0.2);
+  background: rgba(68, 172, 255, 0.2);
   color: var(--route-ats);
-  border: 1px solid rgba(34, 211, 238, 0.3);
+  border: 1px solid rgba(68, 172, 255, 0.3);
 }
 
 .route-th {
