@@ -4,6 +4,7 @@ import { createAirspaceLayers } from '../../features/map/layers/createAirspaceLa
 describe('createAirspaceLayers', () => {
   it('creates geometry and metadata MVT layers', () => {
     const ctx = {
+      isDarkMode: true,
       viewMode: 'ENROUTE',
       zoom: 8,
       activeLayers: {
@@ -71,6 +72,7 @@ describe('createAirspaceLayers', () => {
 
   it('respects layer toggles for all types', () => {
     const ctx = {
+      isDarkMode: true,
       viewMode: 'ENROUTE',
       zoom: 8,
       activeLayers: {

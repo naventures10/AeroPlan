@@ -142,7 +142,7 @@ export function FeatureInfoCard() {
                   setSelectedFeature(null);
                   setSelectedRouteIds([]);
                 }}
-                className="aip-feature-card-close p-2 hover:bg-white/5 rounded-full transition-colors"
+                className="aip-feature-card-close p-2 hover:bg-slate-200 dark:hover:bg-white/5 rounded-full transition-colors"
                 aria-label="Close"
               >
                 <X size={18} />

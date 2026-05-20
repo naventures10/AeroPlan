@@ -90,8 +90,8 @@ export function WeatherControls() {
           onPress={() => setIsWindMode(!isWindMode)}
           className={`backdrop-blur-xl transition-all ${
             isWindMode
-              ? 'bg-blue-500/30 text-blue-400 border border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.3)]'
-              : 'bg-zinc-950/40 border border-zinc-800/60 text-zinc-500 hover:text-zinc-300'
+              ? 'bg-blue-500/20 text-blue-600 border border-blue-500/30 shadow-[0_0_10px_rgba(59,130,246,0.3)] dark:bg-blue-500/30 dark:text-blue-400 dark:border-blue-500/50'
+              : 'bg-white/40 border border-slate-300 text-slate-500 hover:text-slate-800 dark:bg-zinc-950/40 dark:border-zinc-800/60 dark:text-zinc-500 dark:hover:text-zinc-300'
           }`}
           startContent={<Wind size={14} />}
         >
@@ -104,8 +104,8 @@ export function WeatherControls() {
           onPress={() => setIsCloudMode(!isCloudMode)}
           className={`backdrop-blur-xl transition-all ${
             isCloudMode
-              ? 'bg-slate-300/30 text-slate-200 border border-slate-300/50 shadow-[0_0_10px_rgba(203,213,225,0.3)]'
-              : 'bg-zinc-950/40 border border-zinc-800/60 text-zinc-500 hover:text-zinc-300'
+              ? 'bg-slate-300/40 text-slate-600 border border-slate-300/50 shadow-[0_0_10px_rgba(203,213,225,0.3)] dark:bg-slate-300/30 dark:text-slate-200 dark:border-slate-300/50'
+              : 'bg-white/40 border border-slate-300 text-slate-500 hover:text-slate-800 dark:bg-zinc-950/40 dark:border-zinc-800/60 dark:text-zinc-500 dark:hover:text-zinc-300'
           }`}
           startContent={<Cloud size={14} />}
         >

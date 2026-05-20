@@ -46,7 +46,7 @@ export default function MapPage() {
   });
 
   return (
-    <div className="w-screen h-screen overflow-hidden bg-gray-900 relative font-sans">
+    <div className="w-screen h-screen overflow-hidden bg-slate-50 dark:bg-gray-900 relative font-sans">
       {/* Map (Primary Chunk) */}
       <Suspense fallback={<GlobalLoader />}>
         <MapView aerodromes={aerodromes} onAerodromeClick={handleAerodromeClick} />

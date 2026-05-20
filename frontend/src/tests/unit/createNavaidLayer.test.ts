@@ -4,6 +4,7 @@ import { createNavaidLayer } from '../../features/map/layers/createNavaidLayer';
 describe('createNavaidLayer', () => {
   it('creates MVT navaid layer with proper styling', () => {
     const ctx = {
+      isDarkMode: true,
       viewMode: 'ENROUTE',
       activeLayers: { navaids: true },
       zoom: 8,
@@ -47,6 +48,7 @@ describe('createNavaidLayer', () => {
 
   it('hides layers when viewMode is TERMINAL', () => {
     const ctx = {
+      isDarkMode: true,
       viewMode: 'TERMINAL',
       activeLayers: { navaids: true },
       zoom: 8,

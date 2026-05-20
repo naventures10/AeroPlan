@@ -79,6 +79,76 @@
   --font-inter: var(--font-ui);
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   1b. Light Mode Token Overrides (Frosted White Glass)
+   ───────────────────────────────────────────────────────────────────────────── */
+html:not(.dark) {
+  /* Surface System — Slate tones */
+  --surface: #f8fafc;
+  --surface-dim: #f1f5f9;
+  --surface-bright: #ffffff;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f8fafc;
+  --surface-container: #f1f5f9;
+  --surface-container-high: #e2e8f0;
+  --surface-container-highest: #cbd5e1;
+
+  --on-surface: #0f172a;
+  --on-surface-variant: #475569;
+
+  --outline: #94a3b8;
+  --outline-variant: #cbd5e1;
+
+  --primary: #0f172a;
+  --on-primary: #ffffff;
+  --secondary: #334155;
+  --on-secondary: #f8fafc;
+  --secondary-container: #e2e8f0;
+  --on-secondary-container: #334155;
+
+  --background: #f8fafc;
+  --on-background: #0f172a;
+  --surface-variant: #e2e8f0;
+
+  /* Accent — Teal-600 for light surfaces */
+  --accent-cyan: #0d9488;
+  --accent-cyan-glow: rgba(13, 148, 136, 0.35);
+  --accent-cyan-opacity-10: rgba(13, 148, 136, 0.08);
+  --accent-cyan-opacity-20: rgba(13, 148, 136, 0.15);
+  --accent-cyan-opacity-30: rgba(13, 148, 136, 0.2);
+
+  --accent-cyan-50: #f0fdfa;
+  --accent-cyan-100: #ccfbf1;
+  --accent-cyan-200: #99f6e4;
+  --accent-cyan-300: #5eead4;
+  --accent-cyan-400: #2dd4bf;
+  --accent-cyan-500: #14b8a6;
+  --accent-cyan-600: #0d9488;
+  --accent-cyan-700: #0f766e;
+  --accent-cyan-800: #115e59;
+  --accent-cyan-900: #134e4a;
+
+  /* Status — slightly darkened for white bg readability */
+  --status-success: #059669;
+  --status-warning: #d97706;
+  --status-error: #dc2626;
+  --status-idle: #64748b;
+
+  /* Aviation semantic — deeper for white bg */
+  --route-rnav: #16a34a;
+  --route-ats: #2563eb;
+  --route-waypoint: #7c3aed;
+  --airspace-type: #d97706;
+
+  /* Glassmorphism — Frosted White */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-bg-heavy: rgba(255, 255, 255, 0.85);
+  --glass-bg-solid: rgba(248, 250, 252, 0.97);
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --glass-border-highlight: rgba(15, 23, 42, 0.15);
+  --glass-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+}
+
 html,
 body,
 #root {
@@ -1585,4 +1655,157 @@ body,
   transition:
     transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
     opacity 0.5s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   11. Light Mode Component Overrides
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* --- Search Bar --- */
+html:not(.dark) .aip-search-input::placeholder {
+  color: rgba(15, 23, 42, 0.5);
+}
+
+html:not(.dark) .aip-search-bar {
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08);
+}
+
+html:not(.dark) .aip-search-bar:focus-within {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 20px 40px -10px rgba(13, 148, 136, 0.15);
+}
+
+html:not(.dark) .aip-search-results-wrapper {
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.1);
+}
+
+html:not(.dark) .aip-search-result-item:hover,
+html:not(.dark) .aip-search-result-item.selected {
+  background: rgba(15, 23, 42, 0.04);
+}
+
+html:not(.dark) .aip-search-result-name {
+  color: rgba(15, 23, 42, 0.5);
+}
+
+html:not(.dark) .aip-search-result-type {
+  background: rgba(15, 23, 42, 0.05);
+  color: rgba(15, 23, 42, 0.5);
+}
+
+/* --- Layer Toolbar --- */
+html:not(.dark) .aip-layer-toolbar {
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.06);
+}
+
+html:not(.dark) .aip-layer-toggle {
+  color: rgba(15, 23, 42, 0.3);
+}
+
+html:not(.dark) .aip-layer-toggle:hover {
+  color: rgba(15, 23, 42, 0.7);
+}
+
+html:not(.dark) .aip-layer-toggle.active {
+  color: var(--accent-cyan);
+}
+
+html:not(.dark) .aip-layer-tooltip {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* --- Wind Controls --- */
+html:not(.dark) .wind-altitude__step-btn {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: var(--glass-border);
+}
+
+html:not(.dark) .wind-altitude__step-btn:hover:not(.disabled) {
+  background: rgba(15, 23, 42, 0.08);
+  border-color: var(--glass-border-highlight);
+}
+
+html:not(.dark) .wind-timeline__play-circle {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+html:not(.dark) .wind-timeline__play-circle:hover {
+  background: rgba(15, 23, 42, 0.12);
+  border-color: var(--glass-border-highlight);
+}
+
+html:not(.dark) .wind-timeline__track-fill {
+  background: rgba(15, 23, 42, 0.4);
+}
+
+html:not(.dark) .wind-timeline__range-overlay::-webkit-slider-thumb {
+  background: var(--primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+html:not(.dark) .wind-timeline__range-overlay::-moz-range-thumb {
+  background: var(--primary);
+}
+
+/* --- Feature Cards --- */
+html:not(.dark) .aip-feature-card {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Dropdown --- */
+html:not(.dark) .aip-dropdown-trigger {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+}
+
+html:not(.dark) .aip-dropdown-item:hover {
+  background: rgba(15, 23, 42, 0.03);
+}
+
+html:not(.dark) .aip-dropdown-menu {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Terminal Dashboard --- */
+html:not(.dark) .terminal-dashboard-tab:hover {
+  background: rgba(15, 23, 42, 0.03);
+}
+
+html:not(.dark) .terminal-dashboard-tab.active {
+  background: rgba(13, 148, 136, 0.08);
+}
+
+/* --- Modal --- */
+html:not(.dark) .aip-modal-close-btn:hover {
+  background: rgba(15, 23, 42, 0.04);
+}
+
+/* --- Scrollbars --- */
+html:not(.dark) .custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.02);
+}
+
+/* --- View Toggle Pill --- */
+html:not(.dark) .view-toggle-pill-container {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+/* --- 3D View Button --- */
+html:not(.dark) .aip-view-3d-button {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+}
+
+html:not(.dark) .aip-view-3d-button:hover {
+  box-shadow: 0 8px 25px rgba(13, 148, 136, 0.12);
+}
+
+/* --- Obstacle Legend --- */
+html:not(.dark) .obstacle-legend-container {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+}
+
+/* --- Sticky Table Header (Light bg) --- */
+html:not(.dark) .sticky-header-th {
+  background: var(--surface-dim) !important;
 }

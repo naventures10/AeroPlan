@@ -41,6 +41,9 @@ export interface LayerContext {
   /** Current camera zoom — used for zoom-dependent rendering */
   zoom: number;
 
+  /** Whether the UI is in dark mode (mapStyle !== 'light') */
+  isDarkMode: boolean;
+
   /** GeoJSON FeatureCollection of ATS route label midpoints */
   atsRouteLabels: any | null;
 

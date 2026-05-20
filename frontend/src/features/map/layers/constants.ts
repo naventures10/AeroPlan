@@ -22,6 +22,52 @@ export const RGB_RNAV_GREEN: [number, number, number] = [115, 236, 139];
 export const RGB_ATS_BLUE: [number, number, number] = [68, 172, 255];
 export const RGB_WHITE: [number, number, number] = [255, 255, 255];
 
+// ── Theme-aware Palettes ─────────────────────────────────────────────
+
+export interface LayerPalette {
+  white: [number, number, number, number];
+  cyan: [number, number, number, number];
+  emerald: [number, number, number, number];
+  purple: [number, number, number, number];
+  rnavGreen: [number, number, number, number];
+  atsBlue: [number, number, number, number];
+  rgbPurple: [number, number, number];
+  rgbRnavGreen: [number, number, number];
+  rgbAtsBlue: [number, number, number];
+  rgbWhite: [number, number, number];
+}
+
+export const DARK_PALETTE: LayerPalette = {
+  white: [255, 255, 255, 255],
+  cyan: [93, 248, 216, 255],
+  emerald: [52, 211, 153, 255],
+  purple: [192, 132, 252, 255],
+  rnavGreen: [115, 236, 139, 255],
+  atsBlue: [68, 172, 255, 255],
+  rgbPurple: [192, 132, 252],
+  rgbRnavGreen: [115, 236, 139],
+  rgbAtsBlue: [68, 172, 255],
+  rgbWhite: [255, 255, 255],
+};
+
+export const LIGHT_PALETTE: LayerPalette = {
+  white: [15, 23, 42, 255], // slate-900 (dark text on light map)
+  cyan: [13, 148, 136, 255], // teal-600
+  emerald: [5, 150, 105, 255], // emerald-600
+  purple: [124, 58, 237, 255], // violet-600
+  rnavGreen: [22, 163, 74, 255], // green-600
+  atsBlue: [37, 99, 235, 255], // blue-600
+  rgbPurple: [124, 58, 237],
+  rgbRnavGreen: [22, 163, 74],
+  rgbAtsBlue: [37, 99, 235],
+  rgbWhite: [15, 23, 42],
+};
+
+/** Get the appropriate palette for the current theme */
+export function getLayerPalette(isDarkMode: boolean): LayerPalette {
+  return isDarkMode ? DARK_PALETTE : LIGHT_PALETTE;
+}
+
 // ── Zoom Thresholds ──────────────────────────────────────────────────
 
 /** Zoom level above which standalone waypoint labels are visible */

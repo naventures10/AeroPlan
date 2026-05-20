@@ -36,18 +36,18 @@ export function NavaidDetailsPanel({
 
       {/* ── Remarks (Collapsible) ── */}
       {remarks && (
-        <div className="rounded-lg border border-white/10 overflow-hidden">
+        <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
           <button
             onClick={() => setShowRemarks(!showRemarks)}
-            className="w-full flex items-center justify-between px-3 py-2 bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
+            className="w-full flex items-center justify-between px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.03] dark:hover:bg-white/[0.06] transition-colors"
           >
-            <span className="text-[10px] font-bold text-zinc-500 tracking-widest uppercase">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 tracking-widest uppercase">
               Remarks
             </span>
             {showRemarks ? (
-              <ChevronUp size={14} className="text-zinc-500" />
+              <ChevronUp size={14} className="text-slate-500 dark:text-zinc-500" />
             ) : (
-              <ChevronDown size={14} className="text-zinc-500" />
+              <ChevronDown size={14} className="text-slate-500 dark:text-zinc-500" />
             )}
           </button>
           <AnimatePresence>
@@ -59,8 +59,8 @@ export function NavaidDetailsPanel({
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="px-3 py-2 border-t border-white/[0.06]">
-                  <p className="text-[11px] text-zinc-400 leading-relaxed whitespace-pre-line">
+                <div className="px-3 py-2 border-t border-slate-200 dark:border-white/[0.06]">
+                  <p className="text-[11px] text-slate-600 dark:text-zinc-400 leading-relaxed whitespace-pre-line">
                     {remarks}
                   </p>
                 </div>

@@ -83,7 +83,7 @@ export default function ViewToggle() {
           }`}
         >
           {/* Top Cap */}
-          <div className="text-zinc-500/50 pt-1 pb-2">
+          <div className="text-slate-400 dark:text-zinc-500/50 pt-1 pb-2">
             <ChevronUp size={16} strokeWidth={3} />
           </div>
 
@@ -110,8 +110,8 @@ export default function ViewToggle() {
             title="Toggle Enroute Chart"
             className={`flex items-center justify-center w-9 h-9 rounded-full transition duration-300 focus:outline-none ${
               activeLayers.ercMap
-                ? 'bg-emerald-500/20 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
-                : 'text-zinc-400 hover:text-white hover:bg-white/[0.08]'
+                ? 'bg-emerald-500/20 text-emerald-600 shadow-[0_0_12px_rgba(16,185,129,0.2)] dark:text-emerald-400'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-900/[0.08] dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/[0.08]'
             }`}
           >
             <MapIcon size={18} strokeWidth={2} />
@@ -129,7 +129,7 @@ export default function ViewToggle() {
               })
             }
             title="Recenter to North"
-            className="flex items-center justify-center w-9 h-9 rounded-full text-zinc-400 hover:text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan-opacity-10)] transition duration-300 focus:outline-none"
+            className="flex items-center justify-center w-9 h-9 rounded-full text-slate-500 dark:text-zinc-400 hover:text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan-opacity-10)] transition duration-300 focus:outline-none"
           >
             <Compass
               size={20}
@@ -140,7 +140,7 @@ export default function ViewToggle() {
           </button>
 
           {/* Divider */}
-          <div className="w-6 h-[1px] bg-zinc-600/30 my-1" />
+          <div className="w-6 h-[1px] bg-slate-300 dark:bg-zinc-600/30 my-1" />
 
           {/* Zoom Section */}
           <div className="flex flex-col items-center gap-2">
@@ -156,7 +156,7 @@ export default function ViewToggle() {
                 })
               }
               title="Zoom In"
-              className="flex items-center justify-center w-8 h-8 rounded-full text-zinc-400 hover:text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan-opacity-10)] transition duration-300 focus:outline-none"
+              className="flex items-center justify-center w-8 h-8 rounded-full text-slate-500 dark:text-zinc-400 hover:text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan-opacity-10)] transition duration-300 focus:outline-none"
             >
               <Plus size={18} strokeWidth={2.5} />
             </button>
@@ -177,7 +177,7 @@ export default function ViewToggle() {
                     transitionDuration: 0,
                   })
                 }
-                className="absolute w-28 h-1.5 bg-zinc-600/50 rounded-full appearance-none cursor-pointer outline-none hover:bg-zinc-500/50 transition-colors [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-[var(--accent-cyan)] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:scale-125 [&::-webkit-slider-thumb]:transition-transform view-toggle-zoom-slider"
+                className="absolute w-28 h-1.5 bg-slate-300 dark:bg-zinc-600/50 rounded-full appearance-none cursor-pointer outline-none hover:bg-slate-400 dark:hover:bg-zinc-500/50 transition-colors [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-[var(--accent-cyan)] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:scale-125 [&::-webkit-slider-thumb]:transition-transform view-toggle-zoom-slider"
               />
             </div>
 
@@ -193,14 +193,14 @@ export default function ViewToggle() {
                 })
               }
               title="Zoom Out"
-              className="flex items-center justify-center w-8 h-8 rounded-full text-zinc-400 hover:text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan-opacity-10)] transition duration-300 focus:outline-none"
+              className="flex items-center justify-center w-8 h-8 rounded-full text-slate-500 dark:text-zinc-400 hover:text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan-opacity-10)] transition duration-300 focus:outline-none"
             >
               <Minus size={18} strokeWidth={2.5} />
             </button>
           </div>
 
           {/* Bottom Cap */}
-          <div className="text-zinc-500/50 pt-2 pb-1">
+          <div className="text-slate-400 dark:text-zinc-500/50 pt-2 pb-1">
             <ChevronDown size={16} strokeWidth={3} />
           </div>
         </div>
@@ -227,11 +227,11 @@ export default function ViewToggle() {
               {/* 2D Face (Front) */}
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--glass-bg-heavy)] backdrop-blur-xl border border-[var(--glass-border)] rounded-xl shadow-xl transition-all duration-300 group-hover:border-[var(--glass-border-highlight)] view-toggle-face-2d">
                 <Layers
-                  className="text-zinc-300 group-hover:text-white transition-colors"
+                  className="text-slate-600 group-hover:text-slate-900 dark:text-zinc-300 dark:group-hover:text-white transition-colors"
                   size={20}
                   strokeWidth={2}
                 />
-                <span className="text-[9px] font-bold text-zinc-500 tracking-widest mt-0.5">
+                <span className="text-[9px] font-bold text-slate-500 dark:text-zinc-500 tracking-widest mt-0.5">
                   2D
                 </span>
               </div>
@@ -243,7 +243,7 @@ export default function ViewToggle() {
                   size={20}
                   strokeWidth={2}
                 />
-                <span className="text-[9px] font-bold text-cyan-200 tracking-widest mt-0.5">
+                <span className="text-[9px] font-bold text-teal-700 dark:text-cyan-200 tracking-widest mt-0.5">
                   3D
                 </span>
               </div>
@@ -258,10 +258,10 @@ export default function ViewToggle() {
 
           {/* Branding */}
           <div className="flex flex-col items-end select-none pointer-events-none mt-1">
-            <div className="text-zinc-200 font-bold tracking-[0.4em] text-[10px] uppercase opacity-90">
+            <div className="text-slate-800 dark:text-zinc-200 font-bold tracking-[0.4em] text-[10px] uppercase opacity-90">
               Aero Plan
             </div>
-            <div className="text-zinc-500 tracking-[0.2em] text-[8px] mt-1 uppercase font-medium">
+            <div className="text-slate-500 dark:text-zinc-500 tracking-[0.2em] text-[8px] mt-1 uppercase font-medium">
               v0.1.0-alpha
             </div>
           </div>

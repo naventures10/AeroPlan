@@ -21,6 +21,8 @@ interface MapState {
   setViewMode: (mode: 'ENROUTE' | 'TERMINAL') => void;
   mapStyle: 'dark' | 'light' | 'hybrid';
   setMapStyle: (style: 'dark' | 'light' | 'hybrid') => void;
+  /** Derived: true when the UI should render in dark mode (mapStyle !== 'light') */
+  isDarkMode: boolean;
 
   // Metadata for the active aerodrome
   activeAerodromeMetadata: any | null;
@@ -184,7 +186,18 @@ export const useMapStore = create<MapState>((set, get) => ({
   setActiveAerodromeMetadata: (data) => set({ activeAerodromeMetadata: data }),
 
   mapStyle: 'dark',
-  setMapStyle: (style) => set({ mapStyle: style }),
+  get isDarkMode() {
+    return get().mapStyle !== 'light';
+  },
+  setMapStyle: (style) => {
+    set({ mapStyle: style });
+    // Sync the 'dark' class on <html> for Tailwind's darkMode: 'class'
+    if (style === 'light') {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+  },
 
   searchQuery: '',
   setSearchQuery: (query) => set({ searchQuery: query }),

@@ -17,35 +17,35 @@ export default function TerminalLegend() {
       id: 'buildings',
       label: 'Buildings',
       icon: Building2,
-      color: 'text-blue-400',
+      color: 'text-blue-600 dark:text-blue-400',
       glow: 'shadow-blue-500/20',
     },
     {
       id: 'infrastructure',
       label: 'Infrastructure',
       icon: TowerControl,
-      color: 'text-red-400',
+      color: 'text-red-600 dark:text-red-400',
       glow: 'shadow-red-500/20',
     },
     {
       id: 'natural',
       label: 'Natural Hazards',
       icon: TreePine,
-      color: 'text-green-400',
+      color: 'text-green-600 dark:text-green-400',
       glow: 'shadow-green-500/20',
     },
     {
       id: 'navaids',
       label: 'NavAids',
       icon: Radio,
-      color: 'text-purple-400',
+      color: 'text-purple-600 dark:text-purple-400',
       glow: 'shadow-purple-500/20',
     },
     {
       id: 'other',
       label: 'Other Hazards',
       icon: Construction,
-      color: 'text-orange-400',
+      color: 'text-orange-600 dark:text-orange-400',
       glow: 'shadow-orange-500/20',
     },
   ] as const;
@@ -57,7 +57,7 @@ export default function TerminalLegend() {
       className="obstacle-legend-container flex items-center pointer-events-auto w-fit"
     >
       <div className="obstacle-legend-header mr-1">
-        <span className="text-[9px] font-black tracking-[0.25em] text-zinc-500 uppercase select-none">
+        <span className="text-[9px] font-black tracking-[0.25em] text-slate-500 dark:text-zinc-500 uppercase select-none">
           Obstacles
         </span>
       </div>
@@ -83,8 +83,8 @@ export default function TerminalLegend() {
                 onClick={() => toggleTerminalSpatialFilter(id)}
                 className={`relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 group cursor-pointer ${
                   isActive
-                    ? `bg-white/10 ${color} ${glow} shadow-lg`
-                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
+                    ? `bg-slate-200 dark:bg-white/10 ${color} ${glow} shadow-lg`
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200 dark:text-zinc-500 dark:hover:text-zinc-300 dark:hover:bg-white/5'
                 }`}
               >
                 <Icon size={15} strokeWidth={isActive ? 2.5 : 1.5} />

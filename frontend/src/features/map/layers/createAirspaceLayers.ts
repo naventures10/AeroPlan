@@ -23,6 +23,38 @@ const AIRSPACE_COLORS: Record<
   UPR_ZONE: { fill: [190, 200, 255, 15], stroke: [190, 200, 255, 120] },
 };
 
+/** Light mode: deeper, more opaque strokes + boosted fill alpha for white bg */
+const AIRSPACE_COLORS_LIGHT: Record<
+  string,
+  {
+    fill: [number, number, number, number];
+    stroke: [number, number, number, number];
+  }
+> = {
+  FIR: { fill: [217, 119, 6, 18], stroke: [217, 119, 6, 140] },
+  DANGER: { fill: [220, 38, 38, 30], stroke: [220, 38, 38, 200] },
+  PROHIBITED: { fill: [185, 28, 28, 25], stroke: [185, 28, 28, 180] },
+  RESTRICTED: { fill: [194, 120, 3, 25], stroke: [194, 120, 3, 150] },
+  TRA: { fill: [202, 138, 4, 20], stroke: [202, 138, 4, 130] },
+  TSA: { fill: [161, 148, 39, 20], stroke: [161, 148, 39, 130] },
+  ADIZ: { fill: [126, 34, 206, 20], stroke: [126, 34, 206, 150] },
+  CTR: { fill: [37, 99, 235, 20], stroke: [37, 99, 235, 150] },
+  CTA_LOWER: { fill: [14, 165, 180, 20], stroke: [14, 165, 180, 140] },
+  CTA_UPPER: { fill: [29, 78, 216, 20], stroke: [29, 78, 216, 140] },
+  UPR_ZONE: { fill: [79, 70, 229, 20], stroke: [79, 70, 229, 160] },
+};
+
+function getAirspaceColors(isDarkMode: boolean) {
+  return isDarkMode ? AIRSPACE_COLORS : AIRSPACE_COLORS_LIGHT;
+}
+
+const DEFAULT_STROKE: [number, number, number, number] = [128, 128, 128, 60];
+const DEFAULT_STROKE_LIGHT: [number, number, number, number] = [100, 116, 139, 120];
+
+function getDefaultStroke(isDarkMode: boolean) {
+  return isDarkMode ? DEFAULT_STROKE : DEFAULT_STROKE_LIGHT;
+}
+
 const AIRSPACE_HIERARCHY: Record<string, { minZoom: number; priority: number }> = {
   FIR: { minZoom: 2.0, priority: 100 },
   ADIZ: { minZoom: 2.5, priority: 90 },
@@ -40,8 +72,6 @@ const AIRSPACE_HIERARCHY: Record<string, { minZoom: number; priority: number }> 
 const DEFAULT_HIERARCHY = { minZoom: 7.5, priority: 10 };
 
 const ZOOM_THRESHOLDS = [2.0, 2.5, 4.0, 4.5, 6.0, 6.5, 7.0, 7.5];
-
-const DEFAULT_STROKE: [number, number, number, number] = [128, 128, 128, 60];
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -139,6 +169,8 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       .reverse()
       .find((z) => currentZoom >= z) || 0;
   const isLayerActive = ctx.activeLayers.airspaces;
+  const colors = getAirspaceColors(ctx.isDarkMode);
+  const defStroke = getDefaultStroke(ctx.isDarkMode);
 
   return [
     new MVTLayer({
@@ -175,15 +207,27 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
           return [0, 0, 0, 0];
         if (type === 'UPR_ZONE' && !airspaceUpr) return [0, 0, 0, 0];
 
-        return AIRSPACE_COLORS[type]?.stroke ?? DEFAULT_STROKE;
+        return colors[type]?.stroke ?? defStroke;
       },
       getLineWidth: 2,
       lineWidthUnits: 'pixels',
       lineWidthMinPixels: 1,
       minZoom: 2,
       updateTriggers: {
-        getFillColor: [ctx.viewMode, ctx.activeLayers, effectiveZoom, isLayerActive],
-        getLineColor: [ctx.viewMode, ctx.activeLayers, effectiveZoom, isLayerActive],
+        getFillColor: [
+          ctx.viewMode,
+          ctx.activeLayers,
+          effectiveZoom,
+          isLayerActive,
+          ctx.isDarkMode,
+        ],
+        getLineColor: [
+          ctx.viewMode,
+          ctx.activeLayers,
+          effectiveZoom,
+          isLayerActive,
+          ctx.isDarkMode,
+        ],
         getLineWidth: [],
       },
       binary: true,
@@ -231,7 +275,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
 
         const typeUpper = inferAirspaceType(f);
 
-        const baseColor = AIRSPACE_COLORS[typeUpper]?.stroke ?? DEFAULT_STROKE;
+        const baseColor = colors[typeUpper]?.stroke ?? defStroke;
         return [baseColor[0], baseColor[1], baseColor[2], 255];
       },
       background: true,
@@ -256,8 +300,8 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
         const props = f.properties || {};
         if (!(props.name || props.identification)) return [0, 0, 0, 0];
 
-        const colors = AIRSPACE_COLORS[type] || { stroke: DEFAULT_STROKE };
-        const baseColor = colors.stroke || DEFAULT_STROKE;
+        const airspaceColor = colors[type] || { stroke: defStroke };
+        const baseColor = airspaceColor.stroke || defStroke;
         return [baseColor[0], baseColor[1], baseColor[2], 255];
       },
       backgroundPadding: [4, 2],
@@ -269,9 +313,9 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       updateTriggers: {
         getText: [ctx.activeLayers, effectiveZoom],
         getTextSize: [ctx.activeLayers, effectiveZoom],
-        getTextColor: [effectiveZoom, ctx.activeLayers, isLayerActive],
-        getBackgroundColor: [effectiveZoom, ctx.activeLayers, isLayerActive],
-        getBorderColor: [effectiveZoom, ctx.activeLayers, isLayerActive],
+        getTextColor: [effectiveZoom, ctx.activeLayers, isLayerActive, ctx.isDarkMode],
+        getBackgroundColor: [effectiveZoom, ctx.activeLayers, isLayerActive, ctx.isDarkMode],
+        getBorderColor: [effectiveZoom, ctx.activeLayers, isLayerActive, ctx.isDarkMode],
       },
       binary: false,
       transitions: {

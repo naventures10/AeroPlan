@@ -15,9 +15,9 @@ export function NotamWidget({ notams }: NotamWidgetProps) {
       exit={{ opacity: 0 }}
       className="flex flex-col h-full gap-4"
     >
-      <h3 className="text-xl font-black text-white tracking-widest mb-4 flex items-center gap-2">
+      <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-widest mb-4 flex items-center gap-2">
         <AlertTriangle className="text-amber-500" /> Active NOTAMs
-        <span className="bg-zinc-800 text-xs px-3 py-1 rounded-full ml-auto">
+        <span className="bg-slate-200 dark:bg-zinc-800 text-xs px-3 py-1 rounded-full ml-auto">
           {notams.length} Total
         </span>
       </h3>
@@ -26,30 +26,32 @@ export function NotamWidget({ notams }: NotamWidgetProps) {
           notams.map((n) => (
             <div
               key={n.notam_id}
-              className="bg-white/[0.03] p-5 rounded-2xl border border-white/[0.05] hover:border-white/10 transition"
+              className="bg-slate-50 dark:bg-white/[0.03] p-5 rounded-2xl border border-slate-200 dark:border-white/[0.05] hover:border-slate-300 dark:hover:border-white/10 transition"
             >
               <div className="flex justify-between items-center mb-3">
-                <span className="text-amber-400 font-bold tracking-widest text-sm flex items-center gap-2">
+                <span className="text-amber-600 dark:text-amber-400 font-bold tracking-widest text-sm flex items-center gap-2">
                   {n.notam_id}
                   {n.scope && (
-                    <span className="text-[9px] bg-zinc-800 text-amber-500 px-1.5 py-0.5 rounded">
+                    <span className="text-[9px] bg-amber-100 dark:bg-zinc-800 text-amber-700 dark:text-amber-500 px-1.5 py-0.5 rounded">
                       {n.scope}
                     </span>
                   )}
                 </span>
                 <div className="flex items-center gap-2">
                   {n.is_estimated && (
-                    <span className="text-[10px] text-zinc-400 font-mono">EST</span>
+                    <span className="text-[10px] text-slate-400 dark:text-zinc-400 font-mono">
+                      EST
+                    </span>
                   )}
-                  <span className="text-xs text-zinc-500 font-mono tracking-widest">
+                  <span className="text-xs text-slate-500 dark:text-zinc-500 font-mono tracking-widest">
                     SERIES {n.series}
                   </span>
                 </div>
               </div>
-              <p className="text-zinc-300 text-sm whitespace-pre-wrap leading-relaxed">
+              <p className="text-slate-700 dark:text-zinc-300 text-sm whitespace-pre-wrap leading-relaxed">
                 {n.description}
               </p>
-              <div className="mt-4 pt-3 border-t border-zinc-800/50 flex justify-between text-[10px] text-zinc-500 font-mono tracking-widest">
+              <div className="mt-4 pt-3 border-t border-slate-200 dark:border-zinc-800/50 flex justify-between text-[10px] text-slate-500 dark:text-zinc-500 font-mono tracking-widest">
                 <span>
                   FROM:{' '}
                   {n.valid_from
@@ -68,8 +70,8 @@ export function NotamWidget({ notams }: NotamWidgetProps) {
             </div>
           ))
         ) : (
-          <div className="bg-white/[0.03] p-6 rounded-2xl border border-white/[0.05] text-center">
-            <p className="text-zinc-500 italic">No active NOTAMs found.</p>
+          <div className="bg-slate-100 p-6 rounded-2xl border border-slate-200 dark:bg-white/[0.03] dark:border-white/[0.05] text-center">
+            <p className="text-slate-500 dark:text-zinc-500 italic">No active NOTAMs found.</p>
           </div>
         )}
       </div>

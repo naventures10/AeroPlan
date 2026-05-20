@@ -7,7 +7,7 @@ export const LabelVal = ({ label, val }: { label: string; val: React.ReactNode }
       <span className="text-[8px] font-bold text-default-400 tracking-wider uppercase">
         {label}
       </span>
-      <span className="text-[11px] font-medium text-white">{val}</span>
+      <span className="text-[11px] font-medium text-slate-800 dark:text-white">{val}</span>
     </div>
   );
 };

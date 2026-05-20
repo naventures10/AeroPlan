@@ -6,13 +6,14 @@
  */
 
 import { MVTLayer } from '@deck.gl/geo-layers';
-import { COLOR_NEON_CYAN, ZOOM_WAYPOINTS } from './constants';
+import { ZOOM_WAYPOINTS, getLayerPalette } from './constants';
 import type { LayerContext } from './types';
 
 export function createWaypointLayer(ctx: LayerContext): any[] {
   const { viewMode, activeLayers, selectedFeature, setSelectedFeature } = ctx;
   const isZoomWaypoints = ctx.zoom > ZOOM_WAYPOINTS;
   const isLayerActive = activeLayers.waypoints;
+  const palette = getLayerPalette(ctx.isDarkMode);
 
   return [
     new MVTLayer({
@@ -35,10 +36,12 @@ export function createWaypointLayer(ctx: LayerContext): any[] {
           selectedFeature.data.waypoint_name === d.properties.waypoint_name;
         if (isSelected) {
           return isLayerActive
-            ? COLOR_NEON_CYAN
-            : [COLOR_NEON_CYAN[0], COLOR_NEON_CYAN[1], COLOR_NEON_CYAN[2], 0];
+            ? palette.cyan
+            : [palette.cyan[0], palette.cyan[1], palette.cyan[2], 0];
         }
-        return isLayerActive ? [255, 255, 255, 255] : [255, 255, 255, 0];
+        return isLayerActive
+          ? palette.white
+          : [palette.white[0], palette.white[1], palette.white[2], 0];
       },
       getIconSize: (d: any) => {
         if (
@@ -58,7 +61,14 @@ export function createWaypointLayer(ctx: LayerContext): any[] {
         if (activeLayers.atsRoutes && hasRoutes) return 0;
         return 11;
       },
-      getTextColor: isLayerActive ? [220, 220, 220, 255] : [220, 220, 220, 0],
+      getTextColor: isLayerActive
+        ? ([palette.rgbWhite[0], palette.rgbWhite[1], palette.rgbWhite[2], 230] as [
+            number,
+            number,
+            number,
+            number,
+          ])
+        : [0, 0, 0, 0],
       getTextPixelOffset: [0, -15],
       textFontFamily: 'Geist, sans-serif',
       textFontWeight: 600,
@@ -68,10 +78,10 @@ export function createWaypointLayer(ctx: LayerContext): any[] {
         }
       },
       updateTriggers: {
-        getIconColor: [selectedFeature, isLayerActive],
+        getIconColor: [selectedFeature, isLayerActive, ctx.isDarkMode],
         getIconSize: [selectedFeature],
         getTextSize: [isZoomWaypoints, activeLayers.atsRoutes],
-        getTextColor: [isLayerActive],
+        getTextColor: [isLayerActive, ctx.isDarkMode],
       },
       binary: false,
       transitions: {

@@ -44,6 +44,7 @@ export function useDeckLayers({
     selectedRnpProcedureId,
     selectedRnpApproachId,
     setSelectedRnpApproachId,
+    isDarkMode,
   } = useMapStore();
 
   const { isAtsRendered, currentTime } = useRouteAnimation();
@@ -88,6 +89,7 @@ export function useDeckLayers({
     selectedRouteType,
     selectedFeature,
     zoom,
+    isDarkMode,
     atsRouteLabels,
     animatedTrips,
     currentTime,
@@ -160,6 +162,7 @@ export function useDeckLayers({
     missedDist,
     windLayer,
     cloudLayers,
+    isDarkMode,
   ]);
 
   return layers;

@@ -34,7 +34,7 @@ export function RouteDetailsPanel({
     return (
       <div className="flex flex-col items-center justify-center py-10 gap-3">
         <Spinner size="md" color="primary" />
-        <span className="text-[11px] text-zinc-500 tracking-wider uppercase">
+        <span className="text-[11px] text-slate-500 dark:text-zinc-500 tracking-wider uppercase">
           Loading route segments…
         </span>
       </div>
@@ -58,21 +58,21 @@ export function RouteDetailsPanel({
     <div className="flex flex-col gap-3">
       {/* ── Route Summary Strip ── */}
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10">
-          <Plane size={12} className="text-cyan-400" />
-          <span className="text-[11px] font-semibold text-zinc-300 tracking-wide">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 dark:bg-white/5 dark:border-white/10">
+          <Plane size={12} className="text-teal-600 dark:text-cyan-400" />
+          <span className="text-[11px] font-semibold text-slate-700 dark:text-zinc-300 tracking-wide">
             {total_distance_nm} NM
           </span>
         </div>
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10">
-          <ArrowUpDown size={12} className="text-cyan-400" />
-          <span className="text-[11px] font-semibold text-zinc-300 tracking-wide">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 dark:bg-white/5 dark:border-white/10">
+          <ArrowUpDown size={12} className="text-teal-600 dark:text-cyan-400" />
+          <span className="text-[11px] font-semibold text-slate-700 dark:text-zinc-300 tracking-wide">
             {waypoints.length} FIXES
           </span>
         </div>
         {firstSeg?.lateral_limits && (
-          <div className="px-2.5 py-1 rounded-md bg-white/5 border border-white/10">
-            <span className="text-[11px] font-semibold text-zinc-300 tracking-wide">
+          <div className="px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 dark:bg-white/5 dark:border-white/10">
+            <span className="text-[11px] font-semibold text-slate-700 dark:text-zinc-300 tracking-wide">
               {firstSeg.lateral_limits} WIDE
             </span>
           </div>
@@ -81,21 +81,27 @@ export function RouteDetailsPanel({
 
       {/* ── Direction of Cruising Levels ── */}
       {(dirOdd || dirEven) && (
-        <div className="rounded-lg bg-white/[0.03] border border-white/10 px-3 py-2.5">
-          <span className="text-[10px] font-bold text-zinc-500 tracking-widest uppercase block mb-1.5">
+        <div className="rounded-lg bg-slate-50 border border-slate-200 dark:bg-white/[0.03] dark:border-white/10 px-3 py-2.5">
+          <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 tracking-widest uppercase block mb-1.5">
             Direction of Cruising Levels
           </span>
           <div className="flex gap-4">
             {dirOdd && (
               <div className="flex items-center gap-1.5">
-                <span className="text-base font-bold text-zinc-200 leading-none">{dirOdd}</span>
-                <span className="text-[10px] font-medium text-zinc-400 tracking-wide">ODD FLs</span>
+                <span className="text-base font-bold text-slate-800 dark:text-zinc-200 leading-none">
+                  {dirOdd}
+                </span>
+                <span className="text-[10px] font-medium text-slate-500 dark:text-zinc-400 tracking-wide">
+                  ODD FLs
+                </span>
               </div>
             )}
             {dirEven && (
               <div className="flex items-center gap-1.5">
-                <span className="text-base font-bold text-zinc-200 leading-none">{dirEven}</span>
-                <span className="text-[10px] font-medium text-zinc-400 tracking-wide">
+                <span className="text-base font-bold text-slate-800 dark:text-zinc-200 leading-none">
+                  {dirEven}
+                </span>
+                <span className="text-[10px] font-medium text-slate-500 dark:text-zinc-400 tracking-wide">
                   EVEN FLs
                 </span>
               </div>
@@ -105,11 +111,11 @@ export function RouteDetailsPanel({
       )}
 
       {/* ── Segment Table ── */}
-      <div className="rounded-lg border border-white/10 overflow-hidden">
+      <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden">
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse min-w-[500px]">
             <thead>
-              <tr className="bg-white/[0.06]">
+              <tr className="bg-slate-200 dark:bg-white/[0.06]">
                 <th className="route-th">Fix</th>
                 <th className="route-th">Coordinates</th>
                 <th className="route-th">Track</th>
@@ -125,45 +131,49 @@ export function RouteDetailsPanel({
                 return (
                   <tr
                     key={seg.sequence_number}
-                    className={`border-t border-white/[0.06] ${idx % 2 === 0 ? 'bg-white/[0.02]' : ''}`}
+                    className={`border-t border-slate-200 dark:border-white/[0.06] ${idx % 2 === 0 ? 'bg-slate-50 dark:bg-white/[0.02]' : ''}`}
                   >
-                    <td className="route-td font-semibold text-white">
+                    <td className="route-td font-semibold text-slate-900 dark:text-white">
                       <div className="flex flex-col">
                         <span className="text-[11px] leading-tight">
                           {wp?.waypoint_name || seg.from_waypoint}
                         </span>
                         {wp?.navaid_info && (
-                          <span className="text-[9px] text-cyan-400/80 font-normal">
+                          <span className="text-[9px] text-teal-600 dark:text-cyan-400/80 font-normal">
                             {wp.navaid_info}
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="route-td font-mono text-[10px] text-zinc-400">
+                    <td className="route-td font-mono text-[10px] text-slate-500 dark:text-zinc-400">
                       {wp?.raw_coordinates || seg.from_coordinates || '—'}
                     </td>
-                    <td className="route-td text-zinc-300 text-[11px] font-mono">
+                    <td className="route-td text-slate-700 dark:text-zinc-300 text-[11px] font-mono">
                       {seg.track_magnetic || '—'}
                     </td>
-                    <td className="route-td text-right text-zinc-300 text-[11px] font-mono">
+                    <td className="route-td text-right text-slate-700 dark:text-zinc-300 text-[11px] font-mono">
                       {seg.distance_nm ? `${seg.distance_nm}` : '—'}
                     </td>
                     <td className="route-td">
                       <div className="flex flex-col text-[10px]">
-                        <span className="text-zinc-300">{seg.upper_limit || '—'}</span>
-                        <span className="text-zinc-500">{seg.lower_limit || '—'}</span>
+                        <span className="text-slate-700 dark:text-zinc-300">
+                          {seg.upper_limit || '—'}
+                        </span>
+                        <span className="text-slate-500 dark:text-zinc-500">
+                          {seg.lower_limit || '—'}
+                        </span>
                       </div>
                     </td>
                     <td className="route-td text-center">
                       {seg.airspace_class ? (
-                        <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold bg-white/10 text-cyan-300 border border-white/10">
+                        <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200 dark:bg-white/10 dark:text-cyan-300 dark:border-white/10">
                           {seg.airspace_class}
                         </span>
                       ) : (
                         '—'
                       )}
                     </td>
-                    <td className="route-td text-right text-[10px] text-zinc-400">
+                    <td className="route-td text-right text-[10px] text-slate-500 dark:text-zinc-400">
                       {seg.moca || '—'}
                     </td>
                   </tr>
@@ -171,24 +181,26 @@ export function RouteDetailsPanel({
               })}
               {/* ── Last Waypoint Row (COP/Terminal fix) ── */}
               {lastWaypoint && (
-                <tr className="border-t border-white/[0.06] bg-white/[0.02]">
-                  <td className="route-td font-semibold text-white">
+                <tr className="border-t border-slate-200 bg-slate-50 dark:border-white/[0.06] dark:bg-white/[0.02]">
+                  <td className="route-td font-semibold text-slate-900 dark:text-white">
                     <div className="flex flex-col">
                       <span className="text-[11px] leading-tight">
                         {lastWaypoint.waypoint_name}
                       </span>
                       {lastWaypoint.navaid_info && (
-                        <span className="text-[9px] text-cyan-400/80 font-normal">
+                        <span className="text-[9px] text-teal-600 dark:text-cyan-400/80 font-normal">
                           {lastWaypoint.navaid_info}
                         </span>
                       )}
                     </div>
                   </td>
-                  <td className="route-td font-mono text-[10px] text-zinc-400">
+                  <td className="route-td font-mono text-[10px] text-slate-500 dark:text-zinc-400">
                     {lastWaypoint.raw_coordinates || '—'}
                   </td>
-                  <td className="route-td text-zinc-500 text-[11px]">
-                    <span className="text-[10px] italic text-zinc-600">COP / Terminal Fix</span>
+                  <td className="route-td text-slate-500 dark:text-zinc-500 text-[11px]">
+                    <span className="text-[10px] italic text-slate-400 dark:text-zinc-600">
+                      COP / Terminal Fix
+                    </span>
                   </td>
                   <td className="route-td"></td>
                   <td className="route-td"></td>
@@ -203,18 +215,21 @@ export function RouteDetailsPanel({
 
       {/* ── Remarks (Collapsible) ── */}
       {remarks && (
-        <div ref={remarksRef} className="rounded-lg border border-white/10 overflow-hidden">
+        <div
+          ref={remarksRef}
+          className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden"
+        >
           <button
             onClick={() => setShowRemarks(!showRemarks)}
-            className="w-full flex items-center justify-between px-3 py-2 bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
+            className="w-full flex items-center justify-between px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.03] dark:hover:bg-white/[0.06] transition-colors"
           >
-            <span className="text-[10px] font-bold text-zinc-500 tracking-widest uppercase">
+            <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-500 tracking-widest uppercase">
               Remarks
             </span>
             {showRemarks ? (
-              <ChevronUp size={14} className="text-zinc-500" />
+              <ChevronUp size={14} className="text-slate-500 dark:text-zinc-500" />
             ) : (
-              <ChevronDown size={14} className="text-zinc-500" />
+              <ChevronDown size={14} className="text-slate-500 dark:text-zinc-500" />
             )}
           </button>
           <AnimatePresence>
@@ -226,8 +241,8 @@ export function RouteDetailsPanel({
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="px-3 py-2 border-t border-white/[0.06]">
-                  <p className="text-[11px] text-zinc-400 leading-relaxed whitespace-pre-line">
+                <div className="px-3 py-2 border-t border-slate-200 dark:border-white/[0.06]">
+                  <p className="text-[11px] text-slate-600 dark:text-zinc-400 leading-relaxed whitespace-pre-line">
                     {remarks}
                   </p>
                 </div>

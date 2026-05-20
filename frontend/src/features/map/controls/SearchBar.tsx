@@ -98,7 +98,7 @@ export default function SearchBar({
                   onPress={() => {
                     setSearchInput('');
                   }}
-                  className="text-white/40 hover:text-white/80"
+                  className="text-slate-500 hover:text-slate-900 dark:text-white/40 dark:hover:text-white/80"
                 >
                   <X size={16} />
                 </Button>
@@ -115,7 +115,7 @@ export default function SearchBar({
                   animate={{ opacity: 1, rotate: 0 }}
                   exit={{ opacity: 0, rotate: 90 }}
                 >
-                  <Loader2 size={18} className="animate-spin text-white/80" />
+                  <Loader2 size={18} className="animate-spin text-slate-700 dark:text-white/80" />
                 </motion.div>
               ) : (
                 <motion.div
@@ -124,7 +124,7 @@ export default function SearchBar({
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                 >
-                  <Search size={18} className="text-white/90" />
+                  <Search size={18} className="text-slate-800 dark:text-white/90" />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -144,14 +144,14 @@ export default function SearchBar({
           >
             {isLoading ? (
               <div className="px-4 py-8 flex flex-col items-center justify-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
-                  <Loader2 size={24} className="text-white animate-spin" />
+                <div className="w-12 h-12 rounded-full bg-slate-200 border-slate-300 dark:bg-white/5 flex items-center justify-center border dark:border-white/10">
+                  <Loader2 size={24} className="text-slate-900 dark:text-white animate-spin" />
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                  <span className="text-white text-sm font-bold tracking-widest uppercase">
+                  <span className="text-slate-900 dark:text-white text-sm font-bold tracking-widest uppercase">
                     Searching Database
                   </span>
-                  <span className="text-white/40 text-[10px] uppercase tracking-[0.2em] font-medium">
+                  <span className="text-slate-500 dark:text-white/40 text-[10px] uppercase tracking-[0.2em] font-medium">
                     Faster than a turboprop
                   </span>
                 </div>
@@ -173,8 +173,8 @@ export default function SearchBar({
                     onMouseEnter={() => setSearchSelectedIndex(index)}
                   >
                     <div className="flex items-center gap-4 flex-1">
-                      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center shrink-0 border border-white/5">
-                        <Search size={14} className="text-white/60" />
+                      <div className="w-10 h-10 rounded-full bg-slate-100 border-slate-200 dark:bg-white/5 flex items-center justify-center shrink-0 border dark:border-white/5">
+                        <Search size={14} className="text-slate-500 dark:text-white/60" />
                       </div>
                       <div className="flex flex-col">
                         <span className="aip-search-result-id">{item.id}</span>
@@ -189,14 +189,14 @@ export default function SearchBar({
               </div>
             ) : (
               <div className="px-8 py-12 text-center flex flex-col items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center opacity-30">
-                  <Search size={24} className="text-white" />
+                <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-white/5 flex items-center justify-center opacity-50 dark:opacity-30">
+                  <Search size={24} className="text-slate-800 dark:text-white" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-white/50 text-sm font-bold tracking-wider uppercase">
+                  <span className="text-slate-600 dark:text-white/50 text-sm font-bold tracking-wider uppercase">
                     No matching locations
                   </span>
-                  <span className="text-white/20 text-[10px] uppercase tracking-widest font-medium">
+                  <span className="text-slate-400 dark:text-white/20 text-[10px] uppercase tracking-widest font-medium">
                     Try searching for ICAO codes or Airport names
                   </span>
                 </div>
