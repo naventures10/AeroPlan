@@ -26,15 +26,24 @@ export function AirspaceDetailsPanel({ data }: { data: any }) {
   if (!data) return null;
   const p = data;
 
+  // Derive correct type from identification (overrides DB misclassifications)
+  let displayType = (p.airspace_type || 'AIRSPACE').toUpperCase();
+  const ident = (p.identification || p.name || '').toUpperCase();
+  if (/\bTSA\d*/.test(ident)) displayType = 'TSA';
+  else if (/\bTRA\d*/.test(ident)) displayType = 'TRA';
+
+  // Clean name by stripping coordinate junk after pipe separator
+  const cleanName = p.name ? p.name.split('|')[0].trim() : 'Unnamed Airspace';
+
   return (
     <div className="flex flex-col gap-4 px-1 py-1">
       {/* Header */}
       <div className="flex flex-col border-b border-slate-200 dark:border-white/10 pb-2">
         <span className="text-[10px] font-black text-teal-600 dark:text-cyan-400 tracking-[0.2em] uppercase">
-          {(p.airspace_type || 'AIRSPACE').replace(/_/g, ' ')}
+          {displayType.replace(/_/g, ' ')}
         </span>
         <span className="text-sm font-bold text-slate-900 dark:text-white mt-0.5 leading-tight">
-          {p.name || 'Unnamed Airspace'}
+          {cleanName}
         </span>
       </div>
 

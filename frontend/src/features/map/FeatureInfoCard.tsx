@@ -84,7 +84,9 @@ export function FeatureInfoCard() {
 
   let title = 'Feature Details';
   if (type === 'AIRSPACE') {
-    title = data.name || data.identification || 'Airspace Details';
+    const rawName = data.name || data.identification || 'Airspace Details';
+    // Strip coordinate junk after pipe separator
+    title = rawName.split('|')[0].trim();
   } else {
     title =
       data.route_designator ||
