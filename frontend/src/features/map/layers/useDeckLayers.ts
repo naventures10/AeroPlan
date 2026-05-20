@@ -44,8 +44,11 @@ export function useDeckLayers({
     selectedRnpProcedureId,
     selectedRnpApproachId,
     setSelectedRnpApproachId,
-    isDarkMode,
+    mapStyle,
   } = useMapStore();
+
+  // Derive isDarkMode from the reactive mapStyle field (getter is not reactive)
+  const isDarkMode = mapStyle !== 'light';
 
   const { isAtsRendered, currentTime } = useRouteAnimation();
 
@@ -163,6 +166,7 @@ export function useDeckLayers({
     windLayer,
     cloudLayers,
     isDarkMode,
+    mapStyle,
   ]);
 
   return layers;
