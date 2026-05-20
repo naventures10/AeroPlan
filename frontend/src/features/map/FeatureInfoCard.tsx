@@ -123,7 +123,13 @@ export function FeatureInfoCard() {
           className={`aip-feature-card-wrapper ${isRoute ? 'is-route' : ''}`}
         >
           <Card className="aip-feature-card">
-            <CardHeader className="aip-feature-card-header">
+            <CardHeader
+              className={
+                type === 'AIRSPACE'
+                  ? 'flex justify-end !p-2 !pr-4 !pt-4 !pb-0'
+                  : 'aip-feature-card-header'
+              }
+            >
               {type !== 'AIRSPACE' && (
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-center gap-1">
