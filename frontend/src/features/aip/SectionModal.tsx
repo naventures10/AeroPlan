@@ -72,7 +72,7 @@ export default function SectionModal({
               <div className="aip-modal-header">
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="aip-modal-badge">{sectionId.replace(/_/g, ' ')}</span>
-                  <h2 className="text-zinc-100 font-semibold text-sm tracking-wide truncate uppercase">
+                  <h2 className="text-slate-800 dark:text-zinc-100 font-semibold text-sm tracking-wide truncate uppercase">
                     {title}
                   </h2>
                 </div>
@@ -86,8 +86,8 @@ export default function SectionModal({
                 {isLoading ? (
                   <div className="flex items-center justify-center py-20">
                     <div className="flex flex-col items-center gap-3">
-                      <div className="w-8 h-8 border-2 border-zinc-700 border-t-indigo-400 rounded-full animate-spin" />
-                      <span className="text-zinc-500 text-xs font-medium tracking-widest uppercase">
+                      <div className="w-8 h-8 border-2 border-slate-300 dark:border-zinc-700 border-t-teal-500 dark:border-t-indigo-400 rounded-full animate-spin" />
+                      <span className="text-slate-500 dark:text-zinc-500 text-xs font-medium tracking-widest uppercase">
                         Loading Section...
                       </span>
                     </div>

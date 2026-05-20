@@ -35,7 +35,7 @@ const MIN_WIDTHS: Record<string, string> = {
 export default function TableRenderer({ data, columnConfig }: TableRendererProps) {
   if (!Array.isArray(data) || data.length === 0) {
     return (
-      <div className="text-zinc-500 text-sm font-medium tracking-wide py-8 text-center">
+      <div className="text-slate-500 dark:text-zinc-500 text-sm font-medium tracking-wide py-8 text-center">
         NO DATA AVAILABLE
       </div>
     );
@@ -57,9 +57,9 @@ export default function TableRenderer({ data, columnConfig }: TableRendererProps
             {columns.map((col, idx) => (
               <th
                 key={col.key}
-                className={`text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-zinc-400 bg-zinc-950 border-b border-zinc-800 whitespace-nowrap ${
+                className={`text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-950 border-b border-slate-200 dark:border-zinc-800 whitespace-nowrap ${
                   idx === 0
-                    ? 'sticky left-0 z-40 bg-zinc-950 shadow-[2px_0_5px_rgba(0,0,0,0.3)]'
+                    ? 'sticky left-0 z-40 shadow-[2px_0_5px_rgba(0,0,0,0.1)] dark:shadow-[2px_0_5px_rgba(0,0,0,0.3)]'
                     : ''
                 }`}
                 style={{ minWidth: MIN_WIDTHS[col.key] || '140px' }}
@@ -73,8 +73,8 @@ export default function TableRenderer({ data, columnConfig }: TableRendererProps
           {data.map((row: any, rowIdx: number) => (
             <tr
               key={rowIdx}
-              className={`transition-colors hover:bg-white/[0.04] ${
-                rowIdx % 2 === 0 ? 'bg-white/[0.02]' : 'bg-transparent'
+              className={`transition-colors hover:bg-slate-200/50 dark:hover:bg-white/[0.04] ${
+                rowIdx % 2 === 0 ? 'bg-slate-50/50 dark:bg-white/[0.02]' : 'bg-transparent'
               }`}
             >
               {columns.map((col, idx) => {
@@ -84,10 +84,16 @@ export default function TableRenderer({ data, columnConfig }: TableRendererProps
                 return (
                   <td
                     key={col.key}
-                    className={`px-4 py-3 text-zinc-200 text-[13px] leading-relaxed align-top border-b border-zinc-800/40 ${
-                      isSticky ? 'sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.3)]' : ''
+                    className={`px-4 py-3 text-slate-800 dark:text-zinc-200 text-[13px] leading-relaxed align-top border-b border-slate-200 dark:border-zinc-800/40 ${
+                      isSticky
+                        ? 'sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.1)] dark:shadow-[2px_0_5px_rgba(0,0,0,0.3)]'
+                        : ''
                     } ${
-                      isSticky && rowIdx % 2 === 0 ? 'bg-zinc-950' : isSticky ? 'bg-zinc-950' : ''
+                      isSticky && rowIdx % 2 === 0
+                        ? 'bg-slate-50 dark:bg-zinc-950'
+                        : isSticky
+                          ? 'bg-white dark:bg-zinc-950'
+                          : ''
                     }`}
                     dangerouslySetInnerHTML={{
                       __html: sanitizeHtml(
