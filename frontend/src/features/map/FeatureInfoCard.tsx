@@ -125,9 +125,7 @@ export function FeatureInfoCard() {
           <Card className="aip-feature-card">
             <CardHeader
               className={
-                type === 'AIRSPACE'
-                  ? 'flex justify-end !p-2 !pr-4 !pt-4 !pb-0'
-                  : 'aip-feature-card-header'
+                type === 'AIRSPACE' ? 'absolute top-1 right-1 z-10 !p-1' : 'aip-feature-card-header'
               }
             >
               {type !== 'AIRSPACE' && (
@@ -161,7 +159,7 @@ export function FeatureInfoCard() {
             {type !== 'AIRSPACE' && <Divider className="aip-feature-card-divider" />}
             <CardBody
               className={`aip-feature-card-body custom-scrollbar ${
-                type === 'AIRSPACE' ? '!pt-0' : ''
+                type === 'AIRSPACE' ? '!pt-4 !px-5 !pb-5' : ''
               }`}
             >
               {type === 'ATS_ROUTE' && (
