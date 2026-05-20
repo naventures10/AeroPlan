@@ -104,3 +104,56 @@ export function parseRouteIds(raw: any): string[] {
     .split(',')
     .filter(Boolean);
 }
+
+// ── Airspace Colors ──────────────────────────────────────────────────
+
+export const AIRSPACE_COLORS: Record<
+  string,
+  {
+    fill: [number, number, number, number];
+    stroke: [number, number, number, number];
+  }
+> = {
+  FIR: { fill: [255, 165, 0, 10], stroke: [255, 165, 0, 80] },
+  DANGER: { fill: [255, 40, 40, 20], stroke: [255, 90, 90, 180] },
+  PROHIBITED: { fill: [255, 0, 0, 15], stroke: [255, 0, 0, 120] },
+  RESTRICTED: { fill: [255, 140, 0, 15], stroke: [255, 140, 0, 90] },
+  TRA: { fill: [255, 200, 50, 15], stroke: [255, 200, 50, 90] },
+  TSA: { fill: [200, 180, 50, 15], stroke: [200, 180, 50, 90] },
+  ADIZ: { fill: [180, 80, 220, 15], stroke: [180, 80, 220, 100] },
+  CTR: { fill: [50, 180, 255, 15], stroke: [50, 180, 255, 100] },
+  CTA_LOWER: { fill: [80, 200, 220, 15], stroke: [80, 200, 220, 90] },
+  CTA_UPPER: { fill: [60, 140, 200, 15], stroke: [60, 140, 200, 90] },
+  UPR_ZONE: { fill: [190, 200, 255, 15], stroke: [190, 200, 255, 120] },
+};
+
+export const AIRSPACE_COLORS_LIGHT: Record<
+  string,
+  {
+    fill: [number, number, number, number];
+    stroke: [number, number, number, number];
+  }
+> = {
+  FIR: { fill: [224, 169, 109, 25], stroke: [224, 169, 109, 160] }, // Soft Amber
+  DANGER: { fill: [217, 115, 115, 30], stroke: [217, 115, 115, 200] }, // Muted Coral
+  PROHIBITED: { fill: [200, 90, 90, 30], stroke: [200, 90, 90, 200] }, // Soft Brick
+  RESTRICTED: { fill: [217, 155, 88, 30], stroke: [217, 155, 88, 180] }, // Dusty Orange
+  TRA: { fill: [208, 184, 99, 25], stroke: [208, 184, 99, 160] }, // Soft Gold
+  TSA: { fill: [178, 167, 94, 25], stroke: [178, 167, 94, 160] }, // Pale Olive
+  ADIZ: { fill: [160, 116, 196, 25], stroke: [160, 116, 196, 180] }, // Muted Mauve
+  CTR: { fill: [107, 154, 196, 25], stroke: [107, 154, 196, 180] }, // Soft Sky Blue
+  CTA_LOWER: { fill: [92, 158, 173, 25], stroke: [92, 158, 173, 180] }, // Muted Aqua
+  CTA_UPPER: { fill: [90, 132, 181, 25], stroke: [90, 132, 181, 180] }, // Calm Denim
+  UPR_ZONE: { fill: [125, 140, 196, 25], stroke: [125, 140, 196, 180] }, // Soft Periwinkle
+};
+
+export function getAirspaceColors(isDarkMode: boolean) {
+  return isDarkMode ? AIRSPACE_COLORS : AIRSPACE_COLORS_LIGHT;
+}
+
+export const DEFAULT_STROKE: [number, number, number, number] = [128, 128, 128, 60];
+export const DEFAULT_STROKE_LIGHT: [number, number, number, number] = [100, 116, 139, 120];
+
+export function getDefaultStroke(isDarkMode: boolean) {
+  return isDarkMode ? DEFAULT_STROKE : DEFAULT_STROKE_LIGHT;
+}
