@@ -33,28 +33,39 @@ function inferAirspaceType(feature: any): string {
   const props = feature.properties;
   if (!props) return '';
 
+  const ident = props.identification;
+  const identStr = ident ? String(ident).toUpperCase() : '';
+
+  if (identStr) {
+    if (TYPE_CACHE.has(identStr)) return TYPE_CACHE.get(identStr)!;
+
+    // Explicit overrides for obvious misclassifications in DB
+    if (/\bTSA\d*/.test(identStr)) {
+      TYPE_CACHE.set(identStr, 'TSA');
+      return 'TSA';
+    }
+    if (/\bTRA\d*/.test(identStr)) {
+      TYPE_CACHE.set(identStr, 'TRA');
+      return 'TRA';
+    }
+  }
+
   const rawType = props.airspace_type;
   if (rawType) return String(rawType).toUpperCase();
 
-  const ident = props.identification;
-  if (!ident) return '';
+  if (identStr) {
+    let type = '';
+    if (identStr.indexOf('VD') !== -1) type = 'DANGER';
+    else if (identStr.indexOf('VP') !== -1) type = 'PROHIBITED';
+    else if (identStr.indexOf('VR') !== -1) type = 'RESTRICTED';
 
-  const identStr = String(ident).toUpperCase();
-  if (TYPE_CACHE.has(identStr)) return TYPE_CACHE.get(identStr)!;
-
-  let type = '';
-  if (identStr.indexOf('VD') !== -1) type = 'DANGER';
-  else if (identStr.indexOf('VP') !== -1) type = 'PROHIBITED';
-  else if (identStr.indexOf('VR') !== -1) type = 'RESTRICTED';
-  else if (identStr.indexOf('TSA') !== -1) type = 'TSA';
-  else if (identStr.indexOf('TRA') !== -1) type = 'TRA';
-
-  // Limit cache size to prevent memory leaks
-  if (TYPE_CACHE.size < 2000) {
-    TYPE_CACHE.set(identStr, type);
+    if (type && TYPE_CACHE.size < 2000) {
+      TYPE_CACHE.set(identStr, type);
+    }
+    if (type) return type;
   }
 
-  return type;
+  return '';
 }
 
 // Fast string cache for labels
