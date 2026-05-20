@@ -178,6 +178,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
         return AIRSPACE_COLORS[type]?.stroke ?? DEFAULT_STROKE;
       },
       getLineWidth: 2,
+      lineWidthUnits: 'pixels',
       lineWidthMinPixels: 1,
       minZoom: 2,
       updateTriggers: {
