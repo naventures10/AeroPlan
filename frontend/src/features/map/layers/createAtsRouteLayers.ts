@@ -267,7 +267,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
           const baseRgb = routeBaseRgb(d.properties.route_type);
 
           if (!isSelected) {
-            return [baseRgb[0], baseRgb[1], baseRgb[2], 140];
+            return [baseRgb[0], baseRgb[1], baseRgb[2], ctx.isDarkMode ? 140 : 255];
           }
           return glowColor(baseRgb, getLabelIntensity(d, ctx), selectedRouteType);
         },
@@ -306,7 +306,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
           const baseRgb = routeBaseRgb(d.properties.route_type);
 
           if (!isSelected) {
-            return [baseRgb[0], baseRgb[1], baseRgb[2], 140];
+            return [baseRgb[0], baseRgb[1], baseRgb[2], ctx.isDarkMode ? 140 : 255];
           }
           return glowColor(baseRgb, getLabelIntensity(d, ctx), selectedRouteType);
         },
@@ -349,7 +349,11 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
           if (selectedRouteType === 'WAYPOINT') return palette.purple;
           return selectedRouteType === 'RNAV' ? palette.rnavGreen : palette.atsBlue;
         }
-        return isLayerActive ? [150, 150, 150, 80] : [0, 0, 0, 0];
+        return isLayerActive
+          ? ctx.isDarkMode
+            ? [150, 150, 150, 80]
+            : ([...palette.rgbWhite, 120] as any)
+          : [0, 0, 0, 0];
       },
       getIconSize: (d: any) => {
         const routes = parseRouteIds(d.properties.route_ids);
@@ -371,7 +375,11 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
           if (selectedRouteType === 'WAYPOINT') return palette.purple;
           return selectedRouteType === 'RNAV' ? palette.rnavGreen : palette.atsBlue;
         }
-        return isLayerActive ? [150, 150, 150, 150] : [0, 0, 0, 0];
+        return isLayerActive
+          ? ctx.isDarkMode
+            ? [150, 150, 150, 150]
+            : ([...palette.rgbWhite, 255] as any)
+          : [0, 0, 0, 0];
       },
       getTextPixelOffset: [0, -18],
       textFontFamily: 'Geist, sans-serif',
