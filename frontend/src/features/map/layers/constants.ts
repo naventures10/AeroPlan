@@ -51,16 +51,16 @@ export const DARK_PALETTE: LayerPalette = {
 };
 
 export const LIGHT_PALETTE: LayerPalette = {
-  white: [15, 23, 42, 255], // slate-900 (dark text on light map)
-  cyan: [72, 139, 143, 255], // #488B8F accent
-  emerald: [5, 150, 105, 255], // emerald-600
-  purple: [55, 48, 163, 255], // indigo-800 — deep, readable on light map tiles
-  rnavGreen: [22, 163, 74, 255], // green-600
-  atsBlue: [37, 99, 235, 255], // blue-600
-  rgbPurple: [55, 48, 163],
-  rgbRnavGreen: [22, 163, 74],
-  rgbAtsBlue: [37, 99, 235],
-  rgbWhite: [15, 23, 42],
+  white: [71, 85, 105, 255], // slate-600 — soft dark for text, not harsh black
+  cyan: [72, 139, 143, 255], // #488B8F accent — steel teal
+  emerald: [38, 130, 100, 255], // muted teal-green — readable on map greens
+  purple: [72, 139, 143, 255], // #488B8F accent — aerodrome icons match accent
+  rnavGreen: [58, 134, 90, 255], // forest green — softer than bright green-600
+  atsBlue: [66, 126, 188, 255], // steel blue — calm, mid-tone
+  rgbPurple: [72, 139, 143],
+  rgbRnavGreen: [58, 134, 90],
+  rgbAtsBlue: [66, 126, 188],
+  rgbWhite: [71, 85, 105], // slate-600 for text
 };
 
 /** Get the appropriate palette for the current theme */

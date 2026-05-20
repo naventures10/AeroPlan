@@ -63,7 +63,7 @@ export function createAerodromeLayers(
       outlineColor: isLayerActive
         ? ctx.isDarkMode
           ? [0, 0, 0, 180]
-          : [250, 249, 249, 230] // warm off-white outline matches #FAF9F9 map bg
+          : [250, 249, 249, 180] // soft warm-white outline, not opaque
         : [0, 0, 0, 0],
       fontSettings: { sdf: true },
       updateTriggers: {
