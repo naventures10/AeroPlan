@@ -14,10 +14,6 @@ import { getDistanceNm } from '../utils/routeAnimation';
 import {
   EXTENSIONS,
   ZOOM_ATS_WAYPOINTS,
-  RGB_NEON_PURPLE,
-  RGB_RNAV_GREEN,
-  RGB_ATS_BLUE,
-  RGB_WHITE,
   parseRouteIds,
   ATS_ROUTE_LABEL_MAX_PIXELS,
   ATS_ROUTE_LABEL_TEXT_MAX_PIXELS,
@@ -67,9 +63,9 @@ function getLabelIntensity(d: any, ctx: LayerContext): number {
 
 // ── Colour helpers ───────────────────────────────────────────────────
 
-/** Returns the base RGB for a route type (RNAV → lime, conventional → cyan). */
-function routeBaseRgb(routeType: string): [number, number, number] {
-  return routeType === 'RNAV' ? RGB_RNAV_GREEN : RGB_ATS_BLUE;
+/** Returns the base RGB for a route type. */
+function routeBaseRgb(routeType: string, palette: any): [number, number, number] {
+  return routeType === 'RNAV' ? palette.rgbRnavGreen : palette.rgbAtsBlue;
 }
 
 /**
@@ -80,14 +76,15 @@ function glowColor(
   baseRgb: [number, number, number],
   intensity: number,
   selectedRouteType: string | null,
+  palette: any,
 ): [number, number, number, number] {
   const targetGlow: [number, number, number] =
-    selectedRouteType === 'WAYPOINT' ? RGB_NEON_PURPLE : baseRgb;
+    selectedRouteType === 'WAYPOINT' ? palette.rgbPurple : baseRgb;
 
   return [
-    targetGlow[0] + Math.round((RGB_WHITE[0] - targetGlow[0]) * intensity),
-    targetGlow[1] + Math.round((RGB_WHITE[1] - targetGlow[1]) * intensity),
-    targetGlow[2] + Math.round((RGB_WHITE[2] - targetGlow[2]) * intensity),
+    targetGlow[0] + Math.round((palette.rgbWhite[0] - targetGlow[0]) * intensity),
+    targetGlow[1] + Math.round((palette.rgbWhite[1] - targetGlow[1]) * intensity),
+    targetGlow[2] + Math.round((palette.rgbWhite[2] - targetGlow[2]) * intensity),
     255,
   ];
 }
@@ -264,12 +261,12 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
           const isActive = isLayerActive || isSelected;
           if (!isActive) return [0, 0, 0, 0];
 
-          const baseRgb = routeBaseRgb(d.properties.route_type);
+          const baseRgb = routeBaseRgb(d.properties.route_type, palette);
 
           if (!isSelected) {
             return [baseRgb[0], baseRgb[1], baseRgb[2], ctx.isDarkMode ? 140 : 255];
           }
-          return glowColor(baseRgb, getLabelIntensity(d, ctx), selectedRouteType);
+          return glowColor(baseRgb, getLabelIntensity(d, ctx), selectedRouteType, palette);
         },
         sizeUnits: 'meters',
         sizeMaxPixels: ATS_ROUTE_LABEL_MAX_PIXELS,
@@ -303,12 +300,12 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
           const isActive = isLayerActive || isSelected;
           if (!isActive) return [0, 0, 0, 0];
 
-          const baseRgb = routeBaseRgb(d.properties.route_type);
+          const baseRgb = routeBaseRgb(d.properties.route_type, palette);
 
           if (!isSelected) {
             return [baseRgb[0], baseRgb[1], baseRgb[2], ctx.isDarkMode ? 140 : 255];
           }
-          return glowColor(baseRgb, getLabelIntensity(d, ctx), selectedRouteType);
+          return glowColor(baseRgb, getLabelIntensity(d, ctx), selectedRouteType, palette);
         },
         fontFamily: 'Geist, sans-serif',
         fontWeight: 700,
