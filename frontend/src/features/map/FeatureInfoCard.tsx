@@ -159,7 +159,11 @@ export function FeatureInfoCard() {
               </button>
             </CardHeader>
             {type !== 'AIRSPACE' && <Divider className="aip-feature-card-divider" />}
-            <CardBody className="aip-feature-card-body custom-scrollbar">
+            <CardBody
+              className={`aip-feature-card-body custom-scrollbar ${
+                type === 'AIRSPACE' ? '!pt-0' : ''
+              }`}
+            >
               {type === 'ATS_ROUTE' && (
                 <RouteDetailsPanel
                   isLoadingRoute={isLoadingRoute}

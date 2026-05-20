@@ -139,7 +139,7 @@ export const AIRSPACE_COLORS_LIGHT: Record<
   PROHIBITED: { fill: [185, 28, 28, 25], stroke: [185, 28, 28, 180] },
   RESTRICTED: { fill: [194, 120, 3, 25], stroke: [194, 120, 3, 150] },
   TRA: { fill: [139, 92, 246, 20], stroke: [139, 92, 246, 150] }, // Violet
-  TSA: { fill: [132, 204, 22, 20], stroke: [132, 204, 22, 150] }, // Vivid Lime
+  TSA: { fill: [5, 150, 105, 20], stroke: [5, 150, 105, 150] }, // Emerald Green
   ADIZ: { fill: [126, 34, 206, 20], stroke: [126, 34, 206, 150] },
   CTR: { fill: [37, 99, 235, 20], stroke: [37, 99, 235, 150] },
   CTA_LOWER: { fill: [14, 165, 180, 20], stroke: [14, 165, 180, 140] },
