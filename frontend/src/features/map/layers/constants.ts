@@ -54,10 +54,10 @@ export const LIGHT_PALETTE: LayerPalette = {
   white: [71, 85, 105, 255], // slate-600 — soft dark for text, not harsh black
   cyan: [72, 139, 143, 255], // #488B8F accent — steel teal
   emerald: [38, 130, 100, 255], // muted teal-green — readable on map greens
-  purple: [72, 139, 143, 255], // #488B8F accent — aerodrome icons match accent
+  purple: [139, 90, 140, 255], // warm plum purple
   rnavGreen: [58, 134, 90, 255], // forest green — softer than bright green-600
   atsBlue: [66, 126, 188, 255], // steel blue — calm, mid-tone
-  rgbPurple: [72, 139, 143],
+  rgbPurple: [139, 90, 140],
   rgbRnavGreen: [58, 134, 90],
   rgbAtsBlue: [66, 126, 188],
   rgbWhite: [71, 85, 105], // slate-600 for text

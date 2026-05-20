@@ -55,7 +55,11 @@ export function createAerodromeLayers(
       getText: (d: any) => d.text,
       getSize: 12,
       sizeUnits: 'pixels',
-      getColor: isLayerActive ? ([...palette.rgbWhite, 230] as any) : [0, 0, 0, 0],
+      getColor: isLayerActive
+        ? ctx.isDarkMode
+          ? ([...palette.rgbWhite, 230] as any)
+          : ([...palette.rgbPurple, 255] as any)
+        : [0, 0, 0, 0],
       getPixelOffset: [0, 20],
       fontFamily: 'Geist, sans-serif',
       fontWeight: 700,
