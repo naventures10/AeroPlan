@@ -55,11 +55,11 @@ export const LIGHT_PALETTE: LayerPalette = {
   cyan: [72, 139, 143, 255], // #488B8F accent — steel teal
   emerald: [33, 155, 157, 255], // #219B9D — custom teal-green
   purple: [139, 90, 140, 255], // warm plum purple
-  rnavGreen: [79, 143, 97, 255], // soft fern green
-  atsBlue: [76, 122, 158, 255], // dusty denim blue
+  rnavGreen: [10, 124, 110, 255], // #0A7C6E
+  atsBlue: [66, 122, 181, 255], // #427AB5
   rgbPurple: [139, 90, 140],
-  rgbRnavGreen: [79, 143, 97],
-  rgbAtsBlue: [76, 122, 158],
+  rgbRnavGreen: [10, 124, 110],
+  rgbAtsBlue: [66, 122, 181],
   rgbWhite: [92, 107, 138], // slate blue for waypoints/text
 };
 
