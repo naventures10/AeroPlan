@@ -196,17 +196,17 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                 onClick={() => {
                   scroll('left');
                 }}
-                className="shrink-0 w-8 h-8 rounded-full bg-zinc-800/60 hover:bg-zinc-700/60 border border-zinc-700/40 flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors backdrop-blur-xl"
+                className="shrink-0 w-8 h-8 rounded-full bg-slate-200/60 dark:bg-zinc-800/60 hover:bg-slate-300/60 dark:hover:bg-zinc-700/60 border border-slate-300/40 dark:border-zinc-700/40 flex items-center justify-center text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 transition-colors backdrop-blur-xl"
               >
                 <ChevronLeft size={16} />
               </button>
             )}
 
             {/* Cards Container */}
-            <div className="relative rounded-2xl overflow-hidden border border-zinc-700/40 shadow-2xl glass-morphism">
+            <div className="relative rounded-2xl overflow-hidden border border-slate-300/40 dark:border-zinc-700/40 shadow-2xl glass-morphism">
               {/* Title bar */}
               <div className="px-4 pt-2 pb-0.5">
-                <span className="text-[9px] font-bold tracking-[0.25em] text-zinc-500 uppercase">
+                <span className="text-[9px] font-bold tracking-[0.25em] text-slate-500 dark:text-zinc-500 uppercase">
                   Aerodrome Charts
                 </span>
               </div>
@@ -233,18 +233,18 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                       onClick={() => {
                         handleChartClick(chart);
                       }}
-                      className="group shrink-0 flex flex-col items-center gap-1.5 p-2 rounded-xl border border-white/[0.06] hover:border-cyan-500/40 bg-white/[0.02] hover:bg-cyan-500/10 transition-colors duration-200 cursor-pointer w-[82px]"
+                      className="group shrink-0 flex flex-col items-center gap-1.5 p-2 rounded-xl border border-slate-300/40 dark:border-white/[0.06] hover:border-teal-500/40 dark:hover:border-cyan-500/40 bg-slate-100/50 dark:bg-white/[0.02] hover:bg-teal-500/10 dark:hover:bg-cyan-500/10 transition-colors duration-200 cursor-pointer w-[82px]"
                       title={chart.chart_title || undefined}
                     >
                       {/* Chart Icon */}
-                      <div className="w-10 h-11 rounded-lg bg-white/[0.04] border border-white/[0.07] group-hover:border-cyan-500/40 flex items-center justify-center transition-colors">
+                      <div className="w-10 h-11 rounded-lg bg-slate-200/50 dark:bg-white/[0.04] border border-slate-300/50 dark:border-white/[0.07] group-hover:border-teal-500/40 dark:group-hover:border-cyan-500/40 flex items-center justify-center transition-colors">
                         <FileText
                           size={18}
-                          className="text-cyan-400 group-hover:text-cyan-300 transition-colors"
+                          className="text-teal-600 dark:text-cyan-400 group-hover:text-teal-500 dark:group-hover:text-cyan-300 transition-colors"
                         />
                       </div>
                       {/* Title */}
-                      <span className="text-[8px] font-bold text-zinc-500 group-hover:text-zinc-200 text-center leading-tight tracking-wider uppercase line-clamp-1 transition-colors w-full">
+                      <span className="text-[8px] font-bold text-slate-500 dark:text-zinc-500 group-hover:text-slate-800 dark:group-hover:text-zinc-200 text-center leading-tight tracking-wider uppercase line-clamp-1 transition-colors w-full">
                         {chart.chart_title || chart.chart_index}
                       </span>
                     </motion.button>
@@ -259,7 +259,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                 onClick={() => {
                   scroll('right');
                 }}
-                className="shrink-0 w-8 h-8 rounded-full bg-zinc-800/60 hover:bg-zinc-700/60 border border-zinc-700/40 flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors backdrop-blur-xl"
+                className="shrink-0 w-8 h-8 rounded-full bg-slate-200/60 dark:bg-zinc-800/60 hover:bg-slate-300/60 dark:hover:bg-zinc-700/60 border border-slate-300/40 dark:border-zinc-700/40 flex items-center justify-center text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 transition-colors backdrop-blur-xl"
               >
                 <ChevronRight size={16} />
               </button>
