@@ -118,8 +118,8 @@ export const AIRSPACE_COLORS: Record<
   DANGER: { fill: [255, 40, 40, 20], stroke: [255, 90, 90, 180] },
   PROHIBITED: { fill: [255, 0, 0, 15], stroke: [255, 0, 0, 120] },
   RESTRICTED: { fill: [255, 140, 0, 15], stroke: [255, 140, 0, 90] },
-  TRA: { fill: [219, 39, 119, 15], stroke: [219, 39, 119, 90] }, // Vibrant Magenta for both modes
-  TSA: { fill: [200, 180, 50, 15], stroke: [200, 180, 50, 90] },
+  TRA: { fill: [139, 92, 246, 15], stroke: [139, 92, 246, 100] }, // Violet
+  TSA: { fill: [132, 204, 22, 15], stroke: [132, 204, 22, 100] }, // Vivid Lime
   ADIZ: { fill: [180, 80, 220, 15], stroke: [180, 80, 220, 100] },
   CTR: { fill: [50, 180, 255, 15], stroke: [50, 180, 255, 100] },
   CTA_LOWER: { fill: [80, 200, 220, 15], stroke: [80, 200, 220, 90] },
@@ -138,8 +138,8 @@ export const AIRSPACE_COLORS_LIGHT: Record<
   DANGER: { fill: [220, 38, 38, 30], stroke: [220, 38, 38, 200] },
   PROHIBITED: { fill: [185, 28, 28, 25], stroke: [185, 28, 28, 180] },
   RESTRICTED: { fill: [194, 120, 3, 25], stroke: [194, 120, 3, 150] },
-  TRA: { fill: [219, 39, 119, 20], stroke: [219, 39, 119, 160] }, // Vibrant Magenta for both modes
-  TSA: { fill: [161, 148, 39, 20], stroke: [161, 148, 39, 130] },
+  TRA: { fill: [139, 92, 246, 20], stroke: [139, 92, 246, 150] }, // Violet
+  TSA: { fill: [132, 204, 22, 20], stroke: [132, 204, 22, 150] }, // Vivid Lime
   ADIZ: { fill: [126, 34, 206, 20], stroke: [126, 34, 206, 150] },
   CTR: { fill: [37, 99, 235, 20], stroke: [37, 99, 235, 150] },
   CTA_LOWER: { fill: [14, 165, 180, 20], stroke: [14, 165, 180, 140] },
