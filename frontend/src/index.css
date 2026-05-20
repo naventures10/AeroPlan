@@ -80,35 +80,35 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   1b. Light Mode Token Overrides (Frosted White Glass)
+   1b. Light Mode Token Overrides (Warm Off-White Glass — #FAF9F9)
    ───────────────────────────────────────────────────────────────────────────── */
 html:not(.dark) {
-  /* Surface System — Slate tones */
-  --surface: #f8fafc;
-  --surface-dim: #f1f5f9;
+  /* Surface System — Warm off-white tones based on #FAF9F9 */
+  --surface: #faf9f9;
+  --surface-dim: #f2f0f0;
   --surface-bright: #ffffff;
   --surface-container-lowest: #ffffff;
-  --surface-container-low: #f8fafc;
-  --surface-container: #f1f5f9;
-  --surface-container-high: #e2e8f0;
-  --surface-container-highest: #cbd5e1;
+  --surface-container-low: #faf9f9;
+  --surface-container: #f2f0f0;
+  --surface-container-high: #e8e5e5;
+  --surface-container-highest: #d8d4d4;
 
   --on-surface: #0f172a;
   --on-surface-variant: #475569;
 
   --outline: #94a3b8;
-  --outline-variant: #cbd5e1;
+  --outline-variant: #d8d4d4;
 
   --primary: #0f172a;
   --on-primary: #ffffff;
   --secondary: #334155;
-  --on-secondary: #f8fafc;
-  --secondary-container: #e2e8f0;
+  --on-secondary: #faf9f9;
+  --secondary-container: #e8e5e5;
   --on-secondary-container: #334155;
 
-  --background: #f8fafc;
+  --background: #faf9f9;
   --on-background: #0f172a;
-  --surface-variant: #e2e8f0;
+  --surface-variant: #e8e5e5;
 
   /* Accent — Teal-600 for light surfaces */
   --accent-cyan: #0d9488;
@@ -140,10 +140,10 @@ html:not(.dark) {
   --route-waypoint: #7c3aed;
   --airspace-type: #d97706;
 
-  /* Glassmorphism — Frosted White */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-bg-heavy: rgba(255, 255, 255, 0.85);
-  --glass-bg-solid: rgba(248, 250, 252, 0.97);
+  /* Glassmorphism — Warm Off-White (#FAF9F9 base) */
+  --glass-bg: rgba(250, 249, 249, 0.72);
+  --glass-bg-heavy: rgba(250, 249, 249, 0.87);
+  --glass-bg-solid: rgba(250, 249, 249, 0.97);
   --glass-border: rgba(15, 23, 42, 0.08);
   --glass-border-highlight: rgba(15, 23, 42, 0.15);
   --glass-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
