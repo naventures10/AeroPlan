@@ -124,19 +124,21 @@ export function FeatureInfoCard() {
         >
           <Card className="aip-feature-card">
             <CardHeader className="aip-feature-card-header">
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center gap-1">
-                  <span
-                    className={`aip-feature-card-type ${
-                      type === 'WAYPOINT' ? 'aip-feature-card-type-waypoint' : ''
-                    }`}
-                  >
-                    {type.replace('_', ' ')}
-                  </span>
-                  {routeTypeBadge}
+              {type !== 'AIRSPACE' && (
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1">
+                    <span
+                      className={`aip-feature-card-type ${
+                        type === 'WAYPOINT' ? 'aip-feature-card-type-waypoint' : ''
+                      }`}
+                    >
+                      {type.replace('_', ' ')}
+                    </span>
+                    {routeTypeBadge}
+                  </div>
+                  <h3 className="aip-feature-card-title">{title}</h3>
                 </div>
-                <h3 className="aip-feature-card-title">{title}</h3>
-              </div>
+              )}
               <button
                 type="button"
                 data-testid="close-feature-card"
@@ -144,13 +146,13 @@ export function FeatureInfoCard() {
                   setSelectedFeature(null);
                   setSelectedRouteIds([]);
                 }}
-                className="aip-feature-card-close p-2 hover:bg-slate-200 dark:hover:bg-white/5 rounded-full transition-colors"
+                className="aip-feature-card-close p-2 hover:bg-slate-200 dark:hover:bg-white/5 rounded-full transition-colors ml-auto"
                 aria-label="Close"
               >
                 <X size={18} />
               </button>
             </CardHeader>
-            <Divider className="aip-feature-card-divider" />
+            {type !== 'AIRSPACE' && <Divider className="aip-feature-card-divider" />}
             <CardBody className="aip-feature-card-body custom-scrollbar">
               {type === 'ATS_ROUTE' && (
                 <RouteDetailsPanel
