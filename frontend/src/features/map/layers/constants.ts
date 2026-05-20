@@ -53,7 +53,7 @@ export const DARK_PALETTE: LayerPalette = {
 export const LIGHT_PALETTE: LayerPalette = {
   white: [92, 107, 138, 255], // slate blue — soft, mid-tone for waypoints/text
   cyan: [72, 139, 143, 255], // #488B8F accent — steel teal
-  emerald: [142, 173, 119, 255], // soft pistachio — warm pastel green
+  emerald: [33, 155, 157, 255], // #219B9D — custom teal-green
   purple: [139, 90, 140, 255], // warm plum purple
   rnavGreen: [58, 134, 90, 255], // forest green — softer than bright green-600
   atsBlue: [66, 126, 188, 255], // steel blue — calm, mid-tone
