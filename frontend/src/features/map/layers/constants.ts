@@ -51,7 +51,7 @@ export const DARK_PALETTE: LayerPalette = {
 };
 
 export const LIGHT_PALETTE: LayerPalette = {
-  white: [71, 85, 105, 255], // slate-600 — soft dark for text, not harsh black
+  white: [92, 107, 138, 255], // slate blue — soft, mid-tone for waypoints/text
   cyan: [72, 139, 143, 255], // #488B8F accent — steel teal
   emerald: [38, 130, 100, 255], // muted teal-green — readable on map greens
   purple: [139, 90, 140, 255], // warm plum purple
@@ -60,7 +60,7 @@ export const LIGHT_PALETTE: LayerPalette = {
   rgbPurple: [139, 90, 140],
   rgbRnavGreen: [58, 134, 90],
   rgbAtsBlue: [66, 126, 188],
-  rgbWhite: [71, 85, 105], // slate-600 for text
+  rgbWhite: [92, 107, 138], // slate blue for waypoints/text
 };
 
 /** Get the appropriate palette for the current theme */
