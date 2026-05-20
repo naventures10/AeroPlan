@@ -111,7 +111,6 @@ describe('MapView Component', () => {
       setViewMode: vi.fn(),
       setActiveAirport: vi.fn(),
       setSelectedFeature: vi.fn(),
-      setHighlightedAirspaceId: vi.fn(),
       fitBounds: vi.fn(),
     });
   });
@@ -151,12 +150,10 @@ describe('MapView Component', () => {
     expect(setViewStateMock).toHaveBeenCalledWith(expect.objectContaining({ zoom: 2, pitch: 0 }));
   });
 
-  it('handles click events', () => {
+  it('handles click on airspace metadata label and opens info card', () => {
     const setSelectedFeatureMock = vi.fn();
-    const setHighlightedAirspaceIdMock = vi.fn();
     useMapStore.setState({
       setSelectedFeature: setSelectedFeatureMock,
-      setHighlightedAirspaceId: setHighlightedAirspaceIdMock,
     });
 
     const { getByTestId } = render(<MapView aerodromes={[]} onAerodromeClick={vi.fn()} />);
@@ -165,8 +162,10 @@ describe('MapView Component', () => {
       fireEvent.click(getByTestId('mock-deckgl'));
     });
 
-    expect(setSelectedFeatureMock).toHaveBeenCalled();
-    expect(setHighlightedAirspaceIdMock).toHaveBeenCalled();
+    expect(setSelectedFeatureMock).toHaveBeenCalledWith({
+      type: 'AIRSPACE',
+      data: { properties: { id: 1 } },
+    });
   });
 
   it('handles overlay creation and hover', () => {

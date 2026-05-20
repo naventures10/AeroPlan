@@ -162,19 +162,6 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
               <span class="aip-tooltip-subtitle aip-tooltip-waypoint-accent">INTERSECTING: ${routes.join(', ')}</span>
             </div>`),
         };
-      } else if (object && layer?.id === 'airspace-metadata-layer') {
-        const p = object.properties ?? {};
-        const type = p.airspace_type || 'AIRSPACE';
-        const name = p.name || p.identification || 'UNNAMED';
-        const limits = `${p.lower_limit || 'SFC'} - ${p.upper_limit || 'UNL'}`;
-
-        return {
-          html: sanitizeHtml(`<div class="aip-tooltip-container aip-tooltip-max-250">
-              <span class="aip-tooltip-title">${name}</span>
-              <span class="aip-tooltip-subtitle aip-tooltip-airspace-type">${type.replace(/_/g, ' ')}</span>
-              <span class="aip-tooltip-subtitle aip-tooltip-spacing-sm">LIMITS: <span class="aip-tooltip-row-val">${limits}</span></span>
-            </div>`),
-        };
       }
 
       // Fallback: query MapLibre rendered features (terminal 3D view)

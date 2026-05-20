@@ -12,13 +12,7 @@ import { WaypointDetailsPanel } from './components/WaypointDetailsPanel';
 import { AirspaceDetailsPanel } from './components/AirspaceDetailsPanel';
 
 export function FeatureInfoCard() {
-  const {
-    selectedFeature,
-    setSelectedFeature,
-    viewMode,
-    setHighlightedAirspaceId,
-    setSelectedRouteIds,
-  } = useMapStore();
+  const { selectedFeature, setSelectedFeature, viewMode, setSelectedRouteIds } = useMapStore();
 
   const isVisible = viewMode === 'ENROUTE' && selectedFeature !== null;
   const type = selectedFeature?.type || '';
@@ -147,9 +141,6 @@ export function FeatureInfoCard() {
                 onClick={() => {
                   setSelectedFeature(null);
                   setSelectedRouteIds([]);
-                  if (type === 'AIRSPACE') {
-                    setHighlightedAirspaceId(null);
-                  }
                 }}
                 className="aip-feature-card-close p-2 hover:bg-white/5 rounded-full transition-colors"
                 aria-label="Close"

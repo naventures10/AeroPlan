@@ -150,7 +150,6 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     fitBounds,
     setSelectedFeature,
     setSelectedRouteIds,
-    setHighlightedAirspaceId,
     mapStyle,
   } = useMapStore();
 
@@ -270,39 +269,9 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
         return;
       }
 
-      // 1. If we hit an airspace metadata label, handle it directly
+      // 1. If we hit an airspace metadata label, open the info card
       if (info.layer?.id === 'airspace-metadata-layer' && info.object) {
         setSelectedFeature({ type: 'AIRSPACE', data: info.object });
-        const id = info.object.properties?.id ?? info.object.id;
-        setHighlightedAirspaceId(String(id));
-        return;
-      }
-
-      // 2. If we hit a polygon (basemap), try to find the corresponding metadata point in the same click area
-      if (info.layer?.id === 'airspace-basemap-layer' && info.object) {
-        // We hit a polygon. Let's look for any metadata points at this location
-        // info.layer.context.deck is the deck instance
-        const deck = info.layer.context.deck;
-        const pickedObjects = deck.pickMultipleObjects({
-          x: info.x,
-          y: info.y,
-          radius: 10,
-          layerIds: ['airspace-metadata-layer'],
-        });
-
-        if (pickedObjects && pickedObjects.length > 0) {
-          const metadataFeature = pickedObjects[0].object;
-          setSelectedFeature({ type: 'AIRSPACE', data: metadataFeature });
-          const id = metadataFeature.properties?.id ?? metadataFeature.id;
-          setHighlightedAirspaceId(String(id));
-          return;
-        }
-
-        // Fallback: If no metadata point was found, we still highlight the polygon
-        // but we might not have 'remarks' if they aren't in the geometry tile.
-        setSelectedFeature({ type: 'AIRSPACE', data: info.object });
-        const id = info.object.properties?.id ?? info.object.id;
-        setHighlightedAirspaceId(String(id));
         return;
       }
 
@@ -320,9 +289,8 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
       // 3. If we clicked empty space in BOTH contexts, clear selection
       setSelectedFeature(null);
       setSelectedRouteIds([]);
-      setHighlightedAirspaceId(null);
     },
-    [setSelectedFeature, setSelectedRouteIds, setHighlightedAirspaceId],
+    [setSelectedFeature, setSelectedRouteIds],
   );
 
   const handleDeckHover = useCallback(

@@ -41,7 +41,6 @@ export function useDeckLayers({
     viewState,
     atsRouteLabels,
     animatedTrips,
-    highlightedAirspaceId,
     selectedRnpProcedureId,
     selectedRnpApproachId,
     setSelectedRnpApproachId,
@@ -92,7 +91,6 @@ export function useDeckLayers({
     atsRouteLabels,
     animatedTrips,
     currentTime,
-    highlightedAirspaceId,
     setSelectedRouteIds,
     setSelectedFeature,
   };
@@ -154,7 +152,6 @@ export function useDeckLayers({
     atsRouteLabels,
     animatedTrips,
     currentTime,
-    highlightedAirspaceId,
     rnpPathData,
     selectedRnpApproachId,
     setSelectedRnpApproachId,

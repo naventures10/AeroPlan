@@ -50,9 +50,6 @@ export interface LayerContext {
   /** Current animation timestamp (NM from origin) */
   currentTime: number;
 
-  /** The ID of the specific overlapping airspace the user currently expanded in the UI stack */
-  highlightedAirspaceId?: string | null;
-
   // ── Callbacks ──
 
   setSelectedRouteIds: (ids: string[], type?: string | null) => void;

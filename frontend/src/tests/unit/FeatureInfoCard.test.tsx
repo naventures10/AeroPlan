@@ -17,7 +17,6 @@ vi.mock('../../api/client', () => ({
 
 describe('FeatureInfoCard', () => {
   const setSelectedFeature = vi.fn();
-  const setHighlightedAirspaceId = vi.fn();
   const setSelectedRouteIds = vi.fn();
 
   beforeEach(() => {
@@ -26,7 +25,6 @@ describe('FeatureInfoCard', () => {
       selectedFeature: null,
       setSelectedFeature,
       viewMode: 'ENROUTE',
-      setHighlightedAirspaceId,
       setSelectedRouteIds,
     });
   });
@@ -51,7 +49,6 @@ describe('FeatureInfoCard', () => {
       selectedFeature: { type: 'ATS_ROUTE', data: { route_id: 'L333' } },
       setSelectedFeature,
       viewMode: 'ENROUTE',
-      setHighlightedAirspaceId,
       setSelectedRouteIds,
     });
 
@@ -80,7 +77,6 @@ describe('FeatureInfoCard', () => {
       selectedFeature: { type: 'NAVAID', data: { ident: 'BBB', station_name: 'BOMBAY' } },
       setSelectedFeature,
       viewMode: 'ENROUTE',
-      setHighlightedAirspaceId,
       setSelectedRouteIds,
     });
 
@@ -100,7 +96,6 @@ describe('FeatureInfoCard', () => {
       },
       setSelectedFeature,
       viewMode: 'ENROUTE',
-      setHighlightedAirspaceId,
       setSelectedRouteIds,
     });
 
@@ -122,7 +117,6 @@ describe('FeatureInfoCard', () => {
       },
       setSelectedFeature,
       viewMode: 'ENROUTE',
-      setHighlightedAirspaceId,
       setSelectedRouteIds,
     });
 
@@ -137,7 +131,6 @@ describe('FeatureInfoCard', () => {
       selectedFeature: { type: 'WAYPOINT', data: { waypoint_name: 'FIX' } },
       setSelectedFeature,
       viewMode: 'ENROUTE',
-      setHighlightedAirspaceId,
       setSelectedRouteIds,
     });
 

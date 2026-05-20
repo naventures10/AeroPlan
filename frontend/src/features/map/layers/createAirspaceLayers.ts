@@ -145,7 +145,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       id: 'airspace-basemap-layer',
       data: `${window.location.origin}/tiles/airspaces_geometry/{z}/{x}/{y}`,
       visible: ctx.viewMode === 'ENROUTE',
-      pickable: isLayerActive,
+      pickable: false,
       autoHighlight: false,
       getFillColor: (f: any) => {
         if (!isLayerActive) return [0, 0, 0, 0];
@@ -154,11 +154,6 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
 
         const hierarchy = getHierarchy(type);
         if (effectiveZoom < hierarchy.minZoom) return [0, 0, 0, 0];
-
-        const id = props.id ?? f.id;
-        if (ctx.highlightedAirspaceId && String(id) === ctx.highlightedAirspaceId) {
-          return [255, 255, 0, 40]; // Yellow highlight fill
-        }
 
         return [0, 0, 0, 0];
       },
@@ -180,40 +175,15 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
           return [0, 0, 0, 0];
         if (type === 'UPR_ZONE' && !airspaceUpr) return [0, 0, 0, 0];
 
-        const props = f.properties || {};
-        const id = props.id ?? f.id;
-        if (ctx.highlightedAirspaceId && String(id) === ctx.highlightedAirspaceId) {
-          return [255, 255, 0, 255]; // Yellow highlight outline
-        }
-
         return AIRSPACE_COLORS[type]?.stroke ?? DEFAULT_STROKE;
       },
-      getLineWidth: (f: any) => {
-        const props = f.properties || {};
-        const id = props.id ?? f.id;
-        if (ctx.highlightedAirspaceId && String(id) === ctx.highlightedAirspaceId) {
-          return 3;
-        }
-        return 2;
-      },
+      getLineWidth: 2,
       lineWidthMinPixels: 1,
       minZoom: 2,
       updateTriggers: {
-        getFillColor: [
-          ctx.viewMode,
-          ctx.activeLayers,
-          effectiveZoom,
-          ctx.highlightedAirspaceId,
-          isLayerActive,
-        ],
-        getLineColor: [
-          ctx.viewMode,
-          ctx.activeLayers,
-          effectiveZoom,
-          ctx.highlightedAirspaceId,
-          isLayerActive,
-        ],
-        getLineWidth: [ctx.highlightedAirspaceId],
+        getFillColor: [ctx.viewMode, ctx.activeLayers, effectiveZoom, isLayerActive],
+        getLineColor: [ctx.viewMode, ctx.activeLayers, effectiveZoom, isLayerActive],
+        getLineWidth: [],
       },
       binary: true,
       transitions: {
@@ -226,7 +196,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       id: 'airspace-metadata-layer',
       data: `${window.location.origin}/tiles/airspaces_metadata/{z}/{x}/{y}`,
       visible: ctx.viewMode === 'ENROUTE',
-      pickable: isLayerActive,
+      pickable: true,
       autoHighlight: false,
       pointType: 'text',
       // extensions: EXTENSIONS,
@@ -258,41 +228,13 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
           return [0, 0, 0, 0];
         if (type === 'UPR_ZONE' && !airspaceUpr) return [0, 0, 0, 0];
 
-        const id = f.properties?.id ?? f.id;
-        if (ctx.highlightedAirspaceId && String(id) === ctx.highlightedAirspaceId) {
-          return [255, 255, 0, 255]; // Bright yellow text for selection
-        }
         const typeUpper = inferAirspaceType(f);
 
         const baseColor = AIRSPACE_COLORS[typeUpper]?.stroke ?? DEFAULT_STROKE;
         return [baseColor[0], baseColor[1], baseColor[2], 255];
       },
       background: true,
-      getBackgroundColor: (f: any) => {
-        if (!isLayerActive) return [0, 0, 0, 0];
-        const type = inferAirspaceType(f);
-        const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = ctx.activeLayers;
-        if (type === 'FIR' && !airspaceFIR) return [0, 0, 0, 0];
-        if (
-          ['DANGER', 'PROHIBITED', 'RESTRICTED', 'TRA', 'TSA', 'ADIZ'].includes(type) &&
-          !airspaceRegulated
-        )
-          return [0, 0, 0, 0];
-        if (['CTR', 'CTA_LOWER', 'CTA_UPPER'].includes(type) && !airspaceControl)
-          return [0, 0, 0, 0];
-        if (type === 'UPR_ZONE' && !airspaceUpr) return [0, 0, 0, 0];
-
-        if (effectiveZoom < getHierarchy(type).minZoom) return [0, 0, 0, 0];
-
-        const props = f.properties || {};
-        if (!(props.name || props.identification)) return [0, 0, 0, 0];
-
-        const id = f.properties?.id ?? f.id;
-        if (ctx.highlightedAirspaceId && String(id) === ctx.highlightedAirspaceId) {
-          return [0, 0, 0, 180]; // Semi-transparent black background for contrast
-        }
-        return [0, 0, 0, 0]; // No fill
-      },
+      getBackgroundColor: [0, 0, 0, 0],
       getBorderWidth: 2,
       getBorderColor: (f: any) => {
         if (!isLayerActive) return [0, 0, 0, 0];
@@ -310,11 +252,6 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
 
         if (effectiveZoom < getHierarchy(type).minZoom) return [0, 0, 0, 0];
 
-        const id = f.properties?.id ?? f.id;
-        if (ctx.highlightedAirspaceId && String(id) === ctx.highlightedAirspaceId) {
-          return [255, 255, 0, 255]; // Yellow border for highlight
-        }
-
         const props = f.properties || {};
         if (!(props.name || props.identification)) return [0, 0, 0, 0];
 
@@ -331,14 +268,9 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       updateTriggers: {
         getText: [ctx.activeLayers, effectiveZoom],
         getTextSize: [ctx.activeLayers, effectiveZoom],
-        getTextColor: [ctx.highlightedAirspaceId, effectiveZoom, ctx.activeLayers, isLayerActive],
-        getBackgroundColor: [
-          ctx.highlightedAirspaceId,
-          effectiveZoom,
-          ctx.activeLayers,
-          isLayerActive,
-        ],
-        getBorderColor: [ctx.highlightedAirspaceId, effectiveZoom, ctx.activeLayers, isLayerActive],
+        getTextColor: [effectiveZoom, ctx.activeLayers, isLayerActive],
+        getBackgroundColor: [effectiveZoom, ctx.activeLayers, isLayerActive],
+        getBorderColor: [effectiveZoom, ctx.activeLayers, isLayerActive],
       },
       binary: false,
       transitions: {

@@ -29,7 +29,6 @@ describe('useMapStore', () => {
       selectedRouteType: null,
       activeAirport: null,
       selectedFeature: null,
-      highlightedAirspaceId: null,
       atsRouteLabels: null,
       boundsToFit: null,
       animatedTrips: [],
@@ -114,9 +113,6 @@ describe('useMapStore', () => {
       type: 'WAYPOINT',
       data: { name: 'FIX' },
     });
-
-    state.setHighlightedAirspaceId('air1');
-    expect(useMapStore.getState().highlightedAirspaceId).toBe('air1');
 
     state.setAtsRouteLabels({ labels: 'test' } as any);
     expect(useMapStore.getState().atsRouteLabels).toEqual({ labels: 'test' });

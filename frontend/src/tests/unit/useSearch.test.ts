@@ -32,7 +32,6 @@ describe('useSearch', () => {
       setActiveAerodromeMetadata: vi.fn(),
       setSelectedRouteIds: vi.fn(),
       setSelectedFeature: vi.fn(),
-      setHighlightedAirspaceId: vi.fn(),
       searchQuery: '',
       setSearchQuery: vi.fn(),
     });
@@ -205,7 +204,6 @@ describe('useSearch', () => {
     const storeState = useMapStore.getState();
     const flyToSpy = vi.spyOn(storeState, 'flyToLocation');
     const toggleLayerSpy = vi.spyOn(storeState, 'toggleLayer');
-    const setHighlightedAirspaceIdSpy = vi.spyOn(storeState, 'setHighlightedAirspaceId');
     const setSelectedFeatureSpy = vi.spyOn(storeState, 'setSelectedFeature');
 
     const feature = {
@@ -231,7 +229,6 @@ describe('useSearch', () => {
 
     // Verify deferred state updates
     expect(toggleLayerSpy).toHaveBeenCalledWith('airspaces');
-    expect(setHighlightedAirspaceIdSpy).toHaveBeenCalledWith('VABF');
     expect(setSelectedFeatureSpy).toHaveBeenCalledWith({
       type: 'AIRSPACE',
       data: feature.properties,

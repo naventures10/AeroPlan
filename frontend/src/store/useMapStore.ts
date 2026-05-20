@@ -71,9 +71,6 @@ interface MapState {
     feature: { type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID' | 'AIRSPACE'; data: any } | null,
   ) => void;
 
-  highlightedAirspaceId: string | null;
-  setHighlightedAirspaceId: (id: string | null) => void;
-
   atsRouteLabels: any | null;
   setAtsRouteLabels: (data: any) => void;
 
@@ -301,9 +298,6 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   selectedFeature: null,
   setSelectedFeature: (feature) => set({ selectedFeature: feature }),
-
-  highlightedAirspaceId: null,
-  setHighlightedAirspaceId: (id) => set({ highlightedAirspaceId: id }),
 
   atsRouteLabels: null,
   setAtsRouteLabels: (data) => {
