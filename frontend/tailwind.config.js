@@ -26,5 +26,19 @@ export default {
     },
   },
   darkMode: 'class',
-  plugins: [heroui()],
+  plugins: [
+    heroui({
+      themes: {
+        light: {
+          colors: {
+            background: { DEFAULT: '#faf9f9' },
+            content1: { DEFAULT: '#faf9f9', foreground: '#0f172a' },
+            content2: { DEFAULT: '#f2f0f0', foreground: '#334155' },
+            content3: { DEFAULT: '#e8e5e5', foreground: '#475569' },
+            content4: { DEFAULT: '#d8d4d4', foreground: '#475569' },
+          },
+        },
+      },
+    }),
+  ],
 };
