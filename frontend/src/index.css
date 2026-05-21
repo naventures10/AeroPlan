@@ -86,8 +86,8 @@ html:not(.dark) {
   /* Surface System — Warm off-white tones based on #FAF9F9 */
   --surface: #faf9f9;
   --surface-dim: #f2f0f0;
-  --surface-bright: #ffffff;
-  --surface-container-lowest: #ffffff;
+  --surface-bright: #fcfcfc;
+  --surface-container-lowest: #fcfcfc;
   --surface-container-low: #faf9f9;
   --surface-container: #f2f0f0;
   --surface-container-high: #e8e5e5;
@@ -100,7 +100,7 @@ html:not(.dark) {
   --outline-variant: #d8d4d4;
 
   --primary: #0f172a;
-  --on-primary: #ffffff;
+  --on-primary: #fcfcfc;
   --secondary: #334155;
   --on-secondary: #faf9f9;
   --secondary-container: #e8e5e5;

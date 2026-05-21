@@ -53,7 +53,7 @@ const getMapStyleUrl = (style: 'dark' | 'light' | 'hybrid', maptilerKey: string)
   if (IS_E2E || !maptilerKey) return MOCK_STYLE as any;
   switch (style) {
     case 'light':
-      return `https://api.maptiler.com/maps/base-v4/style.json?key=${maptilerKey}`;
+      return `https://api.maptiler.com/maps/landscape-v4/style.json?key=${maptilerKey}`;
     case 'hybrid':
       return `https://api.maptiler.com/maps/hybrid-v4/style.json?key=${maptilerKey}`;
     case 'dark':
