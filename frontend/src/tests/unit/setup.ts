@@ -70,6 +70,24 @@ vi.mock('framer-motion', async () => {
           { ...props, 'data-testid': props['data-testid'] || 'mock-motion-span' },
           children,
         ),
+      aside: ({ children, ...props }: any) =>
+        React.createElement(
+          'aside',
+          { ...props, 'data-testid': props['data-testid'] || 'mock-motion-aside' },
+          children,
+        ),
+      ul: ({ children, ...props }: any) =>
+        React.createElement(
+          'ul',
+          { ...props, 'data-testid': props['data-testid'] || 'mock-motion-ul' },
+          children,
+        ),
+      li: ({ children, ...props }: any) =>
+        React.createElement(
+          'li',
+          { ...props, 'data-testid': props['data-testid'] || 'mock-motion-li' },
+          children,
+        ),
     },
   };
 });

@@ -1,16 +1,15 @@
+import { useState } from 'react';
 import { useMapStore } from '../../../store/useMapStore';
 import './LayerToolbar.css';
-
-interface LayerToolbarProps {
-  onMenuClick?: () => void;
-}
+import MenuDrawer from './MenuDrawer';
 
 /**
  * Left-side vertical toolbar with layer toggle buttons.
  * Visible only in ENROUTE view mode.
  */
-export default function LayerToolbar({ onMenuClick }: LayerToolbarProps = {}) {
+export default function LayerToolbar() {
   const { activeLayers, toggleLayer, isWeatherMode, setIsWeatherMode } = useMapStore();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const toggleButtons = [
     { id: 'aerodromes' as const, title: 'Aerodromes', iconClass: 'aip-icon-aerodromes' },
@@ -25,9 +24,12 @@ export default function LayerToolbar({ onMenuClick }: LayerToolbarProps = {}) {
     <div className="aip-layer-toolbar-container">
       <div className="aip-layer-toolbar">
         <button
-          onClick={onMenuClick}
-          className="aip-layer-toggle"
+          id="aip-menu-toggle-btn"
+          onClick={() => setIsDrawerOpen((prev) => !prev)}
+          className={`aip-layer-toggle ${isDrawerOpen ? 'active' : ''}`}
           aria-label="Toggle menu"
+          aria-expanded={isDrawerOpen}
+          aria-controls="aip-menu-drawer"
           title="Toggle menu"
         >
           <span className="aip-layer-icon aip-icon-menu" />
@@ -54,6 +56,8 @@ export default function LayerToolbar({ onMenuClick }: LayerToolbarProps = {}) {
           );
         })}
       </div>
+
+      <MenuDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
     </div>
   );
 }
