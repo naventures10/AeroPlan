@@ -1,15 +1,30 @@
-import { heroui } from '@heroui/react';
-
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    './index.html',
-    './src/**/*.{js,ts,jsx,tsx}',
-    './node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}',
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
+        surface: 'var(--surface)',
+        'surface-dim': 'var(--surface-dim)',
+        'surface-bright': 'var(--surface-bright)',
+        'surface-container-lowest': 'var(--surface-container-lowest)',
+        'surface-container-low': 'var(--surface-container-low)',
+        'surface-container': 'var(--surface-container)',
+        'surface-container-high': 'var(--surface-container-high)',
+        'surface-container-highest': 'var(--surface-container-highest)',
+        'surface-variant': 'var(--surface-variant)',
+        'on-surface': 'var(--on-surface)',
+        'on-surface-variant': 'var(--on-surface-variant)',
+        primary: 'var(--primary)',
+        'on-primary': 'var(--on-primary)',
+        secondary: 'var(--secondary)',
+        'on-secondary': 'var(--on-secondary)',
+        'secondary-container': 'var(--secondary-container)',
+        'on-secondary-container': 'var(--on-secondary-container)',
+        outline: 'var(--outline)',
+        'outline-variant': 'var(--outline-variant)',
+        background: 'var(--background)',
+        'on-background': 'var(--on-background)',
         cyan: {
           50: 'var(--accent-cyan-50, #ecfeff)',
           100: 'var(--accent-cyan-100, #cffafe)',
@@ -26,19 +41,5 @@ export default {
     },
   },
   darkMode: 'class',
-  plugins: [
-    heroui({
-      themes: {
-        light: {
-          colors: {
-            background: { DEFAULT: '#faf9f9' },
-            content1: { DEFAULT: '#faf9f9', foreground: '#0f172a' },
-            content2: { DEFAULT: '#f2f0f0', foreground: '#334155' },
-            content3: { DEFAULT: '#e8e5e5', foreground: '#475569' },
-            content4: { DEFAULT: '#d8d4d4', foreground: '#475569' },
-          },
-        },
-      },
-    }),
-  ],
+  plugins: [],
 };

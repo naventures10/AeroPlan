@@ -27,7 +27,7 @@ export const LabControls = ({ shaderId, config, onChange }: LabControlsProps) =>
               step="1"
               value={config.ringCount}
               onChange={(e) => onChange({ ...config, ringCount: parseInt(e.target.value) })}
-              className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+              className="w-full h-1 bg-surface-bright/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
             />
           </div>
 
@@ -47,7 +47,7 @@ export const LabControls = ({ shaderId, config, onChange }: LabControlsProps) =>
               step="0.01"
               value={config.ringSpacing}
               onChange={(e) => onChange({ ...config, ringSpacing: parseFloat(e.target.value) })}
-              className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+              className="w-full h-1 bg-surface-bright/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
             />
           </div>
         </>
@@ -69,7 +69,7 @@ export const LabControls = ({ shaderId, config, onChange }: LabControlsProps) =>
           step="0.01"
           value={config.rotation}
           onChange={(e) => onChange({ ...config, rotation: parseFloat(e.target.value) })}
-          className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+          className="w-full h-1 bg-surface-bright/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
         />
       </div>
 
@@ -90,7 +90,7 @@ export const LabControls = ({ shaderId, config, onChange }: LabControlsProps) =>
             step="0.01"
             value={config.circleRadius}
             onChange={(e) => onChange({ ...config, circleRadius: parseFloat(e.target.value) })}
-            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+            className="w-full h-1 bg-surface-bright/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
           />
         </div>
       )}
@@ -112,7 +112,7 @@ export const LabControls = ({ shaderId, config, onChange }: LabControlsProps) =>
             step="0.01"
             value={config.lineLength}
             onChange={(e) => onChange({ ...config, lineLength: parseFloat(e.target.value) })}
-            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+            className="w-full h-1 bg-surface-bright/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
           />
         </div>
       )}
@@ -133,7 +133,7 @@ export const LabControls = ({ shaderId, config, onChange }: LabControlsProps) =>
               step="4"
               value={config.tickCount}
               onChange={(e) => onChange({ ...config, tickCount: parseInt(e.target.value) })}
-              className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+              className="w-full h-1 bg-surface-bright/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
             />
           </div>
 
@@ -153,7 +153,7 @@ export const LabControls = ({ shaderId, config, onChange }: LabControlsProps) =>
               step="0.01"
               value={config.tickLength}
               onChange={(e) => onChange({ ...config, tickLength: parseFloat(e.target.value) })}
-              className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+              className="w-full h-1 bg-surface-bright/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
             />
           </div>
         </>
@@ -176,7 +176,7 @@ export const LabControls = ({ shaderId, config, onChange }: LabControlsProps) =>
             step="0.05"
             value={config.dotDensity}
             onChange={(e) => onChange({ ...config, dotDensity: parseFloat(e.target.value) })}
-            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+            className="w-full h-1 bg-surface-bright/10 rounded-lg appearance-none cursor-pointer accent-cyan-400"
           />
         </div>
       )}

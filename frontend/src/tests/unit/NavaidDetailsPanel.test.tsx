@@ -48,7 +48,7 @@ describe('NavaidDetailsPanel', () => {
     const data = {};
     render(<NavaidDetailsPanel isLoadingNavaid={true} navaidDetails={null} data={data} />);
     // The spinner sets aria-label or we can just find it
-    expect(document.querySelector('.relative.inline-flex')).toBeInTheDocument(); // HeroUI spinner
+    expect(document.querySelector('.animate-spin')).toBeInTheDocument(); // Tailwind spinner
   });
 
   it('prioritizes navaidDetails over data', () => {

@@ -15,7 +15,7 @@ export const ShaderHeader = ({ shader, show, onBack }: ShaderHeaderProps) => (
   >
     <button
       onClick={onBack}
-      className="group flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/5 bg-white/5 transition hover:bg-white/10 active:scale-95"
+      className="group flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/5 bg-surface-bright/5 transition hover:bg-surface-bright/10 active:scale-95"
     >
       <ArrowLeft className="h-4 w-4 text-white/40 transition-colors group-hover:text-white" />
     </button>

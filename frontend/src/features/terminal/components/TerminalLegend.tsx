@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion';
 import { Building2, TowerControl, TreePine, Construction, Radio } from 'lucide-react';
 import { useMapStore } from '../../../store/useMapStore';
-import { Tooltip } from '@heroui/react';
 
 /**
  * TerminalLegend Component
@@ -57,7 +56,7 @@ export default function TerminalLegend() {
       className="obstacle-legend-container flex items-center pointer-events-auto w-fit"
     >
       <div className="obstacle-legend-header mr-1">
-        <span className="text-[9px] font-black tracking-[0.25em] text-slate-500 dark:text-zinc-500 uppercase select-none">
+        <span className="text-[9px] font-black tracking-[0.25em] text-on-surface-variant uppercase select-none">
           Obstacles
         </span>
       </div>
@@ -66,25 +65,15 @@ export default function TerminalLegend() {
         {categories.map(({ id, label, icon: Icon, color, glow }) => {
           const isActive = terminalSpatialFilters ? terminalSpatialFilters[id] : false;
           return (
-            <Tooltip
-              key={id}
-              content={label}
-              placement="bottom"
-              showArrow
-              delay={400}
-              classNames={{
-                content:
-                  'border border-[var(--glass-border-highlight)] bg-[var(--glass-bg-solid)] text-[var(--primary)] text-[10px] font-bold tracking-wider px-2 py-1 rounded-lg shadow-2xl backdrop-blur-md',
-              }}
-            >
+            <div key={id} className="relative group/tooltip flex justify-center">
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => toggleTerminalSpatialFilter(id)}
-                className={`relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 group cursor-pointer ${
+                className={`relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 cursor-pointer ${
                   isActive
-                    ? `bg-slate-200 dark:bg-white/10 ${color} ${glow} shadow-lg`
-                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200 dark:text-zinc-500 dark:hover:text-zinc-300 dark:hover:bg-white/5'
+                    ? `bg-surface-container-high  ${color} ${glow} shadow-lg`
+                    : 'text-on-surface-variant hover:text-on-surface-variant hover:bg-surface-container-high   '
                 }`}
               >
                 <Icon size={15} strokeWidth={isActive ? 2.5 : 1.5} />
@@ -97,7 +86,17 @@ export default function TerminalLegend() {
                   />
                 )}
               </motion.button>
-            </Tooltip>
+
+              {/* Custom Tooltip */}
+              <div className="absolute top-full mt-2 pointer-events-none opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 z-50">
+                <div className="relative">
+                  <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 border-l border-t border-[var(--glass-border-highlight)] bg-[var(--glass-bg-solid)] rotate-45" />
+                  <div className="relative border border-[var(--glass-border-highlight)] bg-[var(--glass-bg-solid)] text-[var(--primary)] text-[10px] font-bold tracking-wider px-2 py-1 rounded-lg shadow-2xl backdrop-blur-md whitespace-nowrap">
+                    {label}
+                  </div>
+                </div>
+              </div>
+            </div>
           );
         })}
       </div>

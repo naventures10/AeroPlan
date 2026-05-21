@@ -134,7 +134,7 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
                 size={16}
                 className="text-teal-600 dark:text-cyan-400 group-hover/handle:scale-125 transition-transform"
               />
-              <div className="text-[10px] font-black text-slate-500 dark:text-white/40 tracking-[0.4em] uppercase [writing-mode:vertical-lr] rotate-180 flex-1 flex items-center justify-center">
+              <div className="text-[10px] font-black text-on-surface-variant tracking-[0.4em] uppercase [writing-mode:vertical-lr] rotate-180 flex-1 flex items-center justify-center">
                 DASHBOARD
               </div>
               <ChevronLeft

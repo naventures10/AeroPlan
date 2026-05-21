@@ -83,32 +83,32 @@
    1b. Light Mode Token Overrides (Warm Off-White Glass — #FAF9F9)
    ───────────────────────────────────────────────────────────────────────────── */
 html:not(.dark) {
-  /* Surface System — Warm off-white tones based on #FAF9F9 */
-  --surface: #faf9f9;
-  --surface-dim: #f2f0f0;
+  /* Surface System — Paper and Ink (Ivory, Cream, Stone) */
+  --surface: #fcfaf5;
+  --surface-dim: #efece5;
   --surface-bright: #ffffff;
   --surface-container-lowest: #ffffff;
-  --surface-container-low: #faf9f9;
-  --surface-container: #f2f0f0;
-  --surface-container-high: #e8e5e5;
-  --surface-container-highest: #d8d4d4;
+  --surface-container-low: #fdfbf7;
+  --surface-container: #fcfaf5;
+  --surface-container-high: #f4f1ea;
+  --surface-container-highest: #ebe8df;
 
-  --on-surface: #0f172a;
-  --on-surface-variant: #475569;
+  --on-surface: #1c1917; /* Stone 900 - Dark Ink */
+  --on-surface-variant: #44403c; /* Stone 700 - Faded Ink */
 
-  --outline: #94a3b8;
-  --outline-variant: #d8d4d4;
+  --outline: #292524; /* Stone 800 - Ink Outline */
+  --outline-variant: #a8a29e; /* Stone 400 - Faint Ink */
 
-  --primary: #0f172a;
-  --on-primary: #ffffff;
-  --secondary: #334155;
-  --on-secondary: #faf9f9;
-  --secondary-container: #e8e5e5;
-  --on-secondary-container: #334155;
+  --primary: #1c1917; /* Ink */
+  --on-primary: #fcfaf5; /* Paper */
+  --secondary: #44403c; /* Faded Ink */
+  --on-secondary: #fcfaf5;
+  --secondary-container: #ebe8df;
+  --on-secondary-container: #1c1917;
 
-  --background: #faf9f9;
-  --on-background: #0f172a;
-  --surface-variant: #e8e5e5;
+  --background: #f4f1ea; /* Slightly textured paper background */
+  --on-background: #1c1917;
+  --surface-variant: #ebe8df;
 
   /* Accent — #488B8F (Muted Steel Teal) for light surfaces */
   --accent-cyan: #488b8f;
@@ -140,13 +140,13 @@ html:not(.dark) {
   --route-waypoint: #7c3aed;
   --airspace-type: #d97706;
 
-  /* Glassmorphism — Warm Off-White (#FAF9F9 base) */
-  --glass-bg: rgba(250, 249, 249, 0.72);
-  --glass-bg-heavy: rgba(250, 249, 249, 0.87);
-  --glass-bg-solid: rgba(250, 249, 249, 0.97);
-  --glass-border: rgba(15, 23, 42, 0.08);
-  --glass-border-highlight: rgba(15, 23, 42, 0.15);
-  --glass-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+  /* Glassmorphism — Pastel Paper & Ink Outlines */
+  --glass-bg: rgba(252, 250, 245, 0.75);
+  --glass-bg-heavy: rgba(252, 250, 245, 0.88);
+  --glass-bg-solid: rgba(252, 250, 245, 0.98);
+  --glass-border: rgba(28, 25, 23, 0.25); /* Sharp ink outline stroke */
+  --glass-border-highlight: rgba(28, 25, 23, 0.45); /* Thicker ink outline */
+  --glass-shadow: 0 25px 50px -12px rgba(28, 25, 23, 0.12); /* Soft dark shadow */
 }
 
 html,

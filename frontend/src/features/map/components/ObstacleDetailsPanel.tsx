@@ -50,11 +50,11 @@ export function ObstacleDetailsPanel({ data }: { data: any }) {
     <div className="flex flex-col gap-3">
       <div className="flex flex-col">
         <span className="text-xs text-default-500 font-semibold tracking-wider">ELEVATION</span>
-        <span className="text-sm text-slate-900 dark:text-white font-mono">{elevStr}</span>
+        <span className="text-sm text-on-surface font-mono">{elevStr}</span>
       </div>
       <div className="flex flex-col">
         <span className="text-xs text-default-500 font-semibold tracking-wider">CATEGORY</span>
-        <span className="text-sm text-slate-900 dark:text-white">{category}</span>
+        <span className="text-sm text-on-surface">{category}</span>
       </div>
 
       {extraInfo && (
@@ -63,23 +63,17 @@ export function ObstacleDetailsPanel({ data }: { data: any }) {
             <span className="text-xs text-default-500 font-semibold tracking-wider">
               AREA AFFECTED
             </span>
-            <span className="text-sm text-slate-900 dark:text-white">
-              {extraInfo.area_affected || 'N/A'}
-            </span>
+            <span className="text-sm text-on-surface">{extraInfo.area_affected || 'N/A'}</span>
           </div>
           <div className="flex flex-col">
             <span className="text-xs text-default-500 font-semibold tracking-wider">
               LGT / MARKING
             </span>
-            <span className="text-sm text-slate-900 dark:text-white">
-              {extraInfo.marking_lgt || 'N/A'}
-            </span>
+            <span className="text-sm text-on-surface">{extraInfo.marking_lgt || 'N/A'}</span>
           </div>
           <div className="flex flex-col">
             <span className="text-xs text-default-500 font-semibold tracking-wider">REMARKS</span>
-            <span className="text-sm text-slate-900 dark:text-white">
-              {extraInfo.remarks || 'N/A'}
-            </span>
+            <span className="text-sm text-on-surface">{extraInfo.remarks || 'N/A'}</span>
           </div>
         </>
       )}

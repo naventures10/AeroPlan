@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Button } from '@heroui/react';
+
 import { Search, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { SearchResult } from '../../../types';
@@ -89,19 +89,16 @@ export default function SearchBar({
                 exit={{ opacity: 0, scale: 0.5 }}
                 transition={{ duration: 0.1 }}
               >
-                <Button
+                <button
                   data-testid="search-clear-button"
-                  isIconOnly
-                  size="sm"
-                  variant="light"
-                  radius="full"
-                  onPress={() => {
+                  type="button"
+                  onClick={() => {
                     setSearchInput('');
                   }}
-                  className="text-slate-500 hover:text-slate-900 dark:text-white/40 dark:hover:text-white/80"
+                  className="flex items-center justify-center w-8 h-8 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-black/5 transition-colors"
                 >
                   <X size={16} />
-                </Button>
+                </button>
               </motion.div>
             ) : null}
           </AnimatePresence>
@@ -115,7 +112,7 @@ export default function SearchBar({
                   animate={{ opacity: 1, rotate: 0 }}
                   exit={{ opacity: 0, rotate: 90 }}
                 >
-                  <Loader2 size={18} className="animate-spin text-slate-700 dark:text-white/80" />
+                  <Loader2 size={18} className="animate-spin text-on-surface-variant" />
                 </motion.div>
               ) : (
                 <motion.div
@@ -124,7 +121,7 @@ export default function SearchBar({
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                 >
-                  <Search size={18} className="text-slate-800 dark:text-white/90" />
+                  <Search size={18} className="text-on-surface" />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -144,14 +141,14 @@ export default function SearchBar({
           >
             {isLoading ? (
               <div className="px-4 py-8 flex flex-col items-center justify-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-slate-200 border-slate-300 dark:bg-white/5 flex items-center justify-center border dark:border-white/10">
-                  <Loader2 size={24} className="text-slate-900 dark:text-white animate-spin" />
+                <div className="w-12 h-12 rounded-full bg-surface-container-high border-outline flex items-center justify-center border">
+                  <Loader2 size={24} className="text-on-surface animate-spin" />
                 </div>
                 <div className="flex flex-col items-center gap-1">
-                  <span className="text-slate-900 dark:text-white text-sm font-bold tracking-widest uppercase">
+                  <span className="text-on-surface text-sm font-bold tracking-widest uppercase">
                     Searching Database
                   </span>
-                  <span className="text-slate-500 dark:text-white/40 text-[10px] uppercase tracking-[0.2em] font-medium">
+                  <span className="text-on-surface-variant text-[10px] uppercase tracking-[0.2em] font-medium">
                     Faster than a turboprop
                   </span>
                 </div>
@@ -173,8 +170,8 @@ export default function SearchBar({
                     onMouseEnter={() => setSearchSelectedIndex(index)}
                   >
                     <div className="flex items-center gap-4 flex-1">
-                      <div className="w-10 h-10 rounded-full bg-slate-100 border-slate-200 dark:bg-white/5 flex items-center justify-center shrink-0 border dark:border-white/5">
-                        <Search size={14} className="text-slate-500 dark:text-white/60" />
+                      <div className="w-10 h-10 rounded-full bg-surface-container border-outline-variant flex items-center justify-center shrink-0 border">
+                        <Search size={14} className="text-on-surface-variant" />
                       </div>
                       <div className="flex flex-col">
                         <span className="aip-search-result-id">{item.id}</span>
@@ -189,14 +186,14 @@ export default function SearchBar({
               </div>
             ) : (
               <div className="px-8 py-12 text-center flex flex-col items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-white/5 flex items-center justify-center opacity-50 dark:opacity-30">
-                  <Search size={24} className="text-slate-800 dark:text-white" />
+                <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center opacity-50 dark:opacity-30">
+                  <Search size={24} className="text-on-surface" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-slate-600 dark:text-white/50 text-sm font-bold tracking-wider uppercase">
+                  <span className="text-slate-600 text-sm font-bold tracking-wider uppercase">
                     No matching locations
                   </span>
-                  <span className="text-slate-400 dark:text-white/20 text-[10px] uppercase tracking-widest font-medium">
+                  <span className="text-slate-400 text-[10px] uppercase tracking-widest font-medium">
                     Try searching for ICAO codes or Airport names
                   </span>
                 </div>
