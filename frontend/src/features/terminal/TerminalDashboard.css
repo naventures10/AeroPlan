@@ -48,3 +48,12 @@
   z-index: 10;
   margin-left: -1rem; /* Overlaps behind tab bar */
 }
+
+/* --- Terminal Dashboard --- */
+html:not(.dark) .terminal-dashboard-tab:hover {
+  background: rgba(15, 23, 42, 0.03);
+}
+
+html:not(.dark) .terminal-dashboard-tab.active {
+  background: rgba(13, 148, 136, 0.08);
+}

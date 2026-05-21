@@ -1,0 +1,38 @@
+@reference "../index.css";
+
+/* ErrorBoundary Component */
+.error-boundary-container {
+  @apply flex flex-col items-center justify-center h-screen w-screen font-sans p-8 text-center;
+  background-color: var(--background);
+  color: var(--on-background);
+}
+
+.error-boundary-icon {
+  @apply text-5xl mb-4;
+}
+
+.error-boundary-title {
+  @apply text-2xl font-semibold mb-2;
+}
+
+.error-boundary-desc {
+  @apply text-sm max-w-[420px] mb-6;
+  color: var(--on-surface-variant);
+}
+
+.error-boundary-button {
+  @apply bg-cyan-500 text-white px-6 py-2.5 rounded-lg text-sm font-medium cursor-pointer transition-colors hover:bg-cyan-600;
+}
+
+.error-pre {
+  background: var(--surface-container);
+  color: var(--status-error);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  max-width: 600px;
+  overflow: auto;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

@@ -1,3 +1,5 @@
+import './GlobalLoader.css';
+
 export default function GlobalLoader() {
   return (
     <div id="placeholder" className="global-loader-container">
