@@ -51,9 +51,9 @@
 
 /* --- Terminal Dashboard --- */
 html:not(.dark) .terminal-dashboard-tab:hover {
-  background: rgba(15, 23, 42, 0.03);
+  background: color-mix(in srgb, var(--on-surface-variant) 3%, transparent);
 }
 
 html:not(.dark) .terminal-dashboard-tab.active {
-  background: rgba(13, 148, 136, 0.08);
+  background: color-mix(in srgb, var(--accent-cyan-700) 8%, transparent);
 }

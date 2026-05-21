@@ -59,13 +59,13 @@ export function RouteDetailsPanel({
       {/* ── Route Summary Strip ── */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-container border border-outline-variant">
-          <Plane size={12} className="text-teal-600 dark:text-cyan-400" />
+          <Plane size={12} className="text-teal-700 dark:text-cyan-400" />
           <span className="text-[11px] font-semibold text-on-surface-variant tracking-wide">
             {total_distance_nm} NM
           </span>
         </div>
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-container border border-outline-variant">
-          <ArrowUpDown size={12} className="text-teal-600 dark:text-cyan-400" />
+          <ArrowUpDown size={12} className="text-teal-700 dark:text-cyan-400" />
           <span className="text-[11px] font-semibold text-on-surface-variant tracking-wide">
             {waypoints.length} FIXES
           </span>
@@ -135,7 +135,7 @@ export function RouteDetailsPanel({
                           {wp?.waypoint_name || seg.from_waypoint}
                         </span>
                         {wp?.navaid_info && (
-                          <span className="text-[9px] text-teal-600 dark:text-cyan-400/80 font-normal">
+                          <span className="text-[9px] text-teal-700 dark:text-cyan-400/80 font-normal">
                             {wp.navaid_info}
                           </span>
                         )}
@@ -158,7 +158,7 @@ export function RouteDetailsPanel({
                     </td>
                     <td className="route-td text-center">
                       {seg.airspace_class ? (
-                        <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-300">
+                        <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold bg-teal-100 text-teal-800 border border-teal-300 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-300">
                           {seg.airspace_class}
                         </span>
                       ) : (
@@ -180,7 +180,7 @@ export function RouteDetailsPanel({
                         {lastWaypoint.waypoint_name}
                       </span>
                       {lastWaypoint.navaid_info && (
-                        <span className="text-[9px] text-teal-600 dark:text-cyan-400/80 font-normal">
+                        <span className="text-[9px] text-teal-700 dark:text-cyan-400/80 font-normal">
                           {lastWaypoint.navaid_info}
                         </span>
                       )}
@@ -190,7 +190,7 @@ export function RouteDetailsPanel({
                     {lastWaypoint.raw_coordinates || '—'}
                   </td>
                   <td className="route-td text-on-surface-variant text-[11px]">
-                    <span className="text-[10px] italic text-slate-400">COP / Terminal Fix</span>
+                    <span className="text-[10px] italic text-slate-500">COP / Terminal Fix</span>
                   </td>
                   <td className="route-td"></td>
                   <td className="route-td"></td>

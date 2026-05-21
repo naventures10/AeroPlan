@@ -39,7 +39,7 @@ export function AirspaceDetailsPanel({ data }: { data: any }) {
     <div className="flex flex-col gap-4 px-1 py-1">
       {/* Header */}
       <div className="flex flex-col border-b border-outline-variant pb-2">
-        <span className="text-[10px] font-black text-teal-600 dark:text-cyan-400 tracking-[0.2em] uppercase">
+        <span className="text-[10px] font-black text-teal-700 dark:text-cyan-400 tracking-[0.2em] uppercase">
           {displayType.replace(/_/g, ' ')}
         </span>
         <span className="text-sm font-bold text-on-surface mt-0.5 leading-tight">{cleanName}</span>

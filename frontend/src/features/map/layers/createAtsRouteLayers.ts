@@ -119,7 +119,11 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
       visible: viewMode === 'ENROUTE',
       pickable: isLayerActive || selectedRouteIds.length > 0,
       autoHighlight: true,
-      highlightColor: isLayerActive ? [255, 255, 255, 150] : [0, 0, 0, 0],
+      highlightColor: isLayerActive
+        ? ctx.isDarkMode
+          ? [255, 255, 255, 150]
+          : [0, 0, 0, 80]
+        : [0, 0, 0, 0],
       getLineColor: (d: any) => {
         const isSelected = selectedRouteIds.includes(d.properties.route_id);
         if (isSelected) {
@@ -332,7 +336,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
       visible: viewMode === 'ENROUTE',
       pickable: isLayerActive || selectedRouteIds.length > 0,
       autoHighlight: true,
-      highlightColor: [255, 255, 255, 60],
+      highlightColor: ctx.isDarkMode ? [255, 255, 255, 60] : [0, 0, 0, 40],
       pointType: 'icon+text',
       iconAtlas: '/WAYPOINT.svg',
       iconMapping: {

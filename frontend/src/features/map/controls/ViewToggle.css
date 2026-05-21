@@ -48,7 +48,7 @@
 }
 
 .view-toggle-pill-container {
-  background: rgba(11, 19, 38, 0.45);
+  background: color-mix(in srgb, var(--surface) 45%, transparent);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -61,6 +61,6 @@
 /* --- View Toggle Pill --- */
 html:not(.dark) .view-toggle-pill-container {
   background: rgba(255, 255, 255, 0.7);
-  border-color: rgba(15, 23, 42, 0.1);
+  border-color: color-mix(in srgb, var(--on-surface-variant) 10%, transparent);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
 }

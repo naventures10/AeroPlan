@@ -59,7 +59,7 @@ export function ConditionsWidget({
             {/* Values */}
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
-                <Wind className="text-teal-600 dark:text-cyan-400 shrink-0" size={16} />
+                <Wind className="text-teal-700 dark:text-cyan-400 shrink-0" size={16} />
                 <span className="text-xl font-black text-on-surface">
                   {parsedMetar.windDir ? `${parsedMetar.windDir}°T` : 'VRB'}
                 </span>
@@ -80,7 +80,7 @@ export function ConditionsWidget({
                   className="absolute origin-center w-1 h-full flex flex-col items-center justify-start py-1.5"
                   style={{ transform: `rotate(${parsedMetar.windDir}deg)` }}
                 >
-                  <div className="w-2 h-2 bg-amber-500 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
+                  <div className="w-2 h-2 bg-amber-500 rounded-full shadow-[0_0_8px_color-mix(in_srgb,var(--status-warning)_80%,transparent)]" />
                 </div>
               )}
               <span className="text-[11px] font-bold text-on-surface z-10">
@@ -100,7 +100,7 @@ export function ConditionsWidget({
           <div className={cardBase}>
             <span className={sectionLabel}>Visibility</span>
             <div className="flex items-center gap-2 mb-2.5">
-              <Eye className="text-teal-600 dark:text-cyan-400 shrink-0" size={16} />
+              <Eye className="text-teal-700 dark:text-cyan-400 shrink-0" size={16} />
               <span className="text-xl font-bold text-on-surface">
                 {parsedMetar.visibility || '–'}
               </span>
@@ -108,7 +108,7 @@ export function ConditionsWidget({
             <div className="w-full bg-surface-container-high ] h-1 rounded-full overflow-hidden">
               {parsedMetar.visibility && (
                 <div
-                  className="bg-teal-500 dark:bg-cyan-400 h-full shadow-[0_0_8px_var(--accent-cyan-glow)]"
+                  className="bg-teal-1000 dark:bg-cyan-400 h-full shadow-[0_0_8px_var(--accent-cyan-glow)]"
                   style={{
                     width: parsedMetar.visibility.includes('>')
                       ? '100%'
@@ -123,7 +123,7 @@ export function ConditionsWidget({
           <div className={cardBase}>
             <span className={sectionLabel}>Cloud Cover</span>
             <div className="flex items-start gap-3">
-              <Cloud className="text-teal-600 dark:text-cyan-400 mt-0.5 shrink-0" size={16} />
+              <Cloud className="text-teal-700 dark:text-cyan-400 mt-0.5 shrink-0" size={16} />
               <div className="flex flex-col gap-0.5">
                 {parsedMetar.clouds.length > 0 ? (
                   parsedMetar.clouds.map((c: string, i: number) => (
@@ -144,7 +144,7 @@ export function ConditionsWidget({
         {/* Temperature */}
         <div className={`col-span-4 ${cardBase} flex flex-col items-center`}>
           <span className={sectionLabel + ' text-center'}>Temp</span>
-          <Thermometer className="text-teal-600 dark:text-cyan-400 mb-1.5" size={18} />
+          <Thermometer className="text-teal-700 dark:text-cyan-400 mb-1.5" size={18} />
           <div className="text-2xl font-black text-on-surface">
             {parsedMetar.temp !== null ? `${parsedMetar.temp}°C` : '–'}
           </div>
@@ -153,7 +153,7 @@ export function ConditionsWidget({
         {/* Dew Point */}
         <div className={`col-span-4 ${cardBase} flex flex-col items-center`}>
           <span className={sectionLabel + ' text-center'}>Dew Pt</span>
-          <CloudFog className="text-teal-600 dark:text-cyan-400 mb-1.5" size={18} />
+          <CloudFog className="text-teal-700 dark:text-cyan-400 mb-1.5" size={18} />
           <div className="text-2xl font-black text-on-surface">
             {parsedMetar.dew !== null ? `${parsedMetar.dew}°C` : '–'}
           </div>
@@ -162,7 +162,7 @@ export function ConditionsWidget({
         {/* QNH */}
         <div className={`col-span-4 ${cardBase} flex flex-col items-center`}>
           <span className={sectionLabel + ' text-center'}>QNH</span>
-          <Compass className="text-teal-600 dark:text-cyan-400 mb-1.5" size={18} />
+          <Compass className="text-teal-700 dark:text-cyan-400 mb-1.5" size={18} />
           <div className="text-2xl font-black text-on-surface">
             {parsedMetar.qnh !== null ? `${parsedMetar.qnh}` : '–'}
           </div>

@@ -62,9 +62,9 @@
   --airspace-type: #fbbf24;
 
   /* Glassmorphism Variables */
-  --glass-bg: rgba(11, 19, 38, 0.65);
-  --glass-bg-heavy: rgba(11, 19, 38, 0.85);
-  --glass-bg-solid: rgba(11, 19, 38, 0.95);
+  --glass-bg: color-mix(in srgb, var(--surface) 65%, transparent);
+  --glass-bg-heavy: color-mix(in srgb, var(--surface) 85%, transparent);
+  --glass-bg-solid: color-mix(in srgb, var(--surface) 95%, transparent);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-border-highlight: rgba(255, 255, 255, 0.2);
   --glass-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
@@ -135,18 +135,26 @@ html:not(.dark) {
   --status-idle: #64748b;
 
   /* Aviation semantic — deeper for white bg */
-  --route-rnav: #16a34a;
-  --route-ats: #2563eb;
-  --route-waypoint: #7c3aed;
+  --route-rnav: #0a7c6e;
+  --route-ats: #427ab5;
+  --route-waypoint: #8b5a8c;
   --airspace-type: #d97706;
 
   /* Glassmorphism — Pastel Paper & Ink Outlines */
-  --glass-bg: rgba(252, 250, 245, 0.75);
-  --glass-bg-heavy: rgba(252, 250, 245, 0.88);
-  --glass-bg-solid: rgba(252, 250, 245, 0.98);
-  --glass-border: rgba(28, 25, 23, 0.25); /* Sharp ink outline stroke */
-  --glass-border-highlight: rgba(28, 25, 23, 0.45); /* Thicker ink outline */
-  --glass-shadow: 0 25px 50px -12px rgba(28, 25, 23, 0.12); /* Soft dark shadow */
+  --glass-bg: color-mix(in srgb, var(--surface) 75%, transparent);
+  --glass-bg-heavy: color-mix(in srgb, var(--surface) 88%, transparent);
+  --glass-bg-solid: color-mix(in srgb, var(--surface) 98%, transparent);
+  --glass-border: color-mix(
+    in srgb,
+    var(--outline-variant) 25%,
+    transparent
+  ); /* Sharp ink outline stroke */
+  --glass-border-highlight: color-mix(
+    in srgb,
+    var(--outline-variant) 45%,
+    transparent
+  ); /* Thicker ink outline */
+  --glass-shadow: 0 25px 50px -12px color-mix(in srgb, var(--outline-variant) 12%, transparent); /* Soft dark shadow */
 }
 
 html,
@@ -326,5 +334,5 @@ body,
 
 /* --- Scrollbars --- */
 html:not(.dark) .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.02);
+  background: color-mix(in srgb, var(--on-surface-variant) 2%, transparent);
 }

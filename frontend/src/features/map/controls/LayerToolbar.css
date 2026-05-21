@@ -183,11 +183,11 @@ html:not(.dark) .aip-layer-toolbar {
 }
 
 html:not(.dark) .aip-layer-toggle {
-  color: rgba(15, 23, 42, 0.3);
+  color: color-mix(in srgb, var(--on-surface-variant) 50%, transparent);
 }
 
 html:not(.dark) .aip-layer-toggle:hover {
-  color: rgba(15, 23, 42, 0.7);
+  color: color-mix(in srgb, var(--on-surface-variant) 90%, transparent);
 }
 
 html:not(.dark) .aip-layer-toggle.active {

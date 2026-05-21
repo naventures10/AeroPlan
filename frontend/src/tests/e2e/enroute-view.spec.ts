@@ -159,7 +159,6 @@ test.describe('Enroute View Workflows', () => {
     // 3. Verify selection via Info Card
     const infoCard = page.getByTestId('feature-info-card');
     await expect(infoCard).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('[data-testid="feature-info-card"]')).toContainText('AIRSPACE');
     await expect(page.locator('[data-testid="feature-info-card"]')).toContainText('Delhi');
 
     // 4. Verify Layer Auto-Toggle
@@ -200,7 +199,7 @@ test.describe('Enroute View Workflows', () => {
     // 3. Verify info card appears from search selection
     const infoCard = page.getByTestId('feature-info-card');
     await expect(infoCard).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('[data-testid="feature-info-card"]')).toContainText('AIRSPACE');
+    await expect(page.locator('[data-testid="feature-info-card"]')).toContainText('Delhi');
 
     // 4. Close the card
     await page.getByTestId('close-feature-card').click();

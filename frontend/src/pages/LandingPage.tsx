@@ -56,7 +56,7 @@ export default function LandingPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.5 }}
-          className="text-slate-400 text-lg md:text-xl max-w-md leading-relaxed mb-10"
+          className="text-slate-500 text-lg md:text-xl max-w-md leading-relaxed mb-10"
         >
           Experience high-performance flight planning with real-time AIP visualization and precision
           tools.

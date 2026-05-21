@@ -146,7 +146,7 @@
 
 /* --- Light Mode Overrides --- */
 html:not(.dark) .aip-search-input::placeholder {
-  color: rgba(15, 23, 42, 0.5);
+  color: color-mix(in srgb, var(--on-surface-variant) 70%, transparent);
 }
 
 html:not(.dark) .aip-search-bar {
@@ -155,7 +155,7 @@ html:not(.dark) .aip-search-bar {
 
 html:not(.dark) .aip-search-bar:focus-within {
   border-color: var(--accent-cyan);
-  box-shadow: 0 20px 40px -10px rgba(13, 148, 136, 0.15);
+  box-shadow: 0 20px 40px -10px color-mix(in srgb, var(--accent-cyan-700) 15%, transparent);
 }
 
 html:not(.dark) .aip-search-results-wrapper {
@@ -164,14 +164,14 @@ html:not(.dark) .aip-search-results-wrapper {
 
 html:not(.dark) .aip-search-result-item:hover,
 html:not(.dark) .aip-search-result-item.selected {
-  background: rgba(15, 23, 42, 0.04);
+  background: color-mix(in srgb, var(--on-surface-variant) 8%, transparent);
 }
 
 html:not(.dark) .aip-search-result-name {
-  color: rgba(15, 23, 42, 0.5);
+  color: color-mix(in srgb, var(--on-surface-variant) 70%, transparent);
 }
 
 html:not(.dark) .aip-search-result-type {
-  background: rgba(15, 23, 42, 0.05);
-  color: rgba(15, 23, 42, 0.5);
+  background: color-mix(in srgb, var(--on-surface-variant) 8%, transparent);
+  color: color-mix(in srgb, var(--on-surface-variant) 70%, transparent);
 }

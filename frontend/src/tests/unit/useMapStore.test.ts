@@ -44,6 +44,7 @@ describe('useMapStore', () => {
       windIsPlaying: false,
       isWindMode: false,
       mapStyle: 'dark',
+      isDarkMode: true,
     });
   });
 
@@ -240,5 +241,24 @@ describe('useMapStore', () => {
     expect(useMapStore.getState().mapStyle).toBe('dark');
     useMapStore.getState().setMapStyle('light');
     expect(useMapStore.getState().mapStyle).toBe('light');
+  });
+
+  it('should update isDarkMode reactively when mapStyle changes (getter bug regression)', () => {
+    // Initial state is dark
+    expect(useMapStore.getState().isDarkMode).toBe(true);
+
+    let subscribedIsDarkMode = useMapStore.getState().isDarkMode;
+    const unsubscribe = useMapStore.subscribe((state) => {
+      subscribedIsDarkMode = state.isDarkMode;
+    });
+
+    useMapStore.getState().setMapStyle('light');
+
+    // If isDarkMode is a getter, Object.assign copies it as a static true value
+    // before the new state is fully formed, causing this to stay true.
+    expect(useMapStore.getState().isDarkMode).toBe(false);
+    expect(subscribedIsDarkMode).toBe(false);
+
+    unsubscribe();
   });
 });

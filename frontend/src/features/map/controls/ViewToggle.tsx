@@ -111,7 +111,7 @@ export default function ViewToggle() {
             title="Toggle Enroute Chart"
             className={`flex items-center justify-center w-9 h-9 rounded-full transition duration-300 focus:outline-none ${
               activeLayers.ercMap
-                ? 'bg-emerald-500/20 text-emerald-600 shadow-[0_0_12px_rgba(16,185,129,0.2)] dark:text-emerald-400'
+                ? 'bg-emerald-500/20 text-emerald-600 shadow-[0_0_12px_color-mix(in_srgb,var(--status-success)_20%,transparent)] dark:text-emerald-400'
                 : 'text-on-surface-variant hover:text-on-surface hover:bg-slate-900/[0.08]   ]'
             }`}
           >
@@ -244,7 +244,7 @@ export default function ViewToggle() {
                   size={20}
                   strokeWidth={2}
                 />
-                <span className="text-[9px] font-bold text-teal-700 dark:text-cyan-200 tracking-widest mt-0.5">
+                <span className="text-[9px] font-bold text-teal-800 dark:text-cyan-200 tracking-widest mt-0.5">
                   3D
                 </span>
               </div>

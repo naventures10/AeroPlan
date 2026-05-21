@@ -60,15 +60,15 @@
 }
 
 .aip-route-badge-rnav {
-  background: rgba(115, 236, 139, 0.2);
+  background: color-mix(in srgb, var(--route-rnav) 20%, transparent);
   color: var(--route-rnav);
-  border: 1px solid rgba(115, 236, 139, 0.3);
+  border: 1px solid color-mix(in srgb, var(--route-rnav) 30%, transparent);
 }
 
 .aip-route-badge-ats {
-  background: rgba(68, 172, 255, 0.2);
+  background: color-mix(in srgb, var(--route-ats) 20%, transparent);
   color: var(--route-ats);
-  border: 1px solid rgba(68, 172, 255, 0.3);
+  border: 1px solid color-mix(in srgb, var(--route-ats) 30%, transparent);
 }
 
 .route-th {

@@ -54,5 +54,5 @@
 
 /* --- Modal --- */
 html:not(.dark) .aip-modal-close-btn:hover {
-  background: rgba(15, 23, 42, 0.04);
+  background: color-mix(in srgb, var(--on-surface-variant) 4%, transparent);
 }

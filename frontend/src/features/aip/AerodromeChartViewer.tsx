@@ -237,14 +237,14 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
                       onClick={() => {
                         handleChartClick(chart);
                       }}
-                      className="group shrink-0 flex flex-col items-center gap-1.5 p-2 rounded-xl border border-outline/40 ] hover:border-teal-500/40 dark:hover:border-cyan-500/40 bg-surface-container/50 ] hover:bg-teal-500/10 dark:hover:bg-cyan-500/10 transition-colors duration-200 cursor-pointer w-[82px]"
+                      className="group shrink-0 flex flex-col items-center gap-1.5 p-2 rounded-xl border border-outline/40 ] hover:border-teal-500/40 dark:hover:border-cyan-500/40 bg-surface-container/50 ] hover:bg-teal-1000/10 dark:hover:bg-cyan-500/10 transition-colors duration-200 cursor-pointer w-[82px]"
                       title={chart.chart_title || undefined}
                     >
                       {/* Chart Icon */}
                       <div className="w-10 h-11 rounded-lg bg-surface-container-high/50 ] border border-outline/50 ] group-hover:border-teal-500/40 dark:group-hover:border-cyan-500/40 flex items-center justify-center transition-colors">
                         <FileText
                           size={18}
-                          className="text-teal-600 dark:text-cyan-400 group-hover:text-teal-500 dark:group-hover:text-cyan-300 transition-colors"
+                          className="text-teal-700 dark:text-cyan-400 group-hover:text-teal-500 dark:group-hover:text-cyan-300 transition-colors"
                         />
                       </div>
                       {/* Title */}

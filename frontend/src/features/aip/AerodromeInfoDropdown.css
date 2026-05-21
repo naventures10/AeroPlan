@@ -80,7 +80,7 @@ html:not(.dark) .aip-dropdown-trigger {
 }
 
 html:not(.dark) .aip-dropdown-item:hover {
-  background: rgba(15, 23, 42, 0.03);
+  background: color-mix(in srgb, var(--on-surface-variant) 3%, transparent);
 }
 
 html:not(.dark) .aip-dropdown-menu {

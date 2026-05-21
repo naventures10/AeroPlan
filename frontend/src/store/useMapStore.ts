@@ -186,11 +186,9 @@ export const useMapStore = create<MapState>((set, get) => ({
   setActiveAerodromeMetadata: (data) => set({ activeAerodromeMetadata: data }),
 
   mapStyle: 'dark',
-  get isDarkMode() {
-    return get().mapStyle !== 'light';
-  },
+  isDarkMode: true,
   setMapStyle: (style) => {
-    set({ mapStyle: style });
+    set({ mapStyle: style, isDarkMode: style !== 'light' });
     // Sync the 'dark' class on <html> for Tailwind's darkMode: 'class'
     if (style === 'light') {
       document.documentElement.classList.remove('dark');

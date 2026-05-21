@@ -193,7 +193,7 @@ export default function SearchBar({
                   <span className="text-on-surface-variant text-sm font-bold tracking-wider uppercase">
                     No matching locations
                   </span>
-                  <span className="text-slate-400 text-[10px] uppercase tracking-widest font-medium">
+                  <span className="text-slate-500 text-[10px] uppercase tracking-widest font-medium">
                     Try searching for ICAO codes or Airport names
                   </span>
                 </div>

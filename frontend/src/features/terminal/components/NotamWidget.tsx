@@ -39,7 +39,7 @@ export function NotamWidget({ notams }: NotamWidgetProps) {
                 </span>
                 <div className="flex items-center gap-2">
                   {n.is_estimated && (
-                    <span className="text-[10px] text-slate-400 font-mono">EST</span>
+                    <span className="text-[10px] text-slate-500 font-mono">EST</span>
                   )}
                   <span className="text-xs text-on-surface-variant font-mono tracking-widest">
                     SERIES {n.series}
