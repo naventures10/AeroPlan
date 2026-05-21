@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import './TerminalLegend.css';
 import { Building2, TowerControl, TreePine, Construction, Radio } from 'lucide-react';
 import { useMapStore } from '../../../store/useMapStore';
 

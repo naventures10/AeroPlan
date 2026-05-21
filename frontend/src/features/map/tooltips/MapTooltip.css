@@ -1,0 +1,176 @@
+@reference "../../../index.css";
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   4. Tooltips System (DeckGL & Shared)
+   ───────────────────────────────────────────────────────────────────────────── */
+.deck-tooltip {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 16px !important;
+  padding: 12px 16px !important;
+  box-shadow: var(--glass-shadow) !important;
+  color: var(--primary) !important;
+  font-family: var(--font-inter) !important;
+  z-index: 1000 !important;
+  max-width: 320px;
+}
+
+.aip-tooltip-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.aip-tooltip-title {
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--primary);
+}
+
+.aip-tooltip-subtitle {
+  color: var(--on-surface-variant);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.aip-tooltip-accent {
+  color: var(--accent-cyan);
+  font-weight: 700;
+}
+
+.aip-tooltip-status {
+  color: var(--status-success);
+  font-size: 9px;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  margin-top: 2px;
+}
+
+.aip-tooltip-divider {
+  margin-top: 8px;
+  border-top: 1px solid var(--glass-border);
+  padding-top: 8px;
+}
+
+.aip-tooltip-row {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--on-surface-variant);
+  white-space: normal;
+}
+
+.aip-tooltip-row-val {
+  color: var(--primary);
+}
+
+.aip-tooltip-mono {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--on-surface-variant);
+  margin-top: 2px;
+}
+
+.aip-tooltip-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--surface-container-high);
+  color: var(--status-success);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-right: 8px;
+}
+
+.aip-tooltip-max-300 {
+  max-width: 300px;
+}
+
+.aip-tooltip-max-260 {
+  max-width: 260px;
+}
+
+.aip-tooltip-max-250 {
+  max-width: 250px;
+}
+
+.aip-tooltip-sig-point {
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.aip-tooltip-spacing-sm {
+  margin-top: 0.25rem;
+}
+
+.aip-tooltip-spacing-md {
+  margin-top: 0.375rem;
+}
+
+.aip-tooltip-spacing-left-sm {
+  margin-left: 0.5rem;
+}
+
+.aip-tooltip-bold {
+  font-weight: 700;
+}
+
+.aip-tooltip-route-list {
+  color: var(--on-secondary-container);
+  font-weight: 600;
+}
+
+.aip-tooltip-badge-row {
+  @apply flex items-center;
+  margin-top: 0.125rem;
+}
+
+.aip-tooltip-badge-val {
+  @apply font-bold;
+  color: var(--primary);
+  font-size: 0.6875rem;
+}
+
+.aip-tooltip-flex-between {
+  @apply flex justify-between items-center;
+}
+
+.aip-tooltip-route-type {
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--route-ats);
+}
+
+.aip-tooltip-route-rnav {
+  color: var(--route-rnav) !important;
+}
+
+.aip-tooltip-waypoint-accent {
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--route-waypoint);
+}
+
+.aip-tooltip-airspace-type {
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--airspace-type);
+}
+
+.aip-tooltip-multi-separator {
+  margin-top: 0.75rem;
+  border-top: 1px dashed var(--glass-border-highlight);
+  padding-top: 0.75rem;
+}
+
+.aip-tooltip-scroll-container {
+  max-height: 400px;
+  overflow-y: auto;
+  max-width: 300px;
+  padding-right: 0.5rem;
+}

@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import './MapTooltip.css';
 import type { MapRef } from 'react-map-gl/maplibre';
 import { useMapStore } from '../../../store/useMapStore';
 import { sanitizeHtml } from '../../../utils/sanitize';

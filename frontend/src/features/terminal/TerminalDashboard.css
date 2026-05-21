@@ -1,0 +1,50 @@
+.terminal-dashboard-sidebar {
+  background: var(--glass-bg-heavy);
+  border: 1px solid var(--glass-border);
+  border-radius: 1.5rem;
+  box-shadow: var(--glass-shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex-shrink: 0;
+  z-index: 20;
+  overflow: hidden;
+}
+
+.terminal-dashboard-tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.875rem 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--on-surface-variant);
+}
+
+.terminal-dashboard-tab:hover {
+  color: var(--primary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.terminal-dashboard-tab.active {
+  color: var(--accent-cyan);
+  background: var(--accent-cyan-opacity-10);
+}
+
+.terminal-dashboard-panel {
+  background: var(--glass-bg-heavy);
+  border: 1px solid var(--glass-border);
+  border-left: none;
+  border-radius: 0 1.5rem 1.5rem 0;
+  box-shadow: var(--glass-shadow);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+  z-index: 10;
+  margin-left: -1rem; /* Overlaps behind tab bar */
+}

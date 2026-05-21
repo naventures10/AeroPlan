@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import './AerodromeInfoDropdown.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, BookOpen } from 'lucide-react';
 

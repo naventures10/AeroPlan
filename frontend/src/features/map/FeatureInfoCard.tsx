@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import './FeatureInfoCard.css';
 
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';

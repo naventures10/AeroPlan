@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import './TerminalDashboard.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CloudFog, CloudRain, AlertTriangle, ChevronLeft } from 'lucide-react';
 import { fetchWeather, fetchNotams, fetchDaylight } from '../../api/client';
