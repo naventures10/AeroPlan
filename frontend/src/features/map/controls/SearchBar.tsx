@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-
+import './SearchBar.css';
 import { Search, X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { SearchResult } from '../../../types';

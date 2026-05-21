@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import './WeatherControls.css';
 import { StatusBadge } from './StatusBadge';
 import { AltitudeSlider } from './AltitudeSlider';
 import { TimelineControl } from './TimelineControl';
