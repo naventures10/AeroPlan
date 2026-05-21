@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import './SectionModal.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import SectionRenderer from './SectionRenderer';

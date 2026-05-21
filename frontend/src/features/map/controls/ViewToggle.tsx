@@ -9,6 +9,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { useMapStore } from '../../../store/useMapStore';
+import './ViewToggle.css';
 
 /**
  * Right-center controls:

@@ -1,0 +1,20 @@
+/* --- Layer Toolbar --- */
+html:not(.dark) .aip-layer-toolbar {
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.06);
+}
+
+html:not(.dark) .aip-layer-toggle {
+  color: rgba(15, 23, 42, 0.3);
+}
+
+html:not(.dark) .aip-layer-toggle:hover {
+  color: rgba(15, 23, 42, 0.7);
+}
+
+html:not(.dark) .aip-layer-toggle.active {
+  color: var(--accent-cyan);
+}
+
+html:not(.dark) .aip-layer-tooltip {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
