@@ -6,13 +6,14 @@
  */
 
 import { MVTLayer } from '@deck.gl/geo-layers';
-import { COLOR_NEON_CYAN, COLOR_EMERALD, ZOOM_NAVAIDS } from './constants';
+import { ZOOM_NAVAIDS, getLayerPalette } from './constants';
 import type { LayerContext } from './types';
 
 export function createNavaidLayer(ctx: LayerContext): any[] {
   const { viewMode, activeLayers, selectedFeature, setSelectedFeature } = ctx;
   const isZoomNavaids = ctx.zoom > ZOOM_NAVAIDS;
   const isLayerActive = activeLayers.navaids;
+  const palette = getLayerPalette(ctx.isDarkMode);
 
   return [
     new MVTLayer({
@@ -44,16 +45,23 @@ export function createNavaidLayer(ctx: LayerContext): any[] {
           selectedFeature?.type === 'NAVAID' && selectedFeature.data.ident === d.properties.ident;
         if (isSelected) {
           return isLayerActive
-            ? COLOR_NEON_CYAN
-            : [COLOR_NEON_CYAN[0], COLOR_NEON_CYAN[1], COLOR_NEON_CYAN[2], 0];
+            ? palette.cyan
+            : [palette.cyan[0], palette.cyan[1], palette.cyan[2], 0];
         }
         return isLayerActive
-          ? COLOR_EMERALD
-          : [COLOR_EMERALD[0], COLOR_EMERALD[1], COLOR_EMERALD[2], 0];
+          ? palette.emerald
+          : [palette.emerald[0], palette.emerald[1], palette.emerald[2], 0];
       },
       getText: (d: any) => d.properties.ident || '',
       getTextSize: isZoomNavaids ? 12 : 0,
-      getTextColor: isLayerActive ? [52, 211, 153, 255] : [52, 211, 153, 0],
+      getTextColor: isLayerActive
+        ? ([palette.emerald[0], palette.emerald[1], palette.emerald[2], 255] as [
+            number,
+            number,
+            number,
+            number,
+          ])
+        : [0, 0, 0, 0],
       getTextPixelOffset: [0, 20],
       textFontFamily: 'Geist, sans-serif',
       textFontWeight: 600,
@@ -63,10 +71,10 @@ export function createNavaidLayer(ctx: LayerContext): any[] {
         }
       },
       updateTriggers: {
-        getIconColor: [selectedFeature, isLayerActive],
+        getIconColor: [selectedFeature, isLayerActive, ctx.isDarkMode],
         getIconSize: [selectedFeature],
         getTextSize: [isZoomNavaids],
-        getTextColor: [isLayerActive],
+        getTextColor: [isLayerActive, ctx.isDarkMode],
       },
       binary: false,
       transitions: {

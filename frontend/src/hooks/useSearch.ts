@@ -33,7 +33,6 @@ export function useSearch() {
     setActiveAerodromeMetadata,
     setSelectedRouteIds,
     setSelectedFeature,
-    setHighlightedAirspaceId,
   } = useMapStore();
 
   const [searchInput, setSearchInput] = useState('');
@@ -162,7 +161,6 @@ export function useSearch() {
             break;
           case 'AIRSPACE':
             if (!activeLayers.airspaces) toggleLayer('airspaces');
-            setHighlightedAirspaceId(item.id);
             break;
         }
 
@@ -183,7 +181,6 @@ export function useSearch() {
       setSelectedRouteIds,
       setActiveAerodromeMetadata,
       setSelectedFeature,
-      setHighlightedAirspaceId,
       resetSearchState,
     ],
   );

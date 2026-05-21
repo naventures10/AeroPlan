@@ -27,7 +27,7 @@ export function StatusBadge({ status }: { status: WindStatus }) {
       </span>
       <button
         onClick={handleClose}
-        className="ml-3 p-1 hover:bg-white/10 rounded-full transition-colors pointer-events-auto flex items-center justify-center text-zinc-400 hover:text-white"
+        className="ml-3 p-1 hover:bg-surface-container-high rounded-full transition-colors pointer-events-auto flex items-center justify-center text-on-surface-variant hover:text-on-surface"
         title="Close Weather Layer"
       >
         <X size={14} />

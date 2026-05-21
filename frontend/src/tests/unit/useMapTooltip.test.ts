@@ -165,9 +165,7 @@ describe('useMapTooltip', () => {
       layer: { id: 'airspace-metadata-layer' },
     });
 
-    expect(tooltip!.html).toContain('MUMBAI TMA');
-    expect(tooltip!.html).toContain('CONTROL AREA');
-    expect(tooltip!.html).toContain('FL070 - FL245');
+    expect(tooltip).toBeNull();
   });
 
   it('handles ats route waypoints layer', () => {

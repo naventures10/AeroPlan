@@ -45,7 +45,6 @@ export interface ActiveLayers {
   waypoints: boolean;
   navaids: boolean;
   atsRoutes: boolean;
-  wacMap: boolean;
 }
 
 export interface ParsedMetar {

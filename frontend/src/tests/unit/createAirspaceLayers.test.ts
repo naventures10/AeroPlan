@@ -4,6 +4,7 @@ import { createAirspaceLayers } from '../../features/map/layers/createAirspaceLa
 describe('createAirspaceLayers', () => {
   it('creates geometry and metadata MVT layers', () => {
     const ctx = {
+      isDarkMode: true,
       viewMode: 'ENROUTE',
       zoom: 8,
       activeLayers: {
@@ -13,7 +14,6 @@ describe('createAirspaceLayers', () => {
         airspaceControl: true,
         airspaceUpr: true,
       },
-      highlightedAirspaceId: null,
     };
 
     const layers = createAirspaceLayers(ctx as any);
@@ -54,32 +54,25 @@ describe('createAirspaceLayers', () => {
     const emptyFeature = { properties: {} };
     expect(metaLayer.props.getText(emptyFeature)).toBe('');
 
-    // Check highlight logic
-    const highlightCtx = { ...ctx, highlightedAirspaceId: '123' };
-    const highlightLayers = createAirspaceLayers(highlightCtx as any);
-
-    const highlightFeature = { properties: { id: '123', airspace_type: 'FIR', name: 'FIR' } };
-    expect(highlightLayers[1].props.getTextColor(highlightFeature)).toEqual([255, 255, 0, 255]);
-    expect(highlightLayers[1].props.getBackgroundColor(highlightFeature)).toEqual([0, 0, 0, 180]);
-    expect(highlightLayers[1].props.getBorderColor(highlightFeature)).toEqual([255, 255, 0, 255]);
-
-    // Check non-highlight borders
+    // Check borders
     expect(
-      highlightLayers[1].props.getBorderColor({
+      layers[1].props.getBorderColor({
         properties: { airspace_type: 'FIR', name: 'FIR' },
       }),
     ).toEqual([255, 165, 0, 255]);
     // Without name it's invisible
-    expect(
-      highlightLayers[1].props.getBorderColor({ properties: { airspace_type: 'FIR' } }),
-    ).toEqual([0, 0, 0, 0]);
+    expect(layers[1].props.getBorderColor({ properties: { airspace_type: 'FIR' } })).toEqual([
+      0, 0, 0, 0,
+    ]);
 
-    expect(highlightLayers[1].props.getTextSize(highlightFeature)).toBe(12);
-    expect(highlightLayers[1].props.getTextSize({ properties: { airspace_type: 'FIR' } })).toBe(0);
+    const someFeature = { properties: { airspace_type: 'FIR', name: 'FIR' } };
+    expect(layers[1].props.getTextSize(someFeature)).toBe(12);
+    expect(layers[1].props.getTextSize({ properties: { airspace_type: 'FIR' } })).toBe(0);
   });
 
   it('respects layer toggles for all types', () => {
     const ctx = {
+      isDarkMode: true,
       viewMode: 'ENROUTE',
       zoom: 8,
       activeLayers: {

@@ -1,10 +1,15 @@
 import { useMapStore } from '../../../store/useMapStore';
+import './LayerToolbar.css';
+
+interface LayerToolbarProps {
+  onMenuClick?: () => void;
+}
 
 /**
  * Left-side vertical toolbar with layer toggle buttons.
  * Visible only in ENROUTE view mode.
  */
-export default function LayerToolbar() {
+export default function LayerToolbar({ onMenuClick }: LayerToolbarProps = {}) {
   const { activeLayers, toggleLayer, isWeatherMode, setIsWeatherMode } = useMapStore();
 
   const toggleButtons = [
@@ -19,6 +24,15 @@ export default function LayerToolbar() {
   return (
     <div className="aip-layer-toolbar-container">
       <div className="aip-layer-toolbar">
+        <button
+          onClick={onMenuClick}
+          className="aip-layer-toggle"
+          aria-label="Toggle menu"
+          title="Toggle menu"
+        >
+          <span className="aip-layer-icon aip-icon-menu" />
+        </button>
+
         {toggleButtons.map(({ id, title, iconClass }) => {
           const isActive = id === 'weather' ? isWeatherMode : activeLayers[id];
           return (

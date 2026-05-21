@@ -29,7 +29,7 @@ export const PerformanceStats = ({
       <button
         type="button"
         onClick={onToggleUI}
-        className={`flex items-center justify-center h-10 w-10 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl transition hover:bg-white/5 active:scale-95 ${!showUI ? 'text-cyan-400 ring-2 ring-cyan-500/20' : 'text-white/40'}`}
+        className={`flex items-center justify-center h-10 w-10 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl transition hover:bg-surface-bright/5 active:scale-95 ${!showUI ? 'text-cyan-400 ring-2 ring-cyan-500/20' : 'text-white/40'}`}
       >
         {showUI ? <Layout className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
       </button>
@@ -37,7 +37,7 @@ export const PerformanceStats = ({
       <button
         type="button"
         onClick={onToggle}
-        className={`flex items-center justify-center h-10 w-10 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl transition hover:bg-white/5 active:scale-95 ${show ? 'text-cyan-400 ring-2 ring-cyan-500/20' : 'text-white/40'}`}
+        className={`flex items-center justify-center h-10 w-10 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl transition hover:bg-surface-bright/5 active:scale-95 ${show ? 'text-cyan-400 ring-2 ring-cyan-500/20' : 'text-white/40'}`}
       >
         <Activity className={`h-4 w-4 ${show ? 'text-cyan-400' : 'text-white/40'}`} />
       </button>

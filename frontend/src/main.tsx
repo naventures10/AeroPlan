@@ -1,7 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.tsx';
-import { HeroUIProvider } from '@heroui/react';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 import { useMapStore } from './store/useMapStore.ts';
 
@@ -19,8 +18,6 @@ if (
 
 createRoot(document.getElementById('root')!).render(
   <ErrorBoundary>
-    <HeroUIProvider>
-      <App />
-    </HeroUIProvider>
+    <App />
   </ErrorBoundary>,
 );

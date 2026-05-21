@@ -6,7 +6,7 @@
  */
 
 import { GeoJsonLayer, TextLayer } from '@deck.gl/layers';
-import { COLOR_NEON_PURPLE } from './constants';
+import { getLayerPalette } from './constants';
 import type { LayerContext } from './types';
 
 export function createAerodromeLayers(
@@ -16,6 +16,7 @@ export function createAerodromeLayers(
   onAerodromeClick: (icao: string, coords: [number, number]) => void,
 ): any[] {
   const isLayerActive = ctx.activeLayers.aerodromes;
+  const palette = getLayerPalette(ctx.isDarkMode);
 
   return [
     new GeoJsonLayer({
@@ -33,13 +34,13 @@ export function createAerodromeLayers(
       }),
       getIconSize: 24,
       iconSizeUnits: 'pixels',
-      getIconColor: isLayerActive ? COLOR_NEON_PURPLE : [192, 132, 252, 0],
+      getIconColor: isLayerActive ? palette.purple : [192, 132, 252, 0],
       onClick: (info: any) => {
         if (info.object)
           onAerodromeClick(info.object.properties.icao_code, info.object.geometry.coordinates);
       },
       updateTriggers: {
-        getIconColor: [isLayerActive],
+        getIconColor: [isLayerActive, ctx.isDarkMode],
       },
       transitions: {
         getIconColor: 300,
@@ -54,16 +55,24 @@ export function createAerodromeLayers(
       getText: (d: any) => d.text,
       getSize: 12,
       sizeUnits: 'pixels',
-      getColor: isLayerActive ? [255, 255, 255, 230] : [255, 255, 255, 0],
+      getColor: isLayerActive
+        ? ctx.isDarkMode
+          ? ([...palette.rgbWhite, 230] as any)
+          : ([...palette.rgbPurple, 255] as any)
+        : [0, 0, 0, 0],
       getPixelOffset: [0, 20],
       fontFamily: 'Geist, sans-serif',
       fontWeight: 700,
       outlineWidth: 2,
-      outlineColor: isLayerActive ? [0, 0, 0, 180] : [0, 0, 0, 0],
+      outlineColor: isLayerActive
+        ? ctx.isDarkMode
+          ? [0, 0, 0, 180]
+          : [250, 249, 249, 180] // soft warm-white outline, not opaque
+        : [0, 0, 0, 0],
       fontSettings: { sdf: true },
       updateTriggers: {
-        getColor: [isLayerActive],
-        outlineColor: [isLayerActive],
+        getColor: [isLayerActive, ctx.isDarkMode],
+        outlineColor: [isLayerActive, ctx.isDarkMode],
       },
       transitions: {
         getColor: 300,

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import ViewToggle from '../../features/map/controls/ViewToggle';
 import { useMapStore } from '../../store/useMapStore';
 
@@ -8,7 +8,7 @@ describe('ViewToggle Component', () => {
     vi.clearAllMocks();
   });
 
-  it('renders correctly and toggles mode', () => {
+  it('renders correctly and toggles mode when activeAirport is present', () => {
     const setViewStateMock = vi.fn();
     useMapStore.setState({
       viewMode: 'ENROUTE',
@@ -20,7 +20,7 @@ describe('ViewToggle Component', () => {
 
     render(<ViewToggle />);
 
-    // In Terminal/Active airport view, a cube with "2D" and "3D" is visible
+    // In Terminal/Active airport view, the 2D/3D toggle cube is visible
     expect(screen.getByText('2D')).toBeInTheDocument();
 
     const toggleButton = screen.getByTitle('Toggle View Mode');
@@ -29,60 +29,114 @@ describe('ViewToggle Component', () => {
     expect(setViewStateMock).toHaveBeenCalledWith(expect.objectContaining({ pitch: 60 }));
   });
 
-  it('handles map layers menu correctly', () => {
+  it('handles zoom operations correctly in enroute view', () => {
+    const setViewStateMock = vi.fn();
+    useMapStore.setState({
+      viewMode: 'ENROUTE',
+      viewState: { zoom: 10, bearing: 15 } as any,
+      activeLayers: {} as any,
+      setViewState: setViewStateMock,
+      activeAirport: null,
+    });
+
+    render(<ViewToggle />);
+
+    // Zoom In
+    const zoomInBtn = screen.getByTitle('Zoom In');
+    fireEvent.click(zoomInBtn);
+    expect(setViewStateMock).toHaveBeenCalledWith(expect.objectContaining({ zoom: 11 }));
+
+    // Zoom Out
+    const zoomOutBtn = screen.getByTitle('Zoom Out');
+    fireEvent.click(zoomOutBtn);
+    expect(setViewStateMock).toHaveBeenCalledWith(expect.objectContaining({ zoom: 9 }));
+  });
+
+  it('handles compass bearing recentering correctly in enroute view', () => {
+    const setViewStateMock = vi.fn();
+    useMapStore.setState({
+      viewMode: 'ENROUTE',
+      viewState: { zoom: 10, bearing: 15 } as any,
+      activeLayers: {} as any,
+      setViewState: setViewStateMock,
+      activeAirport: null,
+    });
+
+    render(<ViewToggle />);
+
+    const recenterBtn = screen.getByTitle('Recenter to North');
+    fireEvent.click(recenterBtn);
+    expect(setViewStateMock).toHaveBeenCalledWith(
+      expect.objectContaining({ bearing: 0, transitionType: 'LINEAR' }),
+    );
+  });
+
+  it('handles base map style selection correctly through cycling', () => {
+    const setMapStyleMock = vi.fn((style) => {
+      useMapStore.setState({ mapStyle: style });
+    });
+    useMapStore.setState({
+      viewMode: 'ENROUTE',
+      viewState: { zoom: 10, bearing: 0 } as any,
+      activeLayers: {} as any,
+      mapStyle: 'dark',
+      setMapStyle: setMapStyleMock,
+      activeAirport: null,
+    });
+
+    render(<ViewToggle />);
+
+    const baseMapCycleBtn = screen.getByTitle('Change Base Map');
+
+    // Click to cycle (should cycle from dark to light)
+    fireEvent.click(baseMapCycleBtn);
+    expect(setMapStyleMock).toHaveBeenCalledWith('light');
+
+    // Simulate store update
+    useMapStore.setState({ mapStyle: 'light' });
+    fireEvent.click(baseMapCycleBtn);
+    expect(setMapStyleMock).toHaveBeenCalledWith('hybrid');
+
+    // Simulate store update
+    useMapStore.setState({ mapStyle: 'hybrid' });
+    fireEvent.click(baseMapCycleBtn);
+    expect(setMapStyleMock).toHaveBeenCalledWith('dark');
+  });
+
+  it('handles map overlay toggle', () => {
     const toggleLayerMock = vi.fn();
     useMapStore.setState({
       viewMode: 'ENROUTE',
-      viewState: { pitch: 0, zoom: 5 } as any,
-      activeLayers: { wacMap: false, ercMap: false } as any,
+      viewState: { zoom: 10, bearing: 0 } as any,
+      activeLayers: { ercMap: false } as any,
       toggleLayer: toggleLayerMock,
       activeAirport: null,
     });
 
     render(<ViewToggle />);
 
-    const toggleButton = screen.getByTitle('Map Overlays');
-    act(() => {
-      fireEvent.click(toggleButton);
-    });
-
-    expect(screen.getByText('World Aeronautical Chart')).toBeInTheDocument();
-
-    const wacButton = screen.getByText('World Aeronautical Chart').closest('button');
-    act(() => {
-      fireEvent.click(wacButton!);
-    });
-
-    expect(toggleLayerMock).toHaveBeenCalledWith('wacMap');
+    const ercBtn = screen.getByTitle('Toggle Enroute Chart');
+    fireEvent.click(ercBtn);
+    expect(toggleLayerMock).toHaveBeenCalledWith('ercMap');
   });
 
-  it('closes menu when clicking outside', () => {
+  it('updates the viewState zoom correctly via the range slider input', () => {
+    const setViewStateMock = vi.fn();
     useMapStore.setState({
       viewMode: 'ENROUTE',
-      viewState: { pitch: 0, zoom: 5 } as any,
-      activeLayers: { wacMap: false, ercMap: false } as any,
+      viewState: { zoom: 10, bearing: 0 } as any,
+      activeLayers: {} as any,
+      setViewState: setViewStateMock,
       activeAirport: null,
     });
 
     render(<ViewToggle />);
 
-    const toggleButton = screen.getByTitle('Map Overlays');
-    act(() => {
-      fireEvent.click(toggleButton);
-    });
+    const slider = screen.getByLabelText('Zoom Level');
+    fireEvent.change(slider, { target: { value: '15.5' } });
 
-    // Verify menu is open
-    expect(screen.getByText('World Aeronautical Chart').closest('.absolute')).toHaveClass(
-      'opacity-100',
-    );
-
-    act(() => {
-      fireEvent.mouseDown(document.body);
-    });
-
-    // Verify menu is closed (hidden via opacity)
-    expect(screen.getByText('World Aeronautical Chart').closest('.absolute')).toHaveClass(
-      'opacity-0',
+    expect(setViewStateMock).toHaveBeenCalledWith(
+      expect.objectContaining({ zoom: 15.5, transitionDuration: 0 }),
     );
   });
 });

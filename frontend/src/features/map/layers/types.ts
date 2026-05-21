@@ -10,7 +10,6 @@ export interface ActiveLayers {
   waypoints: boolean;
   navaids: boolean;
   atsRoutes: boolean;
-  wacMap: boolean;
   airspaces: boolean;
   airspaceFIR: boolean;
   airspaceRegulated: boolean;
@@ -42,6 +41,9 @@ export interface LayerContext {
   /** Current camera zoom — used for zoom-dependent rendering */
   zoom: number;
 
+  /** Whether the UI is in dark mode (mapStyle !== 'light') */
+  isDarkMode: boolean;
+
   /** GeoJSON FeatureCollection of ATS route label midpoints */
   atsRouteLabels: any | null;
 
@@ -50,9 +52,6 @@ export interface LayerContext {
 
   /** Current animation timestamp (NM from origin) */
   currentTime: number;
-
-  /** The ID of the specific overlapping airspace the user currently expanded in the UI stack */
-  highlightedAirspaceId?: string | null;
 
   // ── Callbacks ──
 

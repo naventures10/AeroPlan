@@ -1,0 +1,58 @@
+/* --- Section Modal --- */
+.aip-modal-container {
+  width: 100%;
+  max-width: 64rem;
+  /* 5xl equivalent */
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--glass-border-highlight);
+  background: var(--glass-bg-solid);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  box-shadow: var(--glass-shadow);
+}
+
+.aip-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--glass-border);
+  flex-shrink: 0;
+}
+
+.aip-modal-badge {
+  flex-shrink: 0;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
+  background: var(--accent-cyan-opacity-10);
+  border: 1px solid var(--accent-cyan-glow);
+  color: var(--accent-cyan);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.aip-modal-close-btn {
+  flex-shrink: 0;
+  margin-left: 1rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  color: var(--on-surface-variant);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.aip-modal-close-btn:hover {
+  color: var(--primary);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* --- Modal --- */
+html:not(.dark) .aip-modal-close-btn:hover {
+  background: color-mix(in srgb, var(--on-surface-variant) 4%, transparent);
+}

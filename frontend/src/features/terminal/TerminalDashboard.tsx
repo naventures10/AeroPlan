@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import './TerminalDashboard.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CloudFog, CloudRain, AlertTriangle, ChevronLeft } from 'lucide-react';
 import { fetchWeather, fetchNotams, fetchDaylight } from '../../api/client';
@@ -122,7 +123,9 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className={`absolute top-0 bottom-0 left-0 w-full group/handle flex flex-col items-center justify-center transition-colors ${
-            isCollapsed ? 'hover:bg-cyan-500/5 cursor-pointer' : 'pointer-events-none'
+            isCollapsed
+              ? 'hover:bg-teal-1000/10 dark:hover:bg-cyan-500/5 cursor-pointer'
+              : 'pointer-events-none'
           }`}
           title={isCollapsed ? 'Expand Dashboard' : ''}
         >
@@ -130,14 +133,14 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
             <div className="flex flex-col items-center gap-4 py-8 h-full">
               <ChevronLeft
                 size={16}
-                className="text-cyan-400 group-hover/handle:scale-125 transition-transform"
+                className="text-teal-700 dark:text-cyan-400 group-hover/handle:scale-125 transition-transform"
               />
-              <div className="text-[10px] font-black text-white/40 tracking-[0.4em] uppercase [writing-mode:vertical-lr] rotate-180 flex-1 flex items-center justify-center">
+              <div className="text-[10px] font-black text-on-surface-variant tracking-[0.4em] uppercase [writing-mode:vertical-lr] rotate-180 flex-1 flex items-center justify-center">
                 DASHBOARD
               </div>
               <ChevronLeft
                 size={16}
-                className="text-cyan-400 group-hover/handle:scale-125 transition-transform"
+                className="text-teal-700 dark:text-cyan-400 group-hover/handle:scale-125 transition-transform"
               />
             </div>
           )}
@@ -183,7 +186,7 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
       >
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-7 h-7 border-t-2 border-cyan-400 border-solid rounded-full animate-spin"></div>
+            <div className="w-7 h-7 border-t-2 border-teal-600 dark:border-cyan-400 border-solid rounded-full animate-spin"></div>
           </div>
         ) : (
           <div className="p-6 h-full overflow-y-auto aip-scrollbar w-[480px]">

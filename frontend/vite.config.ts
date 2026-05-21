@@ -28,6 +28,6 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['@heroui/react', 'framer-motion'],
+    include: ['framer-motion'],
   },
 });

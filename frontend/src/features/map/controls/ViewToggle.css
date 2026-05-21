@@ -1,0 +1,66 @@
+/* --- ViewToggle Map Controls & 3D Cube --- */
+.view-toggle-compass {
+  transform: rotate(var(--bearing, 0deg));
+}
+
+.view-toggle-zoom-slider {
+  transform: rotate(-90deg);
+  transform-origin: center;
+}
+
+.view-toggle-cube-container {
+  perspective: 1000px;
+}
+
+.view-toggle-cube {
+  transform-style: preserve-3d;
+  transform: rotateX(0deg);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.view-toggle-cube.pitch-active {
+  transform: rotateX(-90deg) scale(0.95);
+}
+
+.view-toggle-face-2d {
+  transform: translateZ(24px);
+}
+
+.view-toggle-face-3d {
+  transform: rotateX(90deg) translateZ(24px);
+  background-color: var(--accent-cyan-opacity-10);
+}
+
+.view-toggle-side-top {
+  transform: rotateX(-90deg) translateZ(24px);
+}
+
+.view-toggle-side-right {
+  transform: rotateY(90deg) translateZ(24px);
+}
+
+.view-toggle-side-left {
+  transform: rotateY(-90deg) translateZ(24px);
+}
+
+.view-toggle-side-back {
+  transform: rotateY(180deg) translateZ(24px);
+}
+
+.view-toggle-pill-container {
+  background: color-mix(in srgb, var(--surface) 45%, transparent);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+  transition:
+    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.5s ease;
+}
+
+/* --- View Toggle Pill --- */
+html:not(.dark) .view-toggle-pill-container {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: color-mix(in srgb, var(--on-surface-variant) 10%, transparent);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}

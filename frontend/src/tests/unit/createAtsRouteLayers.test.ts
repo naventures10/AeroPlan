@@ -4,6 +4,7 @@ import { createAtsRouteLayers } from '../../features/map/layers/createAtsRouteLa
 describe('createAtsRouteLayers', () => {
   it('creates layers with correct logic', () => {
     const ctx = {
+      isDarkMode: true,
       viewMode: 'ENROUTE',
       zoom: 8,
       activeLayers: {
@@ -121,6 +122,7 @@ describe('createAtsRouteLayers', () => {
 
   it('handles hidden layer state and unselected logic', () => {
     const ctx = {
+      isDarkMode: true,
       viewMode: 'ENROUTE',
       zoom: 8,
       activeLayers: {
@@ -163,6 +165,7 @@ describe('createAtsRouteLayers', () => {
 
   it('handles selected route when layer is inactive', () => {
     const ctx = {
+      isDarkMode: true,
       viewMode: 'ENROUTE',
       zoom: 8,
       activeLayers: {
@@ -187,6 +190,7 @@ describe('createAtsRouteLayers', () => {
 
   it('handles selected waypoints in trip colors and icon color', () => {
     const ctx = {
+      isDarkMode: true,
       viewMode: 'ENROUTE',
       zoom: 8,
       activeLayers: { atsRoutes: true },

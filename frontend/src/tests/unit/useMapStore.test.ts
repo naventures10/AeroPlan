@@ -14,7 +14,6 @@ describe('useMapStore', () => {
         waypoints: false,
         navaids: false,
         atsRoutes: false,
-        wacMap: false,
         airspaces: false,
         airspaceFIR: true,
         airspaceRegulated: true,
@@ -30,7 +29,6 @@ describe('useMapStore', () => {
       selectedRouteType: null,
       activeAirport: null,
       selectedFeature: null,
-      highlightedAirspaceId: null,
       atsRouteLabels: null,
       boundsToFit: null,
       animatedTrips: [],
@@ -45,6 +43,8 @@ describe('useMapStore', () => {
       windAnimationTime: 0,
       windIsPlaying: false,
       isWindMode: false,
+      mapStyle: 'dark',
+      isDarkMode: true,
     });
   });
 
@@ -67,20 +67,17 @@ describe('useMapStore', () => {
 
   it('should toggle map layers accurately', () => {
     let state = useMapStore.getState();
-    expect(state.activeLayers.wacMap).toBe(false);
     expect(state.activeLayers.ercMap).toBe(false);
 
-    // Turn wacMap ON, should turn ercMap OFF
-    state.toggleLayer('wacMap');
-    state = useMapStore.getState();
-    expect(state.activeLayers.wacMap).toBe(true);
-    expect(state.activeLayers.ercMap).toBe(false);
-
-    // Turn ercMap ON, should turn wacMap OFF
+    // Turn ercMap ON
     state.toggleLayer('ercMap');
     state = useMapStore.getState();
-    expect(state.activeLayers.wacMap).toBe(false);
     expect(state.activeLayers.ercMap).toBe(true);
+
+    // Turn ercMap OFF
+    state.toggleLayer('ercMap');
+    state = useMapStore.getState();
+    expect(state.activeLayers.ercMap).toBe(false);
   });
 
   it('should test remaining actions correctly', () => {
@@ -117,9 +114,6 @@ describe('useMapStore', () => {
       type: 'WAYPOINT',
       data: { name: 'FIX' },
     });
-
-    state.setHighlightedAirspaceId('air1');
-    expect(useMapStore.getState().highlightedAirspaceId).toBe('air1');
 
     state.setAtsRouteLabels({ labels: 'test' } as any);
     expect(useMapStore.getState().atsRouteLabels).toEqual({ labels: 'test' });
@@ -241,5 +235,30 @@ describe('useMapStore', () => {
     expect(state.selectedFeature).toBeNull();
     expect(state.terminalPivot).toBeNull();
     expect(state.viewMode).toBe('ENROUTE');
+  });
+
+  it('should update map style via setMapStyle', () => {
+    expect(useMapStore.getState().mapStyle).toBe('dark');
+    useMapStore.getState().setMapStyle('light');
+    expect(useMapStore.getState().mapStyle).toBe('light');
+  });
+
+  it('should update isDarkMode reactively when mapStyle changes (getter bug regression)', () => {
+    // Initial state is dark
+    expect(useMapStore.getState().isDarkMode).toBe(true);
+
+    let subscribedIsDarkMode = useMapStore.getState().isDarkMode;
+    const unsubscribe = useMapStore.subscribe((state) => {
+      subscribedIsDarkMode = state.isDarkMode;
+    });
+
+    useMapStore.getState().setMapStyle('light');
+
+    // If isDarkMode is a getter, Object.assign copies it as a static true value
+    // before the new state is fully formed, causing this to stay true.
+    expect(useMapStore.getState().isDarkMode).toBe(false);
+    expect(subscribedIsDarkMode).toBe(false);
+
+    unsubscribe();
   });
 });

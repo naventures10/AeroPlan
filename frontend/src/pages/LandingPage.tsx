@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router';
 import { Plane, Map as MapIcon, FlaskConical, ChevronRight } from 'lucide-react';
-import { Button } from '@heroui/react';
 
 /**
  * Premium Landing Page for Aero Plan.
@@ -57,7 +56,7 @@ export default function LandingPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.5 }}
-          className="text-slate-400 text-lg md:text-xl max-w-md leading-relaxed mb-10"
+          className="text-on-surface-variant text-lg md:text-xl max-w-md leading-relaxed mb-10"
         >
           Experience high-performance flight planning with real-time AIP visualization and precision
           tools.
@@ -70,15 +69,14 @@ export default function LandingPage() {
           transition={{ delay: 0.6, duration: 0.5 }}
           className="flex flex-col sm:flex-row gap-4 w-full justify-center"
         >
-          <Button
-            size="lg"
-            className="bg-white text-slate-950 font-bold px-8 h-14 rounded-xl hover:bg-blue-50 transition-colors flex items-center gap-2 group"
-            onPress={() => navigate('/app')}
+          <button
+            onClick={() => navigate('/app')}
+            className="bg-surface-bright text-on-primary font-bold px-8 h-14 rounded-xl hover:bg-blue-50 transition-colors flex items-center justify-center gap-2 group text-lg"
           >
             <MapIcon className="w-5 h-5" />
             Launch Application
             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Button>
+          </button>
         </motion.div>
 
         {/* Secondary Links/Shader Lab Access */}
@@ -90,7 +88,7 @@ export default function LandingPage() {
         >
           <button
             onClick={() => navigate('/shader-lab')}
-            className="flex items-center gap-2 text-slate-500 hover:text-orange-400 transition-colors text-sm font-medium group"
+            className="flex items-center gap-2 text-on-surface-variant hover:text-orange-400 transition-colors text-sm font-medium group"
           >
             <FlaskConical className="w-4 h-4 group-hover:rotate-12 transition-transform" />
             Open Shader Lab
@@ -99,7 +97,7 @@ export default function LandingPage() {
       </motion.div>
 
       {/* Footer Decoration */}
-      <div className="absolute bottom-8 text-slate-600 text-[10px] uppercase tracking-[0.3em] font-bold">
+      <div className="absolute bottom-8 text-on-surface-variant text-[10px] uppercase tracking-[0.3em] font-bold">
         Next-Gen Aviation Intelligence
       </div>
     </div>

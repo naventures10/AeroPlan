@@ -33,7 +33,7 @@ export const ShaderLibrary = ({ shaders, activeShaderId, show, onSelect }: Shade
                   <span className="text-[10px] font-bold uppercase tracking-widest text-white/20">
                     {category}
                   </span>
-                  <div className="h-px flex-1 bg-white/5" />
+                  <div className="h-px flex-1 bg-surface-bright/5" />
                 </div>
 
                 <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
@@ -46,8 +46,8 @@ export const ShaderLibrary = ({ shaders, activeShaderId, show, onSelect }: Shade
                         onClick={() => onSelect(shader.id)}
                         className={`group rounded-2xl border px-3.5 py-3 text-left transition ${
                           isActive
-                            ? 'border-white/20 bg-white/10 shadow-lg'
-                            : 'border-white/5 bg-white/[0.02] hover:border-white/12 hover:bg-white/[0.05]'
+                            ? 'border-white/20 bg-surface-bright/10 shadow-lg'
+                            : 'border-white/5 bg-surface-bright/[0.02] hover:border-white/12 hover:bg-surface-bright/[0.05]'
                         }`}
                       >
                         <div
@@ -63,7 +63,7 @@ export const ShaderLibrary = ({ shaders, activeShaderId, show, onSelect }: Shade
                           {shader.tags.map((tag) => (
                             <span
                               key={tag}
-                              className="rounded-full border border-white/5 bg-white/[0.03] px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-white/30"
+                              className="rounded-full border border-white/5 bg-surface-bright/[0.03] px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-white/30"
                             >
                               {tag}
                             </span>

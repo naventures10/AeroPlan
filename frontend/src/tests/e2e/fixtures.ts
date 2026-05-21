@@ -38,9 +38,6 @@ export const test = base.extend({
     });
 
     // Mock tile requests for standard layers to keep tests isolated
-    await page.route(/\/tiles\/wac_india\//, async (route) => {
-      await route.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from([]) });
-    });
     await page.route(/\/tiles\/erc_india\//, async (route) => {
       await route.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from([]) });
     });

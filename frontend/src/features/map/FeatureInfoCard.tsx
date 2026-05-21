@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardBody, Divider } from '@heroui/react';
+import './FeatureInfoCard.css';
+
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMapStore } from '../../store/useMapStore';
@@ -12,13 +13,7 @@ import { WaypointDetailsPanel } from './components/WaypointDetailsPanel';
 import { AirspaceDetailsPanel } from './components/AirspaceDetailsPanel';
 
 export function FeatureInfoCard() {
-  const {
-    selectedFeature,
-    setSelectedFeature,
-    viewMode,
-    setHighlightedAirspaceId,
-    setSelectedRouteIds,
-  } = useMapStore();
+  const { selectedFeature, setSelectedFeature, viewMode, setSelectedRouteIds } = useMapStore();
 
   const isVisible = viewMode === 'ENROUTE' && selectedFeature !== null;
   const type = selectedFeature?.type || '';
@@ -90,7 +85,9 @@ export function FeatureInfoCard() {
 
   let title = 'Feature Details';
   if (type === 'AIRSPACE') {
-    title = data.name || data.identification || 'Airspace Details';
+    const rawName = data.name || data.identification || 'Airspace Details';
+    // Strip coordinate junk after pipe separator
+    title = rawName.split('|')[0].trim();
   } else {
     title =
       data.route_designator ||
@@ -126,39 +123,50 @@ export function FeatureInfoCard() {
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
           className={`aip-feature-card-wrapper ${isRoute ? 'is-route' : ''}`}
         >
-          <Card className="aip-feature-card">
-            <CardHeader className="aip-feature-card-header">
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center gap-1">
-                  <span
-                    className={`aip-feature-card-type ${
-                      type === 'WAYPOINT' ? 'aip-feature-card-type-waypoint' : ''
-                    }`}
-                  >
-                    {type.replace('_', ' ')}
-                  </span>
-                  {routeTypeBadge}
+          <div className="aip-feature-card flex flex-col relative w-full h-full bg-surface-bright rounded-xl overflow-hidden shadow-xl border border-outline-variant">
+            <div
+              className={
+                type === 'AIRSPACE'
+                  ? 'absolute top-1 right-1 z-10 !p-1 flex'
+                  : 'aip-feature-card-header flex p-4 pb-3'
+              }
+            >
+              {type !== 'AIRSPACE' && (
+                <div className="flex flex-col gap-1.5 w-full">
+                  <div className="flex items-center gap-1">
+                    <span
+                      className={`aip-feature-card-type ${
+                        type === 'WAYPOINT' ? 'aip-feature-card-type-waypoint' : ''
+                      }`}
+                    >
+                      {type.replace('_', ' ')}
+                    </span>
+                    {routeTypeBadge}
+                  </div>
+                  <h3 className="aip-feature-card-title">{title}</h3>
                 </div>
-                <h3 className="aip-feature-card-title">{title}</h3>
-              </div>
+              )}
               <button
                 type="button"
                 data-testid="close-feature-card"
                 onClick={() => {
                   setSelectedFeature(null);
                   setSelectedRouteIds([]);
-                  if (type === 'AIRSPACE') {
-                    setHighlightedAirspaceId(null);
-                  }
                 }}
-                className="aip-feature-card-close p-2 hover:bg-white/5 rounded-full transition-colors"
+                className="aip-feature-card-close p-2 hover:bg-surface-container-high rounded-full transition-colors ml-auto flex-shrink-0 self-start"
                 aria-label="Close"
               >
                 <X size={18} />
               </button>
-            </CardHeader>
-            <Divider className="aip-feature-card-divider" />
-            <CardBody className="aip-feature-card-body custom-scrollbar">
+            </div>
+            {type !== 'AIRSPACE' && (
+              <hr className="aip-feature-card-divider m-0 border-t border-outline-variant" />
+            )}
+            <div
+              className={`aip-feature-card-body custom-scrollbar p-4 flex-1 overflow-y-auto ${
+                type === 'AIRSPACE' ? '!pt-4 !px-5 !pb-5' : ''
+              }`}
+            >
               {type === 'ATS_ROUTE' && (
                 <RouteDetailsPanel
                   isLoadingRoute={isLoadingRoute}
@@ -175,8 +183,8 @@ export function FeatureInfoCard() {
               )}
               {type === 'WAYPOINT' && <WaypointDetailsPanel data={data} />}
               {type === 'AIRSPACE' && <AirspaceDetailsPanel data={data} />}
-            </CardBody>
-          </Card>
+            </div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

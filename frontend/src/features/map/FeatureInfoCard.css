@@ -1,0 +1,94 @@
+@import '../../index.css';
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   8. Feature Cards Component
+   ───────────────────────────────────────────────────────────────────────────── */
+.aip-feature-card {
+  @apply max-h-[calc(100vh-180px)] flex flex-col;
+  background: var(--glass-bg-heavy);
+  backdrop-filter: blur(16px) saturate(200%);
+  -webkit-backdrop-filter: blur(16px) saturate(200%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.aip-feature-card-wrapper {
+  @apply absolute top-6 right-6 z-50 w-72;
+}
+
+.aip-feature-card-wrapper.is-route {
+  @apply w-[600px] max-w-[92vw];
+}
+
+.aip-feature-card-header {
+  @apply flex justify-between items-center !pb-4 !pt-6 !px-6;
+}
+
+.aip-feature-card-type {
+  @apply text-[9px] font-bold tracking-widest uppercase mb-0.5;
+  color: var(--primary);
+}
+
+.aip-feature-card-type-waypoint {
+  color: var(--route-waypoint) !important;
+}
+
+.aip-feature-card-title {
+  @apply text-sm font-bold tracking-wide;
+  color: var(--primary);
+}
+
+.aip-feature-card-close {
+  color: var(--on-surface-variant);
+}
+
+.aip-feature-card-close:hover {
+  color: var(--primary);
+}
+
+.aip-feature-card-divider {
+  @apply !mx-6 w-auto;
+  background: var(--glass-border);
+}
+
+.aip-feature-card-body {
+  @apply !px-6 !pt-3 !pb-6 max-h-[60vh] overflow-y-auto;
+}
+
+.aip-route-badge {
+  @apply ml-2 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider;
+}
+
+.aip-route-badge-rnav {
+  background: color-mix(in srgb, var(--route-rnav) 20%, transparent);
+  color: var(--route-rnav);
+  border: 1px solid color-mix(in srgb, var(--route-rnav) 30%, transparent);
+}
+
+.aip-route-badge-ats {
+  background: color-mix(in srgb, var(--route-ats) 20%, transparent);
+  color: var(--route-ats);
+  border: 1px solid color-mix(in srgb, var(--route-ats) 30%, transparent);
+}
+
+.route-th {
+  padding: 4px 8px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+  white-space: nowrap;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.route-td {
+  padding: 4px 8px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* --- Feature Cards --- */
+html:not(.dark) .aip-feature-card {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+}

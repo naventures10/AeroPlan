@@ -79,10 +79,22 @@ refresh-mv: ## Refresh the ATS route labels materialized view
 		"REFRESH MATERIALIZED VIEW mv_ats_route_labels;" && echo "\033[32m✓ Materialized view refreshed\033[0m"
 
 restart-martin: ## Pulls latest Martin and restarts with metrics enabled
+	@if [ -z "$$AWS_ACCESS_KEY_ID" ] || [ -z "$$AWS_SECRET_ACCESS_KEY" ]; then \
+		echo "\033[31mError: AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be set in environment\033[0m"; \
+		exit 1; \
+	fi
 	@docker pull ghcr.io/maplibre/martin:latest
 	@docker stop martin || true && docker rm martin || true
 	@docker run -d --name martin \
 		-p 3000:3000 -p 9091:9091 \
+		-e AWS_ACCESS_KEY_ID=$$AWS_ACCESS_KEY_ID \
+		-e AWS_SECRET_ACCESS_KEY=$$AWS_SECRET_ACCESS_KEY \
+		-e AWS_ENDPOINT=http://host.docker.internal:9000 \
+		-e AWS_ENDPOINT_URL=http://host.docker.internal:9000 \
+		-e AWS_REGION=us-east-1 \
+		-e AWS_DEFAULT_REGION=us-east-1 \
+		-e AWS_EC2_METADATA_DISABLED=true \
+		-e AWS_ALLOW_HTTP=true \
 		-v $(PWD)/backend/martin.yaml:/config/martin.yaml \
 		-v $(PWD)/backend/data:/data \
 		ghcr.io/maplibre/martin:latest --config /config/martin.yaml

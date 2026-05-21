@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import './AerodromeInfoDropdown.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, BookOpen } from 'lucide-react';
 
@@ -75,7 +76,7 @@ export default function AerodromeInfoDropdown({
         <BookOpen
           size={16}
           strokeWidth={2}
-          className={isOpen ? 'text-cyan-400' : 'text-zinc-500'}
+          className={isOpen ? 'text-teal-700 dark:text-cyan-400' : 'text-on-surface-variant '}
         />
         <span className="text-[11px] font-bold tracking-[0.15em] uppercase">
           AERODROME INFORMATION
@@ -83,7 +84,7 @@ export default function AerodromeInfoDropdown({
         <ChevronDown
           size={14}
           strokeWidth={2.5}
-          className={`transition-transform duration-300 ${isOpen ? 'rotate-180 text-cyan-400' : 'text-zinc-500'}`}
+          className={`transition-transform duration-300 ${isOpen ? 'rotate-180 text-teal-700 dark:text-cyan-400' : 'text-on-surface-variant '}`}
         />
       </button>
 
@@ -106,7 +107,7 @@ export default function AerodromeInfoDropdown({
                     setIsOpen(false);
                   }}
                   className={`aip-dropdown-item ${
-                    idx !== AIP_SECTIONS.length - 1 ? 'border-b border-zinc-800/30' : ''
+                    idx !== AIP_SECTIONS.length - 1 ? 'border-b border-outline-variant ' : ''
                   }`}
                 >
                   <span className="aip-dropdown-item-code">{section.code}</span>

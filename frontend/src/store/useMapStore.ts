@@ -19,6 +19,10 @@ interface MapState {
   // UI & App State
   viewMode: 'ENROUTE' | 'TERMINAL';
   setViewMode: (mode: 'ENROUTE' | 'TERMINAL') => void;
+  mapStyle: 'dark' | 'light' | 'hybrid';
+  setMapStyle: (style: 'dark' | 'light' | 'hybrid') => void;
+  /** Derived: true when the UI should render in dark mode (mapStyle !== 'light') */
+  isDarkMode: boolean;
 
   // Metadata for the active aerodrome
   activeAerodromeMetadata: any | null;
@@ -30,7 +34,6 @@ interface MapState {
     waypoints: boolean;
     navaids: boolean;
     atsRoutes: boolean;
-    wacMap: boolean;
     airspaces: boolean;
     airspaceFIR: boolean;
     airspaceRegulated: boolean;
@@ -69,9 +72,6 @@ interface MapState {
   setSelectedFeature: (
     feature: { type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID' | 'AIRSPACE'; data: any } | null,
   ) => void;
-
-  highlightedAirspaceId: string | null;
-  setHighlightedAirspaceId: (id: string | null) => void;
 
   atsRouteLabels: any | null;
   setAtsRouteLabels: (data: any) => void;
@@ -185,6 +185,18 @@ export const useMapStore = create<MapState>((set, get) => ({
   activeAerodromeMetadata: null,
   setActiveAerodromeMetadata: (data) => set({ activeAerodromeMetadata: data }),
 
+  mapStyle: 'dark',
+  isDarkMode: true,
+  setMapStyle: (style) => {
+    set({ mapStyle: style, isDarkMode: style !== 'light' });
+    // Sync the 'dark' class on <html> for Tailwind's darkMode: 'class'
+    if (style === 'light') {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+  },
+
   searchQuery: '',
   setSearchQuery: (query) => set({ searchQuery: query }),
 
@@ -193,7 +205,6 @@ export const useMapStore = create<MapState>((set, get) => ({
     waypoints: false,
     navaids: false,
     atsRoutes: false,
-    wacMap: false,
     airspaces: false,
     airspaceFIR: false,
     airspaceRegulated: false,
@@ -218,6 +229,8 @@ export const useMapStore = create<MapState>((set, get) => ({
 
       newActiveLayers[layer] = !newActiveLayers[layer];
 
+      let stateUpdates: Partial<MapState> = { activeLayers: newActiveLayers };
+
       if (layer === 'weather') {
         const isWeatherNowOn = newActiveLayers.weather;
         // Turn on wind mode by default when weather is activated, if neither was on
@@ -227,19 +240,13 @@ export const useMapStore = create<MapState>((set, get) => ({
             : state.isWindMode
           : state.isWindMode;
 
-        return {
-          activeLayers: newActiveLayers,
+        stateUpdates = {
+          ...stateUpdates,
           isWeatherMode: isWeatherNowOn,
           isWindMode: nextWind,
         };
       }
 
-      if (layer === 'wacMap' && newActiveLayers.wacMap) {
-        newActiveLayers.ercMap = false;
-      }
-      if (layer === 'ercMap' && newActiveLayers.ercMap) {
-        newActiveLayers.wacMap = false;
-      }
       if (layer === 'airspaces' && newActiveLayers.airspaces) {
         newActiveLayers.airspaceFIR = true;
         newActiveLayers.airspaceRegulated = true;
@@ -247,7 +254,42 @@ export const useMapStore = create<MapState>((set, get) => ({
         newActiveLayers.airspaceUpr = true;
       }
 
-      return { activeLayers: newActiveLayers };
+      if (layer === 'atsRoutes' && !newActiveLayers.atsRoutes) {
+        stateUpdates = {
+          ...stateUpdates,
+          selectedRouteIds: [],
+          selectedRouteType: null,
+        };
+        if (state.selectedFeature?.type === 'ATS_ROUTE') {
+          stateUpdates.selectedFeature = null;
+        }
+      }
+
+      if (
+        layer === 'waypoints' &&
+        !newActiveLayers.waypoints &&
+        state.selectedFeature?.type === 'WAYPOINT'
+      ) {
+        stateUpdates.selectedFeature = null;
+      }
+
+      if (
+        layer === 'navaids' &&
+        !newActiveLayers.navaids &&
+        state.selectedFeature?.type === 'NAVAID'
+      ) {
+        stateUpdates.selectedFeature = null;
+      }
+
+      if (
+        (layer === 'airspaces' || layer.startsWith('airspace')) &&
+        !newActiveLayers[layer] &&
+        state.selectedFeature?.type === 'AIRSPACE'
+      ) {
+        stateUpdates.selectedFeature = null;
+      }
+
+      return stateUpdates;
     }),
 
   selectedRouteIds: [],
@@ -304,9 +346,6 @@ export const useMapStore = create<MapState>((set, get) => ({
 
   selectedFeature: null,
   setSelectedFeature: (feature) => set({ selectedFeature: feature }),
-
-  highlightedAirspaceId: null,
-  setHighlightedAirspaceId: (id) => set({ highlightedAirspaceId: id }),
 
   atsRouteLabels: null,
   setAtsRouteLabels: (data) => {

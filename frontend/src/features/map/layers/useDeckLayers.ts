@@ -41,11 +41,14 @@ export function useDeckLayers({
     viewState,
     atsRouteLabels,
     animatedTrips,
-    highlightedAirspaceId,
     selectedRnpProcedureId,
     selectedRnpApproachId,
     setSelectedRnpApproachId,
+    mapStyle,
   } = useMapStore();
+
+  // Derive isDarkMode from the reactive mapStyle field (getter is not reactive)
+  const isDarkMode = mapStyle !== 'light';
 
   const { isAtsRendered, currentTime } = useRouteAnimation();
 
@@ -89,10 +92,10 @@ export function useDeckLayers({
     selectedRouteType,
     selectedFeature,
     zoom,
+    isDarkMode,
     atsRouteLabels,
     animatedTrips,
     currentTime,
-    highlightedAirspaceId,
     setSelectedRouteIds,
     setSelectedFeature,
   };
@@ -154,7 +157,6 @@ export function useDeckLayers({
     atsRouteLabels,
     animatedTrips,
     currentTime,
-    highlightedAirspaceId,
     rnpPathData,
     selectedRnpApproachId,
     setSelectedRnpApproachId,
@@ -163,6 +165,8 @@ export function useDeckLayers({
     missedDist,
     windLayer,
     cloudLayers,
+    isDarkMode,
+    mapStyle,
   ]);
 
   return layers;

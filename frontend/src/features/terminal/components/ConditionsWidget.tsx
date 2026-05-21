@@ -21,10 +21,11 @@ interface ConditionsWidgetProps {
 }
 
 // Shared card label style
-const sectionLabel = 'text-[9px] font-black tracking-[0.25em] text-zinc-500 uppercase block mb-3';
+const sectionLabel =
+  'text-[9px] font-black tracking-[0.25em] text-on-surface-variant  uppercase block mb-3';
 
 // Shared card surface class
-const cardBase = 'bg-white/[0.03] rounded-2xl p-4 border border-white/[0.05]';
+const cardBase = 'bg-surface-container rounded-2xl p-4 border border-outline-variant';
 
 export function ConditionsWidget({
   icaoCode,
@@ -43,8 +44,8 @@ export function ConditionsWidget({
       {/* Header */}
       <div className="flex justify-between items-end mb-1">
         <div>
-          <h2 className="text-2xl font-black text-white tracking-widest">{icaoCode}</h2>
-          <p className="text-zinc-500 text-[10px] tracking-[0.2em] uppercase mt-1">
+          <h2 className="text-2xl font-black text-on-surface tracking-widest">{icaoCode}</h2>
+          <p className="text-on-surface-variant text-[10px] tracking-[0.2em] uppercase mt-1">
             Current Conditions
           </p>
         </div>
@@ -58,31 +59,31 @@ export function ConditionsWidget({
             {/* Values */}
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
-                <Wind className="text-cyan-400 shrink-0" size={16} />
-                <span className="text-xl font-black text-white">
+                <Wind className="text-teal-700 dark:text-cyan-400 shrink-0" size={16} />
+                <span className="text-xl font-black text-on-surface">
                   {parsedMetar.windDir ? `${parsedMetar.windDir}°T` : 'VRB'}
                 </span>
               </div>
-              <span className="text-3xl font-black text-white leading-none">
+              <span className="text-3xl font-black text-on-surface leading-none">
                 {parsedMetar.windSpeed ?? '–'}
-                <span className="text-sm font-medium text-zinc-400 ml-1.5">
+                <span className="text-sm font-medium text-on-surface-variant ml-1.5">
                   {parsedMetar.windUnit || 'kt'}
                 </span>
               </span>
             </div>
 
             {/* Compact compass */}
-            <div className="relative w-[72px] h-[72px] rounded-full border border-zinc-700/50 flex items-center justify-center shrink-0">
-              <div className="absolute inset-1.5 border border-dashed border-zinc-700/60 rounded-full" />
+            <div className="relative w-[72px] h-[72px] rounded-full border border-outline flex items-center justify-center shrink-0">
+              <div className="absolute inset-1.5 border border-dashed border-outline rounded-full" />
               {parsedMetar.windDir && parsedMetar.windDir !== 'VRB' && (
                 <div
                   className="absolute origin-center w-1 h-full flex flex-col items-center justify-start py-1.5"
                   style={{ transform: `rotate(${parsedMetar.windDir}deg)` }}
                 >
-                  <div className="w-2 h-2 bg-amber-500 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.8)]" />
+                  <div className="w-2 h-2 bg-amber-500 rounded-full shadow-[0_0_8px_color-mix(in_srgb,var(--status-warning)_80%,transparent)]" />
                 </div>
               )}
-              <span className="text-[11px] font-bold text-white z-10">
+              <span className="text-[11px] font-bold text-on-surface z-10">
                 {parsedMetar.windDir === 'VRB'
                   ? 'VRB'
                   : parsedMetar.windDir
@@ -99,13 +100,15 @@ export function ConditionsWidget({
           <div className={cardBase}>
             <span className={sectionLabel}>Visibility</span>
             <div className="flex items-center gap-2 mb-2.5">
-              <Eye className="text-cyan-400 shrink-0" size={16} />
-              <span className="text-xl font-bold text-white">{parsedMetar.visibility || '–'}</span>
+              <Eye className="text-teal-700 dark:text-cyan-400 shrink-0" size={16} />
+              <span className="text-xl font-bold text-on-surface">
+                {parsedMetar.visibility || '–'}
+              </span>
             </div>
-            <div className="w-full bg-white/[0.06] h-1 rounded-full overflow-hidden">
+            <div className="w-full bg-surface-container-high h-1 rounded-full overflow-hidden">
               {parsedMetar.visibility && (
                 <div
-                  className="bg-cyan-400 h-full shadow-[0_0_8px_var(--accent-cyan-glow)]"
+                  className="bg-teal-1000 dark:bg-cyan-400 h-full shadow-[0_0_8px_var(--accent-cyan-glow)]"
                   style={{
                     width: parsedMetar.visibility.includes('>')
                       ? '100%'
@@ -120,16 +123,16 @@ export function ConditionsWidget({
           <div className={cardBase}>
             <span className={sectionLabel}>Cloud Cover</span>
             <div className="flex items-start gap-3">
-              <Cloud className="text-cyan-400 mt-0.5 shrink-0" size={16} />
+              <Cloud className="text-teal-700 dark:text-cyan-400 mt-0.5 shrink-0" size={16} />
               <div className="flex flex-col gap-0.5">
                 {parsedMetar.clouds.length > 0 ? (
                   parsedMetar.clouds.map((c: string, i: number) => (
-                    <span key={i} className="text-sm font-semibold text-white leading-snug">
+                    <span key={i} className="text-sm font-semibold text-on-surface leading-snug">
                       {c}
                     </span>
                   ))
                 ) : (
-                  <span className="text-sm text-zinc-500 italic">No cloud data</span>
+                  <span className="text-sm text-on-surface-variant italic">No cloud data</span>
                 )}
               </div>
             </div>
@@ -141,8 +144,8 @@ export function ConditionsWidget({
         {/* Temperature */}
         <div className={`col-span-4 ${cardBase} flex flex-col items-center`}>
           <span className={sectionLabel + ' text-center'}>Temp</span>
-          <Thermometer className="text-cyan-400 mb-1.5" size={18} />
-          <div className="text-2xl font-black text-white">
+          <Thermometer className="text-teal-700 dark:text-cyan-400 mb-1.5" size={18} />
+          <div className="text-2xl font-black text-on-surface">
             {parsedMetar.temp !== null ? `${parsedMetar.temp}°C` : '–'}
           </div>
         </div>
@@ -150,8 +153,8 @@ export function ConditionsWidget({
         {/* Dew Point */}
         <div className={`col-span-4 ${cardBase} flex flex-col items-center`}>
           <span className={sectionLabel + ' text-center'}>Dew Pt</span>
-          <CloudFog className="text-cyan-400 mb-1.5" size={18} />
-          <div className="text-2xl font-black text-white">
+          <CloudFog className="text-teal-700 dark:text-cyan-400 mb-1.5" size={18} />
+          <div className="text-2xl font-black text-on-surface">
             {parsedMetar.dew !== null ? `${parsedMetar.dew}°C` : '–'}
           </div>
         </div>
@@ -159,18 +162,20 @@ export function ConditionsWidget({
         {/* QNH */}
         <div className={`col-span-4 ${cardBase} flex flex-col items-center`}>
           <span className={sectionLabel + ' text-center'}>QNH</span>
-          <Compass className="text-cyan-400 mb-1.5" size={18} />
-          <div className="text-2xl font-black text-white">
+          <Compass className="text-teal-700 dark:text-cyan-400 mb-1.5" size={18} />
+          <div className="text-2xl font-black text-on-surface">
             {parsedMetar.qnh !== null ? `${parsedMetar.qnh}` : '–'}
           </div>
-          <span className="text-[9px] text-zinc-500 font-bold tracking-widest mt-0.5">hPa</span>
+          <span className="text-[9px] text-on-surface-variant font-bold tracking-widest mt-0.5">
+            hPa
+          </span>
         </div>
 
         {/* ── DAYLIGHT ──────────────────────────────────── */}
         <div className={`col-span-12 ${cardBase}`}>
           <div className="flex justify-between items-center mb-4">
             <span className={sectionLabel + ' mb-0'}>Daylight</span>
-            <span className="text-[10px] text-zinc-500 font-mono tracking-widest tabular-nums">
+            <span className="text-[10px] text-on-surface-variant font-mono tracking-widest tabular-nums">
               {todayStr}
             </span>
           </div>
@@ -188,13 +193,15 @@ export function ConditionsWidget({
             ].map(({ icon: Icon, color, label, value }) => (
               <div
                 key={label}
-                className="flex flex-col items-center gap-1.5 bg-white/[0.02] rounded-xl p-3 border border-white/[0.04]"
+                className="flex flex-col items-center gap-1.5 bg-surface rounded-xl p-3 border border-outline-variant"
               >
                 <Icon size={18} className={color} />
-                <span className="text-[8px] text-zinc-500 font-black uppercase tracking-widest">
+                <span className="text-[8px] text-on-surface-variant font-black uppercase tracking-widest">
                   {label}
                 </span>
-                <span className="text-sm font-bold text-white tabular-nums">{value || '–'}</span>
+                <span className="text-sm font-bold text-on-surface tabular-nums">
+                  {value || '–'}
+                </span>
               </div>
             ))}
           </div>

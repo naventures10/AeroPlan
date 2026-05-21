@@ -15,7 +15,9 @@ export class MapPage {
   readonly page: Page;
   readonly searchInput: Locator;
   readonly mapCanvas: Locator;
-  readonly overlayMenuButton: Locator;
+  readonly baseMapButton: Locator;
+  readonly ercToggleButton: Locator;
+  readonly zoomSlider: Locator;
   readonly aerodromeInfoButton: Locator;
   readonly dashboardHandle: Locator;
 
@@ -23,7 +25,9 @@ export class MapPage {
     this.page = page;
     this.searchInput = page.locator('input.aip-search-input');
     this.mapCanvas = page.locator('canvas').first();
-    this.overlayMenuButton = page.getByTitle('Map Overlays');
+    this.baseMapButton = page.getByTitle('Change Base Map');
+    this.ercToggleButton = page.getByTitle('Toggle Enroute Chart');
+    this.zoomSlider = page.getByLabel('Zoom Level');
     this.aerodromeInfoButton = page.getByText('AERODROME INFORMATION');
     this.dashboardHandle = page.getByTitle('Expand Dashboard');
   }
@@ -58,13 +62,12 @@ export class MapPage {
     await button.click();
   }
 
-  async openOverlayMenu() {
-    await this.overlayMenuButton.click();
+  async cycleBaseMap() {
+    await this.baseMapButton.click();
   }
 
   async selectEnrouteChart() {
-    await this.openOverlayMenu();
-    await this.page.getByText('Enroute Chart').click();
+    await this.ercToggleButton.click();
   }
 
   async search(query: string, resultText?: string) {

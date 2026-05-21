@@ -61,7 +61,6 @@ describe('useDeckLayers', () => {
       viewMode: 'TERMINAL',
       selectedRouteIds: [],
       selectedFeature: null,
-      highlightedAirspaceId: null,
       atsRouteLabels: null,
       terminalPivot: null,
       animatedTrips: [],
@@ -70,7 +69,6 @@ describe('useDeckLayers', () => {
       selectedRnpChartKey: null,
       selectedRnpApproachId: null,
       setSelectedFeature: vi.fn(),
-      setHighlightedAirspaceId: vi.fn(),
       setSelectedRnpApproachId: vi.fn(),
     });
   });

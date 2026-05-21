@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import './SectionModal.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import SectionRenderer from './SectionRenderer';
@@ -72,7 +73,7 @@ export default function SectionModal({
               <div className="aip-modal-header">
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="aip-modal-badge">{sectionId.replace(/_/g, ' ')}</span>
-                  <h2 className="text-zinc-100 font-semibold text-sm tracking-wide truncate uppercase">
+                  <h2 className="text-on-surface font-semibold text-sm tracking-wide truncate uppercase">
                     {title}
                   </h2>
                 </div>
@@ -86,8 +87,8 @@ export default function SectionModal({
                 {isLoading ? (
                   <div className="flex items-center justify-center py-20">
                     <div className="flex flex-col items-center gap-3">
-                      <div className="w-8 h-8 border-2 border-zinc-700 border-t-indigo-400 rounded-full animate-spin" />
-                      <span className="text-zinc-500 text-xs font-medium tracking-widest uppercase">
+                      <div className="w-8 h-8 border-2 border-outline border-t-teal-500 dark:border-t-indigo-400 rounded-full animate-spin" />
+                      <span className="text-on-surface-variant text-xs font-medium tracking-widest uppercase">
                         Loading Section...
                       </span>
                     </div>

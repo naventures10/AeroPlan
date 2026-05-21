@@ -17,7 +17,7 @@ interface ObjectRendererProps {
 export default function ObjectRenderer({ data, columnConfig }: ObjectRendererProps) {
   if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
     return (
-      <div className="text-zinc-500 text-sm font-medium tracking-wide py-8 text-center">
+      <div className="text-on-surface-variant text-sm font-medium tracking-wide py-8 text-center">
         NO DATA AVAILABLE
       </div>
     );
@@ -63,13 +63,13 @@ export default function ObjectRenderer({ data, columnConfig }: ObjectRendererPro
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
-            <th className="text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-zinc-400 bg-zinc-900/80 border-b border-zinc-700/50 w-12">
+            <th className="text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-on-surface-variant bg-surface-container border-b border-outline-variant w-12">
               Ref
             </th>
-            <th className="text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-zinc-400 bg-zinc-900/80 border-b border-zinc-700/50 w-1/3">
+            <th className="text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-on-surface-variant bg-surface-container border-b border-outline-variant w-1/3">
               Description
             </th>
-            <th className="text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-zinc-400 bg-zinc-900/80 border-b border-zinc-700/50">
+            <th className="text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-on-surface-variant bg-surface-container border-b border-outline-variant">
               Data
             </th>
           </tr>
@@ -80,18 +80,18 @@ export default function ObjectRenderer({ data, columnConfig }: ObjectRendererPro
             return (
               <tr
                 key={row.ref}
-                className={`border-b border-zinc-800/40 transition-colors hover:bg-zinc-800/30 ${
-                  row.ref % 2 === 0 ? 'bg-transparent' : 'bg-zinc-900/20'
+                className={`border-b border-outline-variant  transition-colors hover:bg-surface-container-high/50 dark:hover:bg-zinc-800/30 ${
+                  row.ref % 2 === 0 ? 'bg-transparent' : 'bg-surface/50 '
                 }`}
               >
-                <td className="px-4 py-3 text-zinc-500 text-[13px] font-mono font-bold align-top">
+                <td className="px-4 py-3 text-on-surface-variant text-[13px] font-mono font-bold align-top">
                   {row.ref}
                 </td>
-                <td className="px-4 py-3 text-zinc-300 text-[13px] font-medium leading-relaxed align-top">
+                <td className="px-4 py-3 text-on-surface-variant text-[13px] font-medium leading-relaxed align-top">
                   {row.label}
                 </td>
                 <td
-                  className="px-4 py-3 text-zinc-200 text-[13px] leading-relaxed align-top whitespace-pre-wrap break-words"
+                  className="px-4 py-3 text-on-surface text-[13px] leading-relaxed align-top whitespace-pre-wrap break-words"
                   dangerouslySetInnerHTML={{
                     __html: sanitizeHtml(
                       displayValue

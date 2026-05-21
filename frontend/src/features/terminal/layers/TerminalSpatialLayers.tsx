@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import { Source, Layer, useMap } from 'react-map-gl/maplibre';
 import type { FilterSpecification } from 'maplibre-gl';
 import {
-  POLYGON_PAINT,
-  POINT_PAINT,
+  getPolygonPaint,
+  getPointPaint,
   POINT_LAYOUT,
   RUNWAY_FILL_PAINT,
   RUNWAY_OUTLINE_PAINT,
@@ -44,6 +44,7 @@ export function TerminalSpatialLayers() {
   const runwayData = useRunwayPolygons();
   const terminalSpatialFilters = useMapStore((state) => state.terminalSpatialFilters);
   const activeAirport = useMapStore((state) => state.activeAirport);
+  const isDarkMode = useMapStore((state) => state.mapStyle !== 'light');
 
   useEffect(() => {
     if (!map) return;
@@ -186,7 +187,7 @@ export function TerminalSpatialLayers() {
           type="fill-extrusion"
           source-layer="spatial_features"
           filter={polygonFilter}
-          paint={POLYGON_PAINT as any}
+          paint={getPolygonPaint(isDarkMode) as any}
         />
         <Layer
           id="mvt-points"
@@ -194,7 +195,7 @@ export function TerminalSpatialLayers() {
           source-layer="spatial_features"
           filter={pointFilter}
           layout={POINT_LAYOUT as any}
-          paint={POINT_PAINT as any}
+          paint={getPointPaint(isDarkMode) as any}
         />
       </Source>
     </>

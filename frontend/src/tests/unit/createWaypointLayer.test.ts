@@ -4,6 +4,7 @@ import { createWaypointLayer } from '../../features/map/layers/createWaypointLay
 describe('createWaypointLayer', () => {
   it('creates MVT waypoint layer with proper styling', () => {
     const ctx = {
+      isDarkMode: true,
       viewMode: 'ENROUTE',
       activeLayers: { atsRoutes: false, waypoints: true }, // if false, waypoints pickable
       zoom: 8,
@@ -53,6 +54,7 @@ describe('createWaypointLayer', () => {
 
   it('hides layers when viewMode is TERMINAL', () => {
     const ctx = {
+      isDarkMode: true,
       viewMode: 'TERMINAL',
       activeLayers: { atsRoutes: false, waypoints: false },
       zoom: 8,

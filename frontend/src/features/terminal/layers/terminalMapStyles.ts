@@ -18,7 +18,7 @@ const GET_SEARCH_STRING = [
   ],
 ];
 
-export const POLYGON_PAINT = {
+export const getPolygonPaint = (isDarkMode: boolean) => ({
   'fill-extrusion-color': [
     'let',
     's',
@@ -26,12 +26,12 @@ export const POLYGON_PAINT = {
     [
       'case',
       ['>=', ['index-of', 'TAXIWAY', ['var', 's']], 0],
-      '#52525b',
+      isDarkMode ? '#52525b' : '#d6d3d1',
       ['>=', ['index-of', 'APRON', ['var', 's']], 0],
-      '#71717a',
+      isDarkMode ? '#71717a' : '#e7e5e4',
       ['>=', ['index-of', 'BUILDING', ['var', 's']], 0],
-      '#94a3b8',
-      '#9ca3af',
+      isDarkMode ? '#94a3b8' : '#94a3b8',
+      isDarkMode ? '#9ca3af' : '#a8a29e',
     ],
   ],
   'fill-extrusion-height': [
@@ -41,7 +41,7 @@ export const POLYGON_PAINT = {
     15,
   ],
   'fill-extrusion-opacity': 0.8,
-};
+});
 
 export const POINT_LAYOUT = {
   'icon-image': [
@@ -120,7 +120,7 @@ export const POINT_LAYOUT = {
   'icon-anchor': 'center' as const,
 };
 
-export const POINT_PAINT = {
+export const getPointPaint = (isDarkMode: boolean) => ({
   'icon-color': [
     'let',
     's',
@@ -128,21 +128,21 @@ export const POINT_PAINT = {
     [
       'case',
       ['>=', ['index-of', 'ARP', ['var', 's']], 0],
-      '#c084fc',
+      isDarkMode ? '#c084fc' : '#8b5a8c',
       ['>=', ['index-of', 'HELIPAD', ['var', 's']], 0],
-      '#0ea5e9',
+      isDarkMode ? '#0ea5e9' : '#427ab5',
       [
         'any',
         ['>=', ['index-of', 'NAV', ['var', 's']], 0],
         ['>=', ['index-of', 'RADIO', ['var', 's']], 0],
       ],
-      '#34d399',
+      isDarkMode ? '#34d399' : '#219b9d',
       [
         'any',
         ['>=', ['index-of', 'TREE', ['var', 's']], 0],
         ['>=', ['index-of', 'NATURAL', ['var', 's']], 0],
       ],
-      '#22c55e',
+      isDarkMode ? '#22c55e' : '#0a7c6e',
       [
         'any',
         ['>=', ['index-of', 'TOWER', ['var', 's']], 0],
@@ -151,18 +151,18 @@ export const POINT_PAINT = {
         ['>=', ['index-of', 'POLE', ['var', 's']], 0],
         ['>=', ['index-of', 'CRANE', ['var', 's']], 0],
       ],
-      '#dc2626',
+      isDarkMode ? '#dc2626' : '#c45b4b',
       [
         'any',
         ['>=', ['index-of', 'BUILDING', ['var', 's']], 0],
         ['>=', ['index-of', 'HOUSE', ['var', 's']], 0],
         ['>=', ['index-of', 'SCHOOL', ['var', 's']], 0],
       ],
-      '#3b82f6',
-      '#f97316',
+      isDarkMode ? '#3b82f6' : '#64748b',
+      isDarkMode ? '#f97316' : '#d97706',
     ],
   ],
-  'icon-halo-color': '#000000',
+  'icon-halo-color': isDarkMode ? '#000000' : '#ffffff',
   'icon-halo-width': [
     'let',
     's',
@@ -179,7 +179,7 @@ export const POINT_PAINT = {
     ],
   ],
   'icon-halo-blur': 0,
-};
+});
 
 export const RUNWAY_FILL_PAINT = {
   'fill-color': '#3f3f46',
