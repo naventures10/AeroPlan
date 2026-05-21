@@ -97,7 +97,7 @@ export default function LandingPage() {
       </motion.div>
 
       {/* Footer Decoration */}
-      <div className="absolute bottom-8 text-slate-600 text-[10px] uppercase tracking-[0.3em] font-bold">
+      <div className="absolute bottom-8 text-on-surface-variant text-[10px] uppercase tracking-[0.3em] font-bold">
         Next-Gen Aviation Intelligence
       </div>
     </div>

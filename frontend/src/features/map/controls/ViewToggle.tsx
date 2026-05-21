@@ -84,7 +84,7 @@ export default function ViewToggle() {
           }`}
         >
           {/* Top Cap */}
-          <div className="text-slate-400 pt-1 pb-2">
+          <div className="text-on-surface-variant pt-1 pb-2">
             <ChevronUp size={16} strokeWidth={3} />
           </div>
 
@@ -141,7 +141,7 @@ export default function ViewToggle() {
           </button>
 
           {/* Divider */}
-          <div className="w-6 h-[1px] bg-slate-300 my-1" />
+          <div className="w-6 h-[1px] bg-outline-variant/50 my-1" />
 
           {/* Zoom Section */}
           <div className="flex flex-col items-center gap-2">
@@ -178,7 +178,7 @@ export default function ViewToggle() {
                     transitionDuration: 0,
                   })
                 }
-                className="absolute w-28 h-1.5 bg-slate-300 rounded-full appearance-none cursor-pointer outline-none hover:bg-slate-400 dark:hover:bg-zinc-500/50 transition-colors [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-[var(--accent-cyan)] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:scale-125 [&::-webkit-slider-thumb]:transition-transform view-toggle-zoom-slider"
+                className="absolute w-28 h-1.5 bg-surface-container-highest rounded-full appearance-none cursor-pointer outline-none hover:bg-outline-variant/60 transition-colors [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-[var(--accent-cyan)] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:scale-125 [&::-webkit-slider-thumb]:transition-transform view-toggle-zoom-slider"
               />
             </div>
 
@@ -201,7 +201,7 @@ export default function ViewToggle() {
           </div>
 
           {/* Bottom Cap */}
-          <div className="text-slate-400 pt-2 pb-1">
+          <div className="text-on-surface-variant pb-1 pt-2">
             <ChevronDown size={16} strokeWidth={3} />
           </div>
         </div>
@@ -228,7 +228,7 @@ export default function ViewToggle() {
               {/* 2D Face (Front) */}
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--glass-bg-heavy)] backdrop-blur-xl border border-[var(--glass-border)] rounded-xl shadow-xl transition-all duration-300 group-hover:border-[var(--glass-border-highlight)] view-toggle-face-2d">
                 <Layers
-                  className="text-slate-600 group-hover:text-on-surface dark:group-hover:text-white transition-colors"
+                  className="text-on-surface-variant group-hover:text-on-surface dark:group-hover:text-white transition-colors"
                   size={20}
                   strokeWidth={2}
                 />

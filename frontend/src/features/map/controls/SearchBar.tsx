@@ -190,7 +190,7 @@ export default function SearchBar({
                   <Search size={24} className="text-on-surface" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-slate-600 text-sm font-bold tracking-wider uppercase">
+                  <span className="text-on-surface-variant text-sm font-bold tracking-wider uppercase">
                     No matching locations
                   </span>
                   <span className="text-slate-400 text-[10px] uppercase tracking-widest font-medium">

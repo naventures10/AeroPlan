@@ -101,7 +101,7 @@ export function WeatherControls() {
           onClick={() => setIsCloudMode(!isCloudMode)}
           className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-full backdrop-blur-xl transition-all ${
             isCloudMode
-              ? 'bg-slate-300/40 text-slate-600 border border-outline/50 shadow-[0_0_10px_rgba(203,213,225,0.3)]   '
+              ? 'bg-slate-300/40 text-on-surface-variant border border-outline/50 shadow-[0_0_10px_rgba(203,213,225,0.3)]   '
               : 'bg-surface-bright/40 border border-outline text-on-surface-variant hover:text-on-surface     hover:bg-surface-container dark:hover:bg-zinc-900'
           }`}
         >

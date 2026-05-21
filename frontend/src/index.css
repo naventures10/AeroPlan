@@ -84,14 +84,14 @@
    ───────────────────────────────────────────────────────────────────────────── */
 html:not(.dark) {
   /* Surface System — Paper and Ink (Ivory, Cream, Stone) */
-  --surface: #fcfaf5;
-  --surface-dim: #efece5;
-  --surface-bright: #ffffff;
-  --surface-container-lowest: #ffffff;
-  --surface-container-low: #fdfbf7;
-  --surface-container: #fcfaf5;
-  --surface-container-high: #f4f1ea;
-  --surface-container-highest: #ebe8df;
+  --surface: #f8f0df;
+  --surface-dim: #e5ddc9;
+  --surface-bright: #fcf8ed;
+  --surface-container-lowest: #fcf8ed;
+  --surface-container-low: #fbf5e7;
+  --surface-container: #f8f0df;
+  --surface-container-high: #eee6d3;
+  --surface-container-highest: #e5ddc9;
 
   --on-surface: #1c1917; /* Stone 900 - Dark Ink */
   --on-surface-variant: #44403c; /* Stone 700 - Faded Ink */
@@ -100,15 +100,15 @@ html:not(.dark) {
   --outline-variant: #a8a29e; /* Stone 400 - Faint Ink */
 
   --primary: #1c1917; /* Ink */
-  --on-primary: #fcfaf5; /* Paper */
+  --on-primary: #f8f0df; /* Paper */
   --secondary: #44403c; /* Faded Ink */
-  --on-secondary: #fcfaf5;
-  --secondary-container: #ebe8df;
+  --on-secondary: #f8f0df;
+  --secondary-container: #e5ddc9;
   --on-secondary-container: #1c1917;
 
-  --background: #f4f1ea; /* Slightly textured paper background */
+  --background: #eee6d3; /* Slightly textured paper background */
   --on-background: #1c1917;
-  --surface-variant: #ebe8df;
+  --surface-variant: #e5ddc9;
 
   /* Accent — #488B8F (Muted Steel Teal) for light surfaces */
   --accent-cyan: #488b8f;

@@ -87,7 +87,7 @@ export default function ObjectRenderer({ data, columnConfig }: ObjectRendererPro
                 <td className="px-4 py-3 text-on-surface-variant text-[13px] font-mono font-bold align-top">
                   {row.ref}
                 </td>
-                <td className="px-4 py-3 text-slate-600 text-[13px] font-medium leading-relaxed align-top">
+                <td className="px-4 py-3 text-on-surface-variant text-[13px] font-medium leading-relaxed align-top">
                   {row.label}
                 </td>
                 <td

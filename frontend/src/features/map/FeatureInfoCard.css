@@ -17,7 +17,7 @@
 }
 
 .aip-feature-card-wrapper.is-route {
-  @apply w-[560px] max-w-[92vw];
+  @apply w-[600px] max-w-[92vw];
 }
 
 .aip-feature-card-header {

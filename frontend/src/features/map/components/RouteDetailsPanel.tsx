@@ -158,7 +158,7 @@ export function RouteDetailsPanel({
                     </td>
                     <td className="route-td text-center">
                       {seg.airspace_class ? (
-                        <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200 dark:text-cyan-300">
+                        <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-300">
                           {seg.airspace_class}
                         </span>
                       ) : (
@@ -229,7 +229,7 @@ export function RouteDetailsPanel({
                 className="overflow-hidden"
               >
                 <div className="px-3 py-2 border-t border-outline-variant ]">
-                  <p className="text-[11px] text-slate-600 leading-relaxed whitespace-pre-line">
+                  <p className="text-[11px] text-on-surface-variant leading-relaxed whitespace-pre-line">
                     {remarks}
                   </p>
                 </div>

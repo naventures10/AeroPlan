@@ -60,7 +60,7 @@ export function NavaidDetailsPanel({
                 className="overflow-hidden"
               >
                 <div className="px-3 py-2 border-t border-outline-variant ]">
-                  <p className="text-[11px] text-slate-600 leading-relaxed whitespace-pre-line">
+                  <p className="text-[11px] text-on-surface-variant leading-relaxed whitespace-pre-line">
                     {remarks}
                   </p>
                 </div>
