@@ -1,3 +1,4 @@
+import gc
 import glob
 import json
 import os
@@ -167,59 +168,76 @@ def run_pipeline() -> bool:
         run_hour, run_time, steps = _get_run_and_steps_for_time(now, offset_hours)
         run_date_str = run_time.strftime("%Y-%m-%d")
 
-        logger.info(
-            "downloading_ecmwf_data",
-            source="aws",
-            date=run_date_str,
-            run=f"{run_hour:02d}Z",
-            steps=steps,
-            attempt=cycle_idx + 1,
-        )
+        # Rotate sources based on the current day and hour to distribute load
+        base_sources = ["azure", "aws", "google", "ecmwf"]
+        shift = (now.hour // 6 + now.timetuple().tm_yday) % len(base_sources)
+        rotated_sources = base_sources[shift:] + base_sources[:shift]
 
-        client = Client(source="aws")
-        try:
-            # Surface levels
-            client.retrieve(
-                date=run_date_str,
-                time=run_hour,
-                step=steps,
-                type="fc",
-                levtype="sfc",
-                param=["10u", "10v", "2t", "2d", "msl", "tcc", "10fg", "tp"],
-                target=raw_sfc_file,
-            )
-
-            time.sleep(5)  # Avoid SlowDown error
-
-            # Pressure levels
-            client.retrieve(
-                date=run_date_str,
-                time=run_hour,
-                step=steps,
-                type="fc",
-                levtype="pl",
-                levelist=[1000, 925, 850, 700, 500, 400, 300, 250, 200, 150],
-                param=["u", "v", "t", "r"],
-                target=raw_pl_file,
-            )
+        for source in rotated_sources:
             logger.info(
-                "download_complete",
-                num_steps=len(steps),
-                run=f"{run_hour:02d}Z",
+                "downloading_ecmwf_data",
+                source=source,
                 date=run_date_str,
+                run=f"{run_hour:02d}Z",
+                steps=steps,
+                attempt=cycle_idx + 1,
             )
-            download_success = True
+
+            client = Client(source=source)
+            try:
+                # Surface levels
+                client.retrieve(
+                    date=run_date_str,
+                    time=run_hour,
+                    step=steps,
+                    type="fc",
+                    levtype="sfc",
+                    param=["10u", "10v", "2t", "2d", "msl", "tcc", "10fg", "tp"],
+                    target=raw_sfc_file,
+                )
+
+                time.sleep(5)  # Avoid SlowDown error
+
+                # Pressure levels
+                client.retrieve(
+                    date=run_date_str,
+                    time=run_hour,
+                    step=steps,
+                    type="fc",
+                    levtype="pl",
+                    levelist=[1000, 925, 850, 700, 500, 400, 300, 250, 200, 150],
+                    param=["u", "v", "t", "r"],
+                    target=raw_pl_file,
+                )
+                logger.info(
+                    "download_complete",
+                    num_steps=len(steps),
+                    run=f"{run_hour:02d}Z",
+                    date=run_date_str,
+                    source=source,
+                )
+                download_success = True
+                break
+            except Exception as e:
+                logger.warning(
+                    "download_failed_for_source",
+                    source=source,
+                    run=f"{run_hour:02d}Z",
+                    date=run_date_str,
+                    error=str(e),
+                )
+                safe_remove_grib(raw_sfc_file)
+                safe_remove_grib(raw_pl_file)
+
+        if download_success:
             break
-        except Exception as e:
+        else:
             logger.warning(
                 "download_failed_for_cycle",
                 run=f"{run_hour:02d}Z",
                 date=run_date_str,
-                error=str(e),
                 will_retry_previous_cycle=(cycle_idx + 1 < max_backwards_cycles),
             )
-            safe_remove_grib(raw_sfc_file)
-            safe_remove_grib(raw_pl_file)
 
     if not download_success:
         logger.error("all_download_attempts_failed")
@@ -297,20 +315,11 @@ def run_pipeline() -> bool:
             150: 44300,
         }
 
-        # --- Process Pressure Levels ---
-        ds_pl["t"] = ds_pl["t"] - 273.15  # Kelvin to Celsius
-        ds_combined = ds_pl[["u", "v", "t", "r"]]
-        ds_combined = ds_combined.assign_coords(
-            altitude=(
-                "isobaricInhPa",
-                [alt_map[int(float(p))] for p in ds_combined.isobaricInhPa.values],
-            )
-        ).swap_dims({"isobaricInhPa": "altitude"})
+        # ECMWF Open Data 0.25 degree resolution
+        # Grid uses -180 to +179.75 longitude, 90 to -90 latitude.
+        transform = from_origin(-180.0, 90.0, 0.25, 0.25)
+        target_alts = np.arange(0, 40000, 1000)
 
-        # --- Process Surface ---
-        # Helper to grab a variable from whichever GRIB group contains it.
-        # Strips level-type coords (heightAboveGround, surface, etc.) to
-        # prevent conflicts when assembling into a single Dataset.
         _level_coords = {
             "heightAboveGround",
             "surface",
@@ -319,60 +328,8 @@ def run_pipeline() -> bool:
             "nominalTop",
         }
 
-        def _sfc_var(name: str, fallback: str | None = None) -> xr.DataArray:
-            if name in sfc_var_map:
-                da = sfc_var_map[name][name]
-            elif fallback and fallback in sfc_var_map:
-                da = sfc_var_map[fallback][fallback]
-            else:
-                raise KeyError(
-                    f"Surface var '{name}' (fallback '{fallback}') "
-                    f"not found. Available: {list(sfc_var_map.keys())}"
-                )
-            drop = [c for c in da.coords if c in _level_coords]
-            return da.drop_vars(drop) if drop else da
-
-        t2m_data = _sfc_var("t2m", "2t") - 273.15
-        d2m_data = _sfc_var("d2m", "2d") - 273.15
-        es = 6.112 * np.exp((17.67 * t2m_data) / (t2m_data + 243.5))
-        e = 6.112 * np.exp((17.67 * d2m_data) / (d2m_data + 243.5))
-        rh_sfc = (e / es) * 100.0
-        rh_sfc = rh_sfc.clip(0, 100)
-
-        # Build surface dataset from individual GRIB groups
-        ds_sfc = xr.Dataset(
-            {
-                "u": _sfc_var("u10"),
-                "v": _sfc_var("v10"),
-                "t": t2m_data,
-                "r": rh_sfc,
-                "fg10": _sfc_var("fg10", "10fg"),
-                "tp": _sfc_var("tp"),
-                "tcc": _sfc_var("tcc"),
-                "msl": _sfc_var("msl"),
-            }
-        )
-
-        ds_sfc = ds_sfc.assign_coords(altitude=0).expand_dims("altitude")
-
-        # Cleanup coords before concat
-        keep_coords = ["altitude", "latitude", "longitude", "step", "valid_time"]
-        ds_combined = ds_combined.drop_vars([c for c in ds_combined.coords if c not in keep_coords])
-        ds_sfc = ds_sfc.drop_vars([c for c in ds_sfc.coords if c not in keep_coords])
-
-        # Combine
-        ds_full = xr.concat([ds_sfc, ds_combined], dim="altitude").sortby("altitude")
-
-        # Interpolate
-        target_alts = np.arange(0, 40000, 1000)
-        ds_interp = ds_full.interp(altitude=target_alts, method="linear")
-
-        # Export each slice
-        # ECMWF Open Data 0.25 degree resolution
-        # Grid uses -180 to +179.75 longitude, 90 to -90 latitude.
-        transform = from_origin(-180.0, 90.0, 0.25, 0.25)
-
-        for step_idx, step_td in enumerate(ds_interp.step.values):
+        # Export each slice step-by-step to save memory
+        for step_idx, step_td in enumerate(ds_pl.step.values):
             # Calculate valid time for this step
             # step_td is typically a timedelta64[ns]
             step_hours = int(step_td.astype("timedelta64[h]").astype(int))
@@ -384,7 +341,69 @@ def run_pipeline() -> bool:
                 "files": {},
             }
 
-            ds_step = ds_interp.isel(step=step_idx)
+            # --- Process Pressure Levels for this step ---
+            step_pl = ds_pl.isel(step=step_idx)
+            step_combined = step_pl[["u", "v", "t", "r"]].copy()
+            step_combined["t"] = step_combined["t"] - 273.15  # Kelvin to Celsius
+            step_combined = step_combined.assign_coords(
+                altitude=(
+                    "isobaricInhPa",
+                    [alt_map[int(float(p))] for p in step_combined.isobaricInhPa.values],
+                )
+            ).swap_dims({"isobaricInhPa": "altitude"})
+
+            # --- Process Surface for this step ---
+            def _sfc_var_step(
+                name: str, fallback: str | None = None, _step_idx: int = step_idx
+            ) -> xr.DataArray:
+                if name in sfc_var_map:
+                    da = sfc_var_map[name][name]
+                elif fallback and fallback in sfc_var_map:
+                    da = sfc_var_map[fallback][fallback]
+                else:
+                    raise KeyError(
+                        f"Surface var '{name}' (fallback '{fallback}') "
+                        f"not found. Available: {list(sfc_var_map.keys())}"
+                    )
+                da_step = da.isel(step=_step_idx)
+                drop = [c for c in da_step.coords if c in _level_coords]
+                return da_step.drop_vars(drop) if drop else da_step
+
+            t2m_data = _sfc_var_step("t2m", "2t") - 273.15
+            d2m_data = _sfc_var_step("d2m", "2d") - 273.15
+            es = 6.112 * np.exp((17.67 * t2m_data) / (t2m_data + 243.5))
+            e = 6.112 * np.exp((17.67 * d2m_data) / (d2m_data + 243.5))
+            rh_sfc = (e / es) * 100.0
+            rh_sfc = rh_sfc.clip(0, 100)
+
+            # Build surface dataset from individual GRIB groups
+            step_sfc = xr.Dataset(
+                {
+                    "u": _sfc_var_step("u10"),
+                    "v": _sfc_var_step("v10"),
+                    "t": t2m_data,
+                    "r": rh_sfc,
+                    "fg10": _sfc_var_step("fg10", "10fg"),
+                    "tp": _sfc_var_step("tp"),
+                    "tcc": _sfc_var_step("tcc"),
+                    "msl": _sfc_var_step("msl"),
+                }
+            )
+
+            step_sfc = step_sfc.assign_coords(altitude=0).expand_dims("altitude")
+
+            # Cleanup coords before concat
+            keep_coords = ["altitude", "latitude", "longitude", "step", "valid_time"]
+            step_combined = step_combined.drop_vars(
+                [c for c in step_combined.coords if c not in keep_coords]
+            )
+            step_sfc = step_sfc.drop_vars([c for c in step_sfc.coords if c not in keep_coords])
+
+            # Combine
+            step_full = xr.concat([step_sfc, step_combined], dim="altitude").sortby("altitude")
+
+            # Interpolate (only for this single step)
+            ds_step = step_full.interp(altitude=target_alts, method="linear")
 
             for alt in target_alts:
                 alt_slice = ds_step.sel(altitude=alt)
@@ -464,6 +483,11 @@ def run_pipeline() -> bool:
 
             manifest_data["forecasts"].append(step_manifest)
 
+            # Explicitly free memory for this step
+            del ds_step, step_full, step_sfc, step_combined, step_pl
+            del t2m_data, d2m_data, es, e, rh_sfc
+            gc.collect()
+
         logger.info("cogs_generated", count=len(target_alts) * len(steps))
 
     except Exception as e:
@@ -471,6 +495,13 @@ def run_pipeline() -> bool:
         safe_remove_grib(raw_pl_file)
         safe_remove_grib(raw_sfc_file)
         return False
+    finally:
+        # Explicitly close datasets to free resources
+        if "ds_pl" in locals():
+            ds_pl.close()
+        if "sfc_datasets" in locals():
+            for ds in sfc_datasets:
+                ds.close()
 
     # --- STEP 3: Generate Manifest ---
     logger.info("updating_manifest", path=manifest_path)

@@ -126,6 +126,7 @@ def test_run_pipeline_success(
         da.__truediv__.return_value = da
         da.__mul__.return_value = da
         da.clip.return_value = da
+        da.isel.return_value = da
         return da
 
     mock_ds_sfc.__getitem__.side_effect = get_var
@@ -144,7 +145,9 @@ def test_run_pipeline_success(
         "step": np.array([np.timedelta64(3, "h")], dtype="timedelta64[ns]"),
     }
     mock_ds_pl.isobaricInhPa.values = np.array([1000])
+    mock_ds_pl.step.values = np.array([np.timedelta64(3, "h")], dtype="timedelta64[ns]")
     mock_ds_pl.__getitem__.side_effect = get_var
+    mock_ds_pl.isel.return_value = mock_ds_pl
     mock_ds_pl.assign_coords.return_value = mock_ds_pl
     mock_ds_pl.swap_dims.return_value = mock_ds_pl
     mock_ds_pl.drop_vars.return_value = mock_ds_pl
@@ -168,7 +171,7 @@ def test_run_pipeline_success(
 
     mock_alt_slice = MagicMock()
     mock_alt_slice.__getitem__.side_effect = lambda key: MagicMock(values=np.zeros((2, 2)))
-    mock_step_ds.sel.return_value = mock_alt_slice
+    mock_ds_interp.sel.return_value = mock_alt_slice
 
     # Mock rasterio context manager
     mock_rasterio.return_value.__enter__.return_value = MagicMock()
@@ -275,6 +278,7 @@ def test_run_pipeline_fallback_success(
         da.__truediv__.return_value = da
         da.__mul__.return_value = da
         da.clip.return_value = da
+        da.isel.return_value = da
         return da
 
     mock_ds_sfc.__getitem__.side_effect = get_var
@@ -291,7 +295,9 @@ def test_run_pipeline_fallback_success(
         "step": np.array([np.timedelta64(3, "h")], dtype="timedelta64[ns]"),
     }
     mock_ds_pl.isobaricInhPa.values = np.array([1000])
+    mock_ds_pl.step.values = np.array([np.timedelta64(3, "h")], dtype="timedelta64[ns]")
     mock_ds_pl.__getitem__.side_effect = get_var
+    mock_ds_pl.isel.return_value = mock_ds_pl
     mock_ds_pl.assign_coords.return_value = mock_ds_pl
     mock_ds_pl.swap_dims.return_value = mock_ds_pl
     mock_ds_pl.drop_vars.return_value = mock_ds_pl
@@ -313,7 +319,7 @@ def test_run_pipeline_fallback_success(
 
     mock_alt_slice = MagicMock()
     mock_alt_slice.__getitem__.side_effect = lambda key: MagicMock(values=np.zeros((2, 2)))
-    mock_step_ds.sel.return_value = mock_alt_slice
+    mock_ds_interp.sel.return_value = mock_alt_slice
 
     mock_rasterio.return_value.__enter__.return_value = MagicMock()
 
