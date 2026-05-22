@@ -135,7 +135,7 @@ export default function AipSupplementsModal() {
 
                   {/* PDF Render Area */}
                   <div
-                    className="aip-supplements-pdf-render-area"
+                    className="aip-supplements-pdf-render-area aip-scrollbar"
                     onWheel={(e) => {
                       if (e.ctrlKey) {
                         e.preventDefault();
@@ -191,7 +191,7 @@ export default function AipSupplementsModal() {
                       <span className="aip-supplements-status-text">No AIP supplements found.</span>
                     </div>
                   ) : (
-                    <div className="aip-supplements-table-wrapper">
+                    <div className="aip-supplements-table-wrapper aip-scrollbar">
                       <table className="aip-supplements-table">
                         <thead>
                           <tr>

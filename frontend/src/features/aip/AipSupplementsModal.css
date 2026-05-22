@@ -98,7 +98,7 @@
 .aip-supplements-table-wrapper {
   border-radius: 0.75rem;
   border: 1px solid var(--outline-opacity-20);
-  overflow: hidden;
+  overflow: auto;
 }
 
 .aip-supplements-table {
@@ -138,6 +138,7 @@
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
   color: var(--on-surface-variant);
+  white-space: nowrap;
 }
 
 .aip-supplements-table td.col-title {
