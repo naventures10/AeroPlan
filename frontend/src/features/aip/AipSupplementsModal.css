@@ -14,9 +14,12 @@
 }
 
 .aip-supplements-modal-container.is-pdf {
-  max-width: 72rem;
-  max-height: 90vh;
-  height: 100%;
+  max-width: 100vw;
+  max-height: 100vh;
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  border: none;
 }
 
 .aip-supplements-modal-container.is-list {
