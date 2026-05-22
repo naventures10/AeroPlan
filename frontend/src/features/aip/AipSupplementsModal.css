@@ -144,6 +144,7 @@
 .aip-supplements-table td.col-title {
   font-weight: 500;
   color: var(--on-surface);
+  white-space: normal;
 }
 
 .aip-supplements-table td.col-actions {
