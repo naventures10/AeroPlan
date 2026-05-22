@@ -108,3 +108,9 @@ if (typeof global.Worker === 'undefined') {
     dispatchEvent = () => false;
   } as any;
 }
+
+// Mock DOMMatrix for react-pdf/pdf.js canvas
+if (typeof global.DOMMatrix === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-extraneous-class
+  global.DOMMatrix = class DOMMatrix {} as any;
+}
