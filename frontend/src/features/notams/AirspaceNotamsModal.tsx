@@ -12,6 +12,7 @@ export function AirspaceNotamsModal() {
   const [notams, setNotams] = useState<NotamData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFir, setSelectedFir] = useState<string>('All');
 
   useEffect(() => {
     if (isAirspaceNotamsModalOpen) {
@@ -48,14 +49,22 @@ export function AirspaceNotamsModal() {
     });
   };
 
+  const uniqueFirs = Array.from(
+    new Set(notams.flatMap((n) => [n.fir, n.combined_fir]).filter(Boolean) as string[]),
+  ).sort();
+
   const filteredNotams = notams.filter((notam) => {
     const q = searchQuery.toLowerCase();
-    return (
+    const matchesSearch =
       notam.notam_id.toLowerCase().includes(q) ||
       (notam.description && notam.description.toLowerCase().includes(q)) ||
       (notam.fir && notam.fir.toLowerCase().includes(q)) ||
-      (notam.combined_fir && notam.combined_fir.toLowerCase().includes(q))
-    );
+      (notam.combined_fir && notam.combined_fir.toLowerCase().includes(q));
+
+    const matchesFir =
+      selectedFir === 'All' || notam.fir === selectedFir || notam.combined_fir === selectedFir;
+
+    return matchesSearch && matchesFir;
   });
 
   return (
@@ -90,8 +99,8 @@ export function AirspaceNotamsModal() {
             </button>
           </div>
 
-          {/* Search Bar */}
-          <div className="airspace-notams-search-container">
+          {/* Search & Filter Controls */}
+          <div className="airspace-notams-controls">
             <div className="airspace-notams-search-wrapper">
               <Search size={18} className="airspace-notams-search-icon" />
               <input
@@ -102,6 +111,19 @@ export function AirspaceNotamsModal() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            <select
+              className="airspace-notams-fir-select"
+              value={selectedFir}
+              onChange={(e) => setSelectedFir(e.target.value)}
+              aria-label="Filter by FIR"
+            >
+              <option value="All">All FIRs</option>
+              {uniqueFirs.map((fir) => (
+                <option key={fir} value={fir}>
+                  {fir}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Content */}
