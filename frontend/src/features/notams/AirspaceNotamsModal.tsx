@@ -89,7 +89,7 @@ export function AirspaceNotamsModal() {
         >
           {/* Header */}
           <div className="airspace-notams-header">
-            <h2 className="airspace-notams-header-title">Airspace & En-route NOTAMs</h2>
+            <h2 className="airspace-notams-header-title">Enroute Notams</h2>
             <button
               onClick={onClose}
               className="airspace-notams-close-btn"
@@ -134,7 +134,7 @@ export function AirspaceNotamsModal() {
             {isLoading ? (
               <div className="airspace-notams-loading">
                 <div className="airspace-notams-spinner" />
-                <span>Loading Airspace NOTAMs...</span>
+                <span>Loading Enroute Notams...</span>
               </div>
             ) : filteredNotams.length === 0 ? (
               <div className="airspace-notams-empty">

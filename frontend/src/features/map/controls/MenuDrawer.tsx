@@ -70,7 +70,7 @@ const drawerSections = [
   },
   {
     id: 'airspace-notams',
-    title: 'Airspace NOTAMs',
+    title: 'Enroute Notams',
     icon: (
       <svg
         viewBox="0 0 24 24"

@@ -50,7 +50,7 @@ describe('AirspaceNotamsModal', () => {
     render(<AirspaceNotamsModal />);
 
     // Header should be present
-    expect(screen.getByText('Airspace & En-route NOTAMs')).toBeInTheDocument();
+    expect(screen.getByText('Enroute Notams')).toBeInTheDocument();
 
     // Wait for empty state
     await waitFor(() => {
