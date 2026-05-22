@@ -1,4 +1,4 @@
-import { X, Search } from 'lucide-react';
+import { X, Search, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useMapStore } from '../../store/useMapStore';
@@ -111,19 +111,22 @@ export function AirspaceNotamsModal() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <select
-              className="airspace-notams-fir-select"
-              value={selectedFir}
-              onChange={(e) => setSelectedFir(e.target.value)}
-              aria-label="Filter by FIR"
-            >
-              <option value="All">All FIRs</option>
-              {uniqueFirs.map((fir) => (
-                <option key={fir} value={fir}>
-                  {fir}
-                </option>
-              ))}
-            </select>
+            <div className="airspace-notams-fir-wrapper">
+              <Filter size={16} className="airspace-notams-fir-icon" />
+              <select
+                className="airspace-notams-fir-select"
+                value={selectedFir}
+                onChange={(e) => setSelectedFir(e.target.value)}
+                aria-label="Filter by FIR"
+              >
+                <option value="All">All FIRs</option>
+                {uniqueFirs.map((fir) => (
+                  <option key={fir} value={fir}>
+                    {fir}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Content */}
