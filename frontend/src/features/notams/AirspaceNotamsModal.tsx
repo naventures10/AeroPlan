@@ -1,0 +1,152 @@
+import { X, Search } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { useMapStore } from '../../store/useMapStore';
+import { fetchAirspaceNotams } from '../../api/client';
+import type { NotamData } from '../../types';
+import './AirspaceNotamsModal.css';
+
+export function AirspaceNotamsModal() {
+  const isAirspaceNotamsModalOpen = useMapStore((s) => s.isAirspaceNotamsModalOpen);
+  const setAirspaceNotamsModalOpen = useMapStore((s) => s.setAirspaceNotamsModalOpen);
+  const [notams, setNotams] = useState<NotamData[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    if (isAirspaceNotamsModalOpen) {
+      const loadNotams = async () => {
+        setIsLoading(true);
+        try {
+          const data = await fetchAirspaceNotams();
+          setNotams(data);
+        } catch (error) {
+          console.error('Failed to load airspace NOTAMs:', error);
+          setNotams([]);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      loadNotams();
+    }
+  }, [isAirspaceNotamsModalOpen]);
+
+  if (!isAirspaceNotamsModalOpen) return null;
+
+  const onClose = () => setAirspaceNotamsModalOpen(false);
+
+  const formatDate = (dateStr?: string | null) => {
+    if (!dateStr) return 'PERM / UFN';
+    return new Date(dateStr).toLocaleString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'UTC',
+      timeZoneName: 'short',
+    });
+  };
+
+  const filteredNotams = notams.filter((notam) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      notam.notam_id.toLowerCase().includes(q) ||
+      (notam.description && notam.description.toLowerCase().includes(q)) ||
+      (notam.fir && notam.fir.toLowerCase().includes(q)) ||
+      (notam.combined_fir && notam.combined_fir.toLowerCase().includes(q))
+    );
+  });
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        key="airspace-notams-backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          key="airspace-notams-modal"
+          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 10 }}
+          transition={{ duration: 0.2 }}
+          className="airspace-notams-modal-container"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="airspace-notams-header">
+            <h2 className="airspace-notams-header-title">Airspace & En-route NOTAMs</h2>
+            <button
+              onClick={onClose}
+              className="airspace-notams-close-btn"
+              aria-label="Close modal"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Search Bar */}
+          <div className="airspace-notams-search-container">
+            <div className="airspace-notams-search-wrapper">
+              <Search size={18} className="airspace-notams-search-icon" />
+              <input
+                type="text"
+                placeholder="Search by ID, FIR, or keyword..."
+                className="airspace-notams-search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="airspace-notams-content aip-scrollbar">
+            {isLoading ? (
+              <div className="airspace-notams-loading">
+                <div className="airspace-notams-spinner" />
+                <span>Loading Airspace NOTAMs...</span>
+              </div>
+            ) : filteredNotams.length === 0 ? (
+              <div className="airspace-notams-empty">
+                <span>No matching NOTAMs found.</span>
+              </div>
+            ) : (
+              <div className="airspace-notams-grid">
+                {filteredNotams.map((notam) => (
+                  <div key={notam.notam_id} className="airspace-notam-card">
+                    <div className="airspace-notam-header">
+                      <div className="airspace-notam-id">{notam.notam_id}</div>
+                      <div className="airspace-notam-badges">
+                        {notam.fir && (
+                          <span className="airspace-notam-badge fir">FIR: {notam.fir}</span>
+                        )}
+                        {notam.combined_fir && (
+                          <span className="airspace-notam-badge fir">
+                            FIR: {notam.combined_fir}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="airspace-notam-dates">
+                      <span>Valid: {formatDate(notam.valid_from)}</span>
+                      <span>—</span>
+                      <span>{notam.is_permanent ? 'PERM' : formatDate(notam.valid_to)}</span>
+                    </div>
+
+                    <div className="airspace-notam-desc">{notam.description}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}

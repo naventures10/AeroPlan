@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
+import { useMapStore } from '../../../store/useMapStore';
 import './MenuDrawer.css';
 
 interface MenuDrawerProps {
@@ -111,6 +112,19 @@ const itemVariants = {
 };
 
 export default function MenuDrawer({ isOpen, onClose }: MenuDrawerProps) {
+  const setAipSupplementsModalOpen = useMapStore((s) => s.setAipSupplementsModalOpen);
+  const setAirspaceNotamsModalOpen = useMapStore((s) => s.setAirspaceNotamsModalOpen);
+
+  const handleSectionClick = (id: string) => {
+    if (id === 'aip-supplements') {
+      setAipSupplementsModalOpen(true);
+      onClose();
+    } else if (id === 'airspace-notams') {
+      setAirspaceNotamsModalOpen(true);
+      onClose();
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -203,6 +217,7 @@ export default function MenuDrawer({ isOpen, onClose }: MenuDrawerProps) {
                       id={`aip-drawer-item-${id}`}
                       className="aip-drawer-item"
                       aria-label={title}
+                      onClick={() => handleSectionClick(id)}
                     >
                       <span className="aip-drawer-item-icon">{icon}</span>
                       <span className="aip-drawer-item-text">

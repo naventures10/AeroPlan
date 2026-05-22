@@ -1,0 +1,184 @@
+.airspace-notams-modal-container {
+  max-width: 72rem;
+  max-height: 90vh;
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid var(--glass-border-highlight);
+  background: var(--surface-container-low);
+  box-shadow: var(--elevation-3);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.airspace-notams-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: var(--surface-container-high);
+  border-bottom: 1px solid var(--outline-opacity-20);
+}
+
+.airspace-notams-header-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--on-surface);
+  letter-spacing: 0.02em;
+}
+
+.airspace-notams-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.airspace-notams-close-btn:hover {
+  background: var(--surface-variant);
+  color: var(--on-surface);
+}
+
+.airspace-notams-search-container {
+  padding: 1rem 1.5rem 0 1.5rem;
+  background: var(--surface-container-high);
+}
+
+.airspace-notams-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.airspace-notams-search-icon {
+  position: absolute;
+  left: 1rem;
+  color: var(--on-surface-variant);
+}
+
+.airspace-notams-search-input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--outline-opacity-20);
+  background: var(--surface);
+  color: var(--on-surface);
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.airspace-notams-search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-container);
+}
+
+.airspace-notams-content {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.airspace-notams-loading,
+.airspace-notams-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  color: var(--on-surface-variant);
+  gap: 1rem;
+}
+
+.airspace-notams-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid var(--outline-opacity-20);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.airspace-notams-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.airspace-notam-card {
+  background: var(--surface);
+  border: 1px solid var(--outline-opacity-20);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.airspace-notam-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.airspace-notam-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.airspace-notam-id {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: var(--primary);
+  font-family: var(--font-mono);
+}
+
+.airspace-notam-badges {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.airspace-notam-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  text-transform: uppercase;
+}
+
+.airspace-notam-badge.fir {
+  background: var(--surface-variant);
+  color: var(--on-surface-variant);
+}
+
+.airspace-notam-dates {
+  font-size: 0.875rem;
+  color: var(--on-surface-variant);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.airspace-notam-desc {
+  font-size: 0.875rem;
+  color: var(--on-surface);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  background: var(--surface-container);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  font-family: var(--font-mono);
+}

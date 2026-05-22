@@ -21,6 +21,12 @@ const AerodromeChartViewer = lazy(() => import('../features/aip/AerodromeChartVi
 const SectionModal = lazy(() => import('../features/aip/SectionModal'));
 const TerminalDashboard = lazy(() => import('../features/terminal/TerminalDashboard'));
 const TerminalLegend = lazy(() => import('../features/terminal/components/TerminalLegend'));
+const AipSupplementsModal = lazy(() => import('../features/aip/AipSupplementsModal'));
+const AirspaceNotamsModal = lazy(() =>
+  import('../features/notams/AirspaceNotamsModal').then((module) => ({
+    default: module.AirspaceNotamsModal,
+  })),
+);
 
 export default function MapPage() {
   const { viewMode, activeAirport, viewState, isWeatherMode } = useMapStore();
@@ -146,6 +152,11 @@ export default function MapPage() {
           dataType={sectionDataType}
           isLoading={sectionLoading}
         />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <AipSupplementsModal />
+        <AirspaceNotamsModal />
       </Suspense>
     </div>
   );

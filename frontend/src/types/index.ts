@@ -103,3 +103,11 @@ export interface RnpPath3d {
   max_distance_nm: number;
   waypoints: RnpWaypointMarker[];
 }
+
+export interface AipSupplement {
+  supplement_number: string;
+  title: string;
+  pdf_link: string;
+  effective_date: string;
+  remarks: string;
+}
