@@ -1,9 +1,9 @@
 .airspace-notams-modal-container {
   position: absolute;
   bottom: 1.5rem;
-  left: 1.5rem;
+  left: 5rem;
   width: 480px;
-  max-height: calc(100vh - 120px);
+  max-height: 60vh;
   border-radius: 1rem;
   border: 1px solid var(--glass-border-highlight);
   background: var(--surface-container-low);
