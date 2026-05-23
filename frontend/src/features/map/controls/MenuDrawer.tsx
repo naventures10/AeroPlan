@@ -27,26 +27,7 @@ const drawerSections = [
     description: 'Manage your account settings and preferences',
     badge: null,
   },
-  {
-    id: 'aip',
-    title: 'AIP',
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        <line x1="3" y1="9" x2="21" y2="9" />
-        <line x1="9" y1="21" x2="9" y2="9" />
-      </svg>
-    ),
-    description: 'Aeronautical Information Publication documents',
-    badge: null,
-  },
+
   {
     id: 'aip-supplements',
     title: 'AIP Supplements',
