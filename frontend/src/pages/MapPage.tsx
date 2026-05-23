@@ -23,7 +23,7 @@ const TerminalDashboard = lazy(() => import('../features/terminal/TerminalDashbo
 const TerminalLegend = lazy(() => import('../features/terminal/components/TerminalLegend'));
 const AipSupplementsModal = lazy(() => import('../features/aip/AipSupplementsModal'));
 const AirspaceNotamsModal = lazy(() =>
-  import('../features/notams/AirspaceNotamsModal').then((module) => ({
+  import('../features/aip/AirspaceNotamsModal').then((module) => ({
     default: module.AirspaceNotamsModal,
   })),
 );
