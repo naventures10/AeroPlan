@@ -9,6 +9,8 @@ import './AirspaceNotamsModal.css';
 export function AirspaceNotamsModal() {
   const isAirspaceNotamsModalOpen = useMapStore((s) => s.isAirspaceNotamsModalOpen);
   const setAirspaceNotamsModalOpen = useMapStore((s) => s.setAirspaceNotamsModalOpen);
+  const viewMode = useMapStore((s) => s.viewMode);
+  const pitch = useMapStore((s) => s.viewState.pitch);
   const [notams, setNotams] = useState<NotamData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,7 +34,7 @@ export function AirspaceNotamsModal() {
     }
   }, [isAirspaceNotamsModalOpen]);
 
-  if (!isAirspaceNotamsModalOpen) return null;
+  if (!isAirspaceNotamsModalOpen || viewMode !== 'ENROUTE' || pitch > 0) return null;
 
   const onClose = () => setAirspaceNotamsModalOpen(false);
 

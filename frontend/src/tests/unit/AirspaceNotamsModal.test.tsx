@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { AirspaceNotamsModal } from '../../features/notams/AirspaceNotamsModal';
+import { AirspaceNotamsModal } from '../../features/aip/AirspaceNotamsModal';
 import * as clientApi from '../../api/client';
 import { useMapStore } from '../../store/useMapStore';
 
@@ -26,6 +26,8 @@ describe('AirspaceNotamsModal', () => {
       const state = {
         isAirspaceNotamsModalOpen: true,
         setAirspaceNotamsModalOpen: mockSetOpen,
+        viewMode: 'ENROUTE',
+        viewState: { pitch: 0 },
       };
       return selector(state);
     });
@@ -36,6 +38,8 @@ describe('AirspaceNotamsModal', () => {
       const state = {
         isAirspaceNotamsModalOpen: false,
         setAirspaceNotamsModalOpen: mockSetOpen,
+        viewMode: 'ENROUTE',
+        viewState: { pitch: 0 },
       };
       return selector(state);
     });
