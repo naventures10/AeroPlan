@@ -158,9 +158,35 @@ export async function fetchNotams(icao: string): Promise<NotamData[]> {
   }
 }
 
+export async function fetchAirspaceNotams(): Promise<NotamData[]> {
+  try {
+    const res = await fetch(`${API_BASE}/notams/airspace?active_only=true`);
+    if (!res.ok) {
+      console.warn(`[API] fetchAirspaceNotams failed: HTTP ${res.status}`);
+      return [];
+    }
+    return await res.json();
+  } catch (err) {
+    console.warn('[API] fetchAirspaceNotams network error:', err);
+    return [];
+  }
+}
+
 export async function fetchDaylight(icao: string, date: string): Promise<DaylightRecord | null> {
   const data = await getOrNull<{ records?: DaylightRecord[] }>(`/daylight/${icao}?date=${date}`);
   return data?.records?.[0] || null;
+}
+
+// ── AIP Supplements ─────────────────────────────────────────────────────
+
+export async function fetchAipSupplements(): Promise<import('../types').AipSupplement[]> {
+  try {
+    const data = await get<import('../types').AipSupplement[]>('/aip-supplements/');
+    return data || [];
+  } catch (err) {
+    console.warn('[API] fetchAipSupplements error:', err);
+    return [];
+  }
 }
 
 // ── ATS Routes ──────────────────────────────────────────────────────────

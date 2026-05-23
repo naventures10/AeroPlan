@@ -137,6 +137,11 @@ interface MapState {
     navaids: boolean;
   };
   toggleTerminalSpatialFilter: (category: keyof MapState['terminalSpatialFilters']) => void;
+
+  isAipSupplementsModalOpen: boolean;
+  setAipSupplementsModalOpen: (isOpen: boolean) => void;
+  isAirspaceNotamsModalOpen: boolean;
+  setAirspaceNotamsModalOpen: (isOpen: boolean) => void;
 }
 
 export const DEFAULT_VIEW = {
@@ -479,6 +484,11 @@ export const useMapStore = create<MapState>((set, get) => ({
         [category]: !state.terminalSpatialFilters[category],
       },
     })),
+
+  isAipSupplementsModalOpen: false,
+  setAipSupplementsModalOpen: (isOpen) => set({ isAipSupplementsModalOpen: isOpen }),
+  isAirspaceNotamsModalOpen: false,
+  setAirspaceNotamsModalOpen: (isOpen) => set({ isAirspaceNotamsModalOpen: isOpen }),
 
   // Basic Setters
   setViewState: (viewState) =>

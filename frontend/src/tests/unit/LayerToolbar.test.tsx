@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import LayerToolbar from '../../features/map/controls/LayerToolbar';
 import { useMapStore } from '../../store/useMapStore';
@@ -37,15 +37,17 @@ describe('LayerToolbar Component', () => {
     expect(useMapStore.getState().activeLayers.waypoints).toBe(true);
   });
 
-  it('renders the menu button and invokes onMenuClick when clicked', () => {
-    const onMenuClick = vi.fn();
-    const { container } = render(<LayerToolbar onMenuClick={onMenuClick} />);
-    const menuButton = container.querySelector('.aip-icon-menu')?.closest('button');
+  it('renders the menu button and toggles the drawer on click', () => {
+    const { container } = render(<LayerToolbar />);
+    const menuButton = container.querySelector('#aip-menu-toggle-btn');
 
     expect(menuButton).toBeInTheDocument();
-    if (menuButton) {
-      fireEvent.click(menuButton);
-    }
-    expect(onMenuClick).toHaveBeenCalledTimes(1);
+    expect(menuButton).toHaveAttribute('aria-expanded', 'false');
+
+    if (menuButton) fireEvent.click(menuButton);
+    expect(menuButton).toHaveAttribute('aria-expanded', 'true');
+
+    if (menuButton) fireEvent.click(menuButton);
+    expect(menuButton).toHaveAttribute('aria-expanded', 'false');
   });
 });

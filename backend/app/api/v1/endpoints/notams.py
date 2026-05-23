@@ -12,6 +12,28 @@ from app.schemas.notam import NotamResponse, serialize_notam
 router = APIRouter(prefix="", tags=["NOTAMs"])
 
 
+@router.get("/notams/airspace", response_model=list[NotamResponse])
+async def get_airspace_notams(
+    active_only: bool = Query(False, description="If true, return only currently active NOTAMs"),
+    db: AsyncSession = Depends(get_db),
+) -> list[NotamResponse]:
+    """Returns pure airspace NOTAMs (associated with a FIR but no specific aerodrome)."""
+    active_filter = "AND (valid_to IS NULL OR valid_to > NOW())" if active_only else ""
+
+    query = text(f"""
+        SELECT notam_id, source_file, series, scope, fir, combined_fir, airport_icao,
+               valid_from, valid_to, is_permanent, is_estimated, duration_category, description
+        FROM notams
+        WHERE airport_icao IS NULL
+        AND (fir IS NOT NULL OR combined_fir IS NOT NULL)
+        {active_filter}
+        ORDER BY valid_from DESC;
+    """)
+
+    result = await db.execute(query)
+    return [serialize_notam(r) for r in result.fetchall()]
+
+
 @router.get("/notams/fir/{fir_code}", response_model=list[NotamResponse])
 async def get_notams_by_fir(
     fir_code: str,

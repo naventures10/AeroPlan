@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
     aerodromes,
+    aip_supplements,
     ats_routes,
     charts,
     daylight,
@@ -25,3 +26,4 @@ api_router.include_router(notams.router)
 api_router.include_router(daylight.router)
 api_router.include_router(ats_routes.router)
 api_router.include_router(navaids.router)
+api_router.include_router(aip_supplements.router)
