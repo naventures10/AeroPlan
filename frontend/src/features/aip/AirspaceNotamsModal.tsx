@@ -71,9 +71,9 @@ export function AirspaceNotamsModal() {
     <AnimatePresence>
       <motion.div
         key="airspace-notams-modal"
-        initial={{ opacity: 0, x: 20, y: 20 }}
+        initial={{ opacity: 0, x: -20, y: 20 }}
         animate={{ opacity: 1, x: 0, y: 0 }}
-        exit={{ opacity: 0, x: 20, y: 20 }}
+        exit={{ opacity: 0, x: -20, y: 20 }}
         transition={{ duration: 0.2 }}
         className="airspace-notams-modal-container"
         onClick={(e) => e.stopPropagation()}
