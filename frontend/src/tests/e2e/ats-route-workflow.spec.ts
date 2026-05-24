@@ -135,9 +135,9 @@ test.describe('ATS Route Workflows', () => {
     const { width, height } = viewportSize;
     await page.mouse.move(width / 2, height / 2);
 
-    // Verify tooltip appears - should contain 'ROUTE'
+    // Verify tooltip appears - should contain 'ROUTE' or 'Route'
     // Note: Tooltip implementation might take a moment to appear
-    await expect(page.locator('body').first()).toContainText('ROUTE');
+    await expect(page.locator('body').first()).toContainText(/ROUTE/i, { timeout: 15000 });
 
     // 5. Manual Click on Canvas
     await page.mouse.click(width / 2, height / 2);

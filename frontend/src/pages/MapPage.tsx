@@ -27,6 +27,7 @@ const AirspaceNotamsModal = lazy(() =>
     default: module.AirspaceNotamsModal,
   })),
 );
+const UserProfileModal = lazy(() => import('../features/user/UserProfileModal'));
 
 export default function MapPage() {
   const { viewMode, activeAirport, viewState, isWeatherMode } = useMapStore();
@@ -157,6 +158,7 @@ export default function MapPage() {
       <Suspense fallback={null}>
         <AipSupplementsModal />
         <AirspaceNotamsModal />
+        <UserProfileModal />
       </Suspense>
     </div>
   );

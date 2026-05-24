@@ -267,7 +267,7 @@ def extract_true_course(course_str: str | None) -> float | None:
         if m:
             try:
                 return float(m.group(1))
-            except ValueError, TypeError:
+            except (ValueError, TypeError):
                 pass
 
     # Format 2: "NNN.NN°(NNN.NN°)"
@@ -275,7 +275,7 @@ def extract_true_course(course_str: str | None) -> float | None:
     if m:
         try:
             return float(m.group(1))
-        except ValueError, TypeError:  # pragma: no cover
+        except (ValueError, TypeError):  # pragma: no cover
             pass
 
     return None
@@ -288,7 +288,7 @@ def extract_altitude(leg: Any) -> float | None:
             val = float(leg.altitude_numeric)
             if val > 0:
                 return val
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             pass
 
     if leg.altitude_constraint:

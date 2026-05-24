@@ -4,6 +4,9 @@ import type { MapRef } from 'react-map-gl/maplibre';
 import { useMapStore } from '../../../store/useMapStore';
 import { sanitizeHtml } from '../../../utils/sanitize';
 
+const buildTooltip = (content: string) =>
+  sanitizeHtml(`<div class="aip-tooltip-wrapper">${content}</div>`);
+
 /**
  * The massive tooltip callback for DeckGL + MapLibre features.
  *
@@ -56,14 +59,24 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
 
         const extraInfo = magVarStr || commsHtml ? `${divider}${magVarStr}${commsHtml}</div>` : '';
 
+        const notamCount = p.notam_count || 0;
+        const notamStr =
+          notamCount > 0
+            ? `<div class="aip-tooltip-spacing-sm" style="display: flex; align-items: center; gap: 8px;">
+               <span class="aip-tooltip-dot-warning"></span>
+               <span class="aip-tooltip-notam-text">${notamCount} Active NOTAMs</span>
+             </div>`
+            : '';
+
         return {
-          html: sanitizeHtml(`<div class="aip-tooltip-container aip-tooltip-max-300">
+          html: buildTooltip(`<div class="aip-tooltip-container aip-tooltip-max-300">
             <span class="aip-tooltip-title">${p.name || p.icao_code}</span>
             <span class="aip-tooltip-subtitle">
-              ICAO: <span class="aip-tooltip-accent">${p.icao_code}</span> | ELEV: <span class="aip-tooltip-accent">${enrouteElev ? enrouteElev + ' FT' : 'N/A'}</span>
+              ICAO: <span class="aip-tooltip-accent">${p.icao_code}</span> | Elev: <span class="aip-tooltip-accent">${enrouteElev ? enrouteElev + ' FT' : 'N/A'}</span>
             </span>
+            ${notamStr}
             <span class="aip-tooltip-status">
-              CLICK TO ENTER TERMINAL VIEW
+              Click to enter Terminal View
             </span>
             ${extraInfo}
           </div>`),
@@ -73,13 +86,13 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
         const routes = p.routes ? p.routes.replace(/[{"'}]/g, '').split(',') : [];
         const routesDisplay =
           routes.length > 0 && routes[0] !== ''
-            ? `<div class="aip-tooltip-subtitle aip-tooltip-spacing-md">ROUTES: <span class="aip-tooltip-route-list">${routes.join(', ')}</span></div>`
+            ? `<div class="aip-tooltip-subtitle aip-tooltip-spacing-md">Routes: <span class="aip-tooltip-route-list">${routes.join(', ')}</span></div>`
             : '';
 
         return {
-          html: sanitizeHtml(`<div class="aip-tooltip-container aip-tooltip-max-250">
-              <span class="aip-tooltip-title">${p.waypoint_name || 'WAYPOINT'}</span>
-              <span class="aip-tooltip-subtitle aip-tooltip-sig-point">SIGNIFICANT POINT</span>
+          html: buildTooltip(`<div class="aip-tooltip-container aip-tooltip-max-250">
+              <span class="aip-tooltip-title">${p.waypoint_name || 'Waypoint'}</span>
+              <span class="aip-tooltip-subtitle aip-tooltip-sig-point">Significant Point</span>
               <span class="aip-tooltip-mono">${p.raw_coordinates?.replace(/\\\\n/g, '') || ''}</span>
               ${routesDisplay}
             </div>`),
@@ -88,15 +101,15 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
         const p = object.properties ?? {};
         const hours =
           p.hours_of_operation && p.hours_of_operation !== 'None'
-            ? `<div class="aip-tooltip-mono aip-tooltip-spacing-sm">HOURS: ${p.hours_of_operation}</div>`
+            ? `<div class="aip-tooltip-mono aip-tooltip-spacing-sm">Hours: ${p.hours_of_operation}</div>`
             : '';
         const elev =
           p.elevation && p.elevation !== 'None'
-            ? `<span class="aip-tooltip-mono aip-tooltip-spacing-left-sm">ELEV: ${p.elevation.replace(/\\\\n/g, '')}</span>`
+            ? `<span class="aip-tooltip-mono aip-tooltip-spacing-left-sm">Elev: ${p.elevation.replace(/\\\\n/g, '')}</span>`
             : '';
 
         return {
-          html: sanitizeHtml(`<div class="aip-tooltip-container aip-tooltip-max-260">
+          html: buildTooltip(`<div class="aip-tooltip-container aip-tooltip-max-260">
               <span class="aip-tooltip-title">${p.station_name || ''} <span class="aip-tooltip-subtitle">${p.aid_type || ''}</span></span>
               <div class="aip-tooltip-badge-row">
                   <span class="aip-tooltip-badge">${p.ident || 'UNK'}</span>
@@ -112,23 +125,23 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
         const isOneWay = p.direction_odd === 'O' || p.direction_even === 'E';
         const directionStr = isOneWay
           ? p.direction_odd === 'O'
-            ? '→ ODD ONLY'
-            : '← EVEN ONLY'
-          : '↔ TWO-WAY';
+            ? '→ Odd Only'
+            : '← Even Only'
+          : '↔ Two-Way';
         const meainfo =
           p.mea && p.mea !== 'None'
             ? `<span class="aip-tooltip-subtitle aip-tooltip-route-type">MEA: <span class="aip-tooltip-row-val">${p.mea}</span></span>`
             : '';
         const limitStr =
           (p.upper_limit && p.upper_limit !== 'None') || (p.lower_limit && p.lower_limit !== 'None')
-            ? `<span class="aip-tooltip-subtitle aip-tooltip-spacing-sm">LIMITS: ${p.lower_limit || 'SFC'} - ${p.upper_limit || 'UNL'}</span>`
+            ? `<span class="aip-tooltip-subtitle aip-tooltip-spacing-sm">Limits: ${p.lower_limit || 'SFC'} - ${p.upper_limit || 'UNL'}</span>`
             : '';
         const trackStr =
           p.track_magnetic &&
           p.track_magnetic !== 'None' &&
           p.distance_nm &&
           p.distance_nm !== 'None'
-            ? `<span class="aip-tooltip-subtitle">SEGMENT: ${p.distance_nm} NM | TR: ${p.track_magnetic}</span>`
+            ? `<span class="aip-tooltip-subtitle">Segment: ${p.distance_nm} NM | Tr: ${p.track_magnetic}</span>`
             : '';
 
         const routeTypeClass =
@@ -137,10 +150,10 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
             : 'aip-tooltip-subtitle aip-tooltip-route-type';
 
         return {
-          html: sanitizeHtml(`<div class="aip-tooltip-container aip-tooltip-max-250">
-              <span class="aip-tooltip-title">ROUTE ${p.route_designator || p.route_id || 'UNKNOWN'}</span>
+          html: buildTooltip(`<div class="aip-tooltip-container aip-tooltip-max-250">
+              <span class="aip-tooltip-title">Route ${p.route_designator || p.route_id || 'Unknown'}</span>
               <div class="aip-tooltip-flex-between">
-                  <span class="${routeTypeClass}">${p.route_type || 'AIRWAY'}</span>
+                  <span class="${routeTypeClass}">${p.route_type || 'Airway'}</span>
                   <span class="aip-tooltip-subtitle aip-tooltip-bold">${directionStr}</span>
               </div>
               ${meainfo}
@@ -158,9 +171,9 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
         if (!activeLayers.atsRoutes && !routes.some((r: string) => selectedRouteIds.includes(r)))
           return null;
         return {
-          html: sanitizeHtml(`<div class="aip-tooltip-container aip-tooltip-max-250">
-              <span class="aip-tooltip-title">${p.waypoint_name || 'WAYPOINT'}</span>
-              <span class="aip-tooltip-subtitle aip-tooltip-waypoint-accent">INTERSECTING: ${routes.join(', ')}</span>
+          html: buildTooltip(`<div class="aip-tooltip-container aip-tooltip-max-250">
+              <span class="aip-tooltip-title">${p.waypoint_name || 'Waypoint'}</span>
+              <span class="aip-tooltip-subtitle aip-tooltip-waypoint-accent">Intersecting: ${routes.join(', ')}</span>
             </div>`),
         };
       }
@@ -262,7 +275,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
                       (o: any) => o.obstacle_type === name || name.includes(o.obstacle_type),
                     );
                   if (obs)
-                    extraInfo = `${divider}${row('AREA AFFECTED', obs.area_affected)}${row('LGT/MARKING', obs.marking_lgt)}${row('REMARKS', obs.remarks)}</div>`;
+                    extraInfo = `${divider}${row('Area Affected', obs.area_affected)}${row('Lgt/Marking', obs.marking_lgt)}${row('Remarks', obs.remarks)}</div>`;
                 } else if (
                   (category === 'NAVAID' || category === 'NAV') &&
                   Array.isArray(docs.radio_navigation_and_landing_aids)
@@ -296,7 +309,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
                   }
                   const nav = highestScore >= 1 ? bestMatch : null;
                   if (nav)
-                    extraInfo = `${divider}${row('FREQ', nav.frequency_channel)}${row('HOURS', nav.hours_of_operation)}${row('REMARKS', nav.remarks)}</div>`;
+                    extraInfo = `${divider}${row('Freq', nav.frequency_channel)}${row('Hours', nav.hours_of_operation)}${row('Remarks', nav.remarks)}</div>`;
                 } else if (
                   (category === 'RUNWAY_THRESHOLD' || category === 'RUNWAY') &&
                   Array.isArray(docs.runway_physical_characteristics)
@@ -306,21 +319,21 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
                     (r: any) => r.designation === rwyNum || r.designation?.includes(rwyNum),
                   );
                   if (rwy)
-                    extraInfo = `${divider}${row('DIMENSIONS', rwy.dimensions)}${row('SURFACE/STRENGTH', rwy.strength_and_surface)}</div>`;
+                    extraInfo = `${divider}${row('Dimensions', rwy.dimensions)}${row('Surface/Strength', rwy.strength_and_surface)}</div>`;
                 }
               }
 
               const separatorClass = k > 0 ? 'aip-tooltip-multi-separator' : '';
               htmlContent += `<div class="${separatorClass} aip-tooltip-container">
                 <span class="aip-tooltip-title">${name}</span>
-                <span class="aip-tooltip-subtitle">ELEVATION: <span class="aip-tooltip-accent">${elevStr}</span></span>
+                <span class="aip-tooltip-subtitle">Elevation: <span class="aip-tooltip-accent">${elevStr}</span></span>
                 <span class="aip-tooltip-status">${categoryDisplay}</span>
                 ${extraInfo}
               </div>`;
             }
 
             return {
-              html: sanitizeHtml(
+              html: buildTooltip(
                 `<div class="aip-scrollbar aip-tooltip-scroll-container">${htmlContent}</div>`,
               ),
             };

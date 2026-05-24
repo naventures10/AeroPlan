@@ -4,17 +4,50 @@
    4. Tooltips System (DeckGL & Shared)
    ───────────────────────────────────────────────────────────────────────────── */
 .deck-tooltip {
-  background: var(--glass-bg) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border: 1px solid var(--glass-border) !important;
-  border-radius: 16px !important;
-  padding: 12px 16px !important;
-  box-shadow: var(--glass-shadow) !important;
-  color: var(--primary) !important;
-  font-family: var(--font-inter) !important;
+  pointer-events: none !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   z-index: 1000 !important;
+}
+
+.aip-tooltip-wrapper {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: var(--glass-shadow);
+  color: var(--primary);
+  font-family: var(--font-inter);
   max-width: 320px;
+  transform: translate(-50%, calc(-100% - 15px));
+}
+
+.aip-tooltip-dot-warning {
+  display: inline-block !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: var(--status-warning) !important;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--status-warning) 80%, transparent) !important;
+  flex-shrink: 0;
+}
+
+.aip-tooltip-notam-text {
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+.aip-tooltip-badge-notam-none {
+  background: var(--surface-container-high) !important;
+  color: var(--on-surface-variant) !important;
 }
 
 .aip-tooltip-container {

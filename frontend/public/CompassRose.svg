@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800">
+  <defs>
+    <line id="minor-tick" x1="0" y1="-360" x2="0" y2="-330" stroke="white" stroke-width="4"/>
+  </defs>
+
+  <circle cx="400" cy="400" r="360" fill="none" stroke="white" stroke-width="8"/>
+  
+  <g transform="translate(400, 400)">
+    <!-- Minor ticks every 10 degrees -->
+    <use href="#minor-tick" transform="rotate(10)"/>
+    <use href="#minor-tick" transform="rotate(20)"/>
+    <use href="#minor-tick" transform="rotate(30)"/>
+    <use href="#minor-tick" transform="rotate(40)"/>
+    <use href="#minor-tick" transform="rotate(50)"/>
+    <use href="#minor-tick" transform="rotate(60)"/>
+    <use href="#minor-tick" transform="rotate(70)"/>
+    <use href="#minor-tick" transform="rotate(80)"/>
+    <use href="#minor-tick" transform="rotate(100)"/>
+    <use href="#minor-tick" transform="rotate(110)"/>
+    <use href="#minor-tick" transform="rotate(120)"/>
+    <use href="#minor-tick" transform="rotate(130)"/>
+    <use href="#minor-tick" transform="rotate(140)"/>
+    <use href="#minor-tick" transform="rotate(150)"/>
+    <use href="#minor-tick" transform="rotate(160)"/>
+    <use href="#minor-tick" transform="rotate(170)"/>
+    <use href="#minor-tick" transform="rotate(190)"/>
+    <use href="#minor-tick" transform="rotate(200)"/>
+    <use href="#minor-tick" transform="rotate(210)"/>
+    <use href="#minor-tick" transform="rotate(220)"/>
+    <use href="#minor-tick" transform="rotate(230)"/>
+    <use href="#minor-tick" transform="rotate(240)"/>
+    <use href="#minor-tick" transform="rotate(250)"/>
+    <use href="#minor-tick" transform="rotate(260)"/>
+    <use href="#minor-tick" transform="rotate(280)"/>
+    <use href="#minor-tick" transform="rotate(290)"/>
+    <use href="#minor-tick" transform="rotate(300)"/>
+    <use href="#minor-tick" transform="rotate(310)"/>
+    <use href="#minor-tick" transform="rotate(320)"/>
+    <use href="#minor-tick" transform="rotate(330)"/>
+    <use href="#minor-tick" transform="rotate(340)"/>
+    <use href="#minor-tick" transform="rotate(350)"/>
+
+    <!-- Cardinal Ticks (Longer) -->
+    <!-- N (0) -->
+    <line x1="0" y1="-360" x2="0" y2="-280" stroke="white" stroke-width="8"/>
+    <text x="0" y="-210" fill="white" font-family="sans-serif" font-size="60" text-anchor="middle" font-weight="bold">0</text>
+    
+    <!-- E (09) -->
+    <line x1="360" y1="0" x2="280" y2="0" stroke="white" stroke-width="8"/>
+    <text x="210" y="20" fill="white" font-family="sans-serif" font-size="60" text-anchor="middle" font-weight="bold">09</text>
+    
+    <!-- S (18) -->
+    <line x1="0" y1="360" x2="0" y2="280" stroke="white" stroke-width="8"/>
+    <text x="0" y="270" fill="white" font-family="sans-serif" font-size="60" text-anchor="middle" font-weight="bold">18</text>
+    
+    <!-- W (27) -->
+    <line x1="-360" y1="0" x2="-280" y2="0" stroke="white" stroke-width="8"/>
+    <text x="-210" y="20" fill="white" font-family="sans-serif" font-size="60" text-anchor="middle" font-weight="bold">27</text>
+  </g>
+</svg>

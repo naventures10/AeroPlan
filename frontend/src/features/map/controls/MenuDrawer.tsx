@@ -1,5 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { useMapStore } from '../../../store/useMapStore';
+import { fetchAirspaceNotams } from '../../../api/client';
 import './MenuDrawer.css';
 
 interface MenuDrawerProps {
@@ -26,6 +28,7 @@ const drawerSections = [
     ),
     description: 'Manage your account settings and preferences',
     badge: null,
+    badgeClass: '',
   },
 
   {
@@ -47,7 +50,8 @@ const drawerSections = [
       </svg>
     ),
     description: 'Temporary changes to the AIP via supplements',
-    badge: 'NEW',
+    badge: 'NEW', // Default fallback
+    badgeClass: 'new', // Semantic class
   },
   {
     id: 'airspace-notams',
@@ -67,7 +71,8 @@ const drawerSections = [
       </svg>
     ),
     description: 'Active notices to airmen for managed airspaces',
-    badge: '12',
+    badge: null, // Default fallback
+    badgeClass: 'warning', // Semantic class
   },
 ];
 
@@ -95,6 +100,17 @@ const itemVariants = {
 export default function MenuDrawer({ isOpen, onClose }: MenuDrawerProps) {
   const setAipSupplementsModalOpen = useMapStore((s) => s.setAipSupplementsModalOpen);
   const setAirspaceNotamsModalOpen = useMapStore((s) => s.setAirspaceNotamsModalOpen);
+  const setUserProfileModalOpen = useMapStore((s) => s.setUserProfileModalOpen);
+
+  const [notamCount, setNotamCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchAirspaceNotams()
+        .then((notams) => setNotamCount(notams.length))
+        .catch(() => setNotamCount(null));
+    }
+  }, [isOpen]);
 
   const handleSectionClick = (id: string) => {
     if (id === 'aip-supplements') {
@@ -102,6 +118,9 @@ export default function MenuDrawer({ isOpen, onClose }: MenuDrawerProps) {
       onClose();
     } else if (id === 'airspace-notams') {
       setAirspaceNotamsModalOpen(true);
+      onClose();
+    } else if (id === 'user-profile') {
+      setUserProfileModalOpen(true);
       onClose();
     }
   };
@@ -192,39 +211,44 @@ export default function MenuDrawer({ isOpen, onClose }: MenuDrawerProps) {
                 animate="visible"
                 exit="exit"
               >
-                {drawerSections.map(({ id, title, icon, description, badge }) => (
-                  <motion.li key={id} variants={itemVariants}>
-                    <button
-                      id={`aip-drawer-item-${id}`}
-                      className="aip-drawer-item"
-                      aria-label={title}
-                      onClick={() => handleSectionClick(id)}
-                    >
-                      <span className="aip-drawer-item-icon">{icon}</span>
-                      <span className="aip-drawer-item-text">
-                        <span className="aip-drawer-item-title">{title}</span>
-                        <span className="aip-drawer-item-desc">{description}</span>
-                      </span>
-                      {badge && (
-                        <span className={`aip-drawer-badge ${badge === 'NEW' ? 'new' : ''}`}>
-                          {badge}
+                {drawerSections.map(({ id, title, icon, description, badge, badgeClass }) => {
+                  let displayBadge = badge;
+                  if (id === 'airspace-notams' && notamCount !== null) {
+                    displayBadge = notamCount.toString();
+                  }
+
+                  return (
+                    <motion.li key={id} variants={itemVariants}>
+                      <button
+                        id={`aip-drawer-item-${id}`}
+                        className="aip-drawer-item"
+                        aria-label={title}
+                        onClick={() => handleSectionClick(id)}
+                      >
+                        <span className="aip-drawer-item-icon">{icon}</span>
+                        <span className="aip-drawer-item-text">
+                          <span className="aip-drawer-item-title">{title}</span>
+                          <span className="aip-drawer-item-desc">{description}</span>
                         </span>
-                      )}
-                      <span className="aip-drawer-item-arrow">
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="9 18 15 12 9 6" />
-                        </svg>
-                      </span>
-                    </button>
-                  </motion.li>
-                ))}
+                        {displayBadge && (
+                          <span className={`aip-drawer-badge ${badgeClass}`}>{displayBadge}</span>
+                        )}
+                        <span className="aip-drawer-item-arrow">
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="9 18 15 12 9 6" />
+                          </svg>
+                        </span>
+                      </button>
+                    </motion.li>
+                  );
+                })}
               </motion.ul>
             </nav>
 

@@ -142,6 +142,8 @@ interface MapState {
   setAipSupplementsModalOpen: (isOpen: boolean) => void;
   isAirspaceNotamsModalOpen: boolean;
   setAirspaceNotamsModalOpen: (isOpen: boolean) => void;
+  isUserProfileModalOpen: boolean;
+  setUserProfileModalOpen: (isOpen: boolean) => void;
 }
 
 export const DEFAULT_VIEW = {
@@ -489,6 +491,8 @@ export const useMapStore = create<MapState>((set, get) => ({
   setAipSupplementsModalOpen: (isOpen) => set({ isAipSupplementsModalOpen: isOpen }),
   isAirspaceNotamsModalOpen: false,
   setAirspaceNotamsModalOpen: (isOpen) => set({ isAirspaceNotamsModalOpen: isOpen }),
+  isUserProfileModalOpen: false,
+  setUserProfileModalOpen: (isOpen) => set({ isUserProfileModalOpen: isOpen }),
 
   // Basic Setters
   setViewState: (viewState) =>

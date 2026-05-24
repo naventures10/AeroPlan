@@ -20,6 +20,34 @@ export function createAerodromeLayers(
 
   return [
     new GeoJsonLayer({
+      id: 'aerodromes-compass-layer',
+      data: aerodromes,
+      visible: ctx.viewMode === 'ENROUTE',
+      pickable: false,
+      pointType: 'icon',
+      getIcon: () => ({
+        url: '/CompassRose.svg',
+        width: 800,
+        height: 800,
+        anchorY: 400,
+        mask: true,
+      }),
+      // Set to 40,000 meters so it represents roughly a ~10-12 NM radius in physical space, scaling seamlessly.
+      getIconSize: 40000,
+      iconSizeUnits: 'meters',
+      // Using full opacity (255) for the compass rose.
+      // If you'd like it semi-transparent, you can change 255 to a lower value (e.g., 150).
+      getIconColor: isLayerActive
+        ? [palette.purple[0], palette.purple[1], palette.purple[2], 255]
+        : [192, 132, 252, 0],
+      updateTriggers: {
+        getIconColor: [isLayerActive, ctx.isDarkMode],
+      },
+      transitions: {
+        getIconColor: 300,
+      },
+    }),
+    new GeoJsonLayer({
       id: 'aerodromes-layer',
       data: aerodromes,
       visible: ctx.viewMode === 'ENROUTE',

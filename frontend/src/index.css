@@ -83,50 +83,50 @@
    1b. Light Mode Token Overrides (Warm Off-White Glass — #FAF9F9)
    ───────────────────────────────────────────────────────────────────────────── */
 html:not(.dark) {
-  /* Surface System — Paper and Ink (Ivory, Cream, Stone) */
-  --surface: #f8f0df;
-  --surface-dim: #e5ddc9;
-  --surface-bright: #fcf8ed;
-  --surface-container-lowest: #fcf8ed;
-  --surface-container-low: #fbf5e7;
-  --surface-container: #f8f0df;
-  --surface-container-high: #eee6d3;
-  --surface-container-highest: #e5ddc9;
+  /* Surface System — Warmer Bone White Paper */
+  --surface: #fbf8f1;
+  --surface-dim: #f3efe5;
+  --surface-bright: #ffffff;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #fdfaf4;
+  --surface-container: #fbf8f1;
+  --surface-container-high: #f5f0e6;
+  --surface-container-highest: #efeada;
 
-  --on-surface: #1c1917; /* Stone 900 - Dark Ink */
-  --on-surface-variant: #44403c; /* Stone 700 - Faded Ink */
+  --on-surface: #314f4c; /* Lighter Faded Teal 900 */
+  --on-surface-variant: #3d6360; /* Lighter Faded Teal 800 */
 
-  --outline: #292524; /* Stone 800 - Ink Outline */
-  --outline-variant: #a8a29e; /* Stone 400 - Faint Ink */
+  --outline: #4c7a77; /* Lighter Faded Teal 700 */
+  --outline-variant: #c6dfdb; /* Lighter Faded Teal 200 */
 
-  --primary: #1c1917; /* Ink */
-  --on-primary: #f8f0df; /* Paper */
-  --secondary: #44403c; /* Faded Ink */
-  --on-secondary: #f8f0df;
-  --secondary-container: #e5ddc9;
-  --on-secondary-container: #1c1917;
+  --primary: #4c7a77; /* Lighter Faded Teal */
+  --on-primary: #fbf8f1; /* Warm Bone White */
+  --secondary: #5a8c87; /* Faded Teal 600 */
+  --on-secondary: #fbf8f1;
+  --secondary-container: #e2eeec;
+  --on-secondary-container: #314f4c;
 
-  --background: #eee6d3; /* Slightly textured paper background */
-  --on-background: #1c1917;
-  --surface-variant: #e5ddc9;
+  --background: #fbf8f1; /* Warmer bone white paper background */
+  --on-background: #314f4c;
+  --surface-variant: #efeada;
 
-  /* Accent — #488B8F (Muted Steel Teal) for light surfaces */
-  --accent-cyan: #488b8f;
-  --accent-cyan-glow: rgba(72, 139, 143, 0.35);
-  --accent-cyan-opacity-10: rgba(72, 139, 143, 0.08);
-  --accent-cyan-opacity-20: rgba(72, 139, 143, 0.15);
-  --accent-cyan-opacity-30: rgba(72, 139, 143, 0.22);
+  /* Accent — Lighter Faded Teal Green for light surfaces */
+  --accent-cyan: #4c7a77;
+  --accent-cyan-glow: rgba(76, 122, 119, 0.35);
+  --accent-cyan-opacity-10: rgba(76, 122, 119, 0.08);
+  --accent-cyan-opacity-20: rgba(76, 122, 119, 0.15);
+  --accent-cyan-opacity-30: rgba(76, 122, 119, 0.22);
 
-  --accent-cyan-50: #f0f7f8;
-  --accent-cyan-100: #d6ecee;
-  --accent-cyan-200: #afd9dc;
-  --accent-cyan-300: #80bec2;
-  --accent-cyan-400: #5aa3a7;
-  --accent-cyan-500: #488b8f;
-  --accent-cyan-600: #3a7276;
-  --accent-cyan-700: #2f5c5f;
-  --accent-cyan-800: #264749;
-  --accent-cyan-900: #1b3335;
+  --accent-cyan-50: #f4f8f8;
+  --accent-cyan-100: #e2eeec;
+  --accent-cyan-200: #c6dfdb;
+  --accent-cyan-300: #a4cac6;
+  --accent-cyan-400: #85b5b0;
+  --accent-cyan-500: #6da8a2;
+  --accent-cyan-600: #5a8c87;
+  --accent-cyan-700: #4c7a77;
+  --accent-cyan-800: #3d6360;
+  --accent-cyan-900: #314f4c;
 
   /* Status — slightly darkened for white bg readability */
   --status-success: #059669;
@@ -144,17 +144,20 @@ html:not(.dark) {
   --glass-bg: color-mix(in srgb, var(--surface) 75%, transparent);
   --glass-bg-heavy: color-mix(in srgb, var(--surface) 88%, transparent);
   --glass-bg-solid: color-mix(in srgb, var(--surface) 98%, transparent);
+
+  --glass-border-width: 1.5px; /* Added stroke weight for light mode */
+
   --glass-border: color-mix(
     in srgb,
-    var(--outline-variant) 25%,
+    var(--outline) 50%,
     transparent
-  ); /* Sharp ink outline stroke */
+  ); /* Stronger ink outline stroke */
   --glass-border-highlight: color-mix(
     in srgb,
-    var(--outline-variant) 45%,
+    var(--outline) 80%,
     transparent
-  ); /* Thicker ink outline */
-  --glass-shadow: 0 25px 50px -12px color-mix(in srgb, var(--outline-variant) 12%, transparent); /* Soft dark shadow */
+  ); /* Very strong ink outline */
+  --glass-shadow: 0 10px 30px -10px color-mix(in srgb, var(--on-surface) 20%, transparent); /* Punchier shadow to lift components */
 }
 
 html,
@@ -178,14 +181,14 @@ body,
     background: var(--glass-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
+    border: var(--glass-border-width, 1px) solid var(--glass-border);
   }
 
   .glass-morphism-heavy {
     background: var(--glass-bg-heavy);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border-highlight);
+    border: var(--glass-border-width, 1px) solid var(--glass-border-highlight);
   }
 
   .glow-accent {

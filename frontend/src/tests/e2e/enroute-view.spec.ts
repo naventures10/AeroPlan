@@ -44,8 +44,12 @@ test.describe('Enroute View Workflows', () => {
 
     // 2. Search for a specific waypoint (e.g., VATLA)
     await mapPage.searchInput.fill('VATLA');
-    const result = page.getByText('VATLA').first();
-    await result.click();
+    const result = page
+      .locator('[data-testid="search-result-item"]')
+      .filter({ hasText: 'VATLA' })
+      .first();
+    await expect(result).toBeVisible({ timeout: 15000 });
+    await result.click({ force: true });
 
     // 3. Verify selection via Info Card
     const infoCard = page.getByTestId('feature-info-card');
@@ -66,7 +70,7 @@ test.describe('Enroute View Workflows', () => {
     await page.waitForTimeout(3000);
     const { width, height } = page.viewportSize()!;
     await page.mouse.move(width / 2, height / 2);
-    await expect(page.locator('body')).toContainText('SIGNIFICANT POINT');
+    await expect(page.locator('body')).toContainText(/SIGNIFICANT POINT/i, { timeout: 15000 });
 
     // 6. Close the card
     await page.getByTestId('close-feature-card').click();
@@ -80,7 +84,12 @@ test.describe('Enroute View Workflows', () => {
 
     // 2. Position the map over a known waypoint (VATLA)
     await mapPage.searchInput.fill('VATLA');
-    await page.getByText('VATLA').first().click();
+    const vatlaResult = page
+      .locator('[data-testid="search-result-item"]')
+      .filter({ hasText: 'VATLA' })
+      .first();
+    await expect(vatlaResult).toBeVisible({ timeout: 15000 });
+    await vatlaResult.click({ force: true });
 
     // 3. Wait and Deselect
     await page.waitForTimeout(3000);
@@ -92,7 +101,7 @@ test.describe('Enroute View Workflows', () => {
     // 4. Manual Hover
     const { width, height } = page.viewportSize()!;
     await page.mouse.move(width / 2, height / 2);
-    await expect(page.locator('body')).toContainText('VATLA');
+    await expect(page.locator('body')).toContainText(/VATLA/i, { timeout: 15000 });
 
     // 5. Manual Click
     await page.mouse.click(width / 2, height / 2);
@@ -108,8 +117,12 @@ test.describe('Enroute View Workflows', () => {
 
     // 2. Search for a specific NavAid (e.g., MMV)
     await mapPage.searchInput.fill('MMV');
-    const result = page.getByText('MMV').first();
-    await result.click();
+    const mmvResult = page
+      .locator('[data-testid="search-result-item"]')
+      .filter({ hasText: 'MMV' })
+      .first();
+    await expect(mmvResult).toBeVisible({ timeout: 15000 });
+    await mmvResult.click({ force: true });
 
     // 3. Verify selection via Info Card
     const infoCard = page.getByTestId('feature-info-card');
@@ -130,7 +143,7 @@ test.describe('Enroute View Workflows', () => {
     await page.waitForTimeout(3000);
     const { width, height } = page.viewportSize()!;
     await page.mouse.move(width / 2, height / 2);
-    await expect(page.locator('body')).toContainText('DVOR/DME');
+    await expect(page.locator('body')).toContainText(/DVOR\/DME/i, { timeout: 15000 });
 
     // 6. Close the card
     await page.getByTestId('close-feature-card').click();

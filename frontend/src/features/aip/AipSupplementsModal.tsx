@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, FileText, ZoomIn, ZoomOut, ArrowLeft } from 'lucide-react';
+import { X, FileText, ZoomIn, ZoomOut } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -28,6 +28,7 @@ export default function AipSupplementsModal() {
   const [selectedPdfUrl, setSelectedPdfUrl] = useState<string | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
   const [pdfScale, setPdfScale] = useState(1.2);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -61,10 +62,16 @@ export default function AipSupplementsModal() {
     setSelectedPdfUrl(getProxyPdfUrl(pdfLink));
     setNumPages(0);
     setPdfScale(1.2);
+    setLoadError(false);
   };
 
   const onDocumentLoadSuccess = useCallback(({ numPages: total }: { numPages: number }) => {
     setNumPages(total);
+    setLoadError(false);
+  }, []);
+
+  const onDocumentLoadError = useCallback(() => {
+    setLoadError(true);
   }, []);
 
   return createPortal(
@@ -89,28 +96,19 @@ export default function AipSupplementsModal() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="aip-supplements-modal-header">
-              <div className="aip-supplements-header-group">
-                {selectedPdfUrl ? (
-                  <button
-                    onClick={() => setSelectedPdfUrl(null)}
-                    className="aip-supplements-action-btn"
-                  >
-                    <ArrowLeft size={20} />
-                  </button>
-                ) : (
+            {!selectedPdfUrl && (
+              <div className="aip-supplements-modal-header">
+                <div className="aip-supplements-header-group">
                   <div className="aip-supplements-header-icon">
                     <FileText size={16} />
                   </div>
-                )}
-                <h2 className="aip-supplements-header-title">
-                  {selectedPdfUrl ? 'Document Viewer' : 'AIP Supplements'}
-                </h2>
+                  <h2 className="aip-supplements-header-title">AIP Supplements</h2>
+                </div>
+                <button onClick={onClose} className="aip-supplements-action-btn">
+                  <X size={20} />
+                </button>
               </div>
-              <button onClick={onClose} className="aip-supplements-action-btn">
-                <X size={20} />
-              </button>
-            </div>
+            )}
 
             {/* Body */}
             <div className="aip-supplements-body">
@@ -132,6 +130,19 @@ export default function AipSupplementsModal() {
                       <ZoomOut size={18} />
                     </button>
                   </div>
+
+                  {numPages === 0 && !loadError && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-50 pointer-events-none">
+                      <div className="aip-supplements-spinner" />
+                      <span className="aip-supplements-status-text">Loading PDF...</span>
+                    </div>
+                  )}
+
+                  {loadError && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-50 pointer-events-none text-red-400">
+                      <span className="aip-supplements-status-text">Failed to load PDF</span>
+                    </div>
+                  )}
 
                   {/* PDF Render Area */}
                   <div
@@ -155,12 +166,8 @@ export default function AipSupplementsModal() {
                       <Document
                         file={selectedPdfUrl}
                         onLoadSuccess={onDocumentLoadSuccess}
-                        loading={
-                          <div className="aip-supplements-status">
-                            <div className="aip-supplements-spinner" />
-                            <span className="aip-supplements-status-text">Loading PDF...</span>
-                          </div>
-                        }
+                        onLoadError={onDocumentLoadError}
+                        loading={<div />}
                       >
                         <div className="flex flex-col items-center gap-8">
                           {Array.from(new Array(numPages), (_, index) => (

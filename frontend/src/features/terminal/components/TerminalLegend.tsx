@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import HoverTooltip from '../../../components/HoverTooltip';
 import './TerminalLegend.css';
 import { Building2, TowerControl, TreePine, Construction, Radio } from 'lucide-react';
 import { useMapStore } from '../../../store/useMapStore';
@@ -66,38 +67,31 @@ export default function TerminalLegend() {
         {categories.map(({ id, label, icon: Icon, color, glow }) => {
           const isActive = terminalSpatialFilters ? terminalSpatialFilters[id] : false;
           return (
-            <div key={id} className="relative group/tooltip flex justify-center">
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => toggleTerminalSpatialFilter(id)}
-                className={`relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 cursor-pointer ${
-                  isActive
-                    ? `bg-surface-container-high  ${color} ${glow} shadow-lg`
-                    : 'text-on-surface-variant hover:text-on-surface-variant hover:bg-surface-container-high   '
-                }`}
-              >
-                <Icon size={15} strokeWidth={isActive ? 2.5 : 1.5} />
+            <HoverTooltip<HTMLButtonElement> key={id} content={label} placement="bottom">
+              {({ ref, interestfor, className }) => (
+                <motion.button
+                  ref={ref}
+                  interestfor={interestfor}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => toggleTerminalSpatialFilter(id)}
+                  className={`${className} relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 cursor-pointer ${
+                    isActive
+                      ? `bg-surface-container-high ${color} ${glow} shadow-lg`
+                      : 'text-on-surface-variant hover:text-on-surface-variant hover:bg-surface-container-high'
+                  }`}
+                >
+                  <Icon size={15} strokeWidth={isActive ? 2.5 : 1.5} />
 
-                {/* Active Indicator Dot */}
-                {isActive && (
-                  <motion.div
-                    layoutId={`active-pill-dot-${id}`}
-                    className={`absolute -bottom-0.5 w-1 h-1 rounded-full ${color.replace('text-', 'bg-')}`}
-                  />
-                )}
-              </motion.button>
-
-              {/* Custom Tooltip */}
-              <div className="absolute top-full mt-2 pointer-events-none opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 z-50">
-                <div className="relative">
-                  <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 border-l border-t border-[var(--glass-border-highlight)] bg-[var(--glass-bg-solid)] rotate-45" />
-                  <div className="relative border border-[var(--glass-border-highlight)] bg-[var(--glass-bg-solid)] text-[var(--primary)] text-[10px] font-bold tracking-wider px-2 py-1 rounded-lg shadow-2xl backdrop-blur-md whitespace-nowrap">
-                    {label}
-                  </div>
-                </div>
-              </div>
-            </div>
+                  {isActive && (
+                    <motion.div
+                      layoutId={`active-pill-dot-${id}`}
+                      className={`absolute -bottom-0.5 w-1 h-1 rounded-full ${color.replace('text-', 'bg-')}`}
+                    />
+                  )}
+                </motion.button>
+              )}
+            </HoverTooltip>
           );
         })}
       </div>
