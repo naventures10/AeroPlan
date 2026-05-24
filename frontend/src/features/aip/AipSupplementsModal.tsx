@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, FileText, ZoomIn, ZoomOut, ArrowLeft } from 'lucide-react';
+import { X, FileText, ZoomIn, ZoomOut } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -89,28 +89,19 @@ export default function AipSupplementsModal() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="aip-supplements-modal-header">
-              <div className="aip-supplements-header-group">
-                {selectedPdfUrl ? (
-                  <button
-                    onClick={() => setSelectedPdfUrl(null)}
-                    className="aip-supplements-action-btn"
-                  >
-                    <ArrowLeft size={20} />
-                  </button>
-                ) : (
+            {!selectedPdfUrl && (
+              <div className="aip-supplements-modal-header">
+                <div className="aip-supplements-header-group">
                   <div className="aip-supplements-header-icon">
                     <FileText size={16} />
                   </div>
-                )}
-                <h2 className="aip-supplements-header-title">
-                  {selectedPdfUrl ? 'Document Viewer' : 'AIP Supplements'}
-                </h2>
+                  <h2 className="aip-supplements-header-title">AIP Supplements</h2>
+                </div>
+                <button onClick={onClose} className="aip-supplements-action-btn">
+                  <X size={20} />
+                </button>
               </div>
-              <button onClick={onClose} className="aip-supplements-action-btn">
-                <X size={20} />
-              </button>
-            </div>
+            )}
 
             {/* Body */}
             <div className="aip-supplements-body">

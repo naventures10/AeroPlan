@@ -128,10 +128,6 @@ describe('AipSupplementsModal', () => {
     });
 
     fireEvent.click(screen.getByText('View PDF'));
-
-    // Header changes
-    expect(screen.getByText('Document Viewer')).toBeInTheDocument();
-
     // Document component should be rendered
     expect(screen.getByTestId('pdf-document')).toBeInTheDocument();
   });

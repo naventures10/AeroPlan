@@ -36,6 +36,7 @@ describe('useMapTooltip', () => {
 
     expect(tooltip).toBeDefined();
     expect(tooltip).toBeDefined();
+    expect(tooltip!.html).toContain('aip-tooltip-wrapper');
     // Instead of exact html string, check for parts
     expect(tooltip!.html).toContain('VAAU');
     expect(tooltip!.html).toContain('TWR');

@@ -95,6 +95,7 @@ const itemVariants = {
 export default function MenuDrawer({ isOpen, onClose }: MenuDrawerProps) {
   const setAipSupplementsModalOpen = useMapStore((s) => s.setAipSupplementsModalOpen);
   const setAirspaceNotamsModalOpen = useMapStore((s) => s.setAirspaceNotamsModalOpen);
+  const setUserProfileModalOpen = useMapStore((s) => s.setUserProfileModalOpen);
 
   const handleSectionClick = (id: string) => {
     if (id === 'aip-supplements') {
@@ -102,6 +103,9 @@ export default function MenuDrawer({ isOpen, onClose }: MenuDrawerProps) {
       onClose();
     } else if (id === 'airspace-notams') {
       setAirspaceNotamsModalOpen(true);
+      onClose();
+    } else if (id === 'user-profile') {
+      setUserProfileModalOpen(true);
       onClose();
     }
   };

@@ -135,7 +135,14 @@ async def get_all_aerodromes(db: AsyncSession = Depends(get_db)) -> GeoJsonFeatu
                             'elevation', substring(ad.aip_document->'data'->'geographical_data'->>'elevation_reference_temp' from '([0-9.]+)\\s*FT'),
                             'magnetic_variation', ad.aip_document->'data'->'geographical_data'->>'magnetic_variation',
                             'remarks', COALESCE(ad.aip_document->'data'->'geographical_data'->>'remarks', 'None'),
-                            'communications', ad.aip_document->'data'->'communications'
+                            'communications', ad.aip_document->'data'->'communications',
+                            'notam_count', (
+                                SELECT count(*)
+                                FROM notams n
+                                WHERE n.airport_icao = sf.icao_code
+                                  AND (n.valid_from IS NULL OR n.valid_from <= NOW())
+                                  AND (n.valid_to >= NOW() OR n.is_permanent = TRUE)
+                            )
                         )
                     )
                 ),

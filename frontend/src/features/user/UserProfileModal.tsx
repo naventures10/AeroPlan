@@ -1,17 +1,24 @@
 import { useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, Mail, LogOut } from 'lucide-react';
+import { X, User, Mail, LogOut, Calendar } from 'lucide-react';
 import { useMapStore } from '../../store/useMapStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import './UserProfileModal.css';
 
 export default function UserProfileModal() {
   const isOpen = useMapStore((s) => s.isUserProfileModalOpen);
   const setOpen = useMapStore((s) => s.setUserProfileModalOpen);
+  const { user, logoutUser } = useAuthStore();
 
   const onClose = useCallback(() => {
     setOpen(false);
   }, [setOpen]);
+
+  const handleLogout = async () => {
+    await logoutUser();
+    onClose();
+  };
 
   // Handle ESC
   useEffect(() => {
@@ -65,8 +72,10 @@ export default function UserProfileModal() {
                   <User size={48} className="text-white/60" />
                 </div>
                 <div className="profile-hero-info">
-                  <h3 className="profile-name">John Doe</h3>
-                  <p className="profile-role">Aviation Pilot</p>
+                  <h3 className="profile-name">
+                    {user?.email ? user.email.split('@')[0] : 'Unknown User'}
+                  </h3>
+                  <p className="profile-role">Registered User</p>
                 </div>
               </div>
 
@@ -78,14 +87,27 @@ export default function UserProfileModal() {
                   </div>
                   <div className="detail-content">
                     <span className="detail-label">Email Address</span>
-                    <span className="detail-value">john.doe@example.com</span>
+                    <span className="detail-value">{user?.email || 'N/A'}</span>
                   </div>
                 </div>
+                {user?.created_at && (
+                  <div className="profile-detail-item">
+                    <div className="detail-icon">
+                      <Calendar size={16} />
+                    </div>
+                    <div className="detail-content">
+                      <span className="detail-label">Member Since</span>
+                      <span className="detail-value">
+                        {new Date(user.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Actions */}
               <div className="profile-actions">
-                <button className="profile-action-button danger">
+                <button onClick={handleLogout} className="profile-action-button danger">
                   <LogOut size={16} />
                   <span>Sign Out</span>
                 </button>
