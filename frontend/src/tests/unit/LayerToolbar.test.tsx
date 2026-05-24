@@ -50,4 +50,21 @@ describe('LayerToolbar Component', () => {
     if (menuButton) fireEvent.click(menuButton);
     expect(menuButton).toHaveAttribute('aria-expanded', 'false');
   });
+
+  it('wires toolbar buttons to hint popovers for tooltip behavior', () => {
+    const { getByRole, getByText } = render(<LayerToolbar />);
+
+    const waypointsButton = getByRole('button', { name: 'Toggle Waypoints' });
+    const menuButton = getByRole('button', { name: 'Toggle menu' });
+    const waypointsTooltip = getByText('Waypoints').closest('[popover="hint"]');
+    const menuTooltip = getByText('Toggle menu').closest('[popover="hint"]');
+
+    expect(waypointsButton).toHaveAttribute('interestfor');
+    expect(menuButton).toHaveAttribute('interestfor');
+
+    expect(waypointsTooltip).toBeInTheDocument();
+    expect(menuTooltip).toBeInTheDocument();
+    expect(waypointsTooltip?.id).toBe(waypointsButton.getAttribute('interestfor'));
+    expect(menuTooltip?.id).toBe(menuButton.getAttribute('interestfor'));
+  });
 });
