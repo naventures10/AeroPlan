@@ -73,7 +73,7 @@ export default function UserProfileModal() {
                 </div>
                 <div className="profile-hero-info">
                   <h3 className="profile-name">
-                    {user?.email ? user.email.split('@')[0] : 'Unknown User'}
+                    {user?.username || (user?.email ? user.email.split('@')[0] : 'Unknown User')}
                   </h3>
                   <p className="profile-role">Registered User</p>
                 </div>

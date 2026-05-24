@@ -3,6 +3,7 @@ import { ApiError } from './client';
 const API_BASE = '/api/v1/auth';
 
 export interface UserCreate {
+  username?: string;
   email: string;
   password?: string;
 }
@@ -14,6 +15,7 @@ export interface UserLogin {
 
 export interface UserResponse {
   id: string;
+  username: string | null;
   email: string;
   is_active: boolean;
   created_at: string;

@@ -124,6 +124,13 @@ export default function AipSupplementsModal() {
                     </button>
                   </div>
 
+                  {numPages === 0 && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-50 pointer-events-none">
+                      <div className="aip-supplements-spinner" />
+                      <span className="aip-supplements-status-text">Loading PDF...</span>
+                    </div>
+                  )}
+
                   {/* PDF Render Area */}
                   <div
                     className="aip-supplements-pdf-render-area aip-scrollbar"
@@ -146,12 +153,7 @@ export default function AipSupplementsModal() {
                       <Document
                         file={selectedPdfUrl}
                         onLoadSuccess={onDocumentLoadSuccess}
-                        loading={
-                          <div className="aip-supplements-status">
-                            <div className="aip-supplements-spinner" />
-                            <span className="aip-supplements-status-text">Loading PDF...</span>
-                          </div>
-                        }
+                        loading={<div />}
                       >
                         <div className="flex flex-col items-center gap-8">
                           {Array.from(new Array(numPages), (_, index) => (

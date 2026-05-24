@@ -13,13 +13,21 @@ interface AuthModalsProps {
 
 export default function AuthModals({ isOpen, onClose, initialMode = 'login' }: AuthModalsProps) {
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const { loginUser, registerUser, isLoading, error, clearError } = useAuthStore();
 
   React.useEffect(() => {
-    if (isOpen) setMode(initialMode);
+    if (isOpen) {
+      setMode(initialMode);
+      setFirstName('');
+      setLastName('');
+      setEmail('');
+      setPassword('');
+    }
   }, [isOpen, initialMode]);
 
   if (!isOpen) return null;
@@ -29,7 +37,8 @@ export default function AuthModals({ isOpen, onClose, initialMode = 'login' }: A
     if (mode === 'login') {
       await loginUser({ email, password });
     } else {
-      await registerUser({ email, password });
+      const username = `${firstName.trim()} ${lastName.trim()}`.trim();
+      await registerUser({ email, password, username });
     }
     // If successful, the auth store updates state and redirects (handled elsewhere).
   };
@@ -73,7 +82,54 @@ export default function AuthModals({ isOpen, onClose, initialMode = 'login' }: A
           </div>
 
           <form onSubmit={handleSubmit} className="auth-modal-body">
-            {error && <div className="auth-error-msg">{error}</div>}
+            {error && (
+              <div className="auth-error-msg">
+                {(() => {
+                  try {
+                    const parsed = JSON.parse(error);
+                    if (parsed.detail) {
+                      return typeof parsed.detail === 'string'
+                        ? parsed.detail
+                        : parsed.detail[0]?.msg || error;
+                    }
+                    if (parsed.message) return parsed.message;
+                  } catch {
+                    // Fall back to raw error if not JSON
+                  }
+                  return error;
+                })()}
+              </div>
+            )}
+
+            {mode === 'register' && (
+              <div
+                className="auth-name-group"
+                style={{ display: 'flex', gap: '1rem', marginBottom: '1.25rem' }}
+              >
+                <div className="auth-input-group" style={{ marginBottom: 0, flex: 1 }}>
+                  <label className="auth-label">First Name</label>
+                  <input
+                    type="text"
+                    required
+                    className="auth-input"
+                    placeholder="Amelia"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                  />
+                </div>
+                <div className="auth-input-group" style={{ marginBottom: 0, flex: 1 }}>
+                  <label className="auth-label">Last Name</label>
+                  <input
+                    type="text"
+                    required
+                    className="auth-input"
+                    placeholder="Earhart"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="auth-input-group">
               <label className="auth-label">Email</label>

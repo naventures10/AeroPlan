@@ -30,6 +30,7 @@ async def register(
     # Create user
     user = User(
         email=user_in.email,
+        username=user_in.username,
         hashed_password=get_password_hash(user_in.password),
     )
     session.add(user)

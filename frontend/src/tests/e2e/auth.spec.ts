@@ -19,6 +19,8 @@ test.describe('Authentication Workflow', () => {
     const modalTitle = page.locator('.auth-modal-title');
     await expect(modalTitle).toHaveText('Create an Account');
 
+    await page.getByPlaceholder('Amelia').fill('Test');
+    await page.getByPlaceholder('Earhart').fill('User');
     await page.locator('input[type="email"]').fill(randomEmail);
     await page.locator('input[type="password"]').fill(password);
 

@@ -97,7 +97,11 @@ describe('AuthModals', () => {
 
     const emailInput = screen.getByPlaceholderText('pilot@example.com');
     const passwordInput = screen.getByPlaceholderText('••••••••');
+    const firstNameInput = screen.getByPlaceholderText('Amelia');
+    const lastNameInput = screen.getByPlaceholderText('Earhart');
 
+    fireEvent.change(firstNameInput, { target: { value: 'New' } });
+    fireEvent.change(lastNameInput, { target: { value: 'User' } });
     fireEvent.change(emailInput, { target: { value: 'newuser@example.com' } });
     fireEvent.change(passwordInput, { target: { value: 'newpass123' } });
 
@@ -107,6 +111,7 @@ describe('AuthModals', () => {
     expect(mockRegisterUser).toHaveBeenCalledWith({
       email: 'newuser@example.com',
       password: 'newpass123',
+      username: 'New User',
     });
     expect(mockLoginUser).not.toHaveBeenCalled();
   });

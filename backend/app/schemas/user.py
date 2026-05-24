@@ -5,6 +5,7 @@ from pydantic import BaseModel, EmailStr
 
 
 class UserCreate(BaseModel):
+    username: str | None = None
     email: EmailStr
     password: str
 
@@ -16,6 +17,7 @@ class UserLogin(BaseModel):
 
 class UserResponse(BaseModel):
     id: uuid.UUID
+    username: str | None
     email: EmailStr
     is_active: bool
     created_at: datetime

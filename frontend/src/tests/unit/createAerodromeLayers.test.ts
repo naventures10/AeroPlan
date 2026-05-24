@@ -7,13 +7,16 @@ describe('createAerodromeLayers', () => {
     const ctx = { viewMode: 'ENROUTE', activeLayers: { aerodromes: true } };
     const layers = createAerodromeLayers(ctx as any, {}, [], mockOnClick);
 
-    expect(layers.length).toBe(2);
-    expect(layers[0].id).toBe('aerodromes-layer');
-    expect(layers[1].id).toBe('aerodrome-text-layer');
+    expect(layers.length).toBe(3);
+    expect(layers[0].id).toBe('aerodromes-compass-layer');
+    expect(layers[1].id).toBe('aerodromes-layer');
+    expect(layers[2].id).toBe('aerodrome-text-layer');
 
-    const geoJsonLayer = layers[0];
-    const textLayer = layers[1];
+    const compassLayer = layers[0];
+    const geoJsonLayer = layers[1];
+    const textLayer = layers[2];
 
+    expect(compassLayer.props.visible).toBe(true);
     expect(geoJsonLayer.props.visible).toBe(true);
 
     const mockInfo = {
@@ -22,6 +25,7 @@ describe('createAerodromeLayers', () => {
     geoJsonLayer.props.onClick(mockInfo);
     expect(mockOnClick).toHaveBeenCalledWith('VAAU', [1, 2]);
 
+    expect(compassLayer.props.getIcon()).toBeDefined();
     expect(geoJsonLayer.props.getIcon()).toBeDefined();
 
     expect(textLayer.props.getPosition({ position: [1, 2] })).toEqual([1, 2]);
@@ -34,5 +38,6 @@ describe('createAerodromeLayers', () => {
 
     expect(layers[0].props.visible).toBe(false);
     expect(layers[1].props.visible).toBe(false);
+    expect(layers[2].props.visible).toBe(false);
   });
 });

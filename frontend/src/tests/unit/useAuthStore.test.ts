@@ -23,6 +23,7 @@ describe('useAuthStore', () => {
   it('checkAuth handles success', async () => {
     const mockUser = {
       id: '1',
+      username: null,
       email: 'test@test.com',
       is_active: true,
       created_at: '',
@@ -51,6 +52,7 @@ describe('useAuthStore', () => {
   it('loginUser handles success', async () => {
     const mockUser = {
       id: '1',
+      username: null,
       email: 'test@test.com',
       is_active: true,
       created_at: '',
