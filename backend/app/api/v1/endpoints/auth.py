@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentUser
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import create_access_token, get_password_hash, verify_password
 from app.models.user import User
@@ -55,7 +56,7 @@ async def login(
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=True,
+        secure=settings.ENVIRONMENT == "production",
         samesite="lax",  # Lax allows cookies to be sent with top-level navigations
         max_age=7 * 24 * 60 * 60,  # 7 days
     )
@@ -64,7 +65,9 @@ async def login(
 
 @router.post("/logout")
 async def logout(response: Response) -> Any:
-    response.delete_cookie("access_token", httponly=True, secure=True, samesite="lax")
+    response.delete_cookie(
+        "access_token", httponly=True, secure=settings.ENVIRONMENT == "production", samesite="lax"
+    )
     return {"message": "Successfully logged out"}
 
 

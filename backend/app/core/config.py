@@ -44,6 +44,7 @@ class Settings(BaseSettings):
 
     # ── Dev / Debug ────────────────────────────────────────────────────
     DEBUG: bool = False
+    ENVIRONMENT: str = "local"
 
     # ── Security ─────────────────────────────────────────────────────
     SECRET_KEY: str = "eAIP-super-secret-key-change-in-production"

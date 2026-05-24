@@ -1,5 +1,4 @@
 import uuid
-from datetime import UTC
 from unittest.mock import MagicMock
 
 import pytest
@@ -20,7 +19,7 @@ async def test_register_new_user(api_client: AsyncClient, db_session):
     db_session.execute.return_value = mock_result
 
     def mock_add(user):
-        from datetime import datetime
+        from datetime import UTC, datetime
 
         user.id = uuid.uuid4()
         user.is_active = True

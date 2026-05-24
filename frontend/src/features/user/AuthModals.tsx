@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader2 } from 'lucide-react';
@@ -17,6 +17,10 @@ export default function AuthModals({ isOpen, onClose, initialMode = 'login' }: A
   const [password, setPassword] = useState('');
 
   const { loginUser, registerUser, isLoading, error, clearError } = useAuthStore();
+
+  React.useEffect(() => {
+    if (isOpen) setMode(initialMode);
+  }, [isOpen, initialMode]);
 
   if (!isOpen) return null;
 
