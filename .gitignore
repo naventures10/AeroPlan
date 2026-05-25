@@ -9,10 +9,11 @@
 !.gitignore
 !Makefile
 !README.md
-# Allow the three packages
+# Allow the packages
 !/frontend/
 !/backend/
 !/scripts/
+!/eaip_scrapper/
 !.gitlab-ci.yml
 
 # ============================================================
