@@ -94,6 +94,7 @@ export default function AipSupplementsModal() {
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className={`aip-supplements-modal-container ${selectedPdfUrl ? 'is-pdf' : 'is-list'}`}
             onClick={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
           >
             {/* Header */}
             {!selectedPdfUrl && (

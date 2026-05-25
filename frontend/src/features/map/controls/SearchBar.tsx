@@ -141,7 +141,7 @@ export default function SearchBar({
           >
             {isLoading ? (
               <div className="px-4 py-8 flex flex-col items-center justify-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-surface-container-high border-outline flex items-center justify-center border">
+                <div className="w-12 h-12 rounded-full border-outline flex items-center justify-center border">
                   <Loader2 size={24} className="text-on-surface animate-spin" />
                 </div>
                 <div className="flex flex-col items-center gap-1">
@@ -170,7 +170,7 @@ export default function SearchBar({
                     onMouseEnter={() => setSearchSelectedIndex(index)}
                   >
                     <div className="flex items-center gap-4 flex-1">
-                      <div className="w-10 h-10 rounded-full bg-surface-container border-outline-variant flex items-center justify-center shrink-0 border">
+                      <div className="w-10 h-10 rounded-full border-outline-variant flex items-center justify-center shrink-0 border">
                         <Search size={14} className="text-on-surface-variant" />
                       </div>
                       <div className="flex flex-col">
@@ -186,7 +186,7 @@ export default function SearchBar({
               </div>
             ) : (
               <div className="px-8 py-12 text-center flex flex-col items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center opacity-50 dark:opacity-30">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center opacity-50 dark:opacity-30">
                   <Search size={24} className="text-on-surface" />
                 </div>
                 <div className="flex flex-col gap-1">

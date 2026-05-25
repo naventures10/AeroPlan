@@ -54,7 +54,7 @@ export function AltitudeSlider() {
       </div>
 
       {/* Level dots — visual indicator of position. 
-          Reversed so higher altitude is at the top. */}
+ Reversed so higher altitude is at the top. */}
       <div className="wind-altitude__dots">
         {[...ALTITUDE_LEVELS].reverse().map((level) => (
           <button

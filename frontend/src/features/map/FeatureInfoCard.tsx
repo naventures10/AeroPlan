@@ -123,7 +123,7 @@ export function FeatureInfoCard() {
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
           className={`aip-feature-card-wrapper ${isRoute ? 'is-route' : ''}`}
         >
-          <div className="aip-feature-card flex flex-col relative w-full h-full bg-surface-bright rounded-xl overflow-hidden shadow-xl border border-outline-variant">
+          <div className="aip-feature-card flex flex-col relative w-full h-full rounded-xl overflow-hidden shadow-xl border border-outline-variant">
             <div
               className={
                 type === 'AIRSPACE'
@@ -153,7 +153,7 @@ export function FeatureInfoCard() {
                   setSelectedFeature(null);
                   setSelectedRouteIds([]);
                 }}
-                className="aip-feature-card-close p-2 hover:bg-surface-container-high rounded-full transition-colors ml-auto flex-shrink-0 self-start"
+                className="aip-feature-card-close p-2 hover: rounded-full transition-colors ml-auto flex-shrink-0 self-start"
                 aria-label="Close"
               >
                 <X size={18} />

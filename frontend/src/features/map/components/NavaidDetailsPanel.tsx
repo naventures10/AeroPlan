@@ -39,7 +39,7 @@ export function NavaidDetailsPanel({
         <div className="rounded-lg border border-outline-variant overflow-hidden">
           <button
             onClick={() => setShowRemarks(!showRemarks)}
-            className="w-full flex items-center justify-between px-3 py-2 bg-surface-container hover:bg-surface-container-high transition-colors"
+            className="w-full flex items-center justify-between px-3 py-2 hover: transition-colors"
           >
             <span className="text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">
               Remarks

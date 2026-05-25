@@ -36,7 +36,7 @@ interface AerodromeInfoDropdownProps {
 }
 
 /**
- * A compact dropdown button labeled "AERODROME INFORMATION".
+ * A compact dropdown button labeled"AERODROME INFORMATION".
  * Clicking it reveals a scrollable list of AIP section links.
  * Positioned in the TERMINAL view top-left.
  */

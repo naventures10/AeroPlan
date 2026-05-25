@@ -58,20 +58,20 @@ export function RouteDetailsPanel({
     <div className="flex flex-col gap-3">
       {/* ── Route Summary Strip ── */}
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-container border border-outline-variant">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-outline-variant">
           <Plane size={12} className="text-teal-700 dark:text-cyan-400" />
           <span className="text-[11px] font-semibold text-on-surface-variant tracking-wide">
             {total_distance_nm} NM
           </span>
         </div>
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-container border border-outline-variant">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-outline-variant">
           <ArrowUpDown size={12} className="text-teal-700 dark:text-cyan-400" />
           <span className="text-[11px] font-semibold text-on-surface-variant tracking-wide">
             {waypoints.length} FIXES
           </span>
         </div>
         {firstSeg?.lateral_limits && (
-          <div className="px-2.5 py-1 rounded-md bg-surface-container border border-outline-variant">
+          <div className="px-2.5 py-1 rounded-md border border-outline-variant">
             <span className="text-[11px] font-semibold text-on-surface-variant tracking-wide">
               {firstSeg.lateral_limits} WIDE
             </span>
@@ -81,7 +81,7 @@ export function RouteDetailsPanel({
 
       {/* ── Direction of Cruising Levels ── */}
       {(dirOdd || dirEven) && (
-        <div className="rounded-lg bg-surface border border-outline-variant px-3 py-2.5">
+        <div className="rounded-lg border border-outline-variant px-3 py-2.5">
           <span className="text-[10px] font-bold text-on-surface-variant tracking-widest uppercase block mb-1.5">
             Direction of Cruising Levels
           </span>
@@ -111,7 +111,7 @@ export function RouteDetailsPanel({
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse min-w-[500px]">
             <thead>
-              <tr className="bg-surface-container-high">
+              <tr className="">
                 <th className="route-th">Fix</th>
                 <th className="route-th">Coordinates</th>
                 <th className="route-th">Track</th>
@@ -127,7 +127,7 @@ export function RouteDetailsPanel({
                 return (
                   <tr
                     key={seg.sequence_number}
-                    className={`border-t border-outline-variant ${idx % 2 === 0 ? 'bg-surface' : ''}`}
+                    className={`border-t border-outline-variant ${idx % 2 === 0 ? '' : ''}`}
                   >
                     <td className="route-td font-semibold text-on-surface">
                       <div className="flex flex-col">
@@ -173,7 +173,7 @@ export function RouteDetailsPanel({
               })}
               {/* ── Last Waypoint Row (COP/Terminal fix) ── */}
               {lastWaypoint && (
-                <tr className="border-t border-outline-variant bg-surface">
+                <tr className="border-t border-outline-variant">
                   <td className="route-td font-semibold text-on-surface">
                     <div className="flex flex-col">
                       <span className="text-[11px] leading-tight">
@@ -210,7 +210,7 @@ export function RouteDetailsPanel({
         <div ref={remarksRef} className="rounded-lg border border-outline-variant overflow-hidden">
           <button
             onClick={() => setShowRemarks(!showRemarks)}
-            className="w-full flex items-center justify-between px-3 py-2 bg-surface-container hover:bg-surface-container-high transition-colors"
+            className="w-full flex items-center justify-between px-3 py-2 hover: transition-colors"
           >
             <span className="text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">
               Remarks

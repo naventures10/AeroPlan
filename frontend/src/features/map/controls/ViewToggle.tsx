@@ -13,9 +13,9 @@ import './ViewToggle.css';
 
 /**
  * Right-center controls:
- *  - Seamless Floating Vertical Pill Map Controller (visible in enroute 2D view only)
- *  - 2D/3D toggle cube (terminal/active airport view only)
- *  - Branding badge
+ * - Seamless Floating Vertical Pill Map Controller (visible in enroute 2D view only)
+ * - 2D/3D toggle cube (terminal/active airport view only)
+ * - Branding badge
  */
 export default function ViewToggle() {
   const {
@@ -178,7 +178,7 @@ export default function ViewToggle() {
                     transitionDuration: 0,
                   })
                 }
-                className="absolute w-28 h-1.5 bg-surface-container-highest rounded-full appearance-none cursor-pointer outline-none hover:bg-outline-variant/60 transition-colors [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-[var(--accent-cyan)] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:scale-125 [&::-webkit-slider-thumb]:transition-transform view-toggle-zoom-slider"
+                className="absolute w-28 h-1.5 -highest rounded-full appearance-none cursor-pointer outline-none hover:bg-outline-variant/60 transition-colors [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-[var(--accent-cyan)] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:scale-125 [&::-webkit-slider-thumb]:transition-transform view-toggle-zoom-slider"
               />
             </div>
 

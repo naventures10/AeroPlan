@@ -132,10 +132,10 @@ interface MapViewProps {
  * The core DeckGL + MapLibre map container.
  *
  * Manages:
- *  - View state transitions (zoom out → exit terminal)
- *  - Layer composition via useDeckLayers hook
- *  - Tooltip rendering via useMapTooltip hook
- *  - MapLibre raster/vector sources (WAC, spatial features)
+ * - View state transitions (zoom out → exit terminal)
+ * - Layer composition via useDeckLayers hook
+ * - Tooltip rendering via useMapTooltip hook
+ * - MapLibre raster/vector sources (WAC, spatial features)
  */
 export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) {
   const {
