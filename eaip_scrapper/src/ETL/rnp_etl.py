@@ -1,16 +1,17 @@
+# ruff: noqa: E402
 import argparse
-import sys
 import logging
+import sys
 from pathlib import Path
 
 # Add src to path for absolute imports
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(BASE_DIR / "src"))
 
-from rnp_processor.utils import setup_logging, MERGED_DIR
 from rnp_processor.extractor import RNPExtractor
-from rnp_processor.transformer import RNPTransformer
 from rnp_processor.loader import RNPLoader
+from rnp_processor.transformer import RNPTransformer
+from rnp_processor.utils import MERGED_DIR, setup_logging
 from rnp_processor.validator import RNPValidator
 
 
@@ -70,9 +71,7 @@ Skip flags:
     try:
         postgres_port = int(postgres_port_str)
     except ValueError:
-        raise ValueError(
-            f"Invalid POSTGRES_PORT: {postgres_port_str}. Must be numeric."
-        )
+        raise ValueError(f"Invalid POSTGRES_PORT: {postgres_port_str}. Must be numeric.") from None
 
     db_config = {
         "host": os.getenv("POSTGRES_HOST", "localhost"),
@@ -161,9 +160,7 @@ Skip flags:
                         logger.warning("  --force-load: loading despite failure")
 
                 if val_res["status"] == "WARNING":
-                    logger.warning(
-                        f"VALIDATION WARNING — {f.name}: {val_res['issues']}"
-                    )
+                    logger.warning(f"VALIDATION WARNING — {f.name}: {val_res['issues']}")
                     summary["warned"] += 1
 
                 # ── Load ───────────────────────────────────────────────────

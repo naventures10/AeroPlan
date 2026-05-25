@@ -1,8 +1,8 @@
 import re
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
-from datetime import datetime, time, date, timedelta
-from sqlalchemy import create_engine, text
 
+from sqlalchemy import create_engine, text
 
 # Regex for 4-letter ICAO code in parentheses like "(VEAT)"
 ICAO_PAREN_PATTERN = re.compile(r"\(([A-Z]{4})\)")
@@ -112,7 +112,7 @@ class DaylightETL:
                 h, m = map(int, match.group(i).split(":"))
                 times.append(time(h, m))
             return (d, times[0], times[1], times[2], times[3])
-        except ValueError, IndexError:
+        except (ValueError, IndexError):
             return None
 
     def _detect_icao_from_header(self, cell_text: str) -> str | None:
@@ -171,10 +171,7 @@ class DaylightETL:
         if self._detect_icao_from_header(first_cell):
             return True
         # Contains "Airport" keyword
-        if "Airport" in first_cell or "airport" in first_cell:
-            return True
-
-        return False
+        return bool("Airport" in first_cell or "airport" in first_cell)
 
     def parse_markdown(self, md_path: Path) -> list[dict]:
         """
@@ -189,7 +186,7 @@ class DaylightETL:
         """
         records = []
 
-        with open(md_path, "r", encoding="utf-8") as f:
+        with open(md_path, encoding="utf-8") as f:
             lines = f.readlines()
 
         # Skip introductory header lines
@@ -248,11 +245,7 @@ class DaylightETL:
             # --- Detect Coordinates-Only Row ---
             # A row where the first cell is purely DMS coordinates
             stripped_first = first_cell.strip()
-            if (
-                DMS_DECIMAL_PATTERN.search(stripped_first)
-                and current_icao
-                and not in_data_rows
-            ):
+            if DMS_DECIMAL_PATTERN.search(stripped_first) and current_icao and not in_data_rows:
                 # Check it's not a data row (shouldn't start with a date)
                 if not DATE_PATTERN.match(stripped_first):
                     lat, lon = self.parse_dms_to_decimal(stripped_first)
@@ -376,7 +369,7 @@ class DaylightETL:
                                     "year": d.year,
                                 }
                             )
-                        except ValueError, IndexError:
+                        except (ValueError, IndexError):
                             continue
 
                     # CASE 4: Partially split — "31-May-2026 04:40 05:06" in one cell,
@@ -389,15 +382,11 @@ class DaylightETL:
                         )
                         if partial_match:
                             # Collect ALL times from the remaining cells
-                            all_times_in_row = re.findall(
-                                r"\b(\d{2}:\d{2})\b", full_row_text
-                            )
+                            all_times_in_row = re.findall(r"\b(\d{2}:\d{2})\b", full_row_text)
                             # Need at least 4 times for one complete record
                             if len(all_times_in_row) >= 4:
                                 try:
-                                    d = datetime.strptime(
-                                        partial_match.group(1), "%d-%b-%Y"
-                                    ).date()
+                                    d = datetime.strptime(partial_match.group(1), "%d-%b-%Y").date()
                                     tf = time(*map(int, all_times_in_row[0].split(":")))
                                     sr = time(*map(int, all_times_in_row[1].split(":")))
                                     ss = time(*map(int, all_times_in_row[2].split(":")))
@@ -416,7 +405,7 @@ class DaylightETL:
                                             "year": d.year,
                                         }
                                     )
-                                except ValueError, IndexError:
+                                except (ValueError, IndexError):
                                     pass
 
         # Deduplicate records by (airport_icao, date) — keep last occurrence
@@ -501,9 +490,7 @@ class DaylightETL:
                                 "sunrise": self._avg_time(
                                     base.get("sunrise"), other.get("sunrise")
                                 ),
-                                "sunset": self._avg_time(
-                                    base.get("sunset"), other.get("sunset")
-                                ),
+                                "sunset": self._avg_time(base.get("sunset"), other.get("sunset")),
                                 "twilight_to": self._avg_time(
                                     base.get("twilight_to"), other.get("twilight_to")
                                 ),
@@ -515,9 +502,7 @@ class DaylightETL:
                         print(f"    [!] Cannot interpolate {icao} {d} — no neighbours")
 
         if interpolated_count > 0:
-            print(
-                f"  [*] Interpolated {interpolated_count} missing records from adjacent days"
-            )
+            print(f"  [*] Interpolated {interpolated_count} missing records from adjacent days")
 
         return interpolated
 
@@ -549,9 +534,7 @@ class DaylightETL:
                 )
             )
             conn.execute(
-                text(
-                    "CREATE INDEX IF NOT EXISTS idx_daylight_date ON daylight_times (date);"
-                )
+                text("CREATE INDEX IF NOT EXISTS idx_daylight_date ON daylight_times (date);")
             )
             conn.execute(
                 text(
@@ -574,11 +557,11 @@ class DaylightETL:
             conn.execute(text("TRUNCATE TABLE daylight_times RESTART IDENTITY;"))
 
         stmt = text("""
-            INSERT INTO daylight_times 
+            INSERT INTO daylight_times
                 (airport_icao, airport_name, coordinates, date, twilight_from, sunrise, sunset, twilight_to, year)
-            VALUES 
-                (:airport_icao, :airport_name, 
-                 CASE WHEN :lat IS NOT NULL AND :lon IS NOT NULL 
+            VALUES
+                (:airport_icao, :airport_name,
+                 CASE WHEN :lat IS NOT NULL AND :lon IS NOT NULL
                       THEN ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)
                       ELSE NULL END,
                  :date, :twilight_from, :sunrise, :sunset, :twilight_to, :year)

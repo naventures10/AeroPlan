@@ -51,9 +51,7 @@ class ENRUPRZonesExtractor(BaseENRExtractor):
         # Extract Charts
         charts = self.chart_extractor.extract_charts(actual_url, soup)
 
-        print(
-            f"[+] Extracted {len(raw_table_data)} Tables of Raw Data and {len(charts)} Charts."
-        )
+        print(f"[+] Extracted {len(raw_table_data)} Tables of Raw Data and {len(charts)} Charts.")
 
         return {
             "source_url": actual_url,

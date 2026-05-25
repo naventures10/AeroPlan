@@ -1,6 +1,5 @@
 from src.scrapper.BaseENRExtractor import BaseENRExtractor
 
-
 # Maps section header table text to section keys and titles
 SECTION_MAP = [
     ("2.1.1", "flight_information_regions", "Flight Information Region"),
@@ -19,9 +18,7 @@ class ENRAirspaceExtractor(BaseENRExtractor):
     chart links from iframes using ChartExtractor.
     """
 
-    def __init__(
-        self, active_eaip_url, session=None, output_file="enr_2_1_airspace.json"
-    ):
+    def __init__(self, active_eaip_url, session=None, output_file="enr_2_1_airspace.json"):
         super().__init__(
             active_eaip_url=active_eaip_url,
             section_code="ENR 2.1",
@@ -44,7 +41,7 @@ class ENRAirspaceExtractor(BaseENRExtractor):
         airspace_data = {}
         total_entries = 0
 
-        for section_id, section_key, section_title in SECTION_MAP:
+        for _section_id, section_key, section_title in SECTION_MAP:
             grids = sections.get(section_key, [])
             entries = []
             for grid in grids:
@@ -65,9 +62,7 @@ class ENRAirspaceExtractor(BaseENRExtractor):
             "summary": {
                 "total_entries": total_entries,
                 "total_charts": len(charts),
-                "sections": {
-                    key: len(airspace_data.get(key, [])) for _, key, _ in SECTION_MAP
-                },
+                "sections": {key: len(airspace_data.get(key, [])) for _, key, _ in SECTION_MAP},
             },
         }
 
@@ -135,7 +130,9 @@ class ENRAirspaceExtractor(BaseENRExtractor):
         """
         from collections import OrderedDict  # preserve insertion order
 
-        clean = lambda c: c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
+        def clean(c):
+            return c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
+
         grouped = OrderedDict()  # key: name_and_limits -> entry dict
 
         for row in grid:

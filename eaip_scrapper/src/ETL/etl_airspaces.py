@@ -117,9 +117,7 @@ def stitch_cluster(airspace_type, cluster_id, group):
         # 2. Ensure we only have LineStrings/MultiLineStrings for linemerge
         if union_result.geom_type == "GeometryCollection":
             lines = [
-                g
-                for g in union_result.geoms
-                if g.geom_type in ["LineString", "MultiLineString"]
+                g for g in union_result.geoms if g.geom_type in ["LineString", "MultiLineString"]
             ]
             if lines:
                 union_result = unary_union(lines)
@@ -128,9 +126,7 @@ def stitch_cluster(airspace_type, cluster_id, group):
 
         # 3. Merge them into continuous lines
         merged = (
-            union_result
-            if union_result.geom_type == "LineString"
-            else line_merge(union_result)
+            union_result if union_result.geom_type == "LineString" else line_merge(union_result)
         )
 
         return {
@@ -210,24 +206,18 @@ class AirspaceETL:
 
     def extract(self, pdf_path: str) -> gpd.GeoDataFrame:
         """Read all whitelisted layers from the PDF using system GDAL binaries."""
-        print(
-            f"\n[*] Processing {len(WHITELIST)} whitelisted layers using system GDAL..."
-        )
+        print(f"\n[*] Processing {len(WHITELIST)} whitelisted layers using system GDAL...")
         print("-" * 50)
 
         # 1. List all available layers in the PDF using ogrinfo
         try:
             cmd_info = ["ogrinfo", "-so", pdf_path]
-            output = subprocess.check_output(
-                cmd_info, stderr=subprocess.STDOUT, timeout=60
-            ).decode("utf-8")
+            output = subprocess.check_output(cmd_info, stderr=subprocess.STDOUT, timeout=60).decode(
+                "utf-8"
+            )
             available_layers = []
             for line in output.splitlines():
-                if (
-                    ":" in line
-                    and not line.startswith("INFO")
-                    and not line.startswith("Had to")
-                ):
+                if ":" in line and not line.startswith("INFO") and not line.startswith("Had to"):
                     # Extract layer name after the colon and space
                     parts = line.split(":", 1)
                     if len(parts) > 1:
@@ -333,12 +323,8 @@ class AirspaceETL:
             indices_i, indices_j = tree.query(geoms, predicate="dwithin", distance=eps)
 
             n = len(type_group)
-            adj_matrix = csr_matrix(
-                (np.ones(len(indices_i)), (indices_i, indices_j)), shape=(n, n)
-            )
-            n_components, labels = connected_components(
-                csgraph=adj_matrix, directed=False
-            )
+            adj_matrix = csr_matrix((np.ones(len(indices_i)), (indices_i, indices_j)), shape=(n, n))
+            n_components, labels = connected_components(csgraph=adj_matrix, directed=False)
 
             type_group = type_group.copy()
             type_group["cluster_id"] = labels
@@ -396,20 +382,14 @@ class AirspaceETL:
                 table_exists = result.scalar()
 
                 if table_exists:
-                    conn.execute(
-                        text(f"TRUNCATE TABLE {TARGET_TABLE} RESTART IDENTITY CASCADE")
-                    )
+                    conn.execute(text(f"TRUNCATE TABLE {TARGET_TABLE} RESTART IDENTITY CASCADE"))
 
-                sync_gdf.to_postgis(
-                    TARGET_TABLE, con=conn, if_exists="append", index=False
-                )
+                sync_gdf.to_postgis(TARGET_TABLE, con=conn, if_exists="append", index=False)
 
                 # If table was just created, add the primary key required by Martin Tile Server
                 if not table_exists:
                     conn.execute(
-                        text(
-                            f"ALTER TABLE {TARGET_TABLE} ADD COLUMN ogc_fid SERIAL PRIMARY KEY"
-                        )
+                        text(f"ALTER TABLE {TARGET_TABLE} ADD COLUMN ogc_fid SERIAL PRIMARY KEY")
                     )
 
             print(f"[+] SUCCESS: Data loaded into PostGIS table: {TARGET_TABLE}")

@@ -1,5 +1,6 @@
 import json
 import re
+
 import boto3
 import psycopg2
 from psycopg2.extras import execute_values
@@ -139,7 +140,7 @@ class NavAidLoader:
                 execute_values(
                     cur,
                     """
-                    INSERT INTO radio_nav_aids 
+                    INSERT INTO radio_nav_aids
                         (station_name, ident, aid_type, frequency, hours_of_operation, elevation, remarks, raw_coordinates, geom)
                     VALUES %s
                 """,
@@ -149,9 +150,7 @@ class NavAidLoader:
 
             self.conn.commit()
 
-        print(
-            f"[+] Successfully loaded {len(records)} radio nav aids into radio_nav_aids!"
-        )
+        print(f"[+] Successfully loaded {len(records)} radio nav aids into radio_nav_aids!")
 
     def close(self):
         """Closes the database connection."""

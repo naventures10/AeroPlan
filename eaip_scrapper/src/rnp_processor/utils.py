@@ -1,14 +1,13 @@
+import logging
 import os
 import re
-import logging
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Initialize paths
-BASE_DIR = Path(
-    os.getenv("RNP_BASE_DIR", Path(__file__).resolve().parent.parent.parent)
-)
+BASE_DIR = Path(os.getenv("RNP_BASE_DIR", Path(__file__).resolve().parent.parent.parent))
 SCRATCH_DIR = BASE_DIR / "scratch"
 OUTPUT_DIR = BASE_DIR / "output"
 EXTRACTED_DIR = OUTPUT_DIR / "extracted_data"
@@ -57,9 +56,7 @@ def is_valid_coord(lat, lon):
     # India-specific sanity check
     if not (INDIA_LAT_MIN <= lat <= INDIA_LAT_MAX):
         return False
-    if not (INDIA_LON_MIN <= lon <= INDIA_LON_MAX):
-        return False
-    return True
+    return INDIA_LON_MIN <= lon <= INDIA_LON_MAX
 
 
 def parse_coordinate(coord_str):
@@ -85,12 +82,8 @@ def parse_coordinate(coord_str):
 
     # ── Strategy 1: Compact format  DDMMSS.ffffD / DDDMMSS.ffffD ──────────
     # e.g. "265049.2745N" or "0810506.6552E"
-    compact_lat = re.search(
-        r"(\d{2})(\d{2})(\d{2}(?:\.\d+)?)\s*([NS])", coord_str, re.IGNORECASE
-    )
-    compact_lon = re.search(
-        r"(\d{2,3})(\d{2})(\d{2}(?:\.\d+)?)\s*([EW])", coord_str, re.IGNORECASE
-    )
+    compact_lat = re.search(r"(\d{2})(\d{2})(\d{2}(?:\.\d+)?)\s*([NS])", coord_str, re.IGNORECASE)
+    compact_lon = re.search(r"(\d{2,3})(\d{2})(\d{2}(?:\.\d+)?)\s*([EW])", coord_str, re.IGNORECASE)
     if compact_lat and compact_lon:
         lat_dir = compact_lat.group(4).upper()
         lon_dir = compact_lon.group(4).upper()
@@ -175,9 +168,7 @@ def parse_coordinate(coord_str):
             )
             # Default to East for Indian airspace
             lon_dd = round(
-                dms_to_dd(
-                    lon_no_dir.group(1), lon_no_dir.group(2), lon_no_dir.group(3), "E"
-                ),
+                dms_to_dd(lon_no_dir.group(1), lon_no_dir.group(2), lon_no_dir.group(3), "E"),
                 7,
             )
             if is_valid_coord(lat_dd, lon_dd):

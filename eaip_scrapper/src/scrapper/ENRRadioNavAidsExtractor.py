@@ -1,6 +1,7 @@
 import re
-from src.scrapper.LiveTableExtractor import TableParser
+
 from src.scrapper.BaseENRExtractor import BaseENRExtractor
+from src.scrapper.LiveTableExtractor import TableParser
 
 
 class ENRRadioNavAidsExtractor(BaseENRExtractor):
@@ -9,9 +10,7 @@ class ENRRadioNavAidsExtractor(BaseENRExtractor):
     Inherits AIRAC cycle resolution and JSON extraction boilerplate.
     """
 
-    def __init__(
-        self, active_eaip_url, session=None, output_file="enr_4_1_radio_nav_aids.json"
-    ):
+    def __init__(self, active_eaip_url, session=None, output_file="enr_4_1_radio_nav_aids.json"):
         super().__init__(
             active_eaip_url=active_eaip_url,
             section_code="ENR 4.1",
@@ -111,9 +110,8 @@ class ENRRadioNavAidsExtractor(BaseENRExtractor):
                     continue
 
                 # Clean up delimiter artifacts from TableParser
-                clean = lambda c: (
-                    c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
-                )
+                def clean(c):
+                    return c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
 
                 nav_aid = {
                     "station_name": clean(station_name),
@@ -132,7 +130,7 @@ class ENRRadioNavAidsExtractor(BaseENRExtractor):
 
     def _extract_data(self):
         """Extracts radio navigation aids from ENR 4.1."""
-        soup, page_url = self._fetch_soup("IN-ENR 4.1-en-GB.html")
+        soup, _page_url = self._fetch_soup("IN-ENR 4.1-en-GB.html")
         if not soup:
             return None
 

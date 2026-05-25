@@ -1,11 +1,12 @@
-import os
-import requests
-import re
-import urllib3
 import asyncio
+import os
+import re
 import tempfile
-import boto3
 from pathlib import Path
+
+import boto3
+import requests
+import urllib3
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from llama_cloud import AsyncLlamaCloud
@@ -24,9 +25,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 BASE_URL = "https://aim-india.aai.aero"
 NOTAM_SUMMARIES_URL = f"{BASE_URL}/notam-summaries"
-PDF_LINK_PATTERN = re.compile(
-    r"/sites/default/files/notam_files/.*\.pdf$", re.IGNORECASE
-)
+PDF_LINK_PATTERN = re.compile(r"/sites/default/files/notam_files/.*\.pdf$", re.IGNORECASE)
 OUTPUT_DIR = Path(__file__).resolve().parent.parent.parent / "output"
 
 
@@ -44,9 +43,7 @@ def scrape_latest_notam_links() -> list[str]:
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            response = requests.get(
-                NOTAM_SUMMARIES_URL, params=params, timeout=60, verify=False
-            )
+            response = requests.get(NOTAM_SUMMARIES_URL, params=params, timeout=60, verify=False)
             response.raise_for_status()
             break
         except (requests.exceptions.RequestException, Exception) as e:
@@ -58,9 +55,7 @@ def scrape_latest_notam_links() -> list[str]:
 
                 time.sleep(5)
             else:
-                print(
-                    f"  [!] Failed to fetch NOTAM summaries after {max_retries} attempts."
-                )
+                print(f"  [!] Failed to fetch NOTAM summaries after {max_retries} attempts.")
                 raise e
 
     soup = BeautifulSoup(response.text, "html.parser")
@@ -86,9 +81,7 @@ def scrape_latest_notam_links() -> list[str]:
     # Group by FIR and series, and pick the latest for each
     latest: dict[tuple[str, str], tuple[str, tuple[int, int]]] = {}
     for link in pdf_links:
-        filename = link.rsplit("/", 1)[
-            -1
-        ]  # e.g. Chennai_A_2026_03.pdf or Kolkata_C_2026_02_0.pdf
+        filename = link.rsplit("/", 1)[-1]  # e.g. Chennai_A_2026_03.pdf or Kolkata_C_2026_02_0.pdf
         match = re.search(r"([A-Za-z]+)_([A-Z])_(\d{4})_(\d{2})", filename)
         if match:
             fir = match.group(1).capitalize()
@@ -110,9 +103,8 @@ def scrape_latest_notam_links() -> list[str]:
 
             if key in latest:
                 max_year = latest[key][1][0]
-                if year == max_year and month == 1:
-                    if key[0] != "Delhi":
-                        january_links.append(link)
+                if year == max_year and month == 1 and key[0] != "Delhi":
+                    january_links.append(link)
 
     result_urls = set(url for _, (url, _) in latest.items())
     result_urls.update(january_links)
@@ -158,9 +150,7 @@ def download_pdf(pdf_url: str, dest_path: Path) -> Path:
     return dest_path
 
 
-async def convert_pdf_to_md_with_llama(
-    pdf_path: Path, output_path: Path, api_key: str
-) -> None:
+async def convert_pdf_to_md_with_llama(pdf_path: Path, output_path: Path, api_key: str) -> None:
     """
     Use LlamaParse (LlamaCloud) to convert a PDF to high-fidelity Markdown.
     """
@@ -169,9 +159,7 @@ async def convert_pdf_to_md_with_llama(
     client = AsyncLlamaCloud(api_key=api_key)
 
     # Upload and parse
-    file = await client.files.create(
-        file=openai_file_upload_stream(pdf_path), purpose="parse"
-    )
+    file = await client.files.create(file=openai_file_upload_stream(pdf_path), purpose="parse")
 
     result = await client.parsing.parse(
         file_id=file.id,
@@ -185,9 +173,7 @@ async def convert_pdf_to_md_with_llama(
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(full_markdown, encoding="utf-8")
-        print(
-            f"  ✓ Saved Markdown to: {output_path.name} ({len(result.markdown.pages)} pages)"
-        )
+        print(f"  ✓ Saved Markdown to: {output_path.name} ({len(result.markdown.pages)} pages)")
     else:
         print(f"  [!] No content extracted for {pdf_path.name}")
 
@@ -200,9 +186,7 @@ def openai_file_upload_stream(path: Path):
 async def main():
     # Load all LLAMA_CLOUD_API_KEY_* variables
     llama_keys = [
-        v
-        for k, v in os.environ.items()
-        if k.startswith("LLAMA_CLOUD_API_KEY_") and v.strip()
+        v for k, v in os.environ.items() if k.startswith("LLAMA_CLOUD_API_KEY_") and v.strip()
     ]
     if not llama_keys:
         legacy_key = os.getenv("LLAMA_CLOUD_API_KEY")
@@ -257,10 +241,10 @@ async def main():
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
-        RAW_PDF_DIR = temp_path / "raw_pdfs"
-        TEMP_OUTPUT_DIR = temp_path / "output"
-        RAW_PDF_DIR.mkdir(parents=True, exist_ok=True)
-        TEMP_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        raw_pdf_dir = temp_path / "raw_pdfs"
+        temp_output_dir = temp_path / "output"
+        raw_pdf_dir.mkdir(parents=True, exist_ok=True)
+        temp_output_dir.mkdir(parents=True, exist_ok=True)
 
         # Pass 1: Download all required PDFs sequentially
         print("\n--- PASSS 1: Downloading PDFs ---")
@@ -270,17 +254,15 @@ async def main():
             pdf_filename = pdf_url.rsplit("/", 1)[-1]  # e.g. Chennai_A_2026_03.pdf
             md_filename = pdf_filename.replace(".pdf", ".md")
             minio_md_key = f"output/notams/{md_filename}"
-            output_md_path = TEMP_OUTPUT_DIR / md_filename
-            local_pdf = RAW_PDF_DIR / pdf_filename
+            output_md_path = temp_output_dir / md_filename
+            local_pdf = raw_pdf_dir / pdf_filename
 
             if minio_file_exists(minio_md_key):
                 print(f"Skipping {pdf_filename} (MD already exists in MinIO)")
                 continue
 
             # Explicitly skip Delhi January NOTAM PDFs
-            match = re.search(
-                r"([A-Za-z]+)_[A-Z]_\d{4}_(\d{2})\.pdf", pdf_filename, re.IGNORECASE
-            )
+            match = re.search(r"([A-Za-z]+)_[A-Z]_\d{4}_(\d{2})\.pdf", pdf_filename, re.IGNORECASE)
             if match and match.group(1).lower() == "delhi" and match.group(2) == "01":
                 print(
                     f"Skipping {pdf_filename} (Delhi January NOTAMs are handled via carry-forward)."

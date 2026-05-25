@@ -1,5 +1,6 @@
 import logging
 import math
+
 from .utils import (
     is_valid_coord,
 )
@@ -45,16 +46,14 @@ class RNPValidator:
           status: "SUCCESS" | "WARNING" | "FAILED"
         """
         issues = []
-        name = proc_data.get("procedure_name", "UNKNOWN")
+        proc_data.get("procedure_name", "UNKNOWN")
 
         tab_ids = {
             str(leg.get("waypoint_identifier")).upper()
             for leg in proc_data.get("tabular_description", [])
             if leg.get("waypoint_identifier")
         }
-        coord_ids = {
-            str(wp.get("waypoint_id")).upper() for wp in proc_data.get("waypoints", [])
-        }
+        coord_ids = {str(wp.get("waypoint_id")).upper() for wp in proc_data.get("waypoints", [])}
 
         # ── 1. Connectivity Check ─────────────────────────────────────────────
         missing_coords = tab_ids - coord_ids
@@ -77,12 +76,10 @@ class RNPValidator:
         for wp in proc_data.get("waypoints", []):
             lat = wp.get("lat_dd")
             lon = wp.get("lon_dd")
-            if lat is not None and lon is not None:
-                if not is_valid_coord(lat, lon):
-                    issues.append(
-                        f"Waypoint {wp.get('waypoint_id')} out of bounds: "
-                        f"lat={lat}, lon={lon}"
-                    )
+            if lat is not None and lon is not None and not is_valid_coord(lat, lon):
+                issues.append(
+                    f"Waypoint {wp.get('waypoint_id')} out of bounds: lat={lat}, lon={lon}"
+                )
 
         # ── 4. Path Continuity: detect massive jumps (>500 NM ≈ ~8.3°) ──────
         wpt_lookup = {
@@ -102,9 +99,7 @@ class RNPValidator:
                     dlon = abs(coord[1] - prev_coord[1])
                     dist_deg = math.sqrt(dlat**2 + dlon**2)
                     if dist_deg > 8.3:  # ~500 NM
-                        issues.append(
-                            f"Massive jump ({dist_deg:.1f}°) between legs near {ident}"
-                        )
+                        issues.append(f"Massive jump ({dist_deg:.1f}°) between legs near {ident}")
                 prev_coord = coord
 
         # ── 5. FAS Pollution Check ────────────────────────────────────────────

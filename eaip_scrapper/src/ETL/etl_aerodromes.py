@@ -89,9 +89,7 @@ class SpatialRouter:
         arp_geom = cls.create_point(arp_coords)
         arp_elev = None
         if arp_geom:
-            arp_elev_str = data.get("geographical_data", {}).get(
-                "elevation_reference_temp"
-            )
+            arp_elev_str = data.get("geographical_data", {}).get("elevation_reference_temp")
             arp_elev = cls.extract_number(arp_elev_str)
             features.append(
                 (
@@ -166,17 +164,13 @@ class SpatialRouter:
                 features.append((icao, "NAVAID", name, elev, "NIL", False, 0, geom))
 
         # 5. HELIPADS (TLOF/FATO)
-        helipad_coords = data.get("helicopter_landing_area", {}).get(
-            "coordinates_tlof_fato", {}
-        )
+        helipad_coords = data.get("helicopter_landing_area", {}).get("coordinates_tlof_fato", {})
         heli_geom = cls.create_point(helipad_coords)
         if heli_geom:
             elev = cls.extract_number(
                 data.get("helicopter_landing_area", {}).get("elevation_tlof_fato")
             )
-            features.append(
-                (icao, "HELIPAD", f"{icao} Helipad", elev, "NIL", False, 0, heli_geom)
-            )
+            features.append((icao, "HELIPAD", f"{icao} Helipad", elev, "NIL", False, 0, heli_geom))
 
         return features
 
@@ -243,9 +237,7 @@ class DBLoader:
             print(f"[!] Failed to fetch or parse file from MinIO: {e}")
             return
 
-        print(
-            f"[*] Found {len(master_data)} airports. Commencing segregated DB ingestion..."
-        )
+        print(f"[*] Found {len(master_data)} airports. Commencing segregated DB ingestion...")
 
         # Hard Reset: Truncate existing data to ensure a fresh reload
         print("[!] Dropping all existing records for a complete refresh...")
@@ -289,12 +281,8 @@ class DBLoader:
                     )
 
                     # B. Clear old child records (Idempotency)
-                    cur.execute(
-                        "DELETE FROM spatial_features WHERE icao_code = %s", (icao,)
-                    )
-                    cur.execute(
-                        "DELETE FROM aerodrome_charts WHERE icao_code = %s", (icao,)
-                    )
+                    cur.execute("DELETE FROM spatial_features WHERE icao_code = %s", (icao,))
+                    cur.execute("DELETE FROM aerodrome_charts WHERE icao_code = %s", (icao,))
 
                     # C. Bulk Insert Spatial Features
                     if spatial_records:
@@ -322,9 +310,7 @@ class DBLoader:
 
                     # Commit the transaction for this airport
                     self.conn.commit()
-                    print(
-                        f"  [✓] {icao} - Segregated {len(spatial_records)} spatial features."
-                    )
+                    print(f"  [✓] {icao} - Segregated {len(spatial_records)} spatial features.")
                     success_count += 1
 
                 except Exception as e:

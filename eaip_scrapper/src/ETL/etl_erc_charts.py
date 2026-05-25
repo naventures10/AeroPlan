@@ -104,9 +104,7 @@ class ERCChartsETL:
             )
             print(f"    [+] Successfully created intermediate TIF at {tif_path}")
         except subprocess.CalledProcessError as e:
-            print(
-                f"    [X] gdalwarp failed: {e.stderr.decode('utf-8', errors='replace')}"
-            )
+            print(f"    [X] gdalwarp failed: {e.stderr.decode('utf-8', errors='replace')}")
             raise
 
         # 2. Translate GeoTIFF to MBTiles
@@ -138,9 +136,7 @@ class ERCChartsETL:
             )
             print(f"    [+] Successfully created base MBTiles at {mbtiles_path}")
         except subprocess.CalledProcessError as e:
-            print(
-                f"    [X] gdal_translate failed: {e.stderr.decode('utf-8', errors='replace')}"
-            )
+            print(f"    [X] gdal_translate failed: {e.stderr.decode('utf-8', errors='replace')}")
             raise
         finally:
             if os.path.exists(tif_path):
@@ -164,14 +160,10 @@ class ERCChartsETL:
         ]
 
         try:
-            subprocess.run(
-                cmd_addo, check=True, capture_output=True, timeout=EXTERNAL_CMD_TIMEOUT
-            )
+            subprocess.run(cmd_addo, check=True, capture_output=True, timeout=EXTERNAL_CMD_TIMEOUT)
             print("    [+] Successfully added overview zoom levels.")
         except subprocess.CalledProcessError as e:
-            print(
-                f"    [X] gdaladdo failed: {e.stderr.decode('utf-8', errors='replace')}"
-            )
+            print(f"    [X] gdaladdo failed: {e.stderr.decode('utf-8', errors='replace')}")
             raise
 
         # 4. Convert MBTiles to PMTiles
@@ -192,9 +184,7 @@ class ERCChartsETL:
             )
             print(f"    [+] Successfully created PMTiles at {pmtiles_path}")
         except subprocess.CalledProcessError as e:
-            print(
-                f"    [X] pmtiles convert failed: {e.stderr.decode('utf-8', errors='replace')}"
-            )
+            print(f"    [X] pmtiles convert failed: {e.stderr.decode('utf-8', errors='replace')}")
             raise
         finally:
             if os.path.exists(mbtiles_path):

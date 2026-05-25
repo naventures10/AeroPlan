@@ -1,20 +1,19 @@
-import os
-import time
 import json
 import logging
-import urllib3
-import requests
-from bs4 import BeautifulSoup
+import os
+import time
+
 import boto3
+import requests
+import urllib3
 from botocore.exceptions import ClientError
+from bs4 import BeautifulSoup
 
 # Disable insecure request warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
 # Constants
@@ -49,11 +48,8 @@ def scrape_supplements():
         return None
 
     tbody = table.find("tbody")
-    if not tbody:
-        # Sometimes there's no tbody, just trs directly in table
-        rows = table.find_all("tr")[1:]  # Skip header
-    else:
-        rows = tbody.find_all("tr")
+    # Sometimes there's no tbody, just trs directly in table
+    rows = table.find_all("tr")[1:] if not tbody else tbody.find_all("tr")
 
     results = []
 

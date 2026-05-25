@@ -51,7 +51,7 @@ class ENRHelicopterRoutesExtractor(BaseENRExtractor):
         seen_guidelines = set()
         guidelines = []
 
-        for idx, table in enumerate(tables):
+        for _idx, table in enumerate(tables):
             # Check for pseudo text tables first
             rows = table.find_all("tr")
             p_tags = table.find_all(["p", "li", "h3", "h4"])
@@ -85,21 +85,18 @@ class ENRHelicopterRoutesExtractor(BaseENRExtractor):
                 if len(text) > 3 and "TABLE" not in text.upper():
                     current_region = text
 
-            clean = lambda c: c.replace("\n", " ").strip() if isinstance(c, str) else ""
+            def clean(c):
+                return c.replace("\n", " ").strip() if isinstance(c, str) else ""
 
             # Detect Helipad Table
             if col_count == 6 and row_count > 2:
                 header = " ".join(grid[0]).upper()
-                if (
-                    "HELIPAD" in header
-                    or "ELEVATION" in header
-                    or "DIMENSION" in header
-                ):
+                if "HELIPAD" in header or "ELEVATION" in header or "DIMENSION" in header:
                     for row in grid[2:]:  # Skip multi-line headers
                         if not any(row[1:]):
                             continue
 
-                        sl_no = clean(row[0])
+                        clean(row[0])
                         name = clean(row[1])
                         elevation = clean(row[2])
                         landing_to = clean(row[3])

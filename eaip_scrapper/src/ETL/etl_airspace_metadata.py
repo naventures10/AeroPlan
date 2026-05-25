@@ -1,10 +1,10 @@
 import json
-import re
 import os
+import re
+
 import boto3
 import psycopg2
 from psycopg2.extras import Json
-from typing import List, Tuple, Optional
 
 # --- Configuration ---
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://localhost:9000")
@@ -39,7 +39,7 @@ class CoordinateParser:
 
     @staticmethod
     def parse_to_decimal(
-        val: str, hemi: str, minutes: str = None, seconds: str = None
+        val: str, hemi: str, minutes: str | None = None, seconds: str | None = None
     ) -> float:
         """Converts degrees/minutes/seconds to decimal degrees."""
         if minutes is not None:
@@ -69,7 +69,7 @@ class CoordinateParser:
         return -decimal if hemi in ["S", "W"] else decimal
 
     @classmethod
-    def extract_points(cls, text: str) -> List[Tuple[float, float]]:
+    def extract_points(cls, text: str) -> list[tuple[float, float]]:
         """Extracts all coordinate pairs from a text string."""
         if not text:
             return []
@@ -182,9 +182,7 @@ class AirspaceMetadataETL:
 
                     vertical_limits = ""
                     for line in lines:
-                        if "/" in line and (
-                            "GND" in line or "FL" in line or "UNL" in line
-                        ):
+                        if "/" in line and ("GND" in line or "FL" in line or "UNL" in line):
                             vertical_limits = line
                             break
 
@@ -249,7 +247,7 @@ class AirspaceMetadataETL:
         return "TRA"
 
     @staticmethod
-    def _extract_identification(name: str) -> Optional[str]:
+    def _extract_identification(name: str) -> str | None:
         """Extract the identification code (e.g. TSA802(C), TRA101) from a name string."""
         m = re.match(r"((?:TSA|TRA)\d+(?:\([A-Z]\))?)", name.strip(), re.IGNORECASE)
         return m.group(1).upper() if m else None
@@ -262,11 +260,7 @@ class AirspaceMetadataETL:
                 text = entry.get("name_and_lateral_limits", "")
                 first_line = text.split("\n")[0] if text else "Unknown Military Area"
                 # Strip coordinate junk after the pipe separator
-                name = (
-                    first_line.split("|")[0].strip()
-                    if "|" in first_line
-                    else first_line
-                )
+                name = first_line.split("|")[0].strip() if "|" in first_line else first_line
                 identification = self._extract_identification(name)
                 airspace_type = self._infer_mil_type(name)
                 metadata = {
@@ -283,14 +277,8 @@ class AirspaceMetadataETL:
         adiz_areas = data.get("air_defence_identification_zones_adiz", [])
         print(f"  [*] Processing ADIZ Areas ({len(adiz_areas)})")
         for entry in adiz_areas:
-            text = (
-                entry.get("zone_coordinates")
-                or entry.get("name_and_lateral_limits")
-                or ""
-            )
-            name = entry.get("zone_name") or (
-                text.split("\n")[0] if text else "Unknown ADIZ"
-            )
+            text = entry.get("zone_coordinates") or entry.get("name_and_lateral_limits") or ""
+            name = entry.get("zone_name") or (text.split("\n")[0] if text else "Unknown ADIZ")
             metadata = {
                 "name": name,
                 "lateral_limits": text,
@@ -329,11 +317,7 @@ class AirspaceMetadataETL:
                                 self._insert_metadata(metadata)
                 else:
                     name = row[0]
-                    if (
-                        not name
-                        or "Designator" in name
-                        or "IDENTIFICATION" in name.upper()
-                    ):
+                    if not name or "Designator" in name or "IDENTIFICATION" in name.upper():
                         continue
                     metadata = {
                         "name": name,
@@ -348,10 +332,10 @@ class AirspaceMetadataETL:
     def _insert_metadata(self, metadata: dict):
         # 1. Combine all text values to find coordinates anywhere in the block
         all_text_values = []
-        for k, v in metadata.items():
+        for _k, v in metadata.items():
             if isinstance(v, str):
                 all_text_values.append(v)
-            elif isinstance(v, list) or isinstance(v, dict):
+            elif isinstance(v, (list, dict)):
                 all_text_values.append(json.dumps(v))
 
         combined_text = " ".join(all_text_values)
@@ -366,13 +350,11 @@ class AirspaceMetadataETL:
             wkt_points = ", ".join([f"{lon} {lat}" for lon, lat in points])
             multipoint_wkt = f"'MULTIPOINT({wkt_points})'"
             # ST_Centroid on ST_GeomFromText gives the geometric center of all extracted points
-            geom_sql = (
-                f"ST_SetSRID(ST_Centroid(ST_GeomFromText({multipoint_wkt})), 4326)"
-            )
+            geom_sql = f"ST_SetSRID(ST_Centroid(ST_GeomFromText({multipoint_wkt})), 4326)"
 
         sql_insert = f"""
         INSERT INTO airspaces_metadata (
-            name, identification, lateral_limits, upper_limit, lower_limit, 
+            name, identification, lateral_limits, upper_limit, lower_limit,
             classifications, remarks, source_file, services, airspace_type, geom
         ) VALUES (
             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, {geom_sql}
@@ -391,9 +373,7 @@ class AirspaceMetadataETL:
                         metadata.get("classifications"),
                         metadata.get("remarks"),
                         metadata.get("source_file"),
-                        Json(metadata.get("services"))
-                        if metadata.get("services")
-                        else None,
+                        Json(metadata.get("services")) if metadata.get("services") else None,
                         metadata.get("airspace_type"),
                     ),
                 )

@@ -57,9 +57,7 @@ class ENREnRouteChartsExtractor(BaseENRExtractor):
         # Extract Charts (the actual PDFs)
         charts = self.chart_extractor.extract_charts(actual_url, soup)
 
-        print(
-            f"[+] Extracted {len(chart_index)} Chart Index entries and {len(charts)} PDF Charts."
-        )
+        print(f"[+] Extracted {len(chart_index)} Chart Index entries and {len(charts)} PDF Charts.")
 
         return {
             "source_url": actual_url,

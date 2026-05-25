@@ -1,5 +1,6 @@
 import json
 import re
+
 import boto3
 import psycopg2
 from psycopg2.extras import execute_values
@@ -44,15 +45,13 @@ class RouteLoader:
         try:
             degrees = float(numbers[:deg_len])
             minutes = float(numbers[deg_len : deg_len + 2])
-            seconds = (
-                float(numbers[deg_len + 2 :]) if len(numbers) > deg_len + 2 else 0.0
-            )
+            seconds = float(numbers[deg_len + 2 :]) if len(numbers) > deg_len + 2 else 0.0
 
             decimal = degrees + (minutes / 60) + (seconds / 3600)
             if hemisphere in ["S", "W"]:
                 decimal *= -1
             return round(decimal, 6)
-        except ValueError, IndexError:
+        except (ValueError, IndexError):
             return None
 
     @classmethod
@@ -112,7 +111,7 @@ class RouteLoader:
 
         # Parse limits/class: "FL 460\nFL 270\nClass E\n10100 FT"
         lc_raw = entry.get("limits_class", "")
-        lc_lines = [l.strip() for l in lc_raw.split("\n") if l.strip()]
+        lc_lines = [line.strip() for line in lc_raw.split("\n") if line.strip()]
 
         upper_limit = lc_lines[0] if len(lc_lines) > 0 else None
         lower_limit = lc_lines[1] if len(lc_lines) > 1 else None
@@ -191,7 +190,7 @@ class RouteLoader:
                     # It's a segment
                     seg_seq += 1
                     parsed = self.parse_segment(entry)
-                    segment_records.append((route_id, seg_seq) + parsed)
+                    segment_records.append((route_id, seg_seq, *parsed))
 
         return route_records, waypoint_records, segment_records
 
@@ -205,9 +204,7 @@ class RouteLoader:
         all_segments = []
 
         for filename, route_type in files:
-            print(
-                f"[*] Fetching '{filename}' from MinIO bucket '{self.bucket_name}'..."
-            )
+            print(f"[*] Fetching '{filename}' from MinIO bucket '{self.bucket_name}'...")
             try:
                 response = self.s3.get_object(Bucket=self.bucket_name, Key=filename)
                 data = json.loads(response["Body"].read().decode("utf-8"))
@@ -276,7 +273,7 @@ class RouteLoader:
                 execute_values(
                     cur,
                     """
-                    INSERT INTO ats_route_segments 
+                    INSERT INTO ats_route_segments
                         (route_id, sequence_number, track_magnetic, distance_nm, upper_limit, lower_limit,
                          airspace_class, moca, lateral_limits, direction_odd, direction_even)
                     VALUES %s
@@ -285,19 +282,17 @@ class RouteLoader:
                 )
 
             # 4. Synthesize Segment Geometry
-            print(
-                "[*] Synthesizing LineStrings for segment geometries from waypoints..."
-            )
+            print("[*] Synthesizing LineStrings for segment geometries from waypoints...")
             cur.execute("""
                 UPDATE ats_route_segments s
                 SET geom = ST_MakeLine(w1.geom, w2.geom)
                 FROM ats_route_waypoints w1
-                JOIN ats_route_waypoints w2 
-                  ON w1.route_id = w2.route_id 
+                JOIN ats_route_waypoints w2
+                  ON w1.route_id = w2.route_id
                   AND w2.sequence_number = w1.sequence_number + 1
-                WHERE s.route_id = w1.route_id 
+                WHERE s.route_id = w1.route_id
                   AND s.sequence_number = w1.sequence_number
-                  AND w1.geom IS NOT NULL 
+                  AND w1.geom IS NOT NULL
                   AND w2.geom IS NOT NULL;
             """)
 
@@ -334,14 +329,12 @@ class RouteLoader:
             """)
 
             # 7. Ensure Spatial Indexes exist
-            print(
-                "[*] Ensuring spatial indexes exist for high-performance tile serving..."
-            )
+            print("[*] Ensuring spatial indexes exist for high-performance tile serving...")
             cur.execute("""
-                CREATE INDEX IF NOT EXISTS idx_ats_route_segments_geom 
+                CREATE INDEX IF NOT EXISTS idx_ats_route_segments_geom
                 ON public.ats_route_segments USING gist (geom);
-                
-                CREATE INDEX IF NOT EXISTS idx_mv_ats_route_labels_geom 
+
+                CREATE INDEX IF NOT EXISTS idx_mv_ats_route_labels_geom
                 ON public.mv_ats_route_labels USING gist (midpoint_geom);
             """)
 

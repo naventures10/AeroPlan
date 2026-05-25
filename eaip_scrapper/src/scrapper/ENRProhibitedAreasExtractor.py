@@ -78,7 +78,9 @@ class ENRProhibitedAreasExtractor(BaseENRExtractor):
 
         print(f"[*] Found {len(tables)} table(s) on the ENR 5.1 page.")
 
-        clean = lambda c: c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
+        def clean(c):
+            return c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
+
         definitions = ""
         regions = {}
         current_region = None
@@ -105,9 +107,7 @@ class ENRProhibitedAreasExtractor(BaseENRExtractor):
                     or "Danger Area" in first_text
                 ):
                     # Definitions table — capture the text
-                    definitions = clean(
-                        "\n".join(row[0] for row in grid if row[0].strip())
-                    )
+                    definitions = clean("\n".join(row[0] for row in grid if row[0].strip()))
                 continue
 
             # Data table (4 cols) — attach to current region

@@ -1,14 +1,14 @@
 import asyncio
+
 from llama_parse import LlamaParse
-from llama_index.core import SimpleDirectoryReader
-import os
 
 keys = [
     "llx-GgMNMxePYJ9TOEtCHYxlBGNMhd6oaigHQbKFUphwIrzpKSZc",
     "llx-E1PxYwBp8LAtJ8M6JNvhQTtmKHPhC0GFAdK5eypGcuJzUL30",
     "llx-AazmTwfi9O0lfJVjogS1UjISyvtFWtWOBJvS9SUFqgLLnw50",
-    "llx-9j8P1MbYh2uSNsTOrNi8Nv8WX6gOBVwQvt4hOXsqShhGyjvX"
+    "llx-9j8P1MbYh2uSNsTOrNi8Nv8WX6gOBVwQvt4hOXsqShhGyjvX",
 ]
+
 
 async def check():
     for i, key in enumerate(keys, 1):
@@ -22,5 +22,6 @@ async def check():
             print(f"Key {i} VALID: {key}")
         except Exception as e:
             print(f"Key {i} INVALID: {key} (Error: {e})")
+
 
 asyncio.run(check())

@@ -1,6 +1,7 @@
+from urllib.parse import quote, urljoin
+
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin, quote
 
 
 class ChartExtractor:

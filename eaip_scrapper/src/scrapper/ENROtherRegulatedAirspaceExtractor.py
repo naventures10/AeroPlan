@@ -68,7 +68,9 @@ class ENROtherRegulatedAirspaceExtractor(BaseENRExtractor):
             return entries
 
         print(f"[*] Found {len(tables)} table(s) on the ENR 2.2 page.")
-        clean = lambda c: c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
+
+        def clean(c):
+            return c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
 
         for table in tables:
             grid = self.parser.build_virtual_grid(table)

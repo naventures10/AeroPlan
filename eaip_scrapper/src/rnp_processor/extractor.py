@@ -1,12 +1,14 @@
-import os
-import logging
 import json
-import requests
+import logging
+import os
 import re
 from pathlib import Path
-from mistralai.client import Mistral
+
+import requests
 from llama_cloud import LlamaCloud
-from .utils import EXTRACTED_DIR, BASE_DIR
+from mistralai.client import Mistral
+
+from .utils import BASE_DIR, EXTRACTED_DIR
 
 logger = logging.getLogger("RNP-ETL.Extractor")
 
@@ -128,9 +130,9 @@ class RNPExtractor:
                 table_lookup = {tbl.id: tbl.content for tbl in (page.tables or [])}
 
                 # Replace placeholders [tbl-X.html](tbl-X.html)
-                def _replace_table(match):
+                def _replace_table(match, tl=table_lookup):
                     tid = match.group(1)
-                    content = table_lookup.get(tid)
+                    content = tl.get(tid)
                     if content is None:
                         logger.warning(
                             f"Mistral OCR: table '{tid}' not found in lookup for {pdf_url}"
@@ -161,7 +163,7 @@ class RNPExtractor:
             json_path = BASE_DIR.parent / "output" / "master_aip_data.json"
 
         try:
-            with open(json_path, "r") as f:
+            with open(json_path) as f:
                 return json.load(f)
         except Exception as e:
             logger.error(f"Failed to load master_aip_data.json from {json_path}: {e}")
@@ -200,17 +202,13 @@ class RNPExtractor:
 
                 chart_name_lower = chart_name.lower()
                 is_coding = chart_name_lower.endswith(CODING_SUFFIX.lower())
-                is_table = any(
-                    chart_name_lower.endswith(s.lower()) for s in TABLE_SUFFIXES
-                )
+                is_table = any(chart_name_lower.endswith(s.lower()) for s in TABLE_SUFFIXES)
 
                 if not (is_coding or is_table):
                     continue
 
                 # Expected markdown name: replace .pdf with .PDF.md (case-insensitive)
-                expected_md = re.sub(
-                    r"\.pdf$", ".PDF.md", chart_name, flags=re.IGNORECASE
-                )
+                expected_md = re.sub(r"\.pdf$", ".PDF.md", chart_name, flags=re.IGNORECASE)
 
                 if expected_md in existing_md:
                     logger.debug(f"Skipping (already extracted): {expected_md}")
@@ -292,8 +290,7 @@ class RNPExtractor:
 
         total = len(missing_files)
         logger.info(
-            f"Extraction complete: {success_count}/{total} succeeded, "
-            f"{fail_count}/{total} failed."
+            f"Extraction complete: {success_count}/{total} succeeded, {fail_count}/{total} failed."
         )
         return fail_count == 0
 
@@ -301,9 +298,7 @@ class RNPExtractor:
 
     def get_missing_tables_files(self, master_data=None) -> list[dict]:
         """Deprecated: use get_missing_files() instead."""
-        logger.warning(
-            "get_missing_tables_files() is deprecated; use get_missing_files()."
-        )
+        logger.warning("get_missing_tables_files() is deprecated; use get_missing_files().")
         all_missing = self.get_missing_files(master_data)
         return [m for m in all_missing if m["chart_type"] == "TABLE"]
 

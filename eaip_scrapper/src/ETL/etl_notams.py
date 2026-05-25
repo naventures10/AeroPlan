@@ -1,11 +1,12 @@
+import json
 import os
 import re
-import json
-import boto3
 import tempfile
-from pathlib import Path
-from bs4 import BeautifulSoup
 from datetime import datetime
+from pathlib import Path
+
+import boto3
+from bs4 import BeautifulSoup
 from sqlalchemy import create_engine, text
 
 # MinIO Config
@@ -196,10 +197,8 @@ class BaseNotamParser:
             icao = icaos[0]
             remainder = text_upper.replace(icao, "").strip()
             # Exclude if it has digits, as headers are typically just names and the ICAO code
-            if not re.search(r"\d", remainder):
-                # Ensure the string is purely letters, spaces, parenthesis, and standard marks
-                if re.fullmatch(r"([A-Z\s\(\)/\-]+)", text_upper):
-                    return "airport", [icao]
+            if not re.search(r"\d", remainder) and re.fullmatch(r"([A-Z\s\(\)/\-]+)", text_upper):
+                return "airport", [icao]
 
         return None, None
 
@@ -238,9 +237,7 @@ class BaseNotamParser:
         return "UNKNOWN"
 
     def extract_from_md(self, file_path: Path):
-        raise NotImplementedError(
-            "FIR Parsers must implement their own extraction logic"
-        )
+        raise NotImplementedError("FIR Parsers must implement their own extraction logic")
 
 
 class ChennaiLlamaParser(BaseNotamParser):
@@ -263,7 +260,7 @@ class ChennaiLlamaParser(BaseNotamParser):
 
         self.default_fir = self.current_fir
 
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         current_notam = None
@@ -278,9 +275,7 @@ class ChennaiLlamaParser(BaseNotamParser):
 
                 # Check for empty description only at very end or ID switch if desired,
                 # but better to keep it and see what's missing.
-                if not current_notam["description"] and not current_notam.get(
-                    "is_permanent"
-                ):
+                if not current_notam["description"] and not current_notam.get("is_permanent"):
                     # Some temporary NOTAMs might have empty descriptions if extraction failed,
                     # but let's keep them for now to avoid data loss.
                     pass
@@ -308,15 +303,9 @@ class ChennaiLlamaParser(BaseNotamParser):
                 current_notam["is_estimated"] = (
                     "EST" in (current_notam.get("valid_to_raw") or "").upper()
                 )
-                current_notam["valid_from"] = self.parse_notam_time(
-                    current_notam["valid_from_raw"]
-                )
-                current_notam["valid_to"] = self.parse_notam_time(
-                    current_notam["valid_to_raw"]
-                )
-                current_notam["duration_category"] = self.calculate_duration_category(
-                    current_notam
-                )
+                current_notam["valid_from"] = self.parse_notam_time(current_notam["valid_from_raw"])
+                current_notam["valid_to"] = self.parse_notam_time(current_notam["valid_to_raw"])
+                current_notam["duration_category"] = self.calculate_duration_category(current_notam)
                 current_notam["raw_json"] = {"source": file_path.name}
 
                 self.records.append(current_notam)
@@ -388,9 +377,7 @@ class ChennaiLlamaParser(BaseNotamParser):
                 htype, icaos = self._classify_header(block)
                 if htype:
                     if htype == "fir":
-                        self.current_fir = (
-                            "/".join(icaos) if icaos else self.current_fir
-                        )
+                        self.current_fir = "/".join(icaos) if icaos else self.current_fir
                         self.current_airport = None
                     elif htype == "airport":
                         self.current_airport = icaos[0] if icaos else None
@@ -403,9 +390,7 @@ class ChennaiLlamaParser(BaseNotamParser):
                 htype, icaos = self._classify_header(block)
                 if htype and not NOTAM_ID_PATTERN.search(block):
                     if htype == "fir":
-                        self.current_fir = (
-                            "/".join(icaos) if icaos else self.current_fir
-                        )
+                        self.current_fir = "/".join(icaos) if icaos else self.current_fir
                         self.current_airport = None
                     elif htype == "airport":
                         self.current_airport = icaos[0] if icaos else None
@@ -447,9 +432,7 @@ class ChennaiLlamaParser(BaseNotamParser):
                 if htype and not NOTAM_ID_PATTERN.search(block):
                     commit_notam()
                     if htype == "fir":
-                        self.current_fir = (
-                            "/".join(icaos) if icaos else self.current_fir
-                        )
+                        self.current_fir = "/".join(icaos) if icaos else self.current_fir
                         self.current_airport = None
                     elif htype == "airport":
                         self.current_airport = icaos[0] if icaos else None
@@ -521,14 +504,12 @@ class DelhiLlamaParser(BaseNotamParser):
         else:
             self.current_fir = "VIDF"
             self.series = (
-                "A"
-                if "_A_" in file_path.name
-                else ("C" if "_C_" in file_path.name else "G")
+                "A" if "_A_" in file_path.name else ("C" if "_C_" in file_path.name else "G")
             )
 
         self.default_fir = self.current_fir
 
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         current_notam = None
@@ -561,15 +542,9 @@ class DelhiLlamaParser(BaseNotamParser):
                 current_notam["is_estimated"] = (
                     "EST" in (current_notam.get("valid_to_raw") or "").upper()
                 )
-                current_notam["valid_from"] = self.parse_notam_time(
-                    current_notam["valid_from_raw"]
-                )
-                current_notam["valid_to"] = self.parse_notam_time(
-                    current_notam["valid_to_raw"]
-                )
-                current_notam["duration_category"] = self.calculate_duration_category(
-                    current_notam
-                )
+                current_notam["valid_from"] = self.parse_notam_time(current_notam["valid_from_raw"])
+                current_notam["valid_to"] = self.parse_notam_time(current_notam["valid_to_raw"])
+                current_notam["duration_category"] = self.calculate_duration_category(current_notam)
                 current_notam["raw_json"] = {"source": file_path.name}
                 self.records.append(current_notam)
             current_notam = None
@@ -676,9 +651,7 @@ class DelhiLlamaParser(BaseNotamParser):
                             current_notam["description"] += cell_1 + "\n"
 
                         if len(block["data"]) > 2:
-                            current_notam["description"] += (
-                                " | ".join(block["data"][2:]) + "\n"
-                            )
+                            current_notam["description"] += " | ".join(block["data"][2:]) + "\n"
                         continue
 
                 remainder = clean_text.replace(primary_id, "").strip()
@@ -735,7 +708,7 @@ class KolkataLlamaParser(BaseNotamParser):
 
         self.default_fir = self.current_fir
 
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         current_notam = None
@@ -768,15 +741,9 @@ class KolkataLlamaParser(BaseNotamParser):
                 current_notam["is_estimated"] = (
                     "EST" in (current_notam.get("valid_to_raw") or "").upper()
                 )
-                current_notam["valid_from"] = self.parse_notam_time(
-                    current_notam["valid_from_raw"]
-                )
-                current_notam["valid_to"] = self.parse_notam_time(
-                    current_notam["valid_to_raw"]
-                )
-                current_notam["duration_category"] = self.calculate_duration_category(
-                    current_notam
-                )
+                current_notam["valid_from"] = self.parse_notam_time(current_notam["valid_from_raw"])
+                current_notam["valid_to"] = self.parse_notam_time(current_notam["valid_to_raw"])
+                current_notam["duration_category"] = self.calculate_duration_category(current_notam)
                 current_notam["raw_json"] = {"source": file_path.name}
                 self.records.append(current_notam)
             current_notam = None
@@ -831,10 +798,7 @@ class KolkataLlamaParser(BaseNotamParser):
                 or "AIP AIRAC AMDT" in upper_text
                 or "NOTE: FOR TEXT OF NOTAM PERTAINING" in upper_text
             ):
-                if (
-                    "NOTE: FOR TEXT OF NOTAM PERTAINING" in upper_text
-                    and not passed_checklist
-                ):
+                if "NOTE: FOR TEXT OF NOTAM PERTAINING" in upper_text and not passed_checklist:
                     pass
                 elif (
                     "LATEST PUBLICATIONS" in upper_text
@@ -895,10 +859,7 @@ class KolkataLlamaParser(BaseNotamParser):
 
                         if len(block["data"]) > 2:
                             current_notam["description"] += (
-                                " ".join(
-                                    cell for cell in block["data"][2:] if cell.strip()
-                                )
-                                + "\n"
+                                " ".join(cell for cell in block["data"][2:] if cell.strip()) + "\n"
                             )
                         continue
 
@@ -958,7 +919,7 @@ class MumbaiLlamaParser(BaseNotamParser):
 
         self.default_fir = self.current_fir
 
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         current_notam = None
@@ -991,15 +952,9 @@ class MumbaiLlamaParser(BaseNotamParser):
                 current_notam["is_estimated"] = (
                     "EST" in (current_notam.get("valid_to_raw") or "").upper()
                 )
-                current_notam["valid_from"] = self.parse_notam_time(
-                    current_notam["valid_from_raw"]
-                )
-                current_notam["valid_to"] = self.parse_notam_time(
-                    current_notam["valid_to_raw"]
-                )
-                current_notam["duration_category"] = self.calculate_duration_category(
-                    current_notam
-                )
+                current_notam["valid_from"] = self.parse_notam_time(current_notam["valid_from_raw"])
+                current_notam["valid_to"] = self.parse_notam_time(current_notam["valid_to_raw"])
+                current_notam["duration_category"] = self.calculate_duration_category(current_notam)
                 current_notam["raw_json"] = {"source": file_path.name}
                 self.records.append(current_notam)
             current_notam = None
@@ -1054,10 +1009,7 @@ class MumbaiLlamaParser(BaseNotamParser):
                 or "AIP AIRAC AMDT" in upper_text
                 or "NOTE: FOR TEXT OF NOTAM PERTAINING" in upper_text
             ):
-                if (
-                    "NOTE: FOR TEXT OF NOTAM PERTAINING" in upper_text
-                    and not passed_checklist
-                ):
+                if "NOTE: FOR TEXT OF NOTAM PERTAINING" in upper_text and not passed_checklist:
                     pass
                 elif (
                     "LATEST PUBLICATIONS" in upper_text
@@ -1118,10 +1070,7 @@ class MumbaiLlamaParser(BaseNotamParser):
 
                         if len(block["data"]) > 2:
                             current_notam["description"] += (
-                                " ".join(
-                                    cell for cell in block["data"][2:] if cell.strip()
-                                )
-                                + "\n"
+                                " ".join(cell for cell in block["data"][2:] if cell.strip()) + "\n"
                             )
                         continue
 
@@ -1193,7 +1142,7 @@ class NOTAMETL:
                 return
 
             objects = response["Contents"]
-            
+
             with tempfile.TemporaryDirectory() as temp_dir:
                 temp_path = Path(temp_dir)
                 for obj in objects:
@@ -1201,20 +1150,16 @@ class NOTAMETL:
                         continue
                     local_path = temp_path / obj["Key"].split("/")[-1]
                     self.s3.download_file(self.bucket, obj["Key"], str(local_path))
-                
+
                 # Process the downloaded files in the temporary directory
                 self.process_all(temp_path)
-                
+
         except Exception as e:
             print(f"[!] Failed to fetch from MinIO: {e}")
 
     def process_all(self, directory: Path):
         all_markdowns = sorted(
-            [
-                f
-                for f in directory.glob("*.md")
-                if re.search(r"[A-Za-z]+_[A-Z]_\d{4}_\d{2}", f.name)
-            ]
+            [f for f in directory.glob("*.md") if re.search(r"[A-Za-z]+_[A-Z]_\d{4}_\d{2}", f.name)]
         )
         if not all_markdowns:
             print("[!] No .md files found.")
@@ -1226,8 +1171,7 @@ class NOTAMETL:
         for md_file in all_markdowns:
             # We will process Chennai, Delhi, Kolkata, and Mumbai
             if not any(
-                fir in md_file.name.lower()
-                for fir in ["chennai", "delhi", "kolkata", "mumbai"]
+                fir in md_file.name.lower() for fir in ["chennai", "delhi", "kolkata", "mumbai"]
             ):
                 continue
 
@@ -1335,8 +1279,6 @@ class NOTAMETL:
 
 
 if __name__ == "__main__":
-    db_url = (
-        "postgresql://postgres:postgres@localhost:5432/aeronautical_information_system"
-    )
+    db_url = "postgresql://postgres:postgres@localhost:5432/aeronautical_information_system"
     etl_pipeline = NOTAMETL(db_url)
     etl_pipeline.process_from_minio()

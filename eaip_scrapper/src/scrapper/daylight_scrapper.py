@@ -1,8 +1,9 @@
-import requests
 import tempfile
-import urllib3
-from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from pathlib import Path
+
+import requests
+import urllib3
 
 # Disable insecure request warnings caused by the expired SSL cert
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -101,20 +102,18 @@ def convert_chunk(chunk_path_str: str) -> tuple[str, str]:
 
     Returns (chunk_filename, markdown_content).
     """
-    from docling.document_converter import DocumentConverter, PdfFormatOption
     from docling.datamodel.base_models import InputFormat
     from docling.datamodel.pipeline_options import (
-        PdfPipelineOptions,
         AcceleratorOptions,
+        PdfPipelineOptions,
     )
+    from docling.document_converter import DocumentConverter, PdfFormatOption
 
     chunk_path = Path(chunk_path_str)
     device = _get_accelerator_device()
 
     pipeline_options = PdfPipelineOptions()
-    pipeline_options.accelerator_options = AcceleratorOptions(
-        device=device, num_threads=4
-    )
+    pipeline_options.accelerator_options = AcceleratorOptions(device=device, num_threads=4)
 
     converter = DocumentConverter(
         format_options={

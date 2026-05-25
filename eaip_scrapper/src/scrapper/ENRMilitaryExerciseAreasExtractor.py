@@ -63,9 +63,7 @@ class ENRMilitaryExerciseAreasExtractor(BaseENRExtractor):
 
             # --- Type 2: ADIZ Zones ---
             # Even if columns are merged, they usually contain 'name' and 'lateral'
-            elif col_count == 1 and (
-                "name" in header_row[0] and "lateral" in header_row[0]
-            ):
+            elif col_count == 1 and ("name" in header_row[0] and "lateral" in header_row[0]):
                 for row_data in grid[1:]:
                     # Row data will be a single string often split by '|' if spans were merged by other parsers,
                     # but TableParser strips tags. ADIZ tables typically have Zone Name and Coordinates

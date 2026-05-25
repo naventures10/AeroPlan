@@ -1,12 +1,13 @@
-import requests
 import json
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from src.scrapper.AIPManifestCreator import AIPManifestCreator
-from src.scrapper.LiveTableExtractor import LiveTableExtractor
-from src.scrapper.ChartExtractor import ChartExtractor
-from src.scrapper.AIPSchemaMapper import AIPSchemaMapper
 
+import requests
+
+from src.scrapper.AIPManifestCreator import AIPManifestCreator
+from src.scrapper.AIPSchemaMapper import AIPSchemaMapper
+from src.scrapper.ChartExtractor import ChartExtractor
+from src.scrapper.LiveTableExtractor import LiveTableExtractor
 
 # Section definitions: (search_id, router_key, json_key, mode)
 TARGET_SECTIONS = [
@@ -42,9 +43,7 @@ TARGET_SECTIONS = [
 
 
 class MasterOrchestrator:
-    def __init__(
-        self, base_url, session=None, output_file="master_aip_data.json", max_workers=4
-    ):
+    def __init__(self, base_url, session=None, output_file="master_aip_data.json", max_workers=4):
         self.base_url = base_url
         self.output_file = output_file
         self.max_workers = max_workers
@@ -92,9 +91,7 @@ class MasterOrchestrator:
         }
 
         # --- Batch Extract ALL Tables from the single fetched page ---
-        section_results = table_extractor.extract_all_sections(
-            url, TARGET_SECTIONS, soup=soup
-        )
+        section_results = table_extractor.extract_all_sections(url, TARGET_SECTIONS, soup=soup)
 
         for json_key, (router_key, grid) in section_results.items():
             mapped_data = self.schema_mapper.process_grid(router_key, grid)
@@ -104,11 +101,8 @@ class MasterOrchestrator:
         # sections (e.g. "NIL" content embedded in the header table) get a
         # default NIL entry so the output schema is always complete.
         for _search_id, _router_key, json_key, mode in TARGET_SECTIONS:
-            if json_key not in airport_record["data"]:
-                if mode == "document":
-                    airport_record["data"][json_key] = [
-                        {"type": "paragraph", "content": "NIL"}
-                    ]
+            if json_key not in airport_record["data"] and mode == "document":
+                airport_record["data"][json_key] = [{"type": "paragraph", "content": "NIL"}]
 
         # --- Extract Charts from the same fetched page ---
         print("    -> Extracting PDF Charts...")
@@ -147,8 +141,7 @@ class MasterOrchestrator:
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             # Submit all airport jobs
             future_to_entry = {
-                executor.submit(self._process_airport, entry): entry
-                for entry in work_queue
+                executor.submit(self._process_airport, entry): entry for entry in work_queue
             }
 
             # Collect results as they complete

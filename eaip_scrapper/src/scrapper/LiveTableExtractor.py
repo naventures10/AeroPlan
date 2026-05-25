@@ -162,9 +162,7 @@ class LiveTableExtractor:
         target_index = -1
 
         def get_primary_row_count(tbl):
-            return len(
-                [tr for tr in tbl.find_all("tr") if tr.find_parent("table") == tbl]
-            )
+            return len([tr for tr in tbl.find_all("tr") if tr.find_parent("table") == tbl])
 
         # 1. Anchor
         for i, table in enumerate(tables):
@@ -206,9 +204,7 @@ class LiveTableExtractor:
             return None
 
         # 3. Assemble
-        print(
-            f"\n[DEBUG] Assembling {len(data_grids)} grids in '{mode.upper()}' mode..."
-        )
+        print(f"\n[DEBUG] Assembling {len(data_grids)} grids in '{mode.upper()}' mode...")
         merged_grid = data_grids[0]
 
         if mode == "grid":

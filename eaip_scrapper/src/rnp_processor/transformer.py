@@ -1,14 +1,16 @@
-import re
 import logging
-from bs4 import BeautifulSoup
+import re
 from collections import defaultdict
+
+from bs4 import BeautifulSoup
+
 from .utils import (
+    EXTRACTED_DIR,
+    MERGED_DIR,
     clean_text,
+    is_valid_coord,
     parse_coordinate,
     sanitize_header,
-    is_valid_coord,
-    MERGED_DIR,
-    EXTRACTED_DIR,
 )
 
 logger = logging.getLogger("RNP-ETL.Transformer")
@@ -71,7 +73,6 @@ class RNPTransformer:
             "INITL",
             "INITR",
             "INITB",
-            "MISAP",
             "MAPT/MATF",
             "FAF/FAP",
             "LTP/FTP",
@@ -150,7 +151,7 @@ class RNPTransformer:
             file_list.sort(key=lambda x: x.name)
             merged_content = []
             for f in file_list:
-                with open(f, "r", encoding="utf-8") as src:
+                with open(f, encoding="utf-8") as src:
                     merged_content.append(f"<!-- Source: {f.name} -->\n" + src.read())
 
             output_file = MERGED_DIR / f"{base_name}.md"
@@ -162,10 +163,7 @@ class RNPTransformer:
         text_lower = table.get_text(separator=" ").lower()
         if "operation type" in text_lower and "ltp/ftp" in text_lower:
             return "fas"
-        if any(
-            k in text_lower
-            for k in ["serial", "path", "descriptor", "terminator", "seq num"]
-        ):
+        if any(k in text_lower for k in ["serial", "path", "descriptor", "terminator", "seq num"]):
             return "tabular"
         if any(
             k in text_lower
@@ -191,7 +189,7 @@ class RNPTransformer:
             for td in tds:
                 try:
                     colspan = int(td.get("colspan", 1))
-                except ValueError, TypeError:
+                except (ValueError, TypeError):
                     colspan = 1
                 cells.extend([clean_text(td.get_text(strip=True))] * colspan)
 
@@ -287,7 +285,7 @@ class RNPTransformer:
         return wpts
 
     def parse_file(self, filepath):
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             soup = BeautifulSoup(f.read(), "html.parser")
 
         airport_id, runway, proc_type = self.extract_metadata(filepath.name)
@@ -314,7 +312,7 @@ class RNPTransformer:
                     # Skip single-cell spanning title rows
                     try:
                         colspan = int(cells[0].get("colspan", 1))
-                    except ValueError, TypeError:
+                    except (ValueError, TypeError):
                         colspan = 1
                     if len(cells) == 1 and colspan > 3:
                         continue
@@ -339,8 +337,7 @@ class RNPTransformer:
                     )
                     # Skip unit rows (ft, kt, NM, °/ft)
                     is_unit = all(
-                        c.get_text(strip=True).lower()
-                        in ("", "ft", "kt", "nm", "°/ft", "min")
+                        c.get_text(strip=True).lower() in ("", "ft", "kt", "nm", "°/ft", "min")
                         for c in cells
                     )
                     if is_header and not is_unit:
@@ -356,9 +353,7 @@ class RNPTransformer:
                                 headers.append(h)
                         break  # Found the header row
                 if headers:
-                    proc_data["tabular_description"].extend(
-                        self.extract_tabular(table, headers)
-                    )
+                    proc_data["tabular_description"].extend(self.extract_tabular(table, headers))
 
             # Extract waypoints from waypoint tables AND unknown tables
             if t_type in ("waypoint", "unknown", "tabular"):

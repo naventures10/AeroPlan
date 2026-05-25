@@ -1,10 +1,12 @@
-import requests
 import json
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+from urllib.parse import quote, urljoin
+
+import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin, quote
-from src.scrapper.LiveTableExtractor import TableParser
+
 from src.scrapper.ChartExtractor import ChartExtractor
+from src.scrapper.LiveTableExtractor import TableParser
 
 
 class BaseENRExtractor:
@@ -54,9 +56,7 @@ class BaseENRExtractor:
         print(f"[*] Writing data to {self.output_file}...")
         with open(self.output_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
-        print(
-            f"[+] {self.section_code} extraction complete. Output: {self.output_file}"
-        )
+        print(f"[+] {self.section_code} extraction complete. Output: {self.output_file}")
         print("=" * 50)
 
     def extract_and_save(self):

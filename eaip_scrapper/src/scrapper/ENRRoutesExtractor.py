@@ -1,10 +1,12 @@
-import requests
+import concurrent.futures
 import json
 import re
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+from urllib.parse import quote, urljoin
+
+import requests
 from bs4 import BeautifulSoup
-import concurrent.futures
-from urllib.parse import urljoin, quote
+
 from src.scrapper.LiveTableExtractor import TableParser
 
 
@@ -95,7 +97,8 @@ class ENRRoutesExtractor:
         soup = BeautifulSoup(resp.text, "html.parser")
         tables = soup.find_all("table")
 
-        clean = lambda c: c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
+        def clean(c):
+            return c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
 
         route_data = {
             "route_id": route_id,
@@ -134,10 +137,7 @@ class ENRRoutesExtractor:
                 col7 = row[7].strip()
 
                 # Skip header rows
-                if (
-                    "ROUTE DESIGNATOR" in col0.upper()
-                    or "ROUTE DESIGNATOR" in col1.upper()
-                ):
+                if "ROUTE DESIGNATOR" in col0.upper() or "ROUTE DESIGNATOR" in col1.upper():
                     continue
                 if col5.upper() == "ODD" or col6.upper() == "EVEN":
                     continue

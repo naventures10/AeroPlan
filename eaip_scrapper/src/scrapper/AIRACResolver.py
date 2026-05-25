@@ -1,8 +1,9 @@
+import re
+from datetime import datetime
+from urllib.parse import urljoin
+
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
-from datetime import datetime
-import re
 
 
 class AIRACResolver:
@@ -10,9 +11,7 @@ class AIRACResolver:
         self.homepage_url = homepage_url
         self.session = session or requests.Session()
         # Regex to capture the date string exactly as it appears inside the parentheses
-        self.date_pattern = re.compile(
-            r"Effective Date:\s*(\d{1,2}\s+[a-zA-Z]{3}\s+\d{4})"
-        )
+        self.date_pattern = re.compile(r"Effective Date:\s*(\d{1,2}\s+[a-zA-Z]{3}\s+\d{4})")
 
     def get_current_eaip_url(self):
         print(f"[*] Hop 0: Resolving active AIRAC cycle from {self.homepage_url}")
@@ -55,9 +54,7 @@ class AIRACResolver:
         active_links = [item for item in eaip_links if item[0] <= today]
 
         if not active_links:
-            print(
-                "[-] No currently active eAIP found (all published cycles are in the future)."
-            )
+            print("[-] No currently active eAIP found (all published cycles are in the future).")
             # Fallback: If everything is in the future, just take the closest one
             eaip_links.sort(key=lambda x: x[0])
             best_match = eaip_links[0]

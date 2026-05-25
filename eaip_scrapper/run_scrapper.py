@@ -1,26 +1,28 @@
+import concurrent.futures
 import os
+
+import boto3
 import requests
 import urllib3
-import boto3
-from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
-import concurrent.futures
+from urllib3.util.retry import Retry
+
 from src.scrapper.AIRACResolver import AIRACResolver
-from src.scrapper.MasterOrchestrator import MasterOrchestrator
-from src.scrapper.ENRSignificantPointsExtractor import ENRSignificantPointsExtractor
-from src.scrapper.ENRRadioNavAidsExtractor import ENRRadioNavAidsExtractor
 from src.scrapper.ENRAirspaceExtractor import ENRAirspaceExtractor
+from src.scrapper.ENREnRouteChartsExtractor import ENREnRouteChartsExtractor
+from src.scrapper.ENRHelicopterRoutesExtractor import ENRHelicopterRoutesExtractor
+from src.scrapper.ENRMilitaryExerciseAreasExtractor import (
+    ENRMilitaryExerciseAreasExtractor,
+)
 from src.scrapper.ENROtherRegulatedAirspaceExtractor import (
     ENROtherRegulatedAirspaceExtractor,
 )
 from src.scrapper.ENRProhibitedAreasExtractor import ENRProhibitedAreasExtractor
-from src.scrapper.ENRMilitaryExerciseAreasExtractor import (
-    ENRMilitaryExerciseAreasExtractor,
-)
-from src.scrapper.ENRUPRZonesExtractor import ENRUPRZonesExtractor
-from src.scrapper.ENREnRouteChartsExtractor import ENREnRouteChartsExtractor
+from src.scrapper.ENRRadioNavAidsExtractor import ENRRadioNavAidsExtractor
 from src.scrapper.ENRRoutesExtractor import ENRRoutesExtractor
-from src.scrapper.ENRHelicopterRoutesExtractor import ENRHelicopterRoutesExtractor
+from src.scrapper.ENRSignificantPointsExtractor import ENRSignificantPointsExtractor
+from src.scrapper.ENRUPRZonesExtractor import ENRUPRZonesExtractor
+from src.scrapper.MasterOrchestrator import MasterOrchestrator
 
 # Concurrency tuning: number of parallel airport workers
 MAX_WORKERS = 4
@@ -66,9 +68,7 @@ if __name__ == "__main__":
     active_eaip_url = master_resolver.get_current_eaip_url()
 
     if not active_eaip_url:
-        print(
-            "[!] Critical Failure: Could not resolve a valid eAIP target URL. Exiting."
-        )
+        print("[!] Critical Failure: Could not resolve a valid eAIP target URL. Exiting.")
         exit(1)
 
     print(f"[+] AIRAC cycle resolved globally. Target: {active_eaip_url}\n")
@@ -170,9 +170,7 @@ if __name__ == "__main__":
             except Exception as exc:
                 print(f"[!] ENR Scraper {name} generated an exception: {exc}")
 
-    print(
-        "\n[*] All standalone ENR extractors completed. Transitioning to AD Pipeline..."
-    )
+    print("\n[*] All standalone ENR extractors completed. Transitioning to AD Pipeline...")
 
     # AD Pipeline: Aerodrome Data Extraction
     orchestrator = MasterOrchestrator(
@@ -201,7 +199,7 @@ if __name__ == "__main__":
             print(f"[*] Bucket '{bucket_name}' not found. Creating it...")
             s3.create_bucket(Bucket=bucket_name)
 
-        for root, dirs, files in os.walk(output_dir):
+        for root, _dirs, files in os.walk(output_dir):
             for file in files:
                 if not file.endswith(".json"):
                     continue

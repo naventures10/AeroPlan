@@ -37,9 +37,7 @@ class AIPSchemaMapper:
         mapping_function = self.strategy_router.get(table_id)
 
         if not mapping_function:
-            print(
-                f"[!] No mapping strategy defined for {table_id}. Returning raw grid."
-            )
+            print(f"[!] No mapping strategy defined for {table_id}. Returning raw grid.")
             return {"raw_data": virtual_grid}
 
         return mapping_function(virtual_grid)
@@ -96,15 +94,12 @@ class AIPSchemaMapper:
                 continue
 
             # Skip empty rows or rows that just contain numbers
-            if not row[0].strip() or all(
-                c.strip().isdigit() or not c.strip() for c in row
-            ):
+            if not row[0].strip() or all(c.strip().isdigit() or not c.strip() for c in row):
                 continue
 
             # Helper to clean up Virtual Grid delimiters into clean newlines
-            clean = lambda c: (
-                c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
-            )
+            def clean(c):
+                return c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
 
             # The Data Contract Mapping
             obstacle_record = {
@@ -516,12 +511,11 @@ class AIPSchemaMapper:
         runways = []
 
         # Flexible regex: optionally matches "RWY " prefix, then 01-36 with optional L/C/R
-        designator_pattern = re.compile(
-            r"^(?:RWY\s+)?(0[1-9]|[12][0-9]|3[0-6])\s*([LCR])?$"
-        )
+        designator_pattern = re.compile(r"^(?:RWY\s+)?(0[1-9]|[12][0-9]|3[0-6])\s*([LCR])?$")
 
         # Helper to clean up Virtual Grid delimiters into clean newlines
-        clean = lambda c: c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
+        def clean(c):
+            return c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
 
         for row in grid:
             # If the row has data and column 0 is a valid runway designator
@@ -561,12 +555,11 @@ class AIPSchemaMapper:
         declared_distances = []
 
         # Flexible regex: optionally matches "RWY " prefix, then 01-36 with optional L/C/R
-        designator_pattern = re.compile(
-            r"^(?:RWY\s+)?(0[1-9]|[12][0-9]|3[0-6])\s*([LCR])?$"
-        )
+        designator_pattern = re.compile(r"^(?:RWY\s+)?(0[1-9]|[12][0-9]|3[0-6])\s*([LCR])?$")
 
         # Helper to clean up Virtual Grid delimiters into clean newlines
-        clean = lambda c: c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
+        def clean(c):
+            return c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
 
         for row in grid:
             # Check if row contains data and the first column is a valid runway designator
@@ -598,12 +591,11 @@ class AIPSchemaMapper:
         runway_lighting = []
 
         # Flexible regex: optionally matches "RWY " prefix, then 01-36 with optional L/C/R
-        designator_pattern = re.compile(
-            r"^(?:RWY\s+)?(0[1-9]|[12][0-9]|3[0-6])\s*([LCR])?$"
-        )
+        designator_pattern = re.compile(r"^(?:RWY\s+)?(0[1-9]|[12][0-9]|3[0-6])\s*([LCR])?$")
 
         # Helper to clean up Virtual Grid delimiters into clean newlines
-        clean = lambda c: c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
+        def clean(c):
+            return c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
 
         for row in grid:
             # Check if row contains data and the first column is a valid runway designator
@@ -766,7 +758,8 @@ class AIPSchemaMapper:
         radio_aids = []
 
         # Helper to clean up Virtual Grid delimiters into clean newlines
-        clean = lambda c: c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
+        def clean(c):
+            return c.replace(" | ", "\n").strip() if isinstance(c, str) else ""
 
         for row in grid:
             if len(row) < 4:
@@ -832,9 +825,7 @@ class AIPSchemaMapper:
             if len(non_empty_unique) > 1:
                 # If we were previously reading text, flush it to the document first
                 if current_text_block:
-                    document.append(
-                        {"type": "text", "content": "\n\n".join(current_text_block)}
-                    )
+                    document.append({"type": "text", "content": "\n\n".join(current_text_block)})
                     current_text_block = []
 
                 # Append the FULL aligned row to the active table
@@ -900,9 +891,7 @@ class AIPSchemaMapper:
             # HYBRID ROUTER: Multi-column = Table
             if len(non_empty_unique) > 1:
                 if current_text_block:
-                    document.append(
-                        {"type": "text", "content": "\n\n".join(current_text_block)}
-                    )
+                    document.append({"type": "text", "content": "\n\n".join(current_text_block)})
                     current_text_block = []
                 current_table.append(cleaned_cells)
 

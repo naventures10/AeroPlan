@@ -1,5 +1,6 @@
 import json
 import re
+
 import boto3
 import psycopg2
 from psycopg2.extras import execute_values
@@ -41,9 +42,7 @@ class WaypointLoader:
         try:
             degrees = float(numbers[:deg_len])
             minutes = float(numbers[deg_len : deg_len + 2])
-            seconds = (
-                float(numbers[deg_len + 2 :]) if len(numbers) > deg_len + 2 else 0.0
-            )
+            seconds = float(numbers[deg_len + 2 :]) if len(numbers) > deg_len + 2 else 0.0
 
             decimal = degrees + (minutes / 60) + (seconds / 3600)
             if direction in ["S", "W"]:
@@ -101,7 +100,7 @@ class WaypointLoader:
                     """
                     INSERT INTO significant_points (waypoint_name, routes, raw_coordinates, geom)
                     VALUES %s
-                    ON CONFLICT (waypoint_name) 
+                    ON CONFLICT (waypoint_name)
                     DO UPDATE SET
                         routes = EXCLUDED.routes,
                         raw_coordinates = EXCLUDED.raw_coordinates,
@@ -113,9 +112,7 @@ class WaypointLoader:
 
             self.conn.commit()
 
-        print(
-            f"[+] Successfully loaded {len(records)} waypoints into significant_points!"
-        )
+        print(f"[+] Successfully loaded {len(records)} waypoints into significant_points!")
 
     def close(self):
         """Closes the database connection."""
