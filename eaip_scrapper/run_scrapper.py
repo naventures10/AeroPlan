@@ -7,22 +7,24 @@ import urllib3
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from src.scrapper.AIRACResolver import AIRACResolver
-from src.scrapper.ENRAirspaceExtractor import ENRAirspaceExtractor
-from src.scrapper.ENREnRouteChartsExtractor import ENREnRouteChartsExtractor
-from src.scrapper.ENRHelicopterRoutesExtractor import ENRHelicopterRoutesExtractor
-from src.scrapper.ENRMilitaryExerciseAreasExtractor import (
+from eaip_scrapper.scrapper.airac_resolver import AIRACResolver
+from eaip_scrapper.scrapper.enr_airspace_extractor import ENRAirspaceExtractor
+from eaip_scrapper.scrapper.enr_en_route_charts_extractor import ENREnRouteChartsExtractor
+from eaip_scrapper.scrapper.enr_helicopter_routes_extractor import ENRHelicopterRoutesExtractor
+from eaip_scrapper.scrapper.enr_military_exercise_areas_extractor import (
     ENRMilitaryExerciseAreasExtractor,
 )
-from src.scrapper.ENROtherRegulatedAirspaceExtractor import (
+from eaip_scrapper.scrapper.enr_other_regulated_airspace_extractor import (
     ENROtherRegulatedAirspaceExtractor,
 )
-from src.scrapper.ENRProhibitedAreasExtractor import ENRProhibitedAreasExtractor
-from src.scrapper.ENRRadioNavAidsExtractor import ENRRadioNavAidsExtractor
-from src.scrapper.ENRRoutesExtractor import ENRRoutesExtractor
-from src.scrapper.ENRSignificantPointsExtractor import ENRSignificantPointsExtractor
-from src.scrapper.ENRUPRZonesExtractor import ENRUPRZonesExtractor
-from src.scrapper.MasterOrchestrator import MasterOrchestrator
+from eaip_scrapper.scrapper.enr_prohibited_areas_extractor import ENRProhibitedAreasExtractor
+from eaip_scrapper.scrapper.enr_radio_nav_aids_extractor import ENRRadioNavAidsExtractor
+from eaip_scrapper.scrapper.enr_routes_extractor import ENRRoutesExtractor
+from eaip_scrapper.scrapper.enr_significant_points_extractor import (
+    ENRSignificantPointsExtractor,
+)
+from eaip_scrapper.scrapper.enr_upr_zones_extractor import ENRUPRZonesExtractor
+from eaip_scrapper.scrapper.master_orchestrator import MasterOrchestrator
 
 # Concurrency tuning: number of parallel airport workers
 MAX_WORKERS = 4
@@ -183,7 +185,20 @@ if __name__ == "__main__":
 
     # MinIO Upload Sequence
     def upload_output_to_minio(output_dir="output", bucket_name="ais"):
-        print("\n[*] Starting MinIO synchronization...")
+        print("\n[*] Starting Pre-Upload Data Validation...")
+        from eaip_scrapper.validation.core.central_validator import ValidationRouter
+
+        validator = ValidationRouter()
+
+        for root, _dirs, files in os.walk(output_dir):
+            for file in files:
+                if not file.endswith(".json"):
+                    continue
+                file_path = os.path.join(root, file)
+                # Validation Hook: Halts if invalid
+                validator.validate_local_file(file_path)
+
+        print("\n[*] Pre-Upload Validation Passed. Starting MinIO synchronization...")
         s3 = boto3.client(
             "s3",
             endpoint_url="http://localhost:9000",
