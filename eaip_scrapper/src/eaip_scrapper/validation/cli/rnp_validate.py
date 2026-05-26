@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 # Add src to path for absolute imports
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.append(str(BASE_DIR / "src"))
 
 import os
