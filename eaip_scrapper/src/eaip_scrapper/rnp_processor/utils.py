@@ -4,6 +4,7 @@ import re
 import sys
 from pathlib import Path
 
+import boto3
 from dotenv import load_dotenv
 
 # Initialize paths
@@ -12,9 +13,9 @@ SCRATCH_DIR = BASE_DIR / "scratch"
 OUTPUT_DIR = BASE_DIR / "output"
 EXTRACTED_DIR = OUTPUT_DIR / "extracted_data"
 MERGED_DIR = OUTPUT_DIR / "merged_data"
-LOG_FILE = BASE_DIR / "rnp_etl_run.log"
+LOG_FILE = BASE_DIR.parent / "logs" / "rnp_etl_run.log"
 
-load_dotenv(BASE_DIR / ".env")
+load_dotenv(BASE_DIR.parent / ".env")
 
 # India bounding box (with generous margin for approach paths)
 INDIA_LAT_MIN = 5.0
@@ -35,6 +36,20 @@ def setup_logging(level=logging.INFO):
         force=True,
     )
     return logging.getLogger("RNP-eaip_scrapper.etl")
+
+
+def get_s3_client():
+    """Initializes and returns a boto3 S3 client for MinIO using environment variables."""
+    endpoint = os.getenv("MINIO_ENDPOINT", "http://localhost:9000")
+    access_key = os.getenv("MINIO_ACCESS_KEY", "ais_admin")
+    secret_key = os.getenv("MINIO_SECRET_KEY", "AviationData2026!")
+    return boto3.client(
+        "s3",
+        endpoint_url=endpoint,
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+        region_name="us-east-1",
+    )
 
 
 def dms_to_dd(degrees, minutes, seconds, direction):

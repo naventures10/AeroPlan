@@ -2,19 +2,17 @@ import json
 import logging
 import os
 import re
-from pathlib import Path
+import tempfile
 
 import requests
 from llama_cloud import LlamaCloud
 from mistralai.client import Mistral
 
-from .utils import BASE_DIR, EXTRACTED_DIR
+from .utils import BASE_DIR, get_s3_client
 
 logger = logging.getLogger("RNP-eaip_scrapper.etl.Extractor")
 
-# Chart types this extractor handles
-CODING_SUFFIX = "-CODING.pdf"
-TABLE_SUFFIXES = ("-TABLE.pdf", "-TABLES.pdf")
+logger = logging.getLogger("RNP-eaip_scrapper.etl.Extractor")
 
 
 class RNPExtractor:
@@ -23,6 +21,8 @@ class RNPExtractor:
         self.llama_keys = [k for k in self.llama_keys if k]
         self.mistral_key = os.getenv("MISTRAL_API_KEY")
         self.current_key_index = 0
+        self.s3_client = get_s3_client()
+        self.bucket = os.getenv("MINIO_BUCKET", "ais")
 
     # ── API key rotation ──────────────────────────────────────────────────────
 
@@ -35,18 +35,17 @@ class RNPExtractor:
 
     # ── Low-level download ────────────────────────────────────────────────────
 
-    def download_pdf(self, url: str, local_path: Path) -> bool:
-        """Download a PDF to *local_path*; skip if already present."""
-        if local_path.exists():
-            logger.debug(f"PDF already downloaded: {local_path.name}")
+    def download_pdf(self, url: str, local_path: str) -> bool:
+        """Download a PDF to *local_path*; skip if already populated."""
+        if os.path.exists(local_path) and os.path.getsize(local_path) > 0:
+            logger.debug(f"PDF already downloaded: {local_path}")
             return True
         try:
             response = requests.get(url, timeout=30)
             response.raise_for_status()
-            local_path.parent.mkdir(parents=True, exist_ok=True)
             with open(local_path, "wb") as f:
                 f.write(response.content)
-            logger.debug(f"Downloaded {local_path.name}")
+            logger.debug(f"Downloaded {local_path}")
             return True
         except Exception as e:
             logger.error(f"Download failed for {url}: {e}")
@@ -54,14 +53,14 @@ class RNPExtractor:
 
     # ── Extraction back-ends ──────────────────────────────────────────────────
 
-    def extract_via_llama(self, pdf_path: Path, output_md_path: Path) -> bool:
-        """Extract *pdf_path* with LlamaCloud; write markdown to *output_md_path*."""
+    def extract_via_llama(self, pdf_path: str, output_name: str) -> bool:
+        """Extract *pdf_path* with LlamaCloud; write markdown to MinIO."""
         api_key = self._get_llama_key()
         if not api_key:
             logger.error("No LlamaCloud API keys found.")
             return False
 
-        logger.info(f"Extracting {pdf_path.name} via LlamaCloud...")
+        logger.info(f"Extracting {os.path.basename(pdf_path)} via LlamaCloud...")
         try:
             client = LlamaCloud(api_key=api_key)
             with open(pdf_path, "rb") as f_obj:
@@ -97,21 +96,22 @@ class RNPExtractor:
                 if not has_tabular:
                     logger.warning(
                         f"LlamaCloud extraction missing tabular data for "
-                        f"{pdf_path.name}. Triggering fallback."
+                        f"{os.path.basename(pdf_path)}. Triggering fallback."
                     )
                     return False
 
-                output_md_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(output_md_path, "w", encoding="utf-8") as f:
-                    f.write(full_md)
+                s3_key = f"output/rnp/extracted_data/{output_name}"
+                self.s3_client.put_object(
+                    Bucket=self.bucket, Key=s3_key, Body=full_md.encode("utf-8")
+                )
                 return True
             return False
         except Exception as e:
-            logger.error(f"LlamaCloud failed for {pdf_path.name}: {e}")
+            logger.error(f"LlamaCloud failed for {os.path.basename(pdf_path)}: {e}")
             return False
 
-    def extract_via_mistral(self, pdf_url: str, output_md_path: Path) -> bool:
-        """Extract *pdf_url* with Mistral OCR; write markdown to *output_md_path*."""
+    def extract_via_mistral(self, pdf_url: str, output_name: str) -> bool:
+        """Extract *pdf_url* with Mistral OCR; write markdown to MinIO."""
         if not self.mistral_key:
             logger.error("No Mistral API key found.")
             return False
@@ -146,9 +146,10 @@ class RNPExtractor:
 
             full_md = "\n\n---\n\n".join(md_parts)
             if full_md.strip():
-                output_md_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(output_md_path, "w", encoding="utf-8") as f:
-                    f.write(full_md)
+                s3_key = f"output/rnp/extracted_data/{output_name}"
+                self.s3_client.put_object(
+                    Bucket=self.bucket, Key=s3_key, Body=full_md.encode("utf-8")
+                )
                 return True
             return False
         except Exception as e:
@@ -189,7 +190,14 @@ class RNPExtractor:
         if not master_data:
             return []
 
-        existing_md = {f.name for f in EXTRACTED_DIR.glob("*.md")}
+        response = self.s3_client.list_objects_v2(
+            Bucket=self.bucket, Prefix="output/rnp/extracted_data/"
+        )
+        existing_md = {
+            os.path.basename(obj["Key"])
+            for obj in response.get("Contents", [])
+            if obj["Key"].endswith(".md")
+        }
 
         missing = []
         for airport in master_data:
@@ -201,9 +209,9 @@ class RNPExtractor:
                 if "RNP" not in chart_name.upper():
                     continue
 
-                chart_name_lower = chart_name.lower()
-                is_coding = chart_name_lower.endswith(CODING_SUFFIX.lower())
-                is_table = any(chart_name_lower.endswith(s.lower()) for s in TABLE_SUFFIXES)
+                chart_name_upper = chart_name.upper()
+                is_coding = "CODING" in chart_name_upper
+                is_table = "TABLE" in chart_name_upper or "WAYPOINT" in chart_name_upper
 
                 if not (is_coding or is_table):
                     continue
@@ -259,35 +267,44 @@ class RNPExtractor:
             chart_type = file_info["chart_type"]
             pdf_url = file_info["pdf_url"]
             output_name = file_info["output_name"]
-            output_path = EXTRACTED_DIR / output_name
+            s3_key = f"output/rnp/extracted_data/{output_name}"
 
             # Guard: skip if someone wrote the file mid-run
-            if output_path.exists():
+            try:
+                self.s3_client.head_object(Bucket=self.bucket, Key=s3_key)
                 logger.info(f"Skipping (appeared mid-run): {output_name}")
                 success_count += 1
                 continue
+            except Exception:
+                pass  # Object does not exist, proceed
 
             logger.info(f"[{chart_type}] Processing {chart_name}...")
 
-            # Download PDF to local scratch area
-            pdf_path = EXTRACTED_DIR / chart_name
-            if not self.download_pdf(pdf_url, pdf_path):
-                logger.error(f"  ✗ Download failed — skipping {chart_name}")
-                fail_count += 1
-                continue
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp_pdf:
+                tmp_pdf_path = tmp_pdf.name
 
-            # Try LlamaCloud first
-            if self.extract_via_llama(pdf_path, output_path):
-                logger.info(f"  ✓ Extracted via LlamaCloud: {chart_name}")
-                success_count += 1
-            else:
-                # Fallback: Mistral OCR (works directly from URL)
-                if self.extract_via_mistral(pdf_url, output_path):
-                    logger.info(f"  ✓ Extracted via Mistral OCR: {chart_name}")
+            try:
+                # Download PDF to local scratch area
+                if not self.download_pdf(pdf_url, tmp_pdf_path):
+                    logger.error(f"  ✗ Download failed — skipping {chart_name}")
+                    fail_count += 1
+                    continue
+
+                # Try LlamaCloud first
+                if self.extract_via_llama(tmp_pdf_path, output_name):
+                    logger.info(f"  ✓ Extracted via LlamaCloud: {chart_name}")
                     success_count += 1
                 else:
-                    logger.error(f"  ✗ Both extractors failed for {chart_name}")
-                    fail_count += 1
+                    # Fallback: Mistral OCR (works directly from URL)
+                    if self.extract_via_mistral(pdf_url, output_name):
+                        logger.info(f"  ✓ Extracted via Mistral OCR: {chart_name}")
+                        success_count += 1
+                    else:
+                        logger.error(f"  ✗ Both extractors failed for {chart_name}")
+                        fail_count += 1
+            finally:
+                if os.path.exists(tmp_pdf_path):
+                    os.unlink(tmp_pdf_path)
 
         total = len(missing_files)
         logger.info(

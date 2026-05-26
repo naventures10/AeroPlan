@@ -1,13 +1,13 @@
 import logging
+import os
 import re
 from collections import defaultdict
 
 from bs4 import BeautifulSoup
 
 from .utils import (
-    EXTRACTED_DIR,
-    MERGED_DIR,
     clean_text,
+    get_s3_client,
     is_valid_coord,
     parse_coordinate,
     sanitize_header,
@@ -18,6 +18,8 @@ logger = logging.getLogger("RNP-eaip_scrapper.etl.Transformer")
 
 class RNPTransformer:
     def __init__(self):
+        self.s3_client = get_s3_client()
+        self.bucket = os.getenv("MINIO_BUCKET", "ais")
         self.roles = {
             "IAF",
             "IF",
@@ -82,14 +84,11 @@ class RNPTransformer:
 
     def get_base_name(self, filename):
         name = filename.replace(".PDF.md", "").replace(".md", "")
+        # Remove any CODING, TABLE, WAYPOINT and trailing numbers/spaces
+        name = re.sub(r"(?i)[-\s]*(CODING|TABLES|TABLE|WAYPOINTS|WAYPOINT)[\s\d]*$", "", name)
+        # Also remove trailing -1 or -2 if any remains
         name = re.sub(r"-\d+$", "", name)
-        name = (
-            name.replace("-CODING", "")
-            .replace("-TABLES", "")
-            .replace("-TABLE", "")
-            .replace("-WAYPOINTS", "")
-        )
-        return name
+        return name.strip()
 
     def extract_metadata(self, filename):
         """Extract airport_id, runway, and procedure_type from the filename.
@@ -99,65 +98,50 @@ class RNPTransformer:
           VECC-RNP-Y-RWY-19R
           VOCL-RNP-Y-RWY-28
           VOPB-RNP-Y-RWY-04-TABLES
+          VEBU RNP RWY- 35- TABLE.pdf
         """
         stem = filename.replace(".PDF.md", "").replace(".md", "")
-        # Remove CODING and TABLES suffixes before processing
-        stem = stem.replace("-CODING", "").replace("-TABLES", "").replace("-TABLE", "")
-        parts = stem.split("-")
-        if len(parts) == 1 and " " in stem:
-            parts = stem.split()
 
-        airport_id = parts[0] if parts else ""
-        runway = ""
-        proc_type = ""
+        # Standard Indian ICAO is 4 letters at the start
+        airport_id_match = re.match(r"^([A-Z]{4})", stem, re.IGNORECASE)
+        airport_id = airport_id_match.group(1).upper() if airport_id_match else "UNKN"
 
-        for i, p in enumerate(parts):
-            if "RWY" in p:
-                if p == "RWY":
-                    runway = parts[i + 1] if i + 1 < len(parts) else ""
-                else:
-                    runway = p.replace("RWY", "").strip()
-            if p in ("RNP", "SID", "STAR"):
-                if i + 1 < len(parts) and parts[i + 1] in ("Y", "Z", "X"):
-                    proc_type = f"{p} {parts[i + 1]}"
-                else:
-                    proc_type = p
+        runway_match = re.search(r"RWY[-\s]*([0-9]{2}[LRC]?)", stem, re.IGNORECASE)
+        runway = runway_match.group(1).upper() if runway_match else ""
 
-        # Strip any remaining stray suffixes from runway
-        runway = (
-            runway.replace("CODING", "")
-            .replace("TABLES", "")
-            .replace("TABLE", "")
-            .strip()
-            .rstrip("-")
-        )
+        proc_type_match = re.search(r"RNP[-\s]*([XYZ])\b", stem, re.IGNORECASE)
+        proc_type = "RNP-" + proc_type_match.group(1).upper() if proc_type_match else "RNP"
 
         return airport_id, runway, proc_type
 
     def merge_files(self):
-        """Merges parts of the same procedure into unified markdown files."""
-        if MERGED_DIR.exists():
-            import shutil
+        """Merges parts of the same procedure into unified markdown files in MinIO."""
+        response = self.s3_client.list_objects_v2(
+            Bucket=self.bucket, Prefix="output/rnp/extracted_data/"
+        )
+        keys = [obj["Key"] for obj in response.get("Contents", []) if obj["Key"].endswith(".md")]
 
-            shutil.rmtree(MERGED_DIR)
-        MERGED_DIR.mkdir(parents=True, exist_ok=True)
-
-        files = list(EXTRACTED_DIR.glob("*.md"))
         groups = defaultdict(list)
-        for f in files:
-            groups[self.get_base_name(f.name)].append(f)
+        for key in keys:
+            filename = os.path.basename(key)
+            groups[self.get_base_name(filename)].append(key)
 
-        for base_name, file_list in groups.items():
-            file_list.sort(key=lambda x: x.name)
+        for base_name, key_list in groups.items():
+            key_list.sort()
             merged_content = []
-            for f in file_list:
-                with open(f, encoding="utf-8") as src:
-                    merged_content.append(f"<!-- Source: {f.name} -->\n" + src.read())
+            for key in key_list:
+                filename = os.path.basename(key)
+                obj_resp = self.s3_client.get_object(Bucket=self.bucket, Key=key)
+                content = obj_resp["Body"].read().decode("utf-8")
+                merged_content.append(f"<!-- Source: {filename} -->\n" + content)
 
-            output_file = MERGED_DIR / f"{base_name}.md"
-            with open(output_file, "w", encoding="utf-8") as dest:
-                dest.write("\n\n---\n\n".join(merged_content))
-        logger.info(f"Merged {len(files)} parts into {len(groups)} procedures.")
+            merged_s3_key = f"output/rnp/merged_data/{base_name}.md"
+            self.s3_client.put_object(
+                Bucket=self.bucket,
+                Key=merged_s3_key,
+                Body="\n\n---\n\n".join(merged_content).encode("utf-8"),
+            )
+        logger.info(f"Merged {len(keys)} parts into {len(groups)} procedures in MinIO.")
 
     def classify_table(self, table):
         text_lower = table.get_text(separator=" ").lower()
@@ -284,14 +268,18 @@ class RNPTransformer:
                 )
         return wpts
 
-    def parse_file(self, filepath):
-        with open(filepath, encoding="utf-8") as f:
-            soup = BeautifulSoup(f.read(), "html.parser")
+    def parse_file(self, s3_key):
+        filename = os.path.basename(s3_key)
+        stem = os.path.splitext(filename)[0]
 
-        airport_id, runway, proc_type = self.extract_metadata(filepath.name)
+        obj_resp = self.s3_client.get_object(Bucket=self.bucket, Key=s3_key)
+        content = obj_resp["Body"].read().decode("utf-8")
+        soup = BeautifulSoup(content, "html.parser")
+
+        airport_id, runway, proc_type = self.extract_metadata(filename)
 
         proc_data = {
-            "procedure_name": filepath.stem,
+            "procedure_name": stem,
             "airport_id": airport_id,
             "runway": runway,
             "procedure_type": proc_type,
