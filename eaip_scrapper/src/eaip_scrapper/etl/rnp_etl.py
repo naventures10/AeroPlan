@@ -11,7 +11,7 @@ sys.path.append(str(BASE_DIR / "src"))
 from eaip_scrapper.rnp_processor.extractor import RNPExtractor
 from eaip_scrapper.rnp_processor.loader import RNPLoader
 from eaip_scrapper.rnp_processor.transformer import RNPTransformer
-from eaip_scrapper.rnp_processor.utils import MERGED_DIR, setup_logging
+from eaip_scrapper.rnp_processor.utils import get_s3_client, setup_logging
 from eaip_scrapper.validation.core.rnp_validator import RNPValidator
 
 
@@ -89,19 +89,26 @@ Skip flags:
 
             # Force-extract: wipe existing markdown files so gap-analysis sees them
             if args.force_extract:
-                from eaip_scrapper.rnp_processor.utils import EXTRACTED_DIR
+                s3_client = get_s3_client()
+                bucket = os.getenv("MINIO_BUCKET", "ais")
+                response = s3_client.list_objects_v2(
+                    Bucket=bucket, Prefix="output/rnp/extracted_data/"
+                )
+                keys = [
+                    obj["Key"] for obj in response.get("Contents", []) if obj["Key"].endswith(".md")
+                ]
 
                 wiped = 0
                 errors = 0
-                for md in EXTRACTED_DIR.glob("*.md"):
+                for key in keys:
                     try:
-                        md.unlink()
+                        s3_client.delete_object(Bucket=bucket, Key=key)
                         wiped += 1
                     except Exception as e:
-                        logger.error(f"Failed to remove {md}: {e}")
+                        logger.error(f"Failed to remove {key}: {e}")
                         errors += 1
                 logger.warning(
-                    f"--force-extract: removed {wiped} existing .md files, {errors} errors"
+                    f"--force-extract: removed {wiped} existing .md files in MinIO, {errors} errors"
                 )
 
             missing = extractor.get_missing_files()
@@ -133,8 +140,14 @@ Skip flags:
             if args.step in ("load", "all"):
                 loader.init_schema()
 
-            merged_files = sorted(MERGED_DIR.glob("*.md"))
-            logger.info(f"Processing {len(merged_files)} merged procedure files...")
+            s3_client = get_s3_client()
+            bucket = os.getenv("MINIO_BUCKET", "ais")
+            response = s3_client.list_objects_v2(Bucket=bucket, Prefix="output/rnp/merged_data/")
+            merged_keys = [
+                obj["Key"] for obj in response.get("Contents", []) if obj["Key"].endswith(".md")
+            ]
+            merged_keys.sort()
+            logger.info(f"Processing {len(merged_keys)} merged procedure files from MinIO...")
 
             summary = {
                 "total": 0,
@@ -144,15 +157,16 @@ Skip flags:
                 "failed": 0,
             }
 
-            for f in merged_files:
+            for key in merged_keys:
                 summary["total"] += 1
-                proc_data = transformer.parse_file(f)
+                proc_data = transformer.parse_file(key)
+                filename = os.path.basename(key)
 
                 # ── Validation ─────────────────────────────────────────────
                 val_res = validator.validate_procedure_data(proc_data)
 
                 if val_res["status"] == "FAILED":
-                    logger.error(f"VALIDATION FAILED — {f.name}: {val_res['issues']}")
+                    logger.error(f"VALIDATION FAILED — {filename}: {val_res['issues']}")
                     if not args.force_load:
                         summary["skipped"] += 1
                         continue
@@ -160,7 +174,7 @@ Skip flags:
                         logger.warning("  --force-load: loading despite failure")
 
                 if val_res["status"] == "WARNING":
-                    logger.warning(f"VALIDATION WARNING — {f.name}: {val_res['issues']}")
+                    logger.warning(f"VALIDATION WARNING — {filename}: {val_res['issues']}")
                     summary["warned"] += 1
 
                 # ── Load ───────────────────────────────────────────────────
