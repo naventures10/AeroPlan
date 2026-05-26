@@ -46,7 +46,7 @@ export function useKeyboardShortcuts({
         } else if (isWeatherMode || activeLayers.weather) {
           setIsWeatherMode(false);
         } else if (viewMode === 'TERMINAL' || activeAirport) {
-          returnToEnroute();
+          returnToEnroute(true);
         } else if (selectedRouteIds?.length > 0 || selectedFeature) {
           cancelPendingSelection();
           setSelectedRouteIds([]);

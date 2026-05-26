@@ -51,6 +51,7 @@ describe('useKeyboardShortcuts', () => {
     const escEvent = new KeyboardEvent('keydown', { key: 'Escape' });
     window.dispatchEvent(escEvent);
     expect(returnToEnrouteMock).toHaveBeenCalledTimes(1);
+    expect(returnToEnrouteMock).toHaveBeenCalledWith(true);
   });
 
   it('should cancel pending selection when Escape is pressed and routes are selected', () => {
