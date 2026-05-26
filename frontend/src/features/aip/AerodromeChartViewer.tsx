@@ -53,6 +53,23 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
   const onClose = useCallback(() => setIsOpen(false), []);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Close the chart modal on Escape — stop propagation so the global
+  // handler does not also exit the 3D terminal view.
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopImmediatePropagation();
+        onClose();
+        setSelectedChart(null);
+        setNumPages(0);
+        setCurrentPage(1);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isOpen, onClose]);
+
   const setViewMode = useMapStore((s) => s.setViewMode);
   const setSelectedRnpProcedure = useMapStore((s) => s.setSelectedRnpProcedure);
   const fitBounds = useMapStore((s) => s.fitBounds);

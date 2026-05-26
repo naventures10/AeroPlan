@@ -559,7 +559,23 @@ def build_3d_paths(
         # as single continuous tracks without any further "final approach" extension.
         final_approach = []
         raw_missed_approach = []
+
+        # Identify the terminal hold fix (HM) so we can connect transitions
+        # that don't naturally end there (e.g. KARGA → TP605 needs → TP607).
+        hm_groups = [g for g in groups if len(g) == 1 and g[0].path_descriptor == "HM"]
+        terminal_hm_leg = hm_groups[0][0] if hm_groups else None
+
         initial_groups = [g for g in groups if not (len(g) == 1 and g[0].path_descriptor == "HM")]
+
+        # Extend any transition group that doesn't end at the terminal hold fix.
+        if terminal_hm_leg and terminal_hm_leg.waypoint_ident:
+            hm_ident = terminal_hm_leg.waypoint_ident
+            for ig in initial_groups:
+                last_ident = next(
+                    (leg.waypoint_ident for leg in reversed(ig) if leg.waypoint_ident), None
+                )
+                if last_ident and last_ident != hm_ident:
+                    ig.append(terminal_hm_leg)
 
     approach_paths = []
 
