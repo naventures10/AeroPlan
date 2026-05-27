@@ -246,11 +246,21 @@ class ENRRoutesExtractor:
             "total_count": len(all_routes),
         }
 
-        print(f"[*] Writing {len(all_routes)} routes to {output_file}...")
-        with open(output_file, "w", encoding="utf-8") as f:
-            json.dump(output, f, indent=2, ensure_ascii=False)
+        from eaip_scrapper.scrapper.core.minio_storage import MinioStorage
+        from eaip_scrapper.validation.core.central_validator import ValidationRouter
 
-        print(f"[+] ENR {section} extraction complete. Output: {output_file}")
+        file_name = output_file.split("/")[-1]
+
+        # Serialize and validate in-memory
+        json_str = json.dumps(output, ensure_ascii=False)
+        validator = ValidationRouter()
+        validator.validate_ingest_json_string(file_name, json_str)
+
+        # Upload directly to MinIO
+        storage = MinioStorage()
+        storage.save_json(output_file, output)
+
+        print(f"[+] ENR {section} extraction complete. MinIO Object: {output_file}")
         print("=" * 50)
         return output
 

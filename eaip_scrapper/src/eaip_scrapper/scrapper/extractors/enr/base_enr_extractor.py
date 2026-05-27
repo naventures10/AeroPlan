@@ -52,11 +52,22 @@ class BaseENRExtractor:
         }
 
     def _save_output(self, data):
-        """Saves the final prepared dictionary to JSON cleanly."""
-        print(f"[*] Writing data to {self.output_file}...")
-        with open(self.output_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-        print(f"[+] {self.section_code} extraction complete. Output: {self.output_file}")
+        """Validates the output data and streams it directly to MinIO."""
+        from eaip_scrapper.scrapper.core.minio_storage import MinioStorage
+        from eaip_scrapper.validation.core.central_validator import ValidationRouter
+
+        file_name = self.output_file.split("/")[-1]
+
+        # Serialize and validate in-memory
+        json_str = json.dumps(data, ensure_ascii=False)
+        validator = ValidationRouter()
+        validator.validate_ingest_json_string(file_name, json_str)
+
+        # Upload directly to MinIO
+        storage = MinioStorage()
+        storage.save_json(self.output_file, data)
+
+        print(f"[+] {self.section_code} extraction complete. MinIO Object: {self.output_file}")
         print("=" * 50)
 
     def extract_and_save(self):

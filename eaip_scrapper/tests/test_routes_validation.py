@@ -178,11 +178,19 @@ class TestATSRouteWaypointRecord:
 
     def test_zero_sequence_rejected(self):
         with pytest.raises(ValidationError):
-            ATSRouteWaypointRecord(route_id="A201", sequence_number=0, waypoint_name="AKTIM")
+            ATSRouteWaypointRecord(
+                route_id="A201",
+                sequence_number=0,  # type: ignore[bad-argument-type]
+                waypoint_name="AKTIM",
+            )
 
     def test_negative_sequence_rejected(self):
         with pytest.raises(ValidationError):
-            ATSRouteWaypointRecord(route_id="A201", sequence_number=-1, waypoint_name="AKTIM")
+            ATSRouteWaypointRecord(
+                route_id="A201",
+                sequence_number=-1,  # type: ignore[bad-argument-type]
+                waypoint_name="AKTIM",
+            )
 
     def test_empty_waypoint_name_rejected(self):
         with pytest.raises(ValidationError, match="cannot be empty"):
@@ -220,11 +228,19 @@ class TestATSRouteSegmentRecord:
 
     def test_zero_distance_rejected(self):
         with pytest.raises(ValidationError):
-            ATSRouteSegmentRecord(route_id="A201", sequence_number=1, distance_nm=0)
+            ATSRouteSegmentRecord(
+                route_id="A201",
+                sequence_number=1,
+                distance_nm=0,  # type: ignore[bad-argument-type]
+            )
 
     def test_negative_distance_rejected(self):
         with pytest.raises(ValidationError):
-            ATSRouteSegmentRecord(route_id="A201", sequence_number=1, distance_nm=-5.0)
+            ATSRouteSegmentRecord(
+                route_id="A201",
+                sequence_number=1,
+                distance_nm=-5.0,
+            )
 
     def test_invalid_airspace_class_rejected(self):
         with pytest.raises(ValidationError, match="Invalid airspace class"):

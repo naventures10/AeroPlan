@@ -1,7 +1,5 @@
 import concurrent.futures
-import os
 
-import boto3
 import requests
 import urllib3
 from requests.adapters import HTTPAdapter
@@ -70,8 +68,7 @@ if __name__ == "__main__":
     master_session.mount("https://", adapter)
     master_session.mount("http://", adapter)
 
-    os.makedirs("output", exist_ok=True)
-
+    # Removed local output directory creation
     # --- Centralized AIRAC Resolution ---
     print("[*] Resolving Active AIRAC Cycle (Master Node)")
     master_resolver = AIRACResolver(HOME_URL, session=master_session)
@@ -191,49 +188,4 @@ if __name__ == "__main__":
     )
     orchestrator.run_pipeline()
 
-    # MinIO Upload Sequence
-    def upload_output_to_minio(output_dir="output", bucket_name="ais"):
-        print("\n[*] Starting Pre-Upload Data Validation...")
-        from eaip_scrapper.validation.core.central_validator import ValidationRouter
-
-        validator = ValidationRouter()
-
-        for root, _dirs, files in os.walk(output_dir):
-            for file in files:
-                if not file.endswith(".json"):
-                    continue
-                file_path = os.path.join(root, file)
-                # Validation Hook: Halts if invalid
-                validator.validate_local_file(file_path)
-
-        print("\n[*] Pre-Upload Validation Passed. Starting MinIO synchronization...")
-        s3 = boto3.client(
-            "s3",
-            endpoint_url="http://localhost:9000",
-            aws_access_key_id="ais_admin",
-            aws_secret_access_key="AviationData2026!",
-            region_name="us-east-1",
-        )
-
-        # Ensure bucket exists
-        try:
-            s3.head_bucket(Bucket=bucket_name)
-        except Exception:
-            print(f"[*] Bucket '{bucket_name}' not found. Creating it...")
-            s3.create_bucket(Bucket=bucket_name)
-
-        for root, _dirs, files in os.walk(output_dir):
-            for file in files:
-                if not file.endswith(".json"):
-                    continue
-                file_path = os.path.join(root, file)
-                # Ensure the object key uses forward slashes regardless of OS
-                object_key = file_path.replace(os.sep, "/")
-                print(f"    -> Uploading {object_key}...")
-                s3.upload_file(file_path, bucket_name, object_key)
-
-        print(
-            f"[+] MinIO synchronization complete. All files uploaded to bucket '{bucket_name}'.\n"
-        )
-
-    upload_output_to_minio()
+    print("\n[*] All pipelines completed successfully. Outputs are stored directly in MinIO.")

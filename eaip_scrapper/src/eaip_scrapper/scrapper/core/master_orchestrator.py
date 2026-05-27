@@ -165,10 +165,19 @@ class MasterOrchestrator:
 
         # Phase 3: Persistence
         print("\n--- PHASE 3: PERSISTENCE ---")
-        print(f"[*] Saving scraped data to {self.output_file}...")
+        from eaip_scrapper.scrapper.core.minio_storage import MinioStorage
+        from eaip_scrapper.validation.core.central_validator import ValidationRouter
 
-        with open(self.output_file, "w", encoding="utf-8") as file:
-            json.dump(master_database, file, indent=2, ensure_ascii=False)
+        file_name = self.output_file.split("/")[-1]
+
+        # Serialize and validate in-memory
+        json_str = json.dumps(master_database, ensure_ascii=False)
+        validator = ValidationRouter()
+        validator.validate_ingest_json_string(file_name, json_str)
+
+        # Upload directly to MinIO
+        storage = MinioStorage()
+        storage.save_json(self.output_file, master_database)
 
         # Summary
         total_time = time.time() - start_time
