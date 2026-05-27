@@ -98,7 +98,7 @@ interface MapState {
     pitch?: number,
     forceViewMode?: 'ENROUTE' | 'TERMINAL',
   ) => void;
-  returnToEnroute: () => void;
+  returnToEnroute: (instant?: boolean) => void;
 
   terminalPivot: [number, number] | null;
   setTerminalPivot: (coords: [number, number] | null) => void;
@@ -160,7 +160,7 @@ export const DEFAULT_VIEW = {
  * and flattens to ENROUTE view. Lowering this makes the terminal view
  * "relaxed" for viewing large procedures.
  */
-export const TERMINAL_EXIT_ZOOM_THRESHOLD = 5.5;
+export const TERMINAL_EXIT_ZOOM_THRESHOLD = 6.0;
 
 // 2. Initialize the Store
 export const useMapStore = create<MapState>((set, get) => ({
@@ -539,7 +539,7 @@ export const useMapStore = create<MapState>((set, get) => ({
     });
   },
 
-  returnToEnroute: () => {
+  returnToEnroute: (instant?: boolean) => {
     const { viewState } = get();
     set({
       viewMode: 'ENROUTE',
@@ -554,8 +554,9 @@ export const useMapStore = create<MapState>((set, get) => ({
         ...viewState,
         pitch: 0,
         bearing: 0,
-        transitionDuration: 1500,
-        transitionType: 'FLY',
+        ...(instant
+          ? { transitionDuration: 0, transitionType: 'LINEAR' }
+          : { transitionDuration: 1500, transitionType: 'FLY' }),
       },
     });
   },

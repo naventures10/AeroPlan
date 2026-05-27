@@ -1,31 +1,100 @@
-import os
+import concurrent.futures
+
 import requests
 import urllib3
-import boto3
-from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
-import concurrent.futures
-from src.scrapper.AIRACResolver import AIRACResolver
-from src.scrapper.MasterOrchestrator import MasterOrchestrator
-from src.scrapper.ENRSignificantPointsExtractor import ENRSignificantPointsExtractor
-from src.scrapper.ENRRadioNavAidsExtractor import ENRRadioNavAidsExtractor
-from src.scrapper.ENRAirspaceExtractor import ENRAirspaceExtractor
-from src.scrapper.ENROtherRegulatedAirspaceExtractor import (
-    ENROtherRegulatedAirspaceExtractor,
+from urllib3.util.retry import Retry
+
+from eaip_scrapper.scrapper.core.airac_resolver import AIRACResolver
+from eaip_scrapper.scrapper.core.master_orchestrator import MasterOrchestrator
+from eaip_scrapper.scrapper.extractors.enr.enr_airspace_extractor import ENRAirspaceExtractor
+from eaip_scrapper.scrapper.extractors.enr.enr_en_route_charts_extractor import (
+    ENREnRouteChartsExtractor,
 )
-from src.scrapper.ENRProhibitedAreasExtractor import ENRProhibitedAreasExtractor
-from src.scrapper.ENRMilitaryExerciseAreasExtractor import (
+from eaip_scrapper.scrapper.extractors.enr.enr_helicopter_routes_extractor import (
+    ENRHelicopterRoutesExtractor,
+)
+from eaip_scrapper.scrapper.extractors.enr.enr_military_exercise_areas_extractor import (
     ENRMilitaryExerciseAreasExtractor,
 )
-from src.scrapper.ENRUPRZonesExtractor import ENRUPRZonesExtractor
-from src.scrapper.ENREnRouteChartsExtractor import ENREnRouteChartsExtractor
-from src.scrapper.ENRRoutesExtractor import ENRRoutesExtractor
-from src.scrapper.ENRHelicopterRoutesExtractor import ENRHelicopterRoutesExtractor
+from eaip_scrapper.scrapper.extractors.enr.enr_other_regulated_airspace_extractor import (
+    ENROtherRegulatedAirspaceExtractor,
+)
+from eaip_scrapper.scrapper.extractors.enr.enr_prohibited_areas_extractor import (
+    ENRProhibitedAreasExtractor,
+)
+from eaip_scrapper.scrapper.extractors.enr.enr_radio_nav_aids_extractor import (
+    ENRRadioNavAidsExtractor,
+)
+from eaip_scrapper.scrapper.extractors.enr.enr_routes_extractor import ENRRoutesExtractor
+from eaip_scrapper.scrapper.extractors.enr.enr_significant_points_extractor import (
+    ENRSignificantPointsExtractor,
+)
+from eaip_scrapper.scrapper.extractors.enr.enr_upr_zones_extractor import ENRUPRZonesExtractor
 
 # Concurrency tuning: number of parallel airport workers
 MAX_WORKERS = 4
 
 if __name__ == "__main__":
+    import logging
+    import os
+    import sys
+    from datetime import datetime
+
+    import questionary
+
+    os.makedirs("logs", exist_ok=True)
+    log_filename = f"logs/orchestrator_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=[logging.FileHandler(log_filename), logging.StreamHandler(sys.stdout)],
+    )
+    logger = logging.getLogger("orchestrator")
+
+    logger.info("======================================")
+    logger.info("    eAIP Scraper Pipeline Selection")
+    logger.info("======================================")
+
+    choices = [
+        questionary.Choice("[SCRAPE] ENR Extractors", value="scrape_enr", checked=True),
+        questionary.Choice(
+            "[LOAD]   ENR ETL (Airspaces, Routes, Sig Points, Nav Aids, Charts)",
+            value="load_enr",
+            checked=True,
+        ),
+        questionary.Choice("[SCRAPE] AD Pipeline (Aerodromes)", value="scrape_ad", checked=True),
+        questionary.Choice("[LOAD]   AD ETL (Aerodromes)", value="load_ad", checked=True),
+        questionary.Choice("[SCRAPE] Daylight Tables", value="scrape_daylight", checked=True),
+        questionary.Choice("[LOAD]   Daylight ETL", value="load_daylight", checked=True),
+        questionary.Choice("[SCRAPE] NOTAMs", value="scrape_notam", checked=True),
+        questionary.Choice("[LOAD]   NOTAMs ETL", value="load_notam", checked=True),
+        questionary.Choice("[SCRAPE] AIP Supplements", value="scrape_supplements", checked=True),
+        questionary.Choice(
+            "[ALL]    RNP Pipeline (Extract -> Merge -> Parse -> Load)",
+            value="all_rnp",
+            checked=True,
+        ),
+    ]
+
+    selected = questionary.checkbox("Select pipeline components to execute:", choices=choices).ask()
+
+    if selected is None or not selected:
+        logger.info("No components selected. Exiting.")
+        sys.exit(0)
+
+    run_scrape_enr = "scrape_enr" in selected
+    run_load_enr = "load_enr" in selected
+    run_scrape_ad = "scrape_ad" in selected
+    run_load_ad = "load_ad" in selected
+    run_scrape_daylight = "scrape_daylight" in selected
+    run_load_daylight = "load_daylight" in selected
+    run_scrape_notam = "scrape_notam" in selected
+    run_load_notam = "load_notam" in selected
+    run_scrape_supplements = "scrape_supplements" in selected
+    run_all_rnp = "all_rnp" in selected
+
     HOME_URL = "https://aim-india.aai.aero/"
 
     # 1. Create the Master Session
@@ -58,22 +127,19 @@ if __name__ == "__main__":
     master_session.mount("https://", adapter)
     master_session.mount("http://", adapter)
 
-    os.makedirs("output", exist_ok=True)
-
+    # Removed local output directory creation
     # --- Centralized AIRAC Resolution ---
-    print("[*] Resolving Active AIRAC Cycle (Master Node)")
+    logger.info("[*] Resolving Active AIRAC Cycle (Master Node)")
     master_resolver = AIRACResolver(HOME_URL, session=master_session)
     active_eaip_url = master_resolver.get_current_eaip_url()
 
     if not active_eaip_url:
-        print(
-            "[!] Critical Failure: Could not resolve a valid eAIP target URL. Exiting."
-        )
+        logger.error("[!] Critical Failure: Could not resolve a valid eAIP target URL. Exiting.")
         exit(1)
 
-    print(f"[+] AIRAC cycle resolved globally. Target: {active_eaip_url}\n")
+    logger.info(f"[+] AIRAC cycle resolved globally. Target: {active_eaip_url}")
 
-    print("[*] Launching ENR standalone extractors concurrently...")
+    logger.info("[*] Launching ENR standalone extractors concurrently...")
 
     # ENR Scraper Task Definitions
     enr_tasks = [
@@ -160,59 +226,120 @@ if __name__ == "__main__":
         ),
     ]
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        future_to_enr = {executor.submit(task): name for task, name in enr_tasks}
-        for future in concurrent.futures.as_completed(future_to_enr):
-            name = future_to_enr[future]
-            try:
-                future.result()
-                print(f"[+] {name} completed successfully.")
-            except Exception as exc:
-                print(f"[!] ENR Scraper {name} generated an exception: {exc}")
+    if run_scrape_enr:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+            future_to_enr = {executor.submit(task): name for task, name in enr_tasks}
+            for future in concurrent.futures.as_completed(future_to_enr):
+                name = future_to_enr[future]
+                try:
+                    future.result()
+                    logger.info(f"[+] {name} completed successfully.")
+                except Exception as exc:
+                    logger.error(f"[!] ENR Scraper {name} generated an exception: {exc}")
+                    logger.error("[!] Halting the entire pipeline due to scrapper failure.")
+                    sys.exit(1)
 
-    print(
-        "\n[*] All standalone ENR extractors completed. Transitioning to AD Pipeline..."
-    )
+        logger.info("[*] All standalone ENR extractors completed. Transitioning to AD Pipeline...")
+    else:
+        logger.info("[*] Skipping ENR Extractors...")
 
     # AD Pipeline: Aerodrome Data Extraction
-    orchestrator = MasterOrchestrator(
-        active_eaip_url,
-        session=master_session,
-        max_workers=MAX_WORKERS,
-        output_file="output/master_aip_data.json",
+    if run_scrape_ad:
+        orchestrator = MasterOrchestrator(
+            active_eaip_url,
+            session=master_session,
+            max_workers=MAX_WORKERS,
+            output_file="output/master_aip_data.json",
+        )
+        orchestrator.run_pipeline()
+    else:
+        logger.info("[*] Skipping AD Pipeline...")
+
+    logger.info("[*] Starting standalone PDF & HTML Scrapers...")
+    import asyncio
+
+    from eaip_scrapper.scrapper.scrappers import (
+        aip_supplements_scrapper,
+        daylight_scrapper,
+        notam_scrapper,
     )
-    orchestrator.run_pipeline()
 
-    # MinIO Upload Sequence
-    def upload_output_to_minio(output_dir="output", bucket_name="ais"):
-        print("\n[*] Starting MinIO synchronization...")
-        s3 = boto3.client(
-            "s3",
-            endpoint_url="http://localhost:9000",
-            aws_access_key_id="ais_admin",
-            aws_secret_access_key="AviationData2026!",
-            region_name="us-east-1",
+    try:
+        if run_scrape_supplements:
+            aip_supplements_scrapper.main()
+        else:
+            logger.info("[*] Skipping AIP Supplements...")
+
+        if run_scrape_daylight:
+            asyncio.run(daylight_scrapper.main())
+        else:
+            logger.info("[*] Skipping Daylight Tables...")
+
+        if run_scrape_notam:
+            asyncio.run(notam_scrapper.main())
+        else:
+            logger.info("[*] Skipping NOTAMs...")
+    except Exception as e:
+        logger.error(f"[!] A standalone scraper failed: {e}")
+        logger.error("[!] Halting the entire pipeline due to scrapper failure.")
+        sys.exit(1)
+
+    logger.info("[*] All scraping tasks completed. Transitioning to ETL Loading Phase...")
+    import subprocess
+    from pathlib import Path
+
+    def run_etl(script_path: str):
+        logger.info(f"[>>>] Triggering ETL Pipeline: {script_path}")
+        process = subprocess.Popen(
+            [sys.executable, script_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
         )
+        script_name = Path(script_path).stem
+        for line in process.stdout:
+            logger.info(f"[{script_name}] {line.strip()}")
 
-        # Ensure bucket exists
-        try:
-            s3.head_bucket(Bucket=bucket_name)
-        except Exception:
-            print(f"[*] Bucket '{bucket_name}' not found. Creating it...")
-            s3.create_bucket(Bucket=bucket_name)
+        process.wait()
+        if process.returncode != 0:
+            logger.error(
+                f"[!] ETL Pipeline {script_path} failed with exit code {process.returncode}."
+            )
+            sys.exit(1)
 
-        for root, dirs, files in os.walk(output_dir):
-            for file in files:
-                if not file.endswith(".json"):
-                    continue
-                file_path = os.path.join(root, file)
-                # Ensure the object key uses forward slashes regardless of OS
-                object_key = file_path.replace(os.sep, "/")
-                print(f"    -> Uploading {object_key}...")
-                s3.upload_file(file_path, bucket_name, object_key)
+    if run_load_enr:
+        logger.info("[*] Starting ENR ETL Pipelines...")
+        run_etl("src/eaip_scrapper/etl/etl_airspaces.py")
+        run_etl("src/eaip_scrapper/etl/etl_routes.py")
+        run_etl("src/eaip_scrapper/etl/etl_significant_points.py")
+        run_etl("src/eaip_scrapper/etl/etl_nav_aids.py")
+        run_etl("src/eaip_scrapper/etl/etl_erc_charts.py")
+    else:
+        logger.info("[*] Skipping ENR ETL Pipelines...")
 
-        print(
-            f"[+] MinIO synchronization complete. All files uploaded to bucket '{bucket_name}'.\n"
-        )
+    if run_load_ad:
+        logger.info("[*] Starting AD ETL Pipeline...")
+        run_etl("src/eaip_scrapper/etl/etl_aerodromes.py")
+    else:
+        logger.info("[*] Skipping AD ETL Pipeline...")
 
-    upload_output_to_minio()
+    if run_load_daylight:
+        logger.info("[*] Starting Daylight ETL Pipeline...")
+        run_etl("src/eaip_scrapper/etl/etl_daylight.py")
+    else:
+        logger.info("[*] Skipping Daylight ETL Pipeline...")
+
+    if run_load_notam:
+        logger.info("[*] Starting NOTAM ETL Pipeline...")
+        run_etl("src/eaip_scrapper/etl/etl_notams.py")
+    else:
+        logger.info("[*] Skipping NOTAM ETL Pipeline...")
+
+    if run_all_rnp:
+        logger.info("[*] Starting Complete RNP Pipeline (Extract -> Merge -> Parse -> Load)...")
+        run_etl("src/eaip_scrapper/etl/rnp_etl.py")
+    else:
+        logger.info("[*] Skipping RNP Pipeline...")
+
+    logger.info("[*] All requested orchestrator pipelines completed successfully.")

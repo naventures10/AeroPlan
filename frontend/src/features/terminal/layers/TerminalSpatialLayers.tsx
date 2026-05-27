@@ -181,7 +181,7 @@ export function TerminalSpatialLayers() {
       </Source>
 
       {/* MVT spatial features (buildings, obstacles, points) */}
-      <Source id="spatial-features-source" type="vector" tiles={SPATIAL_TILES}>
+      <Source id="spatial-features-source" type="vector" tiles={SPATIAL_TILES} maxzoom={14}>
         <Layer
           id="mvt-polygons"
           type="fill-extrusion"

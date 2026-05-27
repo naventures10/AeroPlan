@@ -122,10 +122,10 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
       >
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className={`absolute top-0 bottom-0 left-0 w-full group/handle flex flex-col items-center justify-center transition-colors ${
+          className={`group/handle flex flex-col items-center justify-center transition-colors ${
             isCollapsed
-              ? 'hover:bg-teal-1000/10 dark:hover:bg-cyan-500/5 cursor-pointer'
-              : 'pointer-events-none'
+              ? 'relative flex-1 w-full hover:bg-teal-1000/10 dark:hover:bg-cyan-500/5 cursor-pointer'
+              : 'absolute top-0 bottom-0 left-0 w-full pointer-events-none'
           }`}
           title={isCollapsed ? 'Expand Dashboard' : ''}
         >
