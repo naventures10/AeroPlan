@@ -15,7 +15,7 @@ MINIO_SECRET_KEY = "AviationData2026!"
 MINIO_BUCKET = "ais"
 MINIO_METADATA_KEY = "output/enr_6_en_route_charts.json"
 
-TARGET_CHART_NAME = "En route Chart- Chennai FIR.pdf"
+TARGET_CHART_NAME = "En route Chart- INDIA.pdf"
 OUTPUT_PMTILES_KEY = "output/ERC-VOMF.pmtiles"
 
 EXTERNAL_CMD_TIMEOUT = 600  # 10 minutes max for heavy gdal processing
