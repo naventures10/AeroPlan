@@ -31,7 +31,7 @@ MINIO_METADATA_KEY = "output/enr_6_en_route_charts.json"
 
 # The government website has stored the Chennai FIR ERC chart under the wrong
 # name – the actual ERC-INDIA.pdf is listed as "En route Chart- Chennai FIR.pdf"
-TARGET_CHART_NAME = "En route Chart- Chennai FIR.pdf"
+TARGET_CHART_NAME = "En route Chart- INDIA.pdf"
 
 DB_HOST = "localhost"
 DB_PORT = "5432"
