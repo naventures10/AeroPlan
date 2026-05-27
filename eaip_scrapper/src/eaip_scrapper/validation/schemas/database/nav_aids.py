@@ -35,7 +35,7 @@ class NavAidDatabaseRecord(BaseModel):
             raise ValueError("geom_ewkt cannot be empty")
 
         # Parse longitude and latitude from SRID=4326;POINT(lng lat)
-        match = re.search(r"POINT\(([-\d.]+)\s+([-\d.]+)\)", self.geom_ewkt)
+        match = re.search(r"^SRID=4326;POINT\(([-\d.]+)\s+([-\d.]+)\)$", self.geom_ewkt)
         if not match:
             raise ValueError(f"Invalid geom_ewkt format: {self.geom_ewkt}")
 

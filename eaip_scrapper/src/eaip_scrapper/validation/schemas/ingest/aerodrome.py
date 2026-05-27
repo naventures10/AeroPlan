@@ -38,11 +38,11 @@ class Chart(BaseModel):
 
 
 class AerodromeData(BaseModel):
-    geographical_data: GeographicalData | None = Field(default_factory=GeographicalData)
+    geographical_data: GeographicalData | None = Field(default=None)
     runway_physical_characteristics: list[RunwayCharacteristic] = Field(default_factory=list)
     obstacles: list[Obstacle] = Field(default_factory=list)
     radio_navigation_and_landing_aids: list[NavAid] = Field(default_factory=list)
-    helicopter_landing_area: Helipad | None = Field(default_factory=Helipad)
+    helicopter_landing_area: Helipad | None = Field(default=None)
     charts: list[Chart] = Field(default_factory=list)
 
 
@@ -50,4 +50,4 @@ class AerodromeDocument(BaseModel):
     icao: str
     name: str | None = Field(default=None)
     source_url: str | None = Field(default=None)
-    data: AerodromeData | None = Field(default_factory=AerodromeData)
+    data: AerodromeData | None = Field(default=None)

@@ -69,7 +69,11 @@ def split_pdf(pdf_path: Path, chunk_size: int, output_dir: Path) -> list[Path]:
 
 def openai_file_upload_stream(path: Path):
     """Helper to provide a file stream for LlamaCloud create."""
-    return open(path, "rb")
+    f = open(path, "rb")
+    try:
+        yield f
+    finally:
+        f.close()
 
 
 async def convert_chunk_async(chunk_path: Path, api_key: str) -> tuple[str, str]:
@@ -80,7 +84,8 @@ async def convert_chunk_async(chunk_path: Path, api_key: str) -> tuple[str, str]
     client = AsyncLlamaCloud(api_key=api_key)
 
     # Upload and parse
-    file = await client.files.create(file=openai_file_upload_stream(chunk_path), purpose="parse")
+    with openai_file_upload_stream(chunk_path) as f:
+        file = await client.files.create(file=f, purpose="parse")
 
     result = await client.parsing.parse(
         file_id=file.id,
