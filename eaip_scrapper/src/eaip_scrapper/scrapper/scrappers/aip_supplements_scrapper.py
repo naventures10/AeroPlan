@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import time
 
 import boto3
 import requests
@@ -110,19 +109,15 @@ def upload_to_minio(data):
 
 
 def main():
-    logger.info("Starting AIP Supplements Scraper service...")
-    while True:
-        try:
-            data = scrape_supplements()
-            if data:
-                upload_to_minio(data)
-            else:
-                logger.warning("No data extracted. Skipping upload.")
-        except Exception as e:
-            logger.error(f"Unexpected error in scraping cycle: {e}")
-
-        logger.info(f"Sleeping for {SCRAPE_INTERVAL // 3600} hours...")
-        time.sleep(SCRAPE_INTERVAL)
+    logger.info("Starting AIP Supplements Scraper...")
+    try:
+        data = scrape_supplements()
+        if data:
+            upload_to_minio(data)
+        else:
+            logger.warning("No data extracted. Skipping upload.")
+    except Exception as e:
+        logger.error(f"Unexpected error in scraping cycle: {e}")
 
 
 if __name__ == "__main__":

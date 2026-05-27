@@ -188,4 +188,20 @@ if __name__ == "__main__":
     )
     orchestrator.run_pipeline()
 
+    print("\n[*] Starting standalone PDF & HTML Scrapers...")
+    import asyncio
+
+    from eaip_scrapper.scrapper.scrappers import (
+        aip_supplements_scrapper,
+        daylight_scrapper,
+        notam_scrapper,
+    )
+
+    try:
+        aip_supplements_scrapper.main()
+        asyncio.run(daylight_scrapper.main())
+        asyncio.run(notam_scrapper.main())
+    except Exception as e:
+        print(f"[!] A standalone scraper failed: {e}")
+
     print("\n[*] All pipelines completed successfully. Outputs are stored directly in MinIO.")
