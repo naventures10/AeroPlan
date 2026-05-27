@@ -22,8 +22,8 @@ class RouteLoader:
 
         self.conn = psycopg2.connect(
             dbname="aeronautical_information_system",
-            user="postgres",
-            password="postgres",
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
             host="localhost",
             port="5432",
         )

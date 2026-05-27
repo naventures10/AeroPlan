@@ -22,8 +22,8 @@ class WaypointLoader:
 
         self.conn = psycopg2.connect(
             dbname="aeronautical_information_system",
-            user="postgres",
-            password="postgres",
+            user=os.getenv("PG_USER"),
+            password=os.getenv("PG_PASSWORD"),
             host="localhost",
             port="5432",
         )

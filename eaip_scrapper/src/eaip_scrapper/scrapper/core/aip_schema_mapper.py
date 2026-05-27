@@ -80,7 +80,7 @@ class AIPSchemaMapper:
                 "call_sign": row[1].strip(),
                 "frequency": row[2].strip(),
                 "hours_of_operation": row[5].strip(),
-                "Remarks": row[6].strip(),
+                "remarks": row[6].strip(),
             }
 
             communications_data.append(frequency_record)

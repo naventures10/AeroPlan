@@ -24,8 +24,8 @@ EXTERNAL_CMD_TIMEOUT = 300  # 5 minutes for heavy PDF extraction
 # ── Constants ────────────────────────────────────────────────────────────────
 
 MINIO_ENDPOINT = "http://localhost:9000"
-MINIO_ACCESS_KEY = "ais_admin"
-MINIO_SECRET_KEY = "AviationData2026!"
+MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY")
+MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY")
 MINIO_BUCKET = "ais"
 MINIO_METADATA_KEY = "output/enr_6_en_route_charts.json"
 
@@ -35,8 +35,8 @@ TARGET_CHART_NAME = "En route Chart- INDIA.pdf"
 DB_HOST = "localhost"
 DB_PORT = "5432"
 DB_NAME = "aeronautical_information_system"
-DB_USER = "postgres"
-DB_PASS = "postgres"
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
 
 TARGET_TABLE = "airspaces_geometry"
 

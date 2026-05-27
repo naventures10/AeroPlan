@@ -77,7 +77,7 @@ Skip flags:
         "host": os.getenv("POSTGRES_HOST", "localhost"),
         "port": postgres_port,
         "database": os.getenv("POSTGRES_DB", "aeronautical_information_system"),
-        "user": os.getenv("POSTGRES_USER", "postgres"),
+        "user": os.getenv("POSTGRES_USER"),
         "password": postgres_password,
     }
 
