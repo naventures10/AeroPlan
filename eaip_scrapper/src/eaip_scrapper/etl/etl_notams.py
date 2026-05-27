@@ -9,6 +9,8 @@ import boto3
 from bs4 import BeautifulSoup
 from sqlalchemy import create_engine, text
 
+from eaip_scrapper.validation.schemas.database.notams import NotamDatabaseRecord
+
 # MinIO Config
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://localhost:9000")
 MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "ais_admin")
@@ -38,11 +40,42 @@ class BaseNotamParser:
         self.records = []
         self.current_fir = None
         self.default_fir = None
-        self.current_airport = None
+        self._current_airport = None
         self.series = None
+        self.seen_airports = set()
+
+    @property
+    def current_airport(self):
+        return self._current_airport
+
+    @current_airport.setter
+    def current_airport(self, value):
+        self._current_airport = value
+        if value:
+            self.seen_airports.add(value)
+
+    def validate_extraction(self, filename: str):
+        airports_with_notams = set(
+            r.get("airport_icao") for r in self.records if r.get("airport_icao")
+        )
+        empty_airports = self.seen_airports - airports_with_notams
+        if empty_airports:
+            print(
+                f"  [WARN] {filename}: The following airports had headers but NO NOTAMs extracted: {', '.join(empty_airports)}. Please verify manually!"
+            )
 
     def _extract_icao_from_text(self, text):
         return ICAO_PATTERN.findall(text)
+
+    def _is_new_notam(self, text):
+        found_ids = NOTAM_ID_PATTERN.findall(text)
+        if not found_ids:
+            return False, None
+        primary_id = found_ids[0]
+        prefix = text.split(primary_id)[0]
+        if all(c in " \t\n\r*-_#|>|[]" for c in prefix):
+            return True, primary_id
+        return False, None
 
     def _classify_header(self, text):
         # Strip HTML tags and markdown bold/italic markers
@@ -68,7 +101,7 @@ class BaseNotamParser:
 
         # FIR detection: Check known FIR names STRICTLY (no mid-sentence match)
         for name, icao in FIR_NAME_TO_ICAO.items():
-            if text_upper == name or text_upper == f"{name} FIR":
+            if text_upper == f"{name} FIR":
                 return "fir", [icao]
 
         # FIR keyword match must be in a short row (max 6 words)
@@ -197,7 +230,7 @@ class BaseNotamParser:
             icao = icaos[0]
             remainder = text_upper.replace(icao, "").strip()
             # Exclude if it has digits, as headers are typically just names and the ICAO code
-            if not re.search(r"\d", remainder) and re.fullmatch(r"([A-Z\s\(\)/\-]+)", text_upper):
+            if not re.search(r"\d", remainder) and re.fullmatch(r"([A-Z\s\(\)/\-\|]+)", text_upper):
                 return "airport", [icao]
 
         return None, None
@@ -400,9 +433,8 @@ class ChennaiLlamaParser(BaseNotamParser):
                     continue
 
                 # Check for NOTAM ID
-                found_ids = NOTAM_ID_PATTERN.findall(block)
-                if found_ids:
-                    primary_id = found_ids[0]
+                is_new, primary_id = self._is_new_notam(block)
+                if is_new:
                     current_notam = {
                         "notam_id": primary_id,
                         "series": self.series,
@@ -443,10 +475,9 @@ class ChennaiLlamaParser(BaseNotamParser):
                     continue
 
                 # Check for New NOTAM
-                found_ids = NOTAM_ID_PATTERN.findall(block)
-                if found_ids:
+                is_new, primary_id = self._is_new_notam(block)
+                if is_new:
                     commit_notam()
-                    primary_id = found_ids[0]
                     current_notam = {
                         "notam_id": primary_id,
                         "series": self.series,
@@ -632,10 +663,9 @@ class DelhiLlamaParser(BaseNotamParser):
                 state = STATE_SEEKING_NOTAM
                 continue
 
-            found_ids = NOTAM_ID_PATTERN.findall(unformatted_text)
-            if found_ids:
+            is_new, primary_id = self._is_new_notam(unformatted_text)
+            if is_new:
                 commit_notam()
-                primary_id = found_ids[0]
                 current_notam = {
                     "notam_id": primary_id,
                     "series": self.series,
@@ -848,10 +878,9 @@ class KolkataLlamaParser(BaseNotamParser):
                 state = STATE_SEEKING_NOTAM
                 continue
 
-            found_ids = NOTAM_ID_PATTERN.findall(unformatted_text)
-            if found_ids:
+            is_new, primary_id = self._is_new_notam(unformatted_text)
+            if is_new:
                 commit_notam()
-                primary_id = found_ids[0]
                 current_notam = {
                     "notam_id": primary_id,
                     "series": self.series,
@@ -1068,10 +1097,9 @@ class MumbaiLlamaParser(BaseNotamParser):
                 state = STATE_SEEKING_NOTAM
                 continue
 
-            found_ids = NOTAM_ID_PATTERN.findall(unformatted_text)
-            if found_ids:
+            is_new, primary_id = self._is_new_notam(unformatted_text)
+            if is_new:
                 commit_notam()
-                primary_id = found_ids[0]
                 current_notam = {
                     "notam_id": primary_id,
                     "series": self.series,
@@ -1217,8 +1245,10 @@ class NOTAMETL:
 
             parser = self.select_parser(md_file)
             recs = parser.extract_from_md(md_file)
+            parser.validate_extraction(md_file.name)
 
             # Apply Description Caching Logic
+            last_desc = ""
             for r in recs:
                 notam_id = r.get("notam_id")
                 desc = r.get("description", "").strip()
@@ -1228,8 +1258,13 @@ class NOTAMETL:
                 clean_desc = core_re.sub(r"[\*\s\|]+", "", desc).upper()
                 if clean_desc and clean_desc not in ("EST", "PERM"):
                     description_cache[notam_id] = desc
+                    last_desc = desc
                 else:
-                    r["description"] = description_cache.get(notam_id, "")
+                    cached = description_cache.get(notam_id, "")
+                    if cached:
+                        r["description"] = cached
+                    else:
+                        r["description"] = last_desc
 
             print(f"  [+] Extracted {len(recs)} NOTAMs.")
             all_records.extend(recs)
@@ -1274,6 +1309,38 @@ class NOTAMETL:
 
         with self.engine.begin() as conn:
             for r in records:
+                data = {
+                    "notam_id": r["notam_id"],
+                    "source_file": r.get("raw_json", {}).get("source", "unknown"),
+                    "series": r["series"],
+                    "scope": r.get("scope", "UNKNOWN"),
+                    "fir": r.get("fir").split("/")[0] if r.get("fir") else None,
+                    "combined_fir": r.get("fir")
+                    if (r.get("fir") and "/" in r.get("fir"))
+                    else None,
+                    "airport_icao": r.get("airport_icao"),
+                    "valid_from": r.get("valid_from"),
+                    "valid_to": r.get("valid_to"),
+                    "is_permanent": r.get("is_permanent", False),
+                    "is_estimated": r.get("is_estimated", False),
+                    "duration_category": r.get("duration_category", "UNKNOWN"),
+                    "description": r.get("description", ""),
+                    "raw_json": r.get("raw_json", {}),
+                }
+
+                # Rigorous Pydantic schema validation
+                try:
+                    NotamDatabaseRecord(**data)
+                except Exception as e:
+                    print(
+                        f"\n[!] DATABASE INTEGRITY FAILURE: NOTAM record {data.get('notam_id')} failed validation!"
+                    )
+                    print(e)
+                    print("[!] Halting ETL pipeline to prevent invalid data write to PostgreSQL.")
+                    import sys
+
+                    sys.exit(1)
+
                 stmt = text("""
                     INSERT INTO notams (notam_id, source_file, series, scope, fir, combined_fir, airport_icao, valid_from, valid_to, is_permanent, is_estimated, duration_category, description, raw_json)
                     VALUES (:notam_id, :source_file, :series, :scope, :fir, :combined_fir, :airport_icao, :valid_from, :valid_to, :is_permanent, :is_estimated, :duration_category, :description, :raw_json)
@@ -1292,25 +1359,9 @@ class NOTAMETL:
                         raw_json = EXCLUDED.raw_json,
                         updated_at = CURRENT_TIMESTAMP;
                 """)
-                data = {
-                    "notam_id": r["notam_id"],
-                    "source_file": r.get("raw_json", {}).get("source", "unknown"),
-                    "series": r["series"],
-                    "scope": r.get("scope", "UNKNOWN"),
-                    "fir": r.get("fir").split("/")[0] if r.get("fir") else None,
-                    "combined_fir": r.get("fir")
-                    if (r.get("fir") and "/" in r.get("fir"))
-                    else None,
-                    "airport_icao": r.get("airport_icao"),
-                    "valid_from": r.get("valid_from"),
-                    "valid_to": r.get("valid_to"),
-                    "is_permanent": r.get("is_permanent", False),
-                    "is_estimated": r.get("is_estimated", False),
-                    "duration_category": r.get("duration_category", "UNKNOWN"),
-                    "description": r.get("description", ""),
-                    "raw_json": json.dumps(r.get("raw_json", {})),
-                }
-                conn.execute(stmt, data)
+                insert_data = data.copy()
+                insert_data["raw_json"] = json.dumps(data["raw_json"])
+                conn.execute(stmt, insert_data)
 
 
 if __name__ == "__main__":
