@@ -12,8 +12,6 @@ from .utils import BASE_DIR, get_s3_client
 
 logger = logging.getLogger("RNP-eaip_scrapper.etl.Extractor")
 
-logger = logging.getLogger("RNP-eaip_scrapper.etl.Extractor")
-
 
 class RNPExtractor:
     def __init__(self):
@@ -190,14 +188,12 @@ class RNPExtractor:
         if not master_data:
             return []
 
-        response = self.s3_client.list_objects_v2(
-            Bucket=self.bucket, Prefix="output/rnp/extracted_data/"
-        )
-        existing_md = {
-            os.path.basename(obj["Key"])
-            for obj in response.get("Contents", [])
-            if obj["Key"].endswith(".md")
-        }
+        paginator = self.s3_client.get_paginator('list_objects_v2')
+        existing_md = set()
+        for page in paginator.paginate(Bucket=self.bucket, Prefix="output/rnp/extracted_data/"):
+            for obj in page.get("Contents", []):
+                if obj["Key"].endswith(".md"):
+                    existing_md.add(os.path.basename(obj["Key"]))
 
         missing = []
         for airport in master_data:

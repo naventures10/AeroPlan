@@ -3,7 +3,7 @@ import re
 from pydantic import BaseModel, field_validator
 
 # Strict Regex for PostGIS EWKT (e.g., "SRID=4326;POINT(76.5 8.2)")
-EWKT_REGEX = re.compile(r"^SRID=\d+;POINT\(-?\d+(?:\.\d+)? -?\d+(?:\.\d+)?\)$")
+EWKT_REGEX = re.compile(r"^SRID=\d+;POINT\((-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)\)$")
 
 
 class SpatialFeature(BaseModel):
@@ -19,8 +19,17 @@ class SpatialFeature(BaseModel):
     @field_validator("geom")
     @classmethod
     def validate_geom(cls, v: str | None) -> str | None:
-        if v and not EWKT_REGEX.match(v):
-            raise ValueError(f"Invalid PostGIS EWKT format: '{v}'")
+        if v:
+            match = EWKT_REGEX.match(v)
+            if not match:
+                raise ValueError(f"Invalid PostGIS EWKT format: '{v}'")
+            try:
+                lon = float(match.group(1))
+                lat = float(match.group(2))
+                if not (-180.0 <= lon <= 180.0 and -90.0 <= lat <= 90.0):
+                    raise ValueError(f"Coordinates out of bounds: lon={lon}, lat={lat}")
+            except Exception as err:
+                raise ValueError(f"Invalid EWKT geometry coordinates: '{v}'") from err
         return v
 
 

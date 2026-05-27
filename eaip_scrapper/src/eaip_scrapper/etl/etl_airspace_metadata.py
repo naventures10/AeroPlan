@@ -407,7 +407,7 @@ class AirspaceMetadataETL:
                     )
         except Exception as e:
             print(f"    [X] Failed to insert '{metadata.get('name')}': {e}")
-            self.conn.rollback()
+            # self.conn.rollback()  # No-op since autocommit is True
 
     def run(self):
         print("[*] Truncating airspaces_metadata for fresh ingestion...")

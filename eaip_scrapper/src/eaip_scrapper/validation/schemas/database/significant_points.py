@@ -11,8 +11,8 @@ from pydantic import BaseModel, Field, field_validator
 # EWKT pattern: SRID=4326;POINT(<lng> <lat>)
 _EWKT_PATTERN = re.compile(
     r"^SRID=4326;POINT\("
-    r"-?\d{1,3}\.\d+ "  # longitude
-    r"-?\d{1,2}\.\d+"  # latitude
+    r"(-?\d{1,3}\.\d+) "  # longitude
+    r"(-?\d{1,2}\.\d+)"  # latitude
     r"\)$"
 )
 
@@ -43,10 +43,19 @@ class SignificantPointRecord(BaseModel):
     def validate_geom_ewkt(cls, v: str | None) -> str | None:
         if v is None:
             return v
-        if not _EWKT_PATTERN.match(v):
+        match = _EWKT_PATTERN.match(v)
+        if not match:
             raise ValueError(
                 f"Invalid EWKT geometry: '{v}'. Expected format: SRID=4326;POINT(<lng> <lat>)"
             )
+        try:
+            lon = float(match.group(1))
+            lat = float(match.group(2))
+        except (ValueError, TypeError) as err:
+            raise ValueError(f"Invalid EWKT geometry coordinates: '{v}'") from err
+
+        if not (-180.0 <= lon <= 180.0 and -90.0 <= lat <= 90.0):
+            raise ValueError(f"Coordinates out of bounds: lon={lon}, lat={lat}")
         return v
 
 

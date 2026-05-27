@@ -77,7 +77,7 @@ def scrape_latest_notam_links() -> list[str]:
     if not pdf_links:
         print("WARNING: No NOTAM PDF links found on the page.")
         # pyrefly: ignore [bad-return]
-        return {}
+        return []
 
     print(f"Found {len(pdf_links)} unique NOTAM PDF link(s):")
     for link in pdf_links:

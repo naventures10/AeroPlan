@@ -91,12 +91,12 @@ Skip flags:
             if args.force_extract:
                 s3_client = get_s3_client()
                 bucket = os.getenv("MINIO_BUCKET", "ais")
-                response = s3_client.list_objects_v2(
-                    Bucket=bucket, Prefix="output/rnp/extracted_data/"
-                )
-                keys = [
-                    obj["Key"] for obj in response.get("Contents", []) if obj["Key"].endswith(".md")
-                ]
+                paginator = s3_client.get_paginator('list_objects_v2')
+                keys = []
+                for page in paginator.paginate(Bucket=bucket, Prefix="output/rnp/extracted_data/"):
+                    for obj in page.get("Contents", []):
+                        if obj["Key"].endswith(".md"):
+                            keys.append(obj["Key"])
 
                 wiped = 0
                 errors = 0

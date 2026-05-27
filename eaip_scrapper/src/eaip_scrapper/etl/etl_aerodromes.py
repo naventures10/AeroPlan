@@ -1,4 +1,5 @@
 import json
+import os
 import re
 
 import boto3
@@ -210,6 +211,19 @@ class DBLoader:
             port="5432",
         )
         self.conn.autocommit = False  # We manage transactions manually now for safety
+
+    def close(self):
+        if self.conn:
+            self.conn.close()
+            self.conn = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not None and self.conn and not self.conn.autocommit:
+            self.conn.rollback()
+        self.close()
 
     def enrich_payload(self, data):
         """Recursively hunts for coordinate fields and upgrades them."""

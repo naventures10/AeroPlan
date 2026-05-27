@@ -69,6 +69,8 @@ class RouteIngest(BaseModel):
                 entries.append(RouteWaypointEntryIngest(**entry))
             elif "track_distance" in entry:
                 entries.append(RouteSegmentEntryIngest(**entry))
+            else:
+                raise ValueError(f"Route '{self.route_id}': unrecognized waypoint entry: {entry}")
         return entries
 
 
