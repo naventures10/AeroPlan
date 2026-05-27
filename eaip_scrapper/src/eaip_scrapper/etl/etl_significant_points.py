@@ -89,6 +89,18 @@ class WaypointLoader:
         print(f"[*] Parsed {len(records)} waypoints. Pushing to database...")
 
         with self.conn.cursor() as cur:
+            from eaip_scrapper.validation.schemas.database.significant_points import (
+                SignificantPointsDatabaseValidator,
+            )
+
+            print("[*] Validating records...")
+            try:
+                SignificantPointsDatabaseValidator.validate_all(records)
+                print("[+] Validation passed successfully.")
+            except Exception as e:
+                print(f"[!] Validation failed: {e}")
+                raise e
+
             # Truncate for a clean idempotent reload
             cur.execute("TRUNCATE TABLE significant_points RESTART IDENTITY;")
             print("[!] Cleared existing records for a clean reload.")
