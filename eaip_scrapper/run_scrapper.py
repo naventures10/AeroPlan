@@ -175,7 +175,11 @@ if __name__ == "__main__":
                 future.result()
                 print(f"[+] {name} completed successfully.")
             except Exception as exc:
+                import sys
+
                 print(f"[!] ENR Scraper {name} generated an exception: {exc}")
+                print("[!] Halting the entire pipeline due to scrapper failure.")
+                sys.exit(1)
 
     print("\n[*] All standalone ENR extractors completed. Transitioning to AD Pipeline...")
 
@@ -202,6 +206,10 @@ if __name__ == "__main__":
         asyncio.run(daylight_scrapper.main())
         asyncio.run(notam_scrapper.main())
     except Exception as e:
+        import sys
+
         print(f"[!] A standalone scraper failed: {e}")
+        print("[!] Halting the entire pipeline due to scrapper failure.")
+        sys.exit(1)
 
     print("\n[*] All pipelines completed successfully. Outputs are stored directly in MinIO.")
