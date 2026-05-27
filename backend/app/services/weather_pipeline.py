@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -146,6 +147,11 @@ def _get_run_and_steps(now: datetime) -> tuple[int, datetime, list[int]]:
 
 
 def run_pipeline() -> bool:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        return _run_pipeline_impl(temp_dir)
+
+
+def _run_pipeline_impl(temp_dir: str) -> bool:
     logger.info("starting_weather_pipeline")
 
     os.makedirs(settings.WEATHER_OUTPUT_DIR, exist_ok=True)
@@ -154,8 +160,8 @@ def run_pipeline() -> bool:
     now = datetime.now(UTC)
     timestamp_str = now.strftime("%Y%m%d_%H%M%S")
 
-    raw_sfc_file = os.path.join(os.getcwd(), f"temp_sfc_{timestamp_str}.grib2")
-    raw_pl_file = os.path.join(os.getcwd(), f"temp_pl_{timestamp_str}.grib2")
+    raw_sfc_file = os.path.join(temp_dir, f"temp_sfc_{timestamp_str}.grib2")
+    raw_pl_file = os.path.join(temp_dir, f"temp_pl_{timestamp_str}.grib2")
     manifest_path = os.path.join(settings.WEATHER_OUTPUT_DIR, "weather_manifest.json")
 
     # --- STEP 1: Download with Fallback Loop ---
@@ -423,7 +429,7 @@ def run_pipeline() -> bool:
                             np.nan_to_num(alt_slice[var].values.astype(np.float32), nan=0.0)
                         )
 
-                temp_tif = os.path.join(os.getcwd(), f"temp_out_{int(alt)}_{step_hours}.tif")
+                temp_tif = os.path.join(temp_dir, f"temp_out_{int(alt)}_{step_hours}.tif")
 
                 with rasterio.open(
                     temp_tif,
