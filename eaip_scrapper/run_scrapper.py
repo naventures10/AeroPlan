@@ -36,6 +36,40 @@ from eaip_scrapper.scrapper.extractors.enr.enr_upr_zones_extractor import ENRUPR
 MAX_WORKERS = 4
 
 if __name__ == "__main__":
+    import sys
+
+    import questionary
+
+    print("\n======================================")
+    print("    eAIP Scraper Pipeline Selection")
+    print("======================================\n")
+
+    choices = [
+        questionary.Choice(
+            "ENR Extractors (Airspace, Routes, Nav Aids, etc.)", value="enr", checked=True
+        ),
+        questionary.Choice(
+            "AD Pipeline (Aerodromes Master Orchestrator)", value="ad", checked=True
+        ),
+        questionary.Choice("AIP Supplements", value="supplements", checked=True),
+        questionary.Choice("Daylight Tables", value="daylight", checked=True),
+        questionary.Choice("NOTAMs", value="notam", checked=True),
+    ]
+
+    selected = questionary.checkbox(
+        "Select which scrapers to run (Space to toggle, Enter to confirm):", choices=choices
+    ).ask()
+
+    if selected is None or not selected:
+        print("No scrapers selected. Exiting.")
+        sys.exit(0)
+
+    run_enr = "enr" in selected
+    run_ad = "ad" in selected
+    run_supplements = "supplements" in selected
+    run_daylight = "daylight" in selected
+    run_notam = "notam" in selected
+
     HOME_URL = "https://aim-india.aai.aero/"
 
     # 1. Create the Master Session
@@ -167,30 +201,36 @@ if __name__ == "__main__":
         ),
     ]
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        future_to_enr = {executor.submit(task): name for task, name in enr_tasks}
-        for future in concurrent.futures.as_completed(future_to_enr):
-            name = future_to_enr[future]
-            try:
-                future.result()
-                print(f"[+] {name} completed successfully.")
-            except Exception as exc:
-                import sys
+    if run_enr:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+            future_to_enr = {executor.submit(task): name for task, name in enr_tasks}
+            for future in concurrent.futures.as_completed(future_to_enr):
+                name = future_to_enr[future]
+                try:
+                    future.result()
+                    print(f"[+] {name} completed successfully.")
+                except Exception as exc:
+                    import sys
 
-                print(f"[!] ENR Scraper {name} generated an exception: {exc}")
-                print("[!] Halting the entire pipeline due to scrapper failure.")
-                sys.exit(1)
+                    print(f"[!] ENR Scraper {name} generated an exception: {exc}")
+                    print("[!] Halting the entire pipeline due to scrapper failure.")
+                    sys.exit(1)
 
-    print("\n[*] All standalone ENR extractors completed. Transitioning to AD Pipeline...")
+        print("\n[*] All standalone ENR extractors completed. Transitioning to AD Pipeline...")
+    else:
+        print("\n[*] Skipping ENR Extractors...")
 
     # AD Pipeline: Aerodrome Data Extraction
-    orchestrator = MasterOrchestrator(
-        active_eaip_url,
-        session=master_session,
-        max_workers=MAX_WORKERS,
-        output_file="output/master_aip_data.json",
-    )
-    orchestrator.run_pipeline()
+    if run_ad:
+        orchestrator = MasterOrchestrator(
+            active_eaip_url,
+            session=master_session,
+            max_workers=MAX_WORKERS,
+            output_file="output/master_aip_data.json",
+        )
+        orchestrator.run_pipeline()
+    else:
+        print("\n[*] Skipping AD Pipeline...")
 
     print("\n[*] Starting standalone PDF & HTML Scrapers...")
     import asyncio
@@ -202,9 +242,20 @@ if __name__ == "__main__":
     )
 
     try:
-        aip_supplements_scrapper.main()
-        asyncio.run(daylight_scrapper.main())
-        asyncio.run(notam_scrapper.main())
+        if run_supplements:
+            aip_supplements_scrapper.main()
+        else:
+            print("[*] Skipping AIP Supplements...")
+
+        if run_daylight:
+            asyncio.run(daylight_scrapper.main())
+        else:
+            print("[*] Skipping Daylight Tables...")
+
+        if run_notam:
+            asyncio.run(notam_scrapper.main())
+        else:
+            print("[*] Skipping NOTAMs...")
     except Exception as e:
         import sys
 
