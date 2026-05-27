@@ -120,7 +120,9 @@ class RouteLoader:
 
         for line in lc_lines[2:]:
             if line.startswith("Class"):
-                airspace_class = line.replace("Class ", "").strip()
+                # Handle "Class E", "ClassE", or just "Class"
+                extracted_class = line.replace("Class", "").strip()
+                airspace_class = extracted_class if extracted_class else None
             elif re.search(r"\d+\s*(?:FT|M\b)", line, re.IGNORECASE):
                 moca = line.strip()
 
@@ -223,6 +225,17 @@ class RouteLoader:
         print(
             f"\n[*] Total: {len(all_routes)} routes, {len(all_waypoints)} waypoints, {len(all_segments)} segments."
         )
+
+        from eaip_scrapper.validation.schemas.database.ats_routes import ATSRouteDatabaseValidator
+
+        print("[*] Validating records...")
+        try:
+            ATSRouteDatabaseValidator.validate_all(all_routes, all_waypoints, all_segments)
+            print("[+] Validation passed successfully.")
+        except Exception as e:
+            print(f"[!] Validation failed: {e}")
+            raise e
+
         print("[*] Pushing to database...")
 
         with self.conn.cursor() as cur:
