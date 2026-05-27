@@ -1,10 +1,14 @@
 import json
 import os
 import re
+import sys
 
 import boto3
 import psycopg2
 from psycopg2.extras import Json
+from pydantic import ValidationError
+
+from eaip_scrapper.validation.schemas.database.airspace import AirspaceMetadataDatabaseValidator
 
 # --- Configuration ---
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://localhost:9000")
@@ -330,6 +334,14 @@ class AirspaceMetadataETL:
                     self._insert_metadata(metadata)
 
     def _insert_metadata(self, metadata: dict):
+        try:
+            AirspaceMetadataDatabaseValidator.validate_metadata_record(metadata)
+        except ValidationError as e:
+            print("\n[!] DATA INTEGRITY FAILURE IN METADATA DICT!")
+            print(e)
+            print("[!] The metadata dict violates the schema contract. Halting pipeline.")
+            sys.exit(1)
+
         # 1. Combine all text values to find coordinates anywhere in the block
         all_text_values = []
         for _k, v in metadata.items():
@@ -361,22 +373,28 @@ class AirspaceMetadataETL:
         )
         """
         try:
+            params = (
+                metadata.get("name"),
+                metadata.get("identification"),
+                metadata.get("lateral_limits"),
+                metadata.get("upper_limit") or metadata.get("vertical_limits"),
+                metadata.get("lower_limit"),
+                metadata.get("classifications"),
+                metadata.get("remarks"),
+                metadata.get("source_file"),
+                Json(metadata.get("services")) if metadata.get("services") else None,
+                metadata.get("airspace_type"),
+            )
+            try:
+                AirspaceMetadataDatabaseValidator.validate_metadata_params(params)
+            except ValidationError as e:
+                print("\n[!] DATA INTEGRITY FAILURE IN DB PARAMS!")
+                print(e)
+                print("[!] The parameter tuple violates the schema contract. Halting pipeline.")
+                sys.exit(1)
+
             with self.conn.cursor() as cur:
-                cur.execute(
-                    sql_insert,
-                    (
-                        metadata.get("name"),
-                        metadata.get("identification"),
-                        metadata.get("lateral_limits"),
-                        metadata.get("upper_limit") or metadata.get("vertical_limits"),
-                        metadata.get("lower_limit"),
-                        metadata.get("classifications"),
-                        metadata.get("remarks"),
-                        metadata.get("source_file"),
-                        Json(metadata.get("services")) if metadata.get("services") else None,
-                        metadata.get("airspace_type"),
-                    ),
-                )
+                cur.execute(sql_insert, params)
                 if points:
                     print(
                         # pyrefly: ignore [unsupported-operation]

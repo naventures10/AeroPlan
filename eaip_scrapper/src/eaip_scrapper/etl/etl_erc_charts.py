@@ -1,10 +1,13 @@
 import json
 import os
 import subprocess
+import sys
 import tempfile
 
 import boto3
 import requests
+
+from eaip_scrapper.validation.core.central_validator import ValidationRouter
 
 MINIO_ENDPOINT = "http://localhost:9000"
 MINIO_ACCESS_KEY = "ais_admin"
@@ -33,7 +36,13 @@ class ERCChartsETL:
         """Fetch ENR 6 metadata and find the target chart PDF URL."""
         print(f"[*] Fetching metadata from MinIO: {MINIO_METADATA_KEY}")
         response = self.s3.get_object(Bucket=MINIO_BUCKET, Key=MINIO_METADATA_KEY)
-        metadata = json.loads(response["Body"].read().decode("utf-8"))
+        json_string = response["Body"].read().decode("utf-8")
+
+        # VALIDATION BOUNDARY
+        validator = ValidationRouter()
+        validator.validate_ingest_json_string(os.path.basename(MINIO_METADATA_KEY), json_string)
+
+        metadata = json.loads(json_string)
 
         charts = metadata.get("charts", [])
         for chart in charts:
@@ -193,11 +202,23 @@ class ERCChartsETL:
         return pmtiles_path
 
     def upload_pmtiles(self, pmtiles_path: str):
-        """Upload the finished PMTiles to MinIO."""
+        """Upload the finished PMTiles to MinIO, ensuring the file is valid."""
         print(f"\n[*] Uploading PMTiles to MinIO: {OUTPUT_PMTILES_KEY}")
 
-        file_size = os.path.getsize(pmtiles_path) / (1024 * 1024)
-        print(f"    File size: {file_size:.1f} MB")
+        if not os.path.exists(pmtiles_path):
+            print(f"[!] Artifact Validation Failed: {pmtiles_path} does not exist.")
+            sys.exit(1)
+
+        file_size_mb = os.path.getsize(pmtiles_path) / (1024 * 1024)
+        print(f"    File size: {file_size_mb:.1f} MB")
+
+        # Verify the file is not empty or corruptly small (e.g., < 0.1 MB)
+        if file_size_mb < 0.1:
+            print(
+                "[!] Artifact Validation Failed: Generated PMTiles file is too small (less than 100KB)."
+            )
+            print("[!] Pipeline halted to prevent corrupting MinIO storage.")
+            sys.exit(1)
 
         self.s3.upload_file(pmtiles_path, MINIO_BUCKET, OUTPUT_PMTILES_KEY)
         print("[+] Upload complete.")

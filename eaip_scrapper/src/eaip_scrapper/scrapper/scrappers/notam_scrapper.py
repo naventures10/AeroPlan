@@ -185,6 +185,54 @@ async def convert_pdf_to_md_with_llama(pdf_path: Path, output_path: Path, api_ke
         print(f"  [!] No content extracted for {pdf_path.name}")
 
 
+def convert_pdf_to_md_with_mistral(pdf_url: str, output_path: Path) -> bool:
+    """
+    Use Mistral OCR fallback to parse PDF and extract structured HTML tables inside markdown.
+    """
+    mistral_key = os.getenv("MISTRAL_API_KEY")
+    if not mistral_key:
+        print("  [!] Mistral API key (MISTRAL_API_KEY) is not configured. Skipping fallback.")
+        return False
+
+    print(f"  Parsing with Mistral OCR fallback: {pdf_url}")
+    try:
+        from mistralai.client import Mistral
+
+        client = Mistral(api_key=mistral_key)
+        response = client.ocr.process(
+            model="mistral-ocr-latest",
+            document={"type": "document_url", "document_url": pdf_url},
+            table_format="html",
+        )
+
+        md_parts = []
+        for page in response.pages:
+            md = page.markdown or ""
+            table_lookup = {tbl.id: tbl.content for tbl in (page.tables or [])}
+
+            def _replace_table(match, tl=table_lookup):
+                tid = match.group(1)
+                content = tl.get(tid)
+                if content is None:
+                    print(f"  [WARN] Mistral OCR: table '{tid}' not found in lookup.")
+                    return ""
+                return content
+
+            md = re.sub(r"\[([^\]]+\.html)\]\([^\)]+\)", _replace_table, md)
+            md_parts.append(md)
+
+        full_md = "\n\n---\n\n".join(md_parts)
+        if full_md.strip():
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(full_md, encoding="utf-8")
+            print(f"  ✓ Saved Mistral OCR Markdown to: {output_path.name}")
+            return True
+        return False
+    except Exception as e:
+        print(f"  [!] Mistral OCR failed for {pdf_url}: {e}")
+        return False
+
+
 def openai_file_upload_stream(path: Path):
     """Helper to provide a file stream for LlamaCloud create."""
     return open(path, "rb")
@@ -281,7 +329,7 @@ async def main():
                 download_pdf(pdf_url, local_pdf)
 
                 if not output_md_path.exists():
-                    conversion_tasks.append((local_pdf, output_md_path, minio_md_key))
+                    conversion_tasks.append((local_pdf, output_md_path, minio_md_key, pdf_url))
             except Exception as e:
                 print(f"  FAILED to process {pdf_filename}: {e}")
 
@@ -291,33 +339,89 @@ async def main():
                 f"\n--- PASS 2: Concurrent LlamaParse Processing ({len(conversion_tasks)} files) ---"
             )
 
-            async def run_conversion(pdf_path, md_path, minio_key, api_key):
+            async def run_conversion(pdf_path, md_path, minio_key, api_key, pdf_url):
+                from eaip_scrapper.validation.core.central_validator import ValidationRouter
+
+                validator = ValidationRouter()
+                success = False
+
+                # 1. Try LlamaParse
                 try:
                     await convert_pdf_to_md_with_llama(pdf_path, md_path, api_key)
                     if md_path.exists():
-                        print(f"  Uploading {md_path.name} to MinIO...")
-                        with open(md_path, "rb") as f:
-                            s3.put_object(
-                                Bucket=MINIO_BUCKET,
-                                Key=minio_key,
-                                Body=f,
-                                ContentType="text/markdown",
+                        content = md_path.read_text(encoding="utf-8")
+                        if validator.validate_raw_markdown(content, md_path.name):
+                            success = True
+                        else:
+                            print(
+                                f"  [WARN] LlamaParse output for {pdf_path.name} failed structure validation. Triggering Mistral OCR fallback..."
                             )
-                        print(f"  ✓ Uploaded to {minio_key}")
                 except Exception as e:
-                    print(f"  [!] Processing FAILED for {pdf_path.name}: {e}")
+                    print(
+                        f"  [!] LlamaParse failed for {pdf_path.name}: {e}. Triggering Mistral OCR fallback..."
+                    )
+
+                # 2. Try Mistral OCR Fallback
+                if not success:
+                    try:
+                        mistral_success = await asyncio.to_thread(
+                            convert_pdf_to_md_with_mistral, pdf_url, md_path
+                        )
+                        if mistral_success and md_path.exists():
+                            content = md_path.read_text(encoding="utf-8")
+                            if validator.validate_raw_markdown(content, md_path.name):
+                                success = True
+                            else:
+                                print(
+                                    f"  [!] Mistral OCR output for {pdf_path.name} failed structure validation."
+                                )
+                    except Exception as e:
+                        print(f"  [!] Mistral OCR fallback failed for {pdf_path.name}: {e}")
+
+                # 3. Handle Upload or Halt
+                if not success and md_path.exists():
+                    # Last resort: both engines failed strict validation.
+                    # Try lenient mode on the Mistral output (skips corruption threshold check)
+                    # to accept files where the source PDF itself has corrupted timestamps.
+                    content = md_path.read_text(encoding="utf-8")
+                    if validator.validate_raw_markdown(content, md_path.name, strict=False):
+                        print(
+                            f"  [WARN] Accepting {md_path.name} with lenient validation "
+                            f"(source-level corruption detected in both OCR engines)."
+                        )
+                        success = True
+
+                if success:
+                    print(f"  Uploading {md_path.name} to MinIO...")
+                    with open(md_path, "rb") as f:
+                        s3.put_object(
+                            Bucket=MINIO_BUCKET,
+                            Key=minio_key,
+                            Body=f,
+                            ContentType="text/markdown",
+                        )
+                    print(f"  ✓ Uploaded to {minio_key}")
+                else:
+                    print(f"\n[!] CRITICAL DATA INTEGRITY FAILURE for {pdf_path.name}!")
+                    print(
+                        "[!] Both LlamaParse and Mistral OCR failed to extract structured "
+                        "markdown (even with lenient validation). Halting pipeline."
+                    )
+                    import sys
+
+                    sys.exit(1)
 
             # Limit concurrency to 1 active request per API key to respect general rate limits
             semaphore = asyncio.Semaphore(len(llama_keys))
 
-            async def worker(pdf_path, md_path, minio_key, api_key):
+            async def worker(pdf_path, md_path, minio_key, api_key, pdf_url):
                 async with semaphore:
-                    await run_conversion(pdf_path, md_path, minio_key, api_key)
+                    await run_conversion(pdf_path, md_path, minio_key, api_key, pdf_url)
 
             tasks = []
-            for i, (p_pdf, p_md, minio_key) in enumerate(conversion_tasks):
+            for i, (p_pdf, p_md, minio_key, pdf_url) in enumerate(conversion_tasks):
                 assigned_key = llama_keys[i % len(llama_keys)]
-                tasks.append(worker(p_pdf, p_md, minio_key, assigned_key))
+                tasks.append(worker(p_pdf, p_md, minio_key, assigned_key, pdf_url))
 
             await asyncio.gather(*tasks)
 

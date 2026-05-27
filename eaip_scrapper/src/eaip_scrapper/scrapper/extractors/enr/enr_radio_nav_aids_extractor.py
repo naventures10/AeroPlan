@@ -1,7 +1,7 @@
 import re
 
-from eaip_scrapper.scrapper.base_enr_extractor import BaseENRExtractor
-from eaip_scrapper.scrapper.live_table_extractor import TableParser
+from eaip_scrapper.scrapper.extractors.enr.base_enr_extractor import BaseENRExtractor
+from eaip_scrapper.scrapper.extractors.live_table_extractor import TableParser
 
 
 class ENRRadioNavAidsExtractor(BaseENRExtractor):

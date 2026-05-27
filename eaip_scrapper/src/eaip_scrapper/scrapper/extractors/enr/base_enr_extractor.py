@@ -5,8 +5,8 @@ from urllib.parse import quote, urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from eaip_scrapper.scrapper.chart_extractor import ChartExtractor
-from eaip_scrapper.scrapper.live_table_extractor import TableParser
+from eaip_scrapper.scrapper.extractors.chart_extractor import ChartExtractor
+from eaip_scrapper.scrapper.extractors.live_table_extractor import TableParser
 
 
 class BaseENRExtractor:

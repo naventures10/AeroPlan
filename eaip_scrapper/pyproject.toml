@@ -8,7 +8,6 @@ dependencies = [
     "beautifulsoup4>=4.14.3",
     "boto3>=1.42.59",
     "deepeval>=3.9.5",
-    "docling>=2.80.0",
     "fiona>=1.10.1",
     "geoalchemy>=0.7.2",
     "geoalchemy2>=0.18.4",

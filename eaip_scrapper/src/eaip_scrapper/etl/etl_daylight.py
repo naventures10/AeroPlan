@@ -1,15 +1,20 @@
 import re
+import sys
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 
+from pydantic import ValidationError
 from sqlalchemy import create_engine, text
+
+from eaip_scrapper.validation.core.central_validator import ValidationRouter
+from eaip_scrapper.validation.schemas.database.daylight import DaylightDatabaseValidator
 
 # Regex for 4-letter ICAO code in parentheses like "(VEAT)"
 ICAO_PAREN_PATTERN = re.compile(r"\(([A-Z]{4})\)")
 # Regex for standard DMS coordinates: "235326N 0911421E"
 DMS_STANDARD_PATTERN = re.compile(r"(\d{6})[NS]\s+(\d{7})[EW]")
 # Regex for decimal-seconds DMS: "264513.99N 0820901.02E" or "222318.0N 0710246.0E"
-DMS_DECIMAL_PATTERN = re.compile(r"(\d{6}(?:\.\d+)?[NS])\s+(\d{7}(?:\.\d+)?[EW])")
+DMS_DECIMAL_PATTERN = re.compile(r"(?<!\d)(\d{6}(?:\.\d+)?[NS])\s+(\d{7}(?:\.\d+)?[EW])(?!\w)")
 # Regex for date like "01-Jan-2026"
 DATE_PATTERN = re.compile(r"\d{2}-[A-Z][a-z]{2}-\d{4}")
 # Regex for time like "05:43"
@@ -39,6 +44,17 @@ class DaylightETL:
         Handles both standard ('235326N 0911421E') and decimal-second
         formats ('264513.99N 0820901.02E', '222318.0N 0710246.0E').
         """
+        dms_str = dms_str.strip()
+
+        # Handle specific typo for 7-digit lat and 7-digit lon (missing leading 0 on lon and missing decimals)
+        # e.g., "2215220N 8448530E" -> "221522.0N 0844853.0E"
+        typo_match = re.match(r"^(\d{7})([NS])\s+(\d{7})([EW])$", dms_str)
+        if typo_match:
+            lat_nums, lat_dir, lon_nums, lon_dir = typo_match.groups()
+            lat_str = f"{lat_nums[:6]}.{lat_nums[6]}{lat_dir}"
+            lon_str = f"0{lon_nums[:6]}.{lon_nums[6]}{lon_dir}"
+            dms_str = f"{lat_str} {lon_str}"
+
         match = DMS_DECIMAL_PATTERN.search(dms_str)
         if not match:
             # pyrefly: ignore [bad-return]
@@ -174,9 +190,9 @@ class DaylightETL:
         # Contains "Airport" keyword
         return bool("Airport" in first_cell or "airport" in first_cell)
 
-    def parse_markdown(self, md_path: Path) -> list[dict]:
+    def parse_markdown(self, content: str) -> list[dict]:
         """
-        Parses the daylight Markdown file into a list of records.
+        Parses the daylight Markdown (which actually contains HTML tables) into a list of records.
         Handles all docling edge cases:
         - Headers with/without ICAO codes in parentheses
         - Coordinates embedded in header rows or missing entirely
@@ -187,11 +203,9 @@ class DaylightETL:
         """
         records = []
 
-        with open(md_path, encoding="utf-8") as f:
-            lines = f.readlines()
+        from bs4 import BeautifulSoup
 
-        # Skip introductory header lines
-        lines = lines[HEADER_SKIP_LINES:]
+        soup = BeautifulSoup(content, "html.parser")
 
         current_icao = None
         current_name = None
@@ -199,25 +213,8 @@ class DaylightETL:
         current_lon = None
         in_data_rows = False
 
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-
-            # Skip table divider lines (|---|---|...)
-            if line.startswith("|") and all(c in "|- " for c in line):
-                continue
-
-            if not line.startswith("|"):
-                continue
-
-            # Parse table cells
-            cells = [c.strip() for c in line.split("|")]
-            if cells and cells[0] == "":
-                cells = cells[1:]
-            if cells and cells[-1] == "":
-                cells = cells[:-1]
-
+        for tr in soup.find_all("tr"):
+            cells = [td.get_text(separator=" ", strip=True) for td in tr.find_all(["td", "th"])]
             if not cells:
                 continue
 
@@ -485,6 +482,10 @@ class DaylightETL:
                     if prev_r or next_r:
                         base = prev_r or next_r
                         other = next_r or prev_r
+
+                        assert base is not None
+                        assert other is not None
+
                         interpolated.append(
                             {
                                 "airport_icao": icao,
@@ -598,6 +599,18 @@ class DaylightETL:
                 batch = records[i : i + batch_size]
                 params = []
                 for r in batch:
+                    try:
+                        DaylightDatabaseValidator.validate_metadata_record(r)
+                    except ValidationError as e:
+                        print(
+                            f"\n[!] DATA INTEGRITY FAILURE IN DATABASE RECORD (ICAO: {r.get('airport_icao')}, Date: {r.get('date')})!"
+                        )
+                        print(e)
+                        print(
+                            "[!] The parsed record violates the schema contract. Halting pipeline."
+                        )
+                        sys.exit(1)
+
                     params.append(
                         {
                             "airport_icao": r["airport_icao"],
@@ -619,22 +632,43 @@ class DaylightETL:
 
 
 def main():
-    md_path = OUTPUT_DIR / MD_FILENAME
+    import os
 
-    if not md_path.exists():
-        print(f"[!] Markdown file not found: {md_path}")
-        print("    Run the daylight_scrapper.py first to generate the Markdown.")
-        return
+    import boto3
 
     print("=" * 60)
     print(" Daylight Tables eaip_scrapper.etl")
     print("=" * 60)
 
+    try:
+        s3 = boto3.client(
+            "s3",
+            endpoint_url=os.getenv("MINIO_ENDPOINT", "http://localhost:9000"),
+            aws_access_key_id=os.getenv("MINIO_ACCESS_KEY", "ais_admin"),
+            aws_secret_access_key=os.getenv("MINIO_SECRET_KEY", "AviationData2026!"),
+            region_name="us-east-1",
+        )
+        bucket = os.getenv("MINIO_BUCKET", "ais")
+        key = f"output/{MD_FILENAME}"
+        print(f"[*] Fetching '{key}' from MinIO bucket '{bucket}'...")
+        response = s3.get_object(Bucket=bucket, Key=key)
+        content = response["Body"].read().decode("utf-8")
+
+        print("[*] Validating raw unstructured Markdown content...")
+        validator = ValidationRouter()
+        if not validator.validate_raw_markdown(content, source_name="GEN_2.7_Sunrise_Sunset"):
+            sys.exit(1)
+
+    except Exception as e:
+        print(f"[!] Failed to fetch Markdown from MinIO: {e}")
+        print("    Run the daylight_scrapper.py first to generate the Markdown.")
+        return
+
     etl = DaylightETL(DB_URL)
 
     # Step 1: Parse the Markdown
     print("\n[1/2] Parsing Markdown...")
-    records = etl.parse_markdown(md_path)
+    records = etl.parse_markdown(content)
     print(f"  [✓] Extracted {len(records)} records")
 
     # Show summary by airport

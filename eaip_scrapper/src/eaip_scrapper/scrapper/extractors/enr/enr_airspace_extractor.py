@@ -1,4 +1,4 @@
-from eaip_scrapper.scrapper.base_enr_extractor import BaseENRExtractor
+from eaip_scrapper.scrapper.extractors.enr.base_enr_extractor import BaseENRExtractor
 
 # Maps section header table text to section keys and titles
 SECTION_MAP = [

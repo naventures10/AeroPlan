@@ -4,10 +4,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 
-from eaip_scrapper.scrapper.aip_manifest_creator import AIPManifestCreator
-from eaip_scrapper.scrapper.aip_schema_mapper import AIPSchemaMapper
-from eaip_scrapper.scrapper.chart_extractor import ChartExtractor
-from eaip_scrapper.scrapper.live_table_extractor import LiveTableExtractor
+from eaip_scrapper.scrapper.core.aip_manifest_creator import AIPManifestCreator
+from eaip_scrapper.scrapper.core.aip_schema_mapper import AIPSchemaMapper
+from eaip_scrapper.scrapper.extractors.chart_extractor import ChartExtractor
+from eaip_scrapper.scrapper.extractors.live_table_extractor import LiveTableExtractor
 
 # Section definitions: (search_id, router_key, json_key, mode)
 TARGET_SECTIONS = [
@@ -189,7 +189,7 @@ if __name__ == "__main__":
 
     import urllib3
 
-    from eaip_scrapper.scrapper.airac_resolver import AIRACResolver
+    from eaip_scrapper.scrapper.core.airac_resolver import AIRACResolver
 
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 

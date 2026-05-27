@@ -7,24 +7,32 @@ import urllib3
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from eaip_scrapper.scrapper.airac_resolver import AIRACResolver
-from eaip_scrapper.scrapper.enr_airspace_extractor import ENRAirspaceExtractor
-from eaip_scrapper.scrapper.enr_en_route_charts_extractor import ENREnRouteChartsExtractor
-from eaip_scrapper.scrapper.enr_helicopter_routes_extractor import ENRHelicopterRoutesExtractor
-from eaip_scrapper.scrapper.enr_military_exercise_areas_extractor import (
+from eaip_scrapper.scrapper.core.airac_resolver import AIRACResolver
+from eaip_scrapper.scrapper.core.master_orchestrator import MasterOrchestrator
+from eaip_scrapper.scrapper.extractors.enr.enr_airspace_extractor import ENRAirspaceExtractor
+from eaip_scrapper.scrapper.extractors.enr.enr_en_route_charts_extractor import (
+    ENREnRouteChartsExtractor,
+)
+from eaip_scrapper.scrapper.extractors.enr.enr_helicopter_routes_extractor import (
+    ENRHelicopterRoutesExtractor,
+)
+from eaip_scrapper.scrapper.extractors.enr.enr_military_exercise_areas_extractor import (
     ENRMilitaryExerciseAreasExtractor,
 )
-from eaip_scrapper.scrapper.enr_other_regulated_airspace_extractor import (
+from eaip_scrapper.scrapper.extractors.enr.enr_other_regulated_airspace_extractor import (
     ENROtherRegulatedAirspaceExtractor,
 )
-from eaip_scrapper.scrapper.enr_prohibited_areas_extractor import ENRProhibitedAreasExtractor
-from eaip_scrapper.scrapper.enr_radio_nav_aids_extractor import ENRRadioNavAidsExtractor
-from eaip_scrapper.scrapper.enr_routes_extractor import ENRRoutesExtractor
-from eaip_scrapper.scrapper.enr_significant_points_extractor import (
+from eaip_scrapper.scrapper.extractors.enr.enr_prohibited_areas_extractor import (
+    ENRProhibitedAreasExtractor,
+)
+from eaip_scrapper.scrapper.extractors.enr.enr_radio_nav_aids_extractor import (
+    ENRRadioNavAidsExtractor,
+)
+from eaip_scrapper.scrapper.extractors.enr.enr_routes_extractor import ENRRoutesExtractor
+from eaip_scrapper.scrapper.extractors.enr.enr_significant_points_extractor import (
     ENRSignificantPointsExtractor,
 )
-from eaip_scrapper.scrapper.enr_upr_zones_extractor import ENRUPRZonesExtractor
-from eaip_scrapper.scrapper.master_orchestrator import MasterOrchestrator
+from eaip_scrapper.scrapper.extractors.enr.enr_upr_zones_extractor import ENRUPRZonesExtractor
 
 # Concurrency tuning: number of parallel airport workers
 MAX_WORKERS = 4
