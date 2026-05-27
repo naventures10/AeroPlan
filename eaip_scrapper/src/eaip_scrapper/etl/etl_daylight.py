@@ -656,7 +656,9 @@ def main():
 
         print("[*] Validating raw unstructured Markdown content...")
         validator = ValidationRouter()
-        if not validator.validate_raw_markdown(content, source_name="GEN_2.7_Sunrise_Sunset"):
+        if not validator.validate_raw_markdown(
+            content, source_name="GEN_2.7_Sunrise_Sunset", document_type="daylight"
+        ):
             sys.exit(1)
 
     except Exception as e:

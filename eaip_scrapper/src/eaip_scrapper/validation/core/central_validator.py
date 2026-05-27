@@ -106,7 +106,9 @@ class ValidationRouter:
             print("[!] The fetched data violates the schema contract. Halting pipeline.")
             sys.exit(1)
 
-    def validate_raw_markdown(self, content: str, source_name: str, strict: bool = True) -> bool:
+    def validate_raw_markdown(
+        self, content: str, source_name: str, document_type: str = "notam", strict: bool = True
+    ) -> bool:
         """
         Validates that raw unstructured markdown/HTML data is substantially present
         and does not contain corrupted dates or empty records.
@@ -114,6 +116,7 @@ class ValidationRouter:
         Args:
             content: The raw markdown/HTML text to validate.
             source_name: A human-readable identifier for logging.
+            document_type: 'notam' or 'daylight'. Used to determine specific checks.
             strict: If True, applies the OCR corruption threshold check.
                     If False (lenient mode), skips corruption checks — used as a
                     last resort when both OCR engines reproduce source-level noise.
@@ -129,40 +132,45 @@ class ValidationRouter:
             print("[!] Content does not contain expected tabular structures (HTML or Markdown).")
             return False
 
-        # Threshold-based OCR date corruption check (strict mode only)
-        # Validity timestamps should be exactly 10 digits (YYMMDDHHMM).
-        # A few corrupted timestamps (<= 5%) indicate source-level PDF noise.
-        # In strict mode, we have zero tolerance for corrupted timestamps (11 or 12 digits),
-        # which indicates OCR hallucination (e.g. reading border lines as digits).
-        if strict:
-            timestamp_pattern = re.compile(r"(\d{10,12})\s*/\s*(\d{10,12}|PERM|\S+?EST|\S+?PERM)")
-            all_matches = timestamp_pattern.findall(content)
-            total_count = len(all_matches)
-
-            if total_count > 0:
-                corrupted_count = sum(
-                    1
-                    for from_ts, to_ts in all_matches
-                    if len(from_ts) > 10 or (to_ts.isdigit() and len(to_ts) > 10)
+        if document_type == "notam":
+            # Threshold-based OCR date corruption check (strict mode only)
+            # Validity timestamps should be exactly 10 digits (YYMMDDHHMM).
+            # A few corrupted timestamps (<= 5%) indicate source-level PDF noise.
+            # In strict mode, we have zero tolerance for corrupted timestamps (11 or 12 digits),
+            # which indicates OCR hallucination (e.g. reading border lines as digits).
+            if strict:
+                timestamp_pattern = re.compile(
+                    r"(\d{10,12})\s*/\s*(\d{10,12}|PERM|\S+?EST|\S+?PERM)"
                 )
+                all_matches = timestamp_pattern.findall(content)
+                total_count = len(all_matches)
 
-                if corrupted_count > 0:
-                    corruption_rate = corrupted_count / total_count
-                    print(f"\n[!] DATA INTEGRITY FAILURE IN {source_name}!")
-                    print(
-                        f"[!] OCR corruption detected: {corrupted_count}/{total_count} "
-                        f"timestamps ({corruption_rate:.1%}) have 11-12 digits. "
-                        f"Zero tolerance threshold in strict mode."
+                if total_count > 0:
+                    corrupted_count = sum(
+                        1
+                        for from_ts, to_ts in all_matches
+                        if len(from_ts) > 10 or (to_ts.isdigit() and len(to_ts) > 10)
                     )
-                    return False
 
-        # Ensure that there is at least one NOTAM ID present in the text (e.g., A1234/26, C0123/25)
-        # to guarantee the OCR didn't completely skip or fail to extract the actual NOTAM content.
-        notam_id_pattern = re.compile(r"\b[A-Za-z]\d{4}/\d{2}\b")
-        if not notam_id_pattern.search(content):
-            print(f"\n[!] DATA INTEGRITY FAILURE IN {source_name}!")
-            print("[!] No NOTAM IDs found in the markdown, indicating possible extraction failure.")
-            return False
+                    if corrupted_count > 0:
+                        corruption_rate = corrupted_count / total_count
+                        print(f"\n[!] DATA INTEGRITY FAILURE IN {source_name}!")
+                        print(
+                            f"[!] OCR corruption detected: {corrupted_count}/{total_count} "
+                            f"timestamps ({corruption_rate:.1%}) have 11-12 digits. "
+                            f"Zero tolerance threshold in strict mode."
+                        )
+                        return False
+
+            # Ensure that there is at least one NOTAM ID present in the text (e.g., A1234/26, C0123/25)
+            # to guarantee the OCR didn't completely skip or fail to extract the actual NOTAM content.
+            notam_id_pattern = re.compile(r"\b[A-Za-z]\d{4}/\d{2}\b")
+            if not notam_id_pattern.search(content):
+                print(f"\n[!] DATA INTEGRITY FAILURE IN {source_name}!")
+                print(
+                    "[!] No NOTAM IDs found in the markdown, indicating possible extraction failure."
+                )
+                return False
 
         mode_label = "strictly" if strict else "leniently (source-level corruption accepted)"
         print(f"[✓] {source_name} raw structure and content {mode_label} validated.")
