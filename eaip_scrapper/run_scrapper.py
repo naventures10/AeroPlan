@@ -36,13 +36,26 @@ from eaip_scrapper.scrapper.extractors.enr.enr_upr_zones_extractor import ENRUPR
 MAX_WORKERS = 4
 
 if __name__ == "__main__":
+    import logging
+    import os
     import sys
+    from datetime import datetime
 
     import questionary
 
-    print("\n======================================")
-    print("    eAIP Scraper Pipeline Selection")
-    print("======================================\n")
+    os.makedirs("logs", exist_ok=True)
+    log_filename = f"logs/orchestrator_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=[logging.FileHandler(log_filename), logging.StreamHandler(sys.stdout)],
+    )
+    logger = logging.getLogger("orchestrator")
+
+    logger.info("======================================")
+    logger.info("    eAIP Scraper Pipeline Selection")
+    logger.info("======================================")
 
     choices = [
         questionary.Choice("[SCRAPE] ENR Extractors", value="scrape_enr", checked=True),
@@ -68,7 +81,7 @@ if __name__ == "__main__":
     selected = questionary.checkbox("Select pipeline components to execute:", choices=choices).ask()
 
     if selected is None or not selected:
-        print("No components selected. Exiting.")
+        logger.info("No components selected. Exiting.")
         sys.exit(0)
 
     run_scrape_enr = "scrape_enr" in selected
@@ -116,17 +129,17 @@ if __name__ == "__main__":
 
     # Removed local output directory creation
     # --- Centralized AIRAC Resolution ---
-    print("[*] Resolving Active AIRAC Cycle (Master Node)")
+    logger.info("[*] Resolving Active AIRAC Cycle (Master Node)")
     master_resolver = AIRACResolver(HOME_URL, session=master_session)
     active_eaip_url = master_resolver.get_current_eaip_url()
 
     if not active_eaip_url:
-        print("[!] Critical Failure: Could not resolve a valid eAIP target URL. Exiting.")
+        logger.error("[!] Critical Failure: Could not resolve a valid eAIP target URL. Exiting.")
         exit(1)
 
-    print(f"[+] AIRAC cycle resolved globally. Target: {active_eaip_url}\n")
+    logger.info(f"[+] AIRAC cycle resolved globally. Target: {active_eaip_url}")
 
-    print("[*] Launching ENR standalone extractors concurrently...")
+    logger.info("[*] Launching ENR standalone extractors concurrently...")
 
     # ENR Scraper Task Definitions
     enr_tasks = [
@@ -220,17 +233,15 @@ if __name__ == "__main__":
                 name = future_to_enr[future]
                 try:
                     future.result()
-                    print(f"[+] {name} completed successfully.")
+                    logger.info(f"[+] {name} completed successfully.")
                 except Exception as exc:
-                    import sys
-
-                    print(f"[!] ENR Scraper {name} generated an exception: {exc}")
-                    print("[!] Halting the entire pipeline due to scrapper failure.")
+                    logger.error(f"[!] ENR Scraper {name} generated an exception: {exc}")
+                    logger.error("[!] Halting the entire pipeline due to scrapper failure.")
                     sys.exit(1)
 
-        print("\n[*] All standalone ENR extractors completed. Transitioning to AD Pipeline...")
+        logger.info("[*] All standalone ENR extractors completed. Transitioning to AD Pipeline...")
     else:
-        print("\n[*] Skipping ENR Extractors...")
+        logger.info("[*] Skipping ENR Extractors...")
 
     # AD Pipeline: Aerodrome Data Extraction
     if run_scrape_ad:
@@ -242,9 +253,9 @@ if __name__ == "__main__":
         )
         orchestrator.run_pipeline()
     else:
-        print("\n[*] Skipping AD Pipeline...")
+        logger.info("[*] Skipping AD Pipeline...")
 
-    print("\n[*] Starting standalone PDF & HTML Scrapers...")
+    logger.info("[*] Starting standalone PDF & HTML Scrapers...")
     import asyncio
 
     from eaip_scrapper.scrapper.scrappers import (
@@ -257,66 +268,78 @@ if __name__ == "__main__":
         if run_scrape_supplements:
             aip_supplements_scrapper.main()
         else:
-            print("[*] Skipping AIP Supplements...")
+            logger.info("[*] Skipping AIP Supplements...")
 
         if run_scrape_daylight:
             asyncio.run(daylight_scrapper.main())
         else:
-            print("[*] Skipping Daylight Tables...")
+            logger.info("[*] Skipping Daylight Tables...")
 
         if run_scrape_notam:
             asyncio.run(notam_scrapper.main())
         else:
-            print("[*] Skipping NOTAMs...")
+            logger.info("[*] Skipping NOTAMs...")
     except Exception as e:
-        import sys
-
-        print(f"[!] A standalone scraper failed: {e}")
-        print("[!] Halting the entire pipeline due to scrapper failure.")
+        logger.error(f"[!] A standalone scraper failed: {e}")
+        logger.error("[!] Halting the entire pipeline due to scrapper failure.")
         sys.exit(1)
 
-    print("\n[*] All scraping tasks completed. Transitioning to ETL Loading Phase...")
+    logger.info("[*] All scraping tasks completed. Transitioning to ETL Loading Phase...")
     import subprocess
+    from pathlib import Path
 
     def run_etl(script_path: str):
-        print(f"\n[>>>] Triggering ETL Pipeline: {script_path}")
-        result = subprocess.run([sys.executable, script_path])
-        if result.returncode != 0:
-            print(f"[!] ETL Pipeline {script_path} failed.")
+        logger.info(f"[>>>] Triggering ETL Pipeline: {script_path}")
+        process = subprocess.Popen(
+            [sys.executable, script_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+        script_name = Path(script_path).stem
+        for line in process.stdout:
+            logger.info(f"[{script_name}] {line.strip()}")
+
+        process.wait()
+        if process.returncode != 0:
+            logger.error(
+                f"[!] ETL Pipeline {script_path} failed with exit code {process.returncode}."
+            )
             sys.exit(1)
 
     if run_load_enr:
-        print("\n[*] Starting ENR ETL Pipelines...")
+        logger.info("[*] Starting ENR ETL Pipelines...")
         run_etl("src/eaip_scrapper/etl/etl_airspaces.py")
         run_etl("src/eaip_scrapper/etl/etl_routes.py")
         run_etl("src/eaip_scrapper/etl/etl_significant_points.py")
         run_etl("src/eaip_scrapper/etl/etl_nav_aids.py")
         run_etl("src/eaip_scrapper/etl/etl_erc_charts.py")
     else:
-        print("\n[*] Skipping ENR ETL Pipelines...")
+        logger.info("[*] Skipping ENR ETL Pipelines...")
 
     if run_load_ad:
-        print("\n[*] Starting AD ETL Pipeline...")
+        logger.info("[*] Starting AD ETL Pipeline...")
         run_etl("src/eaip_scrapper/etl/etl_aerodromes.py")
     else:
-        print("\n[*] Skipping AD ETL Pipeline...")
+        logger.info("[*] Skipping AD ETL Pipeline...")
 
     if run_load_daylight:
-        print("\n[*] Starting Daylight ETL Pipeline...")
+        logger.info("[*] Starting Daylight ETL Pipeline...")
         run_etl("src/eaip_scrapper/etl/etl_daylight.py")
     else:
-        print("\n[*] Skipping Daylight ETL Pipeline...")
+        logger.info("[*] Skipping Daylight ETL Pipeline...")
 
     if run_load_notam:
-        print("\n[*] Starting NOTAM ETL Pipeline...")
+        logger.info("[*] Starting NOTAM ETL Pipeline...")
         run_etl("src/eaip_scrapper/etl/etl_notams.py")
     else:
-        print("\n[*] Skipping NOTAM ETL Pipeline...")
+        logger.info("[*] Skipping NOTAM ETL Pipeline...")
 
     if run_all_rnp:
-        print("\n[*] Starting Complete RNP Pipeline (Extract -> Merge -> Parse -> Load)...")
+        logger.info("[*] Starting Complete RNP Pipeline (Extract -> Merge -> Parse -> Load)...")
         run_etl("src/eaip_scrapper/etl/rnp_etl.py")
     else:
-        print("\n[*] Skipping RNP Pipeline...")
+        logger.info("[*] Skipping RNP Pipeline...")
 
-    print("\n[*] All requested orchestrator pipelines completed successfully.")
+    logger.info("[*] All requested orchestrator pipelines completed successfully.")
