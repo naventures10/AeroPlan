@@ -20,10 +20,15 @@ class WaypointLoader:
         )
         self.bucket_name = bucket_name
 
+        pg_user = os.getenv("PG_USER")
+        pg_password = os.getenv("PG_PASSWORD")
+        if not pg_user or not pg_password:
+            raise ValueError("Missing required env var PG_USER/PG_PASSWORD")
+
         self.conn = psycopg2.connect(
-            dbname="aeronautical_information_system",
-            user="postgres",
-            password="postgres",
+            dbname=os.getenv("PG_DBNAME", "aeronautical_information_system"),
+            user=pg_user,
+            password=pg_password,
             host="localhost",
             port="5432",
         )

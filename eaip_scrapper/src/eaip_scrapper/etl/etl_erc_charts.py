@@ -10,8 +10,8 @@ import requests
 from eaip_scrapper.validation.core.central_validator import ValidationRouter
 
 MINIO_ENDPOINT = "http://localhost:9000"
-MINIO_ACCESS_KEY = "ais_admin"
-MINIO_SECRET_KEY = "AviationData2026!"
+MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY")
+MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY")
 MINIO_BUCKET = "ais"
 MINIO_METADATA_KEY = "output/enr_6_en_route_charts.json"
 

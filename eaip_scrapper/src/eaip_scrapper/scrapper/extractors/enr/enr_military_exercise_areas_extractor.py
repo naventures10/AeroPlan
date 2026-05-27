@@ -76,7 +76,7 @@ class ENRMilitaryExerciseAreasExtractor(BaseENRExtractor):
                     parts = [p.strip() for p in raw_text.split("|")]
 
                     zone_name = parts[0]
-                    coordinates = " | ".join(parts[1:]) if len(parts) > 1 else raw_text
+                    coordinates = " | ".join(parts[1:]) if len(parts) > 1 else ""
 
                     adiz_zones.append(
                         {
