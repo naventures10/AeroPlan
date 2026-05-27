@@ -245,6 +245,11 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     const layers = map.getStyle()?.layers;
     if (layers) {
       layers.forEach((layer: any) => {
+        // Only target base map layers, exclude our custom terminal layers
+        if (layer.id.startsWith('mvt-') || layer.id.startsWith('runway-')) {
+          return;
+        }
+
         if (
           layer.type === 'symbol' ||
           layer.id.includes('road') ||
