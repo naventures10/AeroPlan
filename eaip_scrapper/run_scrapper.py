@@ -45,30 +45,42 @@ if __name__ == "__main__":
     print("======================================\n")
 
     choices = [
+        questionary.Choice("[SCRAPE] ENR Extractors", value="scrape_enr", checked=True),
         questionary.Choice(
-            "ENR Extractors (Airspace, Routes, Nav Aids, etc.)", value="enr", checked=True
+            "[LOAD]   ENR ETL (Airspaces, Routes, Sig Points, Nav Aids, Charts)",
+            value="load_enr",
+            checked=True,
         ),
+        questionary.Choice("[SCRAPE] AD Pipeline (Aerodromes)", value="scrape_ad", checked=True),
+        questionary.Choice("[LOAD]   AD ETL (Aerodromes)", value="load_ad", checked=True),
+        questionary.Choice("[SCRAPE] Daylight Tables", value="scrape_daylight", checked=True),
+        questionary.Choice("[LOAD]   Daylight ETL", value="load_daylight", checked=True),
+        questionary.Choice("[SCRAPE] NOTAMs", value="scrape_notam", checked=True),
+        questionary.Choice("[LOAD]   NOTAMs ETL", value="load_notam", checked=True),
+        questionary.Choice("[SCRAPE] AIP Supplements", value="scrape_supplements", checked=True),
         questionary.Choice(
-            "AD Pipeline (Aerodromes Master Orchestrator)", value="ad", checked=True
+            "[ALL]    RNP Pipeline (Extract -> Merge -> Parse -> Load)",
+            value="all_rnp",
+            checked=True,
         ),
-        questionary.Choice("AIP Supplements", value="supplements", checked=True),
-        questionary.Choice("Daylight Tables", value="daylight", checked=True),
-        questionary.Choice("NOTAMs", value="notam", checked=True),
     ]
 
-    selected = questionary.checkbox(
-        "Select which scrapers to run (Space to toggle, Enter to confirm):", choices=choices
-    ).ask()
+    selected = questionary.checkbox("Select pipeline components to execute:", choices=choices).ask()
 
     if selected is None or not selected:
-        print("No scrapers selected. Exiting.")
+        print("No components selected. Exiting.")
         sys.exit(0)
 
-    run_enr = "enr" in selected
-    run_ad = "ad" in selected
-    run_supplements = "supplements" in selected
-    run_daylight = "daylight" in selected
-    run_notam = "notam" in selected
+    run_scrape_enr = "scrape_enr" in selected
+    run_load_enr = "load_enr" in selected
+    run_scrape_ad = "scrape_ad" in selected
+    run_load_ad = "load_ad" in selected
+    run_scrape_daylight = "scrape_daylight" in selected
+    run_load_daylight = "load_daylight" in selected
+    run_scrape_notam = "scrape_notam" in selected
+    run_load_notam = "load_notam" in selected
+    run_scrape_supplements = "scrape_supplements" in selected
+    run_all_rnp = "all_rnp" in selected
 
     HOME_URL = "https://aim-india.aai.aero/"
 
@@ -201,7 +213,7 @@ if __name__ == "__main__":
         ),
     ]
 
-    if run_enr:
+    if run_scrape_enr:
         with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             future_to_enr = {executor.submit(task): name for task, name in enr_tasks}
             for future in concurrent.futures.as_completed(future_to_enr):
@@ -221,7 +233,7 @@ if __name__ == "__main__":
         print("\n[*] Skipping ENR Extractors...")
 
     # AD Pipeline: Aerodrome Data Extraction
-    if run_ad:
+    if run_scrape_ad:
         orchestrator = MasterOrchestrator(
             active_eaip_url,
             session=master_session,
@@ -242,17 +254,17 @@ if __name__ == "__main__":
     )
 
     try:
-        if run_supplements:
+        if run_scrape_supplements:
             aip_supplements_scrapper.main()
         else:
             print("[*] Skipping AIP Supplements...")
 
-        if run_daylight:
+        if run_scrape_daylight:
             asyncio.run(daylight_scrapper.main())
         else:
             print("[*] Skipping Daylight Tables...")
 
-        if run_notam:
+        if run_scrape_notam:
             asyncio.run(notam_scrapper.main())
         else:
             print("[*] Skipping NOTAMs...")
@@ -263,4 +275,48 @@ if __name__ == "__main__":
         print("[!] Halting the entire pipeline due to scrapper failure.")
         sys.exit(1)
 
-    print("\n[*] All pipelines completed successfully. Outputs are stored directly in MinIO.")
+    print("\n[*] All scraping tasks completed. Transitioning to ETL Loading Phase...")
+    import subprocess
+
+    def run_etl(script_path: str):
+        print(f"\n[>>>] Triggering ETL Pipeline: {script_path}")
+        result = subprocess.run([sys.executable, script_path])
+        if result.returncode != 0:
+            print(f"[!] ETL Pipeline {script_path} failed.")
+            sys.exit(1)
+
+    if run_load_enr:
+        print("\n[*] Starting ENR ETL Pipelines...")
+        run_etl("src/eaip_scrapper/etl/etl_airspaces.py")
+        run_etl("src/eaip_scrapper/etl/etl_routes.py")
+        run_etl("src/eaip_scrapper/etl/etl_significant_points.py")
+        run_etl("src/eaip_scrapper/etl/etl_nav_aids.py")
+        run_etl("src/eaip_scrapper/etl/etl_erc_charts.py")
+    else:
+        print("\n[*] Skipping ENR ETL Pipelines...")
+
+    if run_load_ad:
+        print("\n[*] Starting AD ETL Pipeline...")
+        run_etl("src/eaip_scrapper/etl/etl_aerodromes.py")
+    else:
+        print("\n[*] Skipping AD ETL Pipeline...")
+
+    if run_load_daylight:
+        print("\n[*] Starting Daylight ETL Pipeline...")
+        run_etl("src/eaip_scrapper/etl/etl_daylight.py")
+    else:
+        print("\n[*] Skipping Daylight ETL Pipeline...")
+
+    if run_load_notam:
+        print("\n[*] Starting NOTAM ETL Pipeline...")
+        run_etl("src/eaip_scrapper/etl/etl_notams.py")
+    else:
+        print("\n[*] Skipping NOTAM ETL Pipeline...")
+
+    if run_all_rnp:
+        print("\n[*] Starting Complete RNP Pipeline (Extract -> Merge -> Parse -> Load)...")
+        run_etl("src/eaip_scrapper/etl/rnp_etl.py")
+    else:
+        print("\n[*] Skipping RNP Pipeline...")
+
+    print("\n[*] All requested orchestrator pipelines completed successfully.")
