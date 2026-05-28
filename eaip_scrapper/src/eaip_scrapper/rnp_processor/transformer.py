@@ -116,13 +116,11 @@ class RNPTransformer:
 
     def merge_files(self):
         """Merges parts of the same procedure into unified markdown files in MinIO."""
-        paginator = self.s3_client.get_paginator('list_objects_v2')
+        paginator = self.s3_client.get_paginator("list_objects_v2")
         keys = []
         for page in paginator.paginate(Bucket=self.bucket, Prefix="output/rnp/extracted_data/"):
             keys.extend(
-                obj["Key"]
-                for obj in page.get("Contents", [])
-                if obj["Key"].endswith(".md")
+                obj["Key"] for obj in page.get("Contents", []) if obj["Key"].endswith(".md")
             )
 
         groups = defaultdict(list)

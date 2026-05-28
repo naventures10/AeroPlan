@@ -67,6 +67,8 @@ Skip flags:
     if not postgres_password:
         raise ValueError("POSTGRES_PASSWORD must be set in environment variables.")
 
+    postgres_user = os.getenv("POSTGRES_USER", "postgres")
+
     postgres_port_str = os.getenv("POSTGRES_PORT", "5432")
     try:
         postgres_port = int(postgres_port_str)
@@ -91,7 +93,7 @@ Skip flags:
             if args.force_extract:
                 s3_client = get_s3_client()
                 bucket = os.getenv("MINIO_BUCKET", "ais")
-                paginator = s3_client.get_paginator('list_objects_v2')
+                paginator = s3_client.get_paginator("list_objects_v2")
                 keys = []
                 for page in paginator.paginate(Bucket=bucket, Prefix="output/rnp/extracted_data/"):
                     for obj in page.get("Contents", []):

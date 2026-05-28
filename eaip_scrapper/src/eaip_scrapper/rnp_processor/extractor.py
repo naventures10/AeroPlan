@@ -188,7 +188,7 @@ class RNPExtractor:
         if not master_data:
             return []
 
-        paginator = self.s3_client.get_paginator('list_objects_v2')
+        paginator = self.s3_client.get_paginator("list_objects_v2")
         existing_md = set()
         for page in paginator.paginate(Bucket=self.bucket, Prefix="output/rnp/extracted_data/"):
             for obj in page.get("Contents", []):

@@ -1,4 +1,4 @@
-.PHONY: frontend backend dev test test-frontend test-backend \
+.PHONY: frontend backend dev prod frontend-prod backend-prod test test-frontend test-backend \
        debug profile-start profile-stop profile-bundle profile-db profile-queries profile-jaeger \
        profile-tiles restart-martin refresh-mv help
 
@@ -13,6 +13,15 @@ frontend: ## Start the Vite dev server (React + TypeScript)
 
 backend: ## Start the FastAPI server (uvicorn with hot-reload)
 	cd backend && uv run python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+prod: ## Start both frontend preview and backend simultaneously
+	$(MAKE) -j2 frontend-prod backend-prod
+
+frontend-prod: ## Build and start the Vite preview server (React + TypeScript)
+	cd frontend && npm run build && npm run preview
+
+backend-prod: ## Start the FastAPI server in production mode (no hot-reload)
+	cd backend && uv run python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 
 test: ## Run all tests (frontend and backend)

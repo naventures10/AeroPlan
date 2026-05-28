@@ -220,7 +220,7 @@ class DBLoader:
     def close(self):
         if self.conn:
             self.conn.close()
-            self.conn = None
+            self.conn = None  # pyrefly: ignore [bad-assignment]
 
     def __enter__(self):
         return self

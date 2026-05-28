@@ -1,6 +1,7 @@
 import asyncio
 import os
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 
 import requests
@@ -67,6 +68,7 @@ def split_pdf(pdf_path: Path, chunk_size: int, output_dir: Path) -> list[Path]:
     return chunk_paths
 
 
+@contextmanager
 def openai_file_upload_stream(path: Path):
     """Helper to provide a file stream for LlamaCloud create."""
     f = open(path, "rb")
@@ -95,7 +97,9 @@ async def convert_chunk_async(chunk_path: Path, api_key: str) -> tuple[str, str]
     )
 
     if result.markdown and result.markdown.pages:
-        full_markdown = "\n\n".join([page.markdown for page in result.markdown.pages])
+        full_markdown = "\n\n".join(
+            [page.markdown for page in result.markdown.pages]  # pyrefly: ignore [missing-attribute]
+        )
         print(f"    ✓ Converted {chunk_path.name} ({len(full_markdown)} chars)")
         return chunk_path.name, full_markdown
     else:
