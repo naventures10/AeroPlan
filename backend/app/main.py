@@ -6,6 +6,12 @@ import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from sqlalchemy import text
 
 from app.api.v1.api import api_router
@@ -18,9 +24,17 @@ setup_logging(json_format=os.getenv("LOG_FORMAT", "").lower() == "json")
 logger = structlog.get_logger()
 
 
+# ── OpenTelemetry Instrumentation ────────────────────────────────────────────
+resource = Resource.create({"service.name": "eaip-backend"})
+provider = TracerProvider(resource=resource)
+processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="http://localhost:4318/v1/traces"))
+provider.add_span_processor(processor)
+trace.set_tracer_provider(provider)
+
 # ── Application ──────────────────────────────────────────────────────────────
 app = FastAPI(title="Aero Plan API", version="0.1.0")
 
+FastAPIInstrumentor.instrument_app(app)
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",

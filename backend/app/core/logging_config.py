@@ -24,8 +24,19 @@ def setup_logging(*, json_format: bool = False) -> None:
         If True, emit JSON lines (for production log aggregation).
         If False (default), emit coloured, human-readable output.
     """
+    from opentelemetry import trace
+
+    def add_otel_trace_context(logger, method_name, event_dict):
+        span = trace.get_current_span()
+        if span.is_recording():
+            span_context = span.get_span_context()
+            event_dict["trace_id"] = f"{span_context.trace_id:032x}"
+            event_dict["span_id"] = f"{span_context.span_id:016x}"
+        return event_dict
+
     shared_processors: list[structlog.types.Processor] = [
         structlog.contextvars.merge_contextvars,
+        add_otel_trace_context,
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
         structlog.processors.TimeStamper(fmt="iso"),
