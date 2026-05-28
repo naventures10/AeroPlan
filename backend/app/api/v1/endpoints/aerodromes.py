@@ -122,6 +122,13 @@ async def get_all_aerodromes(db: AsyncSession = Depends(get_db)) -> GeoJsonFeatu
     Returns a GeoJSON FeatureCollection natively from PostGIS.
     """
     query = text("""
+        WITH active_notams AS (
+            SELECT airport_icao, count(*) as count
+            FROM notams
+            WHERE (valid_from IS NULL OR valid_from <= NOW())
+              AND (valid_to >= NOW() OR is_permanent = TRUE)
+            GROUP BY airport_icao
+        )
         SELECT jsonb_build_object(
             'type', 'FeatureCollection',
             'features', COALESCE(
@@ -136,13 +143,7 @@ async def get_all_aerodromes(db: AsyncSession = Depends(get_db)) -> GeoJsonFeatu
                             'magnetic_variation', ad.aip_document->'data'->'geographical_data'->>'magnetic_variation',
                             'remarks', COALESCE(ad.aip_document->'data'->'geographical_data'->>'remarks', 'None'),
                             'communications', ad.aip_document->'data'->'communications',
-                            'notam_count', (
-                                SELECT count(*)
-                                FROM notams n
-                                WHERE n.airport_icao = sf.icao_code
-                                  AND (n.valid_from IS NULL OR n.valid_from <= NOW())
-                                  AND (n.valid_to >= NOW() OR n.is_permanent = TRUE)
-                            )
+                            'notam_count', COALESCE(n.count, 0)
                         )
                     )
                 ),
@@ -151,6 +152,7 @@ async def get_all_aerodromes(db: AsyncSession = Depends(get_db)) -> GeoJsonFeatu
         ) AS geojson
         FROM spatial_features sf
         JOIN aerodrome_documents ad ON sf.icao_code = ad.icao_code
+        LEFT JOIN active_notams n ON sf.icao_code = n.airport_icao
         WHERE sf.feature_category = 'ARP';
     """)
     result = await db.execute(query)
