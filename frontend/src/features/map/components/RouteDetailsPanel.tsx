@@ -158,7 +158,7 @@ export function RouteDetailsPanel({
                     </td>
                     <td className="route-td text-center">
                       {seg.airspace_class ? (
-                        <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold bg-teal-100 text-teal-800 border border-teal-300 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-300">
+                        <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold bg-accent-cyan/10 border border-accent-cyan/30 text-accent-cyan">
                           {seg.airspace_class}
                         </span>
                       ) : (

@@ -60,14 +60,23 @@ describe('useCloudLayer', () => {
       ],
     };
 
-    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValue({
-      json: () => Promise.resolve(mockManifest),
-    } as any);
+    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation((url) => {
+      if (typeof url === 'string' && url.endsWith('.tif')) {
+        return Promise.resolve({
+          headers: { get: () => 'image/tiff' },
+        } as any);
+      }
+      return Promise.resolve({
+        json: () => Promise.resolve(mockManifest),
+      } as any);
+    });
 
     renderHook(() => useCloudLayer());
 
     await waitFor(() => {
-      expect(fetchSpy).toHaveBeenCalledWith('/weather/weather_manifest.json');
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expect.stringContaining('/weather/weather_manifest.json'),
+      );
     });
   });
 
@@ -85,9 +94,16 @@ describe('useCloudLayer', () => {
       ],
     };
 
-    vi.spyOn(global, 'fetch').mockResolvedValue({
-      json: () => Promise.resolve(mockManifest),
-    } as any);
+    vi.spyOn(global, 'fetch').mockImplementation((url) => {
+      if (typeof url === 'string' && url.endsWith('.tif')) {
+        return Promise.resolve({
+          headers: { get: () => 'image/tiff' },
+        } as any);
+      }
+      return Promise.resolve({
+        json: () => Promise.resolve(mockManifest),
+      } as any);
+    });
 
     // Mock texture data (e.g., 2x2 image, 8 bands, band 6 is TCC)
     const mockImg = {
@@ -132,9 +148,16 @@ describe('useCloudLayer', () => {
       ],
     };
 
-    vi.spyOn(global, 'fetch').mockResolvedValue({
-      json: () => Promise.resolve(mockManifest),
-    } as any);
+    vi.spyOn(global, 'fetch').mockImplementation((url) => {
+      if (typeof url === 'string' && url.endsWith('.tif')) {
+        return Promise.resolve({
+          headers: { get: () => 'image/tiff' },
+        } as any);
+      }
+      return Promise.resolve({
+        json: () => Promise.resolve(mockManifest),
+      } as any);
+    });
 
     const w = 640;
     const h = 360;

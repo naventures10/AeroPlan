@@ -1,167 +1,138 @@
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Space+Grotesk:wght@300..700&display=swap');
 @import 'tailwindcss';
-@config "../tailwind.config.js";
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   1. Tokens & Theme Base
+   1. Tokens & Theme Base (Tailwind v4 Integration)
    ───────────────────────────────────────────────────────────────────────────── */
 :root {
-  color-scheme: dark;
+  color-scheme: light dark;
 
-  /* Obsidian Slate Design Tokens */
-  --surface: #0b1326;
-  --surface-dim: #0b1326;
-  --surface-bright: #31394d;
-  --surface-container-lowest: #060e20;
-  --surface-container-low: #131b2e;
-  --surface-container: #171f33;
-  --surface-container-high: #222a3d;
-  --surface-container-highest: #2d3449;
+  /* Surface System */
+  --surface: light-dark(#fbf8f1, #0b1326);
+  --surface-dim: light-dark(#f3efe5, #0b1326);
+  --surface-bright: light-dark(#ffffff, #31394d);
+  --surface-container-lowest: light-dark(#ffffff, #060e20);
+  --surface-container-low: light-dark(#fdfaf4, #131b2e);
+  --surface-container: light-dark(#fbf8f1, #171f33);
+  --surface-container-high: light-dark(#f5f0e6, #222a3d);
+  --surface-container-highest: light-dark(#efeada, #2d3449);
+  --surface-variant: light-dark(#efeada, #2d3449);
 
-  --on-surface: #dae2fd;
-  --on-surface-variant: #c4c7c8;
+  --on-surface: light-dark(#314f4c, #dae2fd);
+  --on-surface-variant: light-dark(#3d6360, #c4c7c8);
 
-  --outline: #8e9192;
-  --outline-variant: #444748;
+  --outline: light-dark(#4c7a77, #8e9192);
+  --outline-variant: light-dark(#c6dfdb, #444748);
 
-  --primary: #ffffff;
-  --on-primary: #2f3131;
-  --secondary: #bcc7de;
-  --on-secondary: #263143;
-  --secondary-container: #3e495d;
-  --on-secondary-container: #aeb9d0;
+  /* Primary & Secondary */
+  --primary: light-dark(#4c7a77, #ffffff);
+  --on-primary: light-dark(#fbf8f1, #2f3131);
+  --secondary: light-dark(#5a8c87, #bcc7de);
+  --on-secondary: light-dark(#fbf8f1, #263143);
+  --secondary-container: light-dark(#e2eeec, #3e495d);
+  --on-secondary-container: light-dark(#314f4c, #aeb9d0);
 
-  --background: #0b1326;
-  --on-background: #dae2fd;
-  --surface-variant: #2d3449;
+  --background: light-dark(#fbf8f1, #0b1326);
+  --on-background: light-dark(#314f4c, #dae2fd);
 
   /* Accent & Semantic Colors */
-  --accent-cyan: #5df8d8;
-  --accent-cyan-glow: rgba(93, 248, 216, 0.5);
-  --accent-cyan-opacity-10: rgba(93, 248, 216, 0.1);
-  --accent-cyan-opacity-20: rgba(93, 248, 216, 0.2);
-  --accent-cyan-opacity-30: rgba(93, 248, 216, 0.3);
+  --accent-cyan: light-dark(#4c7a77, #5df8d8);
+  --accent-cyan-glow: light-dark(rgba(76, 122, 119, 0.35), rgba(93, 248, 216, 0.5));
+  --accent-cyan-opacity-10: light-dark(rgba(76, 122, 119, 0.08), rgba(93, 248, 216, 0.1));
+  --accent-cyan-opacity-20: light-dark(rgba(76, 122, 119, 0.15), rgba(93, 248, 216, 0.2));
+  --accent-cyan-opacity-30: light-dark(rgba(76, 122, 119, 0.22), rgba(93, 248, 216, 0.3));
 
-  --accent-cyan-50: #f0fefc;
-  --accent-cyan-100: #dcfdf9;
-  --accent-cyan-200: #bcfbf1;
-  --accent-cyan-300: #9cf9e9;
-  --accent-cyan-400: #5df8d8;
-  --accent-cyan-500: #4eeecf;
-  --accent-cyan-600: #42dfc0;
-  --accent-cyan-700: #33c4a8;
-  --accent-cyan-800: #25a890;
-  --accent-cyan-900: #17816e;
+  --accent-cyan-50: light-dark(#f4f8f8, #f0fefc);
+  --accent-cyan-100: light-dark(#e2eeec, #dcfdf9);
+  --accent-cyan-200: light-dark(#c6dfdb, #bcfbf1);
+  --accent-cyan-300: light-dark(#a4cac6, #9cf9e9);
+  --accent-cyan-400: light-dark(#85b5b0, #5df8d8);
+  --accent-cyan-500: light-dark(#6da8a2, #4eeecf);
+  --accent-cyan-600: light-dark(#5a8c87, #42dfc0);
+  --accent-cyan-700: light-dark(#4c7a77, #33c4a8);
+  --accent-cyan-800: light-dark(#3d6360, #25a890);
+  --accent-cyan-900: light-dark(#314f4c, #17816e);
 
-  --status-success: #10b981;
-  --status-warning: #f59e0b;
-  --status-error: #ef4444;
-  --status-idle: #64748b;
+  --status-success: light-dark(#059669, #10b981);
+  --status-warning: light-dark(#d97706, #f59e0b);
+  --status-error: light-dark(#dc2626, #ef4444);
+  --status-idle: light-dark(#64748b, #64748b);
 
-  --route-rnav: #73ec8b;
-  --route-ats: #44acff;
-  --route-waypoint: #c084fc;
-  --airspace-type: #fbbf24;
+  --route-rnav: light-dark(#0a7c6e, #73ec8b);
+  --route-ats: light-dark(#427ab5, #44acff);
+  --route-waypoint: light-dark(#8b5a8c, #c084fc);
+  --airspace-type: light-dark(#d97706, #fbbf24);
 
   /* Glassmorphism Variables */
-  --glass-bg: color-mix(in srgb, var(--surface) 65%, transparent);
-  --glass-bg-heavy: color-mix(in srgb, var(--surface) 85%, transparent);
-  --glass-bg-solid: color-mix(in srgb, var(--surface) 95%, transparent);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-border-highlight: rgba(255, 255, 255, 0.2);
-  --glass-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  --glass-bg: light-dark(
+    color-mix(in srgb, var(--surface) 75%, transparent),
+    color-mix(in srgb, var(--surface) 65%, transparent)
+  );
+  --glass-bg-heavy: light-dark(
+    color-mix(in srgb, var(--surface) 88%, transparent),
+    color-mix(in srgb, var(--surface) 85%, transparent)
+  );
+  --glass-bg-solid: light-dark(
+    color-mix(in srgb, var(--surface) 98%, transparent),
+    color-mix(in srgb, var(--surface) 95%, transparent)
+  );
+  --glass-border-width: 1px;
+  --glass-border: light-dark(
+    color-mix(in srgb, var(--outline) 50%, transparent),
+    rgba(255, 255, 255, 0.1)
+  );
+  --glass-border-highlight: light-dark(
+    color-mix(in srgb, var(--outline) 80%, transparent),
+    rgba(255, 255, 255, 0.2)
+  );
+  --glass-shadow: 0 25px 50px -12px
+    light-dark(color-mix(in srgb, var(--on-surface) 20%, transparent), rgba(0, 0, 0, 0.6));
 
   /* Typography */
   --font-display: 'Space Grotesk', system-ui, sans-serif;
   --font-ui: 'Geist', system-ui, sans-serif;
   --font-mono: 'Space Grotesk', system-ui, sans-serif;
-
-  /* Legacy Aliases for safety */
   --font-hanken: var(--font-display);
   --font-inter: var(--font-ui);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   1b. Light Mode Token Overrides (Warm Off-White Glass — #FAF9F9)
-   ───────────────────────────────────────────────────────────────────────────── */
-html:not(.dark) {
-  color-scheme: light;
+@theme {
+  --color-surface: var(--surface);
+  --color-surface-dim: var(--surface-dim);
+  --color-surface-bright: var(--surface-bright);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-surface-variant: var(--surface-variant);
 
-  /* Surface System — Warmer Bone White Paper */
-  --surface: #fbf8f1;
-  --surface-dim: #f3efe5;
-  --surface-bright: #ffffff;
-  --surface-container-lowest: #ffffff;
-  --surface-container-low: #fdfaf4;
-  --surface-container: #fbf8f1;
-  --surface-container-high: #f5f0e6;
-  --surface-container-highest: #efeada;
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
 
-  --on-surface: #314f4c; /* Lighter Faded Teal 900 */
-  --on-surface-variant: #3d6360; /* Lighter Faded Teal 800 */
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
 
-  --outline: #4c7a77; /* Lighter Faded Teal 700 */
-  --outline-variant: #c6dfdb; /* Lighter Faded Teal 200 */
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-secondary: var(--secondary);
+  --color-on-secondary: var(--on-secondary);
+  --color-secondary-container: var(--secondary-container);
+  --color-on-secondary-container: var(--on-secondary-container);
 
-  --primary: #4c7a77; /* Lighter Faded Teal */
-  --on-primary: #fbf8f1; /* Warm Bone White */
-  --secondary: #5a8c87; /* Faded Teal 600 */
-  --on-secondary: #fbf8f1;
-  --secondary-container: #e2eeec;
-  --on-secondary-container: #314f4c;
+  --color-background: var(--background);
+  --color-on-background: var(--on-background);
 
-  --background: #fbf8f1; /* Warmer bone white paper background */
-  --on-background: #314f4c;
-  --surface-variant: #efeada;
-
-  /* Accent — Lighter Faded Teal Green for light surfaces */
-  --accent-cyan: #4c7a77;
-  --accent-cyan-glow: rgba(76, 122, 119, 0.35);
-  --accent-cyan-opacity-10: rgba(76, 122, 119, 0.08);
-  --accent-cyan-opacity-20: rgba(76, 122, 119, 0.15);
-  --accent-cyan-opacity-30: rgba(76, 122, 119, 0.22);
-
-  --accent-cyan-50: #f4f8f8;
-  --accent-cyan-100: #e2eeec;
-  --accent-cyan-200: #c6dfdb;
-  --accent-cyan-300: #a4cac6;
-  --accent-cyan-400: #85b5b0;
-  --accent-cyan-500: #6da8a2;
-  --accent-cyan-600: #5a8c87;
-  --accent-cyan-700: #4c7a77;
-  --accent-cyan-800: #3d6360;
-  --accent-cyan-900: #314f4c;
-
-  /* Status — slightly darkened for white bg readability */
-  --status-success: #059669;
-  --status-warning: #d97706;
-  --status-error: #dc2626;
-  --status-idle: #64748b;
-
-  /* Aviation semantic — deeper for white bg */
-  --route-rnav: #0a7c6e;
-  --route-ats: #427ab5;
-  --route-waypoint: #8b5a8c;
-  --airspace-type: #d97706;
-
-  /* Glassmorphism — Pastel Paper & Ink Outlines */
-  --glass-bg: color-mix(in srgb, var(--surface) 75%, transparent);
-  --glass-bg-heavy: color-mix(in srgb, var(--surface) 88%, transparent);
-  --glass-bg-solid: color-mix(in srgb, var(--surface) 98%, transparent);
-
-  --glass-border-width: 1.5px; /* Added stroke weight for light mode */
-
-  --glass-border: color-mix(
-    in srgb,
-    var(--outline) 50%,
-    transparent
-  ); /* Stronger ink outline stroke */
-  --glass-border-highlight: color-mix(
-    in srgb,
-    var(--outline) 80%,
-    transparent
-  ); /* Very strong ink outline */
-  --glass-shadow: 0 10px 30px -10px color-mix(in srgb, var(--on-surface) 20%, transparent); /* Punchier shadow to lift components */
+  --color-cyan-50: var(--accent-cyan-50);
+  --color-cyan-100: var(--accent-cyan-100);
+  --color-cyan-200: var(--accent-cyan-200);
+  --color-cyan-300: var(--accent-cyan-300);
+  --color-cyan-400: var(--accent-cyan-400);
+  --color-cyan-500: var(--accent-cyan-500);
+  --color-cyan-600: var(--accent-cyan-600);
+  --color-cyan-700: var(--accent-cyan-700);
+  --color-cyan-800: var(--accent-cyan-800);
+  --color-cyan-900: var(--accent-cyan-900);
 }
 
 html,
@@ -218,42 +189,44 @@ body,
     scrollbar-color: var(--outline-variant) transparent;
   }
 
-  .aip-scrollbar::-webkit-scrollbar {
-    inline-size: 5px;
-    block-size: 5px;
-  }
+  @supports not (scrollbar-color: auto) {
+    .aip-scrollbar::-webkit-scrollbar {
+      inline-size: 5px;
+      block-size: 5px;
+    }
 
-  .aip-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
+    .aip-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
 
-  .aip-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--surface-container-high);
-    border-radius: 20px;
-    border: 1px solid transparent;
-    background-clip: content-box;
-  }
+    .aip-scrollbar::-webkit-scrollbar-thumb {
+      background: var(--surface-container-high);
+      border-radius: 20px;
+      border: 1px solid transparent;
+      background-clip: content-box;
+    }
 
-  .aip-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--surface-container-highest);
-    background-clip: content-box;
-  }
+    .aip-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: var(--surface-container-highest);
+      background-clip: content-box;
+    }
 
-  .chart-scroll::-webkit-scrollbar {
-    block-size: 4px;
-  }
+    .chart-scroll::-webkit-scrollbar {
+      block-size: 4px;
+    }
 
-  .chart-scroll::-webkit-scrollbar-track {
-    background: transparent;
-  }
+    .chart-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
 
-  .chart-scroll::-webkit-scrollbar-thumb {
-    background: var(--surface-container-high);
-    border-radius: 2px;
-  }
+    .chart-scroll::-webkit-scrollbar-thumb {
+      background: var(--surface-container-high);
+      border-radius: 2px;
+    }
 
-  .chart-scroll::-webkit-scrollbar-thumb:hover {
-    background: var(--surface-container-highest);
+    .chart-scroll::-webkit-scrollbar-thumb:hover {
+      background: var(--surface-container-highest);
+    }
   }
 
   .custom-scrollbar {
@@ -261,25 +234,27 @@ body,
     scrollbar-color: var(--glass-border) transparent;
   }
 
-  .custom-scrollbar::-webkit-scrollbar {
-    inline-size: 6px;
-  }
+  @supports not (scrollbar-color: auto) {
+    .custom-scrollbar::-webkit-scrollbar {
+      inline-size: 6px;
+    }
 
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 10px;
-  }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 10px;
+    }
 
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--glass-border);
-    border-radius: 10px;
-    border: 1.5px solid transparent;
-    background-clip: padding-box;
-  }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: var(--glass-border);
+      border-radius: 10px;
+      border: 1.5px solid transparent;
+      background-clip: padding-box;
+    }
 
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--glass-border-highlight);
-    background-clip: padding-box;
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: var(--glass-border-highlight);
+      background-clip: padding-box;
+    }
   }
 }
 
@@ -340,6 +315,8 @@ body,
 }
 
 /* --- Scrollbars --- */
-html:not(.dark) .custom-scrollbar::-webkit-scrollbar-track {
-  background: color-mix(in srgb, var(--on-surface-variant) 2%, transparent);
+@supports not (scrollbar-color: auto) {
+  html:not(.dark) .custom-scrollbar::-webkit-scrollbar-track {
+    background: color-mix(in srgb, var(--on-surface-variant) 2%, transparent);
+  }
 }

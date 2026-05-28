@@ -1,50 +1,48 @@
-@layer components {
-  /* ─────────────────────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────────
    9. 3D View Button Component
    ───────────────────────────────────────────────────────────────────────────── */
-  .aip-view-3d-container {
-    position: absolute;
-    inset-block-end: 2rem;
-    inset-inline-end: 2rem;
-    z-index: 55;
-    pointer-events: auto;
-    min-block-size: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-  }
-
-  .aip-view-3d-button {
-    padding: 0.625rem 1.25rem;
-    border-radius: 1rem;
-    font-size: 11px;
-    font-weight: 900;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--primary);
-    background: var(--glass-bg-heavy);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid var(--glass-border);
-    transition: all 0.2s ease;
-    cursor: pointer;
-    box-shadow: light-dark(0 4px 15px rgba(0, 0, 0, 0.06), transparent);
-  }
-
-  .aip-view-3d-button:hover {
-    background: var(--surface-container-high);
-    border-color: var(--accent-cyan);
-    color: var(--primary);
-    transform: translateY(-1px);
-    box-shadow: light-dark(
-      0 8px 25px color-mix(in srgb, var(--accent-cyan-700) 12%, transparent),
-      transparent
-    );
-  }
-
-  .aip-view-3d-button:active {
-    transform: translateY(0);
-  }
-
-  /* --- 3D View Button --- */
+.aip-view-3d-container {
+  position: absolute;
+  inset-block-end: 2rem;
+  inset-inline-end: 2rem;
+  z-index: 55;
+  pointer-events: auto;
+  min-block-size: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
+
+.aip-view-3d-button {
+  padding: 0.625rem 1.25rem;
+  border-radius: 1rem;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--primary);
+  background: var(--glass-bg-heavy);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: light-dark(0 4px 15px rgba(0, 0, 0, 0.06), transparent);
+}
+
+.aip-view-3d-button:hover {
+  background: var(--surface-container-high);
+  border-color: var(--accent-cyan);
+  color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: light-dark(
+    0 8px 25px color-mix(in srgb, var(--accent-cyan-700) 12%, transparent),
+    transparent
+  );
+}
+
+.aip-view-3d-button:active {
+  transform: translateY(0);
+}
+
+/* --- 3D View Button --- */

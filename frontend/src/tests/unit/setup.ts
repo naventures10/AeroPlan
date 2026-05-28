@@ -114,3 +114,42 @@ if (typeof global.DOMMatrix === 'undefined') {
   // eslint-disable-next-line @typescript-eslint/no-extraneous-class
   global.DOMMatrix = class DOMMatrix {} as any;
 }
+
+// Mock localStorage and sessionStorage for store persistence
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+    key: (index: number) => Object.keys(store)[index] || null,
+    get length() {
+      return Object.keys(store).length;
+    },
+  };
+})();
+
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock,
+  writable: true,
+});
+Object.defineProperty(window, 'sessionStorage', {
+  value: localStorageMock,
+  writable: true,
+});
+Object.defineProperty(global, 'localStorage', {
+  value: localStorageMock,
+  writable: true,
+});
+Object.defineProperty(global, 'sessionStorage', {
+  value: localStorageMock,
+  writable: true,
+});

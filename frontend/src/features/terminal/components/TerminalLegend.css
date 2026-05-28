@@ -1,22 +1,20 @@
-@layer components {
-  /* --- Obstacle Legend --- */
-  .obstacle-legend-container {
-    background: var(--glass-bg-heavy);
-    border: 1px solid var(--glass-border);
-    border-radius: 9999px;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    box-shadow: light-dark(0 4px 15px rgba(0, 0, 0, 0.06), var(--glass-shadow));
-    padding: 0.25rem;
-  }
-
-  .obstacle-legend-header {
-    border-inline-end: 1px solid var(--glass-border);
-    padding-inline-start: 0.75rem;
-    padding-inline-end: 0.75rem;
-    display: flex;
-    align-items: center;
-  }
-
-  /* --- Obstacle Legend --- */
+/* --- Obstacle Legend --- */
+.obstacle-legend-container {
+  background: var(--glass-bg-heavy);
+  border: 1px solid var(--glass-border);
+  border-radius: 9999px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: light-dark(0 4px 15px rgba(0, 0, 0, 0.06), var(--glass-shadow));
+  padding: 0.25rem;
 }
+
+.obstacle-legend-header {
+  border-inline-end: 1px solid var(--glass-border);
+  padding-inline-start: 0.75rem;
+  padding-inline-end: 0.75rem;
+  display: flex;
+  align-items: center;
+}
+
+/* --- Obstacle Legend --- */

@@ -26,3 +26,4 @@ dist-ssr
 # Playwright
 src/tests/e2e/artifacts/
 
+lighthouse-reports/

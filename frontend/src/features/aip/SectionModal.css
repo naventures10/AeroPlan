@@ -1,60 +1,58 @@
-@layer components {
-  /* --- Section Modal --- */
-  .aip-modal-container {
-    inline-size: 100%;
-    max-inline-size: 64rem;
-    /* 5xl equivalent */
-    max-block-size: 85vh;
-    display: flex;
-    flex-direction: column;
-    border-radius: 1rem;
-    overflow: hidden;
-    border: 1px solid var(--glass-border-highlight);
-    background: var(--glass-bg-solid);
-    backdrop-filter: blur(32px);
-    -webkit-backdrop-filter: blur(32px);
-    box-shadow: var(--glass-shadow);
-  }
-
-  .aip-modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem 1.5rem;
-    border-block-end: 1px solid var(--glass-border);
-    flex-shrink: 0;
-  }
-
-  .aip-modal-badge {
-    flex-shrink: 0;
-    padding: 0.25rem 0.625rem;
-    border-radius: 0.375rem;
-    background: var(--accent-cyan-opacity-10);
-    border: 1px solid var(--accent-cyan-glow);
-    color: var(--accent-cyan);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .aip-modal-close-btn {
-    flex-shrink: 0;
-    margin-inline-start: 1rem;
-    padding: 0.5rem;
-    border-radius: 0.5rem;
-    color: var(--on-surface-variant);
-    transition: all 0.2s ease;
-    cursor: pointer;
-  }
-
-  .aip-modal-close-btn:hover {
-    color: var(--primary);
-    background: light-dark(
-      color-mix(in srgb, var(--on-surface-variant) 4%, transparent),
-      rgba(255, 255, 255, 0.06)
-    );
-  }
-
-  /* --- Modal --- */
+/* --- Section Modal --- */
+.aip-modal-container {
+  inline-size: 100%;
+  max-inline-size: 64rem;
+  /* 5xl equivalent */
+  max-block-size: 85vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--glass-border-highlight);
+  background: var(--glass-bg-solid);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  box-shadow: var(--glass-shadow);
 }
+
+.aip-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-block-end: 1px solid var(--glass-border);
+  flex-shrink: 0;
+}
+
+.aip-modal-badge {
+  flex-shrink: 0;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
+  background: var(--accent-cyan-opacity-10);
+  border: 1px solid var(--accent-cyan-glow);
+  color: var(--accent-cyan);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.aip-modal-close-btn {
+  flex-shrink: 0;
+  margin-inline-start: 1rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  color: var(--on-surface-variant);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.aip-modal-close-btn:hover {
+  color: var(--primary);
+  background: light-dark(
+    color-mix(in srgb, var(--on-surface-variant) 4%, transparent),
+    rgba(255, 255, 255, 0.06)
+  );
+}
+
+/* --- Modal --- */

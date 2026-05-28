@@ -54,9 +54,17 @@ export function useWindLayer() {
 
       const levelKey = windAltitude === 0 ? 'surface' : String(windAltitude).padStart(3, '0');
 
-      const loadPromises = forecastTimestamps.map((t) => {
+      const loadPromises = forecastTimestamps.map(async (t) => {
         const url = t.files[levelKey];
         if (!url) throw new Error(`Missing URL for level ${levelKey}`);
+
+        // Pre-flight check to prevent HTML parsing errors
+        const headRes = await fetch(url, { method: 'HEAD' });
+        const contentType = headRes.headers.get('content-type');
+        if (contentType && contentType.includes('text/html')) {
+          throw new Error(`File no longer exists (received HTML fallback) for ${url}`);
+        }
+
         return WeatherLayers.loadTextureData(url);
       });
 
@@ -88,9 +96,18 @@ export function useWindLayer() {
         setLoadedImages(imageMap);
         setRenderImages(renderMap);
         setStatus({ state: 'ready', message: 'All frames ready' });
-      } catch (err) {
+      } catch (err: any) {
         if (!active) return;
         console.error('[useWindLayer] Load error:', err);
+
+        if (err.message?.includes('File no longer exists')) {
+          console.warn(
+            '[useWindLayer] Stale manifest detected. Auto-healing by fetching fresh manifest...',
+          );
+          fetchWeatherManifest(true);
+          return;
+        }
+
         setStatus({ state: 'error', message: 'Failed to pre-load some frames' });
       }
     }

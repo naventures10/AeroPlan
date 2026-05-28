@@ -4,10 +4,35 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" sizes="any" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
     <title>Aero Plan</title>
   </head>
 
   <body>
+    <script>
+      (function () {
+        try {
+          var store = localStorage.getItem('eaip-map-store');
+          if (store) {
+            var parsed = JSON.parse(store);
+            if (parsed.state && parsed.state.mapStyle) {
+              if (parsed.state.mapStyle === 'hybrid') {
+                document.documentElement.style.colorScheme = '';
+              } else {
+                document.documentElement.style.colorScheme =
+                  parsed.state.mapStyle === 'light' ? 'light' : 'dark';
+              }
+              return;
+            }
+          }
+          if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+            document.documentElement.style.colorScheme = 'light';
+          } else {
+            document.documentElement.style.colorScheme = 'dark';
+          }
+        } catch (e) {}
+      })();
+    </script>
     <div
       id="placeholder"
       style="
