@@ -11,15 +11,12 @@ from sqlalchemy import text
 from app.api.v1.api import api_router
 from app.core.database import AsyncSessionLocal
 from app.core.logging_config import setup_logging
-from app.core.telemetry import setup_tracing
 from app.schemas.geojson import HealthResponse
 
 # ── Initialise structured logging ────────────────────────────────────────────
 setup_logging(json_format=os.getenv("LOG_FORMAT", "").lower() == "json")
 logger = structlog.get_logger()
 
-# ── Initialise OpenTelemetry tracing ─────────────────────────────────────────
-setup_tracing()
 
 # ── Application ──────────────────────────────────────────────────────────────
 app = FastAPI(title="Aero Plan API", version="0.1.0")
@@ -104,10 +101,3 @@ async def health_check() -> dict:
 
 # ── Register Routers ─────────────────────────────────────────────────────────
 app.include_router(api_router, prefix="/api/v1")
-
-# ── Dev-only: Async profiling endpoints (yappi) ──────────────────────────────
-if os.getenv("DEBUG", "").lower() in ("1", "true"):
-    from app.core.profiling import profiling_router
-
-    app.include_router(profiling_router)
-    logger.info("profiling_endpoints_enabled")

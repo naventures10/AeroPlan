@@ -19,12 +19,10 @@ import httpx
 import structlog
 from bs4 import BeautifulSoup
 from fastapi import APIRouter, HTTPException
-from opentelemetry import trace
 
 from app.schemas.weather import WeatherResponse
 
 logger = structlog.get_logger()
-tracer = trace.get_tracer(__name__)
 
 router = APIRouter(prefix="", tags=["Weather"])
 
@@ -96,22 +94,14 @@ def _extract_metar_time(metar: str | None) -> int:
 
 async def _fetch_from_source(source_name: str, url: str) -> dict | None:
     """Fetch and parse weather from a single source. Returns None on failure."""
-    with tracer.start_as_current_span(
-        "weather.fetch_source",
-        attributes={"weather.source": source_name, "http.url": url},
-    ) as span:
-        try:
-            async with httpx.AsyncClient(verify=False, timeout=15.0) as client:
-                resp = await client.get(url)
-                resp.raise_for_status()
-            span.set_attribute("http.status_code", resp.status_code)
-            span.set_attribute("http.response_size", len(resp.text))
-            return {"source": source_name, "html": resp.text}
-        except Exception as exc:
-            span.set_attribute("error", True)
-            span.set_attribute("error.message", str(exc))
-            logger.warning("weather_source_failed", source=source_name, error=str(exc))
-            return None
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=15.0) as client:
+            resp = await client.get(url)
+            resp.raise_for_status()
+        return {"source": source_name, "html": resp.text}
+    except Exception as exc:
+        logger.warning("weather_source_failed", source=source_name, error=str(exc))
+        return None
 
 
 async def _fetch_weather(icao: str) -> dict:
@@ -121,16 +111,12 @@ async def _fetch_weather(icao: str) -> dict:
     """
     icao_upper = icao.upper()
 
-    with tracer.start_as_current_span(
-        "weather.fetch_all",
-        attributes={"weather.icao": icao_upper},
-    ) as _span:
-        # Fire both requests concurrently
-        tasks = {
-            name: _fetch_from_source(name, url.format(icao_upper)) for name, url in SOURCES.items()
-        }
-        results = await asyncio.gather(*tasks.values())
-        source_results = dict(zip(tasks.keys(), results, strict=False))
+    # Fire both requests concurrently
+    tasks = {
+        name: _fetch_from_source(name, url.format(icao_upper)) for name, url in SOURCES.items()
+    }
+    results = await asyncio.gather(*tasks.values())
+    source_results = dict(zip(tasks.keys(), results, strict=False))
 
     # Parse successful responses
     parsed: list[dict] = []

@@ -3,14 +3,11 @@ Search Router — Global search across aerodromes, navaids, waypoints, and ATS r
 """
 
 from fastapi import APIRouter, Depends
-from opentelemetry import trace
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.schemas.search import SearchResultResponse
-
-tracer = trace.get_tracer(__name__)
 
 router = APIRouter(prefix="", tags=["Search"])
 
@@ -215,21 +212,16 @@ async def global_search(q: str, db: AsyncSession = Depends(get_db)) -> list[Sear
         SELECT * FROM final_search ORDER BY relevance DESC, name ASC LIMIT 20;
     """)
 
-    with tracer.start_as_current_span(
-        "search.execute",
-        attributes={"search.query": q_clean, "search.token_count": len(tokens)},
-    ) as span:
-        result = await db.execute(
-            query,
-            {
-                "exact_term": exact_term,
-                "start_term": start_term,
-                "contains_term": contains_term,
-                "regex_term": regex_term,
-            },
-        )
-        rows = result.fetchall()
-        span.set_attribute("search.result_count", len(rows))
+    result = await db.execute(
+        query,
+        {
+            "exact_term": exact_term,
+            "start_term": start_term,
+            "contains_term": contains_term,
+            "regex_term": regex_term,
+        },
+    )
+    rows = result.fetchall()
 
     output = []
     for r in rows:
