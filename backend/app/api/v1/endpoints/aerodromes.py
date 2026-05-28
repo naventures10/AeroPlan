@@ -2,9 +2,8 @@
 Aerodromes Router — Aerodrome data, metadata, and AIP section lookups.
 """
 
-from typing import Any
-
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -162,21 +161,21 @@ async def get_all_aerodromes(db: AsyncSession = Depends(get_db)) -> GeoJsonFeatu
     return GeoJsonFeatureCollection(type="FeatureCollection", features=[])
 
 
-@router.get("/aerodromes/{icao_code}/metadata", response_model=dict[str, Any])
+@router.get("/aerodromes/{icao_code}/metadata")
 async def get_aerodrome_metadata(
     icao_code: str, db: AsyncSession = Depends(get_db)
-) -> dict[str, Any]:
-    """Fetches the JSONB AIP document metadata for a specific aerodrome."""
+) -> JSONResponse:
+    """Fetches the JSONB AIP document metadata for a specific aerodrome, bypassing serialization overhead."""
     query = text("""
-        SELECT aip_document
+        SELECT aip_document::text
         FROM aerodrome_documents
         WHERE icao_code = :icao;
     """)
     result = await db.execute(query, {"icao": icao_code.upper()})
     row = result.fetchone()
     if row and row[0]:
-        return row[0] if isinstance(row[0], dict) else {}
-    return {}
+        return JSONResponse(content=row[0] if isinstance(row[0], dict) else {})
+    return JSONResponse(content={})
 
 
 @router.get("/aerodromes/{icao_code}/section/{section_id}", response_model=AerodromeSectionResponse)
