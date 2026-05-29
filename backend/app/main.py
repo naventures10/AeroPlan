@@ -32,14 +32,16 @@ resource = Resource.create({"service.name": "eaip-backend"})
 
 # Traces
 provider = TracerProvider(resource=resource)
-processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="http://localhost:4318/v1/traces"))
+trace_endpoint = os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "http://localhost:4318/v1/traces")
+processor = BatchSpanProcessor(OTLPSpanExporter(endpoint=trace_endpoint))
 provider.add_span_processor(processor)
 trace.set_tracer_provider(provider)
 
 # Metrics
-metric_reader = PeriodicExportingMetricReader(
-    OTLPMetricExporter(endpoint="http://localhost:4318/v1/metrics")
+metric_endpoint = os.getenv(
+    "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "http://localhost:4318/v1/metrics"
 )
+metric_reader = PeriodicExportingMetricReader(OTLPMetricExporter(endpoint=metric_endpoint))
 meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
 metrics.set_meter_provider(meter_provider)
 
