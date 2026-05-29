@@ -1,27 +1,31 @@
-.PHONY: frontend backend dev prod frontend-prod backend-prod test test-frontend test-backend \
-       help
+.PHONY: frontend dev test test-frontend test-backend test-build frontend-audit \
+       docker-up docker-down observability-up observability-down help
 
 help: ## Show available commands
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
 
-dev: ## Start both frontend and backend simultaneously
-	$(MAKE) -j2 frontend backend
+# ── Docker ────────────────────────────────────────────────────────────────────
 
-frontend: ## Start the Vite dev server (React + TypeScript)
+docker-up: ## Start the Docker Compose stack (backend, db, tile server, etc.)
+	docker compose up -d
+
+docker-down: ## Stop the Docker Compose stack
+	docker compose down
+
+observability-up: ## Start the observability stack (Alloy → Grafana Cloud)
+	docker compose -f monitoring/docker-compose.observability.yml up -d
+
+observability-down: ## Stop the observability stack
+	docker compose -f monitoring/docker-compose.observability.yml down
+
+# ── Frontend ──────────────────────────────────────────────────────────────────
+
+dev: ## Start the Vite dev server (React + TypeScript)
 	cd frontend && npm run dev
 
-backend: ## Start the FastAPI server (uvicorn with hot-reload)
-	cd backend && uv run python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 2>&1 | tee logs/backend.log
+frontend: dev ## Alias for dev
 
-prod: ## Start both frontend preview and backend simultaneously
-	$(MAKE) -j2 frontend-prod backend-prod
-
-frontend-prod: ## Build and start the Vite preview server (React + TypeScript)
-	cd frontend && npm run build && npm run preview
-
-backend-prod: ## Start the FastAPI server in production mode (no hot-reload)
-	cd backend && uv run python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 2>&1 | tee logs/backend.log
-
+# ── Testing ───────────────────────────────────────────────────────────────────
 
 test: ## Run all tests (frontend and backend)
 	$(MAKE) test-backend
@@ -39,7 +43,6 @@ test-build: ## Run frontend build
 
 frontend-audit: ## Run Lighthouse audit on the frontend app and save reports to frontend/lighthouse-reports
 	cd frontend && npm run audit
-
 
 
 # ── ETL & Data Pipelines ───────────────────────────────────────────────────
