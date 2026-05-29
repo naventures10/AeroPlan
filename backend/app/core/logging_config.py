@@ -9,8 +9,6 @@ Call ``setup_logging()`` once at application startup (in main.py).
 """
 
 import logging
-import os
-import pathlib
 import sys
 
 import structlog
@@ -75,24 +73,6 @@ def setup_logging(*, json_format: bool = False) -> None:
     root_logger = logging.getLogger()
     root_logger.handlers.clear()
     root_logger.addHandler(handler)
-
-    # If LOG_FILE_PATH is set, also write JSON logs to file for Alloy scraping
-    log_file_path = os.getenv("LOG_FILE_PATH")
-    if log_file_path:
-        pathlib.Path(log_file_path).parent.mkdir(parents=True, exist_ok=True)
-
-        # File always writes JSON regardless of console format
-        json_formatter = structlog.stdlib.ProcessorFormatter(
-            foreign_pre_chain=shared_processors,
-            processors=[
-                structlog.stdlib.ProcessorFormatter.remove_processors_meta,
-                structlog.processors.JSONRenderer(),
-            ],
-        )
-        file_handler = logging.FileHandler(log_file_path)
-        file_handler.setFormatter(json_formatter)
-        root_logger.addHandler(file_handler)
-
     root_logger.setLevel(logging.INFO)
 
     # Quieten noisy third-party loggers

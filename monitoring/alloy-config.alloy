@@ -67,17 +67,22 @@ otelcol.exporter.otlphttp "tempo" {
   }
 }
 
-// 4. Log Scraping (Local Backend Logs)
-local.file_match "backend_logs" {
-  path_targets = [{"__path__" = "/var/log/backend/*.log"}]
+// 4. Log Collection (Docker stdout — no shared volume needed)
+discovery.docker "backend" {
+  host = "unix:///var/run/docker.sock"
+  filter {
+    name   = "name"
+    values = ["eaip-backend"]
+  }
 }
 
-loki.source.file "backend" {
-  targets    = local.file_match.backend_logs.targets
+loki.source.docker "backend" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.docker.backend.targets
   forward_to = [loki.process.backend_pipeline.receiver]
 }
 
-// Parse trace IDs, levels, etc. from JSON backend logs
+// Parse trace IDs, levels, etc. from JSON backend stdout logs
 loki.process "backend_pipeline" {
   stage.json {
     expressions = {
@@ -95,7 +100,7 @@ loki.process "backend_pipeline" {
   stage.static_labels {
     values = {
       service_name = "eaip-backend",
-      job          = "local_backend",
+      job          = "docker_backend",
     }
   }
   forward_to = [loki.write.grafana_cloud.receiver]
