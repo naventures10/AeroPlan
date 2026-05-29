@@ -2,7 +2,7 @@
 networks:
   eaip_network:
     name: eaip_network
-    driver: bridge
+    external: true
 
 volumes:
   alloy_data:

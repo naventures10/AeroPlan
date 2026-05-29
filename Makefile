@@ -12,7 +12,9 @@ docker-up: ## Start the Docker Compose stack (backend, db, tile server, etc.)
 docker-down: ## Stop the Docker Compose stack
 	docker compose down
 
-observability-up: ## Start the observability stack (Alloy → Grafana Cloud)
+observability-up: ## Start the observability stack (Alloy → Grafana Cloud) — run docker-up first
+	@docker network inspect eaip_network >/dev/null 2>&1 || \
+		(echo "❌ eaip_network not found. Run 'make docker-up' first." && exit 1)
 	docker compose -f monitoring/docker-compose.observability.yml up -d
 
 observability-down: ## Stop the observability stack

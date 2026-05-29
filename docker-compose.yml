@@ -91,4 +91,4 @@ volumes:
 networks:
   eaip_network:
     name: eaip_network
-    external: true
+    driver: bridge
