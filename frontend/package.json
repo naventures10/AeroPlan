@@ -14,7 +14,8 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:unit": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "audit": "mkdir -p lighthouse-reports && npx lighthouse http://localhost:4173 --output html --output json --output-path ./lighthouse-reports/lighthouse-report.html --chrome-flags=\"--headless\""
   },
   "dependencies": {
     "@deck.gl/aggregation-layers": "~9.2.6",

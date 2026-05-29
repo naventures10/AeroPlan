@@ -37,6 +37,9 @@ test-backend: ## Run backend integration tests (Pytest)
 test-build: ## Run frontend build
 	cd frontend && npm run build
 
+frontend-audit: ## Run Lighthouse audit on the frontend app and save reports to frontend/lighthouse-reports
+	cd frontend && npm run audit
+
 
 
 # ── ETL & Data Pipelines ───────────────────────────────────────────────────
