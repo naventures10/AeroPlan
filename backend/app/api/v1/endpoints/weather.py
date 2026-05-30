@@ -1,16 +1,23 @@
 """
-Weather Router — Non-persistent, on-demand METAR/TAF with in-memory TTL cache.
+Weather Router — Non-persistent, on-demand METAR/TAF with in-memory TTL cache,
+plus MinIO proxy endpoints for weather forecast GeoTIFF data.
 
-Redundant dual-source architecture:
+Redundant dual-source architecture for METAR/TAF:
   1. Chennai OLBS  (olbs.amsschennai.gov.in)
   2. Delhi OLBS    (olbs.amssdelhi.gov.in)
 
 Both sources are scraped concurrently. If both succeed, the data is compared and
 the most recent observation is returned. If one source fails, the other is used
 as fallback. Results are cached in-memory for CACHE_TTL_SECONDS (default 300s).
+
+Weather Forecast Data:
+  GeoTIFF files and manifest are stored in MinIO (ais bucket, weather/ prefix)
+  and served via API proxy endpoints.
 """
 
 import asyncio
+import json
+import os
 import re
 import time
 from datetime import UTC, datetime
@@ -18,8 +25,10 @@ from datetime import UTC, datetime
 import httpx
 import structlog
 from bs4 import BeautifulSoup
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi.responses import JSONResponse, StreamingResponse
 
+from app.core.storage import get_storage_client
 from app.schemas.weather import WeatherResponse
 
 logger = structlog.get_logger()
@@ -32,6 +41,9 @@ SOURCES = {
     "delhi": "https://olbs.amssdelhi.gov.in/nsweb/FlightBriefing/weathermap/station.php?icao={}",
 }
 CACHE_TTL_SECONDS = 300  # 5 minutes
+
+MINIO_BUCKET = os.getenv("MINIO_BUCKET", "ais")
+WEATHER_S3_PREFIX = "weather"
 
 # ── In-Memory Cache ──────────────────────────────────────────────────────────
 # { "VABB": { "data": {...}, "fetched_at": float, "source": str } }
@@ -175,7 +187,102 @@ async def _fetch_weather(icao: str) -> dict:
     }
 
 
-# ── Endpoint ─────────────────────────────────────────────────────────────────
+# ── Forecast Data Proxy Endpoints (from MinIO) ──────────────────────────────
+# These MUST be defined BEFORE the dynamic /weather/{icao_code} route below.
+
+
+@router.get("/weather/weather_manifest.json")
+async def get_weather_manifest() -> JSONResponse:
+    """
+    Fetch the weather manifest from MinIO and rewrite file URLs to point
+    through the API proxy.
+    """
+    s3 = get_storage_client()
+    s3_key = f"{WEATHER_S3_PREFIX}/weather_manifest.json"
+
+    try:
+        response = s3.get_object(Bucket=MINIO_BUCKET, Key=s3_key)
+        manifest = json.loads(response["Body"].read().decode("utf-8"))
+    except s3.exceptions.NoSuchKey:
+        raise HTTPException(status_code=404, detail="Weather manifest not found") from None
+    except Exception as e:
+        logger.error("weather_manifest_fetch_failed", error=str(e))
+        raise HTTPException(status_code=502, detail="Failed to fetch weather manifest") from e
+
+    return JSONResponse(
+        content=manifest,
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+    )
+
+
+@router.api_route("/weather/files/{filename}", methods=["GET", "HEAD"])
+async def get_weather_file(filename: str, request: Request):
+    """
+    Stream a weather GeoTIFF file from MinIO with long-lived cache headers.
+    Supports HTTP HEAD and Range requests for Cloud-Optimized GeoTIFF (COG) streaming.
+    """
+    # Validate filename to prevent path traversal
+    if "/" in filename or "\\" in filename or ".." in filename:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    s3 = get_storage_client()
+    s3_key = f"{WEATHER_S3_PREFIX}/{filename}"
+
+    try:
+        if request.method == "HEAD":
+            # For HEAD requests, just get the object metadata
+            head_resp = s3.head_object(Bucket=MINIO_BUCKET, Key=s3_key)
+            return Response(
+                headers={
+                    "Content-Length": str(head_resp.get("ContentLength", 0)),
+                    "Accept-Ranges": "bytes",
+                    "Cache-Control": "public, max-age=31536000, immutable",
+                }
+            )
+
+        # For GET requests, check if there's a Range header
+        range_header = request.headers.get("range")
+        kwargs = {"Bucket": MINIO_BUCKET, "Key": s3_key}
+        if range_header:
+            kwargs["Range"] = range_header
+
+        response = s3.get_object(**kwargs)
+    except s3.exceptions.ClientError as e:
+        error_code = e.response["Error"]["Code"]
+        if error_code == "404" or error_code == "NoSuchKey":
+            raise HTTPException(
+                status_code=404, detail=f"Weather file not found: {filename}"
+            ) from None
+        logger.error("weather_file_fetch_failed", filename=filename, error=str(e))
+        raise HTTPException(status_code=502, detail="Failed to fetch weather file") from e
+    except Exception as e:
+        logger.error("weather_file_fetch_failed", filename=filename, error=str(e))
+        raise HTTPException(status_code=502, detail="Failed to fetch weather file") from e
+
+    content_type = "image/tiff"
+    if filename.endswith(".json"):
+        content_type = "application/json"
+
+    status_code = 206 if range_header else 200
+    headers = {
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Content-Disposition": f"inline; filename={filename}",
+        "Accept-Ranges": "bytes",
+        "Content-Length": str(response.get("ContentLength", 0)),
+    }
+
+    if "ContentRange" in response:
+        headers["Content-Range"] = response["ContentRange"]
+
+    return StreamingResponse(
+        response["Body"],
+        status_code=status_code,
+        media_type=content_type,
+        headers=headers,
+    )
+
+
+# ── METAR/TAF Endpoint ──────────────────────────────────────────────────────
 @router.get("/weather/{icao_code}", response_model=WeatherResponse)
 async def get_weather(icao_code: str) -> WeatherResponse:
     """

@@ -2,18 +2,22 @@
 
 # Wrapper script to run the weather pipeline with correct environment
 # Used by launchd agent
+#
+# The weather pipeline now lives in the eaip_scrapper project and uploads
+# data to MinIO instead of the frontend public folder.
 
 # Set path to the script's directory
 SCRIPT_DIR=$(dirname "$0")
-BACKEND_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
-LOG_DIR="$BACKEND_DIR/logs"
+ROOT_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+SCRAPPER_DIR="$ROOT_DIR/eaip_scrapper"
+LOG_DIR="$SCRAPPER_DIR/logs"
 LOG_FILE="$LOG_DIR/weather_pipeline.log"
 
 # Ensure logs directory exists
 mkdir -p "$LOG_DIR"
 
-# Navigate to backend directory
-cd "$BACKEND_DIR"
+# Navigate to scrapper directory
+cd "$SCRAPPER_DIR"
 
 # Load environment variables if .env exists
 if [ -f .env ]; then
@@ -38,10 +42,10 @@ function run_with_retry() {
     echo "[$(date)] Starting weather pipeline (Attempt $attempt/$max_attempts)..." >> "$LOG_FILE"
     
     # Cleanup any stale pipeline processes from previous runs
-    STALE_PIDS=$(pgrep -f "app.services.weather_pipeline" | grep -v $$)
+    STALE_PIDS=$(pgrep -f "eaip_scrapper.etl.etl_weather" | grep -v $$)
     if [ -n "$STALE_PIDS" ]; then
       echo "[$(date)] Found stale weather pipeline processes. Cleaning up..." >> "$LOG_FILE"
-      pkill -f "app.services.weather_pipeline"
+      pkill -f "eaip_scrapper.etl.etl_weather"
       sleep 2
     fi
 
@@ -57,12 +61,11 @@ function run_with_retry() {
     fi
 
     # Run the pipeline using uv with a 20-minute hard timeout
-    # We use python3 to implement timeout since timeout/gtimeout are missing on macOS
     echo "[$(date)] Running pipeline with 20m timeout..." >> "$LOG_FILE"
     python3 -c "
 import subprocess, sys
 try:
-    subprocess.run(['uv', 'run', 'python', '-m', 'app.services.weather_pipeline'], timeout=1200, check=True)
+    subprocess.run(['uv', 'run', 'python', 'src/eaip_scrapper/etl/etl_weather.py'], timeout=1200, check=True)
 except subprocess.TimeoutExpired:
     print('ERROR: Weather pipeline timed out after 20 minutes', file=sys.stderr)
     sys.exit(124)
@@ -96,4 +99,3 @@ EXIT_CODE=$?
 
 echo "------------------------------------------------" >> "$LOG_FILE"
 exit $EXIT_CODE
-

@@ -75,7 +75,7 @@ describe('useCloudLayer', () => {
 
     await waitFor(() => {
       expect(fetchSpy).toHaveBeenCalledWith(
-        expect.stringContaining('/weather/weather_manifest.json'),
+        expect.stringContaining('/api/v1/weather/weather_manifest.json'),
       );
     });
   });

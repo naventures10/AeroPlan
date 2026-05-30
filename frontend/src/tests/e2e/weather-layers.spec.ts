@@ -6,7 +6,7 @@ test.describe('Weather Layers Userflows (Wind & Clouds)', () => {
     const mapPage = new MapPage(page);
 
     // Intercept weather manifest to ensure stable test data
-    await page.route('**/weather/weather_manifest.json', async (route) => {
+    await page.route('**/api/v1/weather/weather_manifest.json', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',

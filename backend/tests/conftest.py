@@ -11,29 +11,6 @@ os.environ["MINIO_SECRET_KEY"] = "mock_minio_secret"
 os.environ["DATABASE_URL"] = "postgresql+asyncpg://postgres:mock_db_password@localhost/test_db"
 os.environ["POSTGRES_DB"] = "test_aeronautical_information_system"
 
-from app.core.config import settings
-
-
-@pytest.fixture(autouse=True)
-def mock_weather_output_dir(tmp_path, monkeypatch):
-    """Mock WEATHER_OUTPUT_DIR to use pytest's tmp_path."""
-    d = tmp_path / "weather_output"
-    d.mkdir()
-    monkeypatch.setattr(settings, "WEATHER_OUTPUT_DIR", str(d))
-    yield str(d)
-
-
-@pytest.fixture(autouse=True)
-def mock_gdal(monkeypatch):
-    """Mock GDAL command resolution and subprocess.run for pipeline tests."""
-    mock_run = MagicMock()
-    monkeypatch.setattr(
-        "app.services.weather_pipeline.shutil.which", lambda cmd: f"/mock/bin/{cmd}"
-    )
-    # If the process output needs to be read, we can mock it here
-    monkeypatch.setattr("subprocess.run", mock_run)
-    yield mock_run
-
 
 @pytest.fixture(autouse=True)
 def mock_boto3(monkeypatch):

@@ -425,7 +425,7 @@ export const useMapStore = create<MapState>()(
         set({ weatherStatus: { state: 'loading', message: 'Loading weather timeline…' } });
 
         try {
-          const response = await fetch('/weather/weather_manifest.json');
+          const response = await fetch('/api/v1/weather/weather_manifest.json');
           const manifestData = await response.json();
           if (manifestData && manifestData.forecasts) {
             const timestamps = manifestData.forecasts.map((f: any) => {

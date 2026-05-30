@@ -1,6 +1,18 @@
+"""
+Weather Pipeline ETL — Download ECMWF forecast data, generate Cloud-Optimized
+GeoTIFFs, and upload them to MinIO object storage.
+
+This module is the canonical entrypoint for weather data ingestion. It runs as
+a standalone script, typically triggered by macOS launchd on a schedule.
+
+Usage:
+    uv run python -m eaip_scrapper.etl.etl_weather
+"""
+
 import gc
 import glob
 import json
+import logging
 import os
 import shutil
 import subprocess
@@ -10,6 +22,7 @@ import time
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import boto3
 import cfgrib
 import numpy as np
 import rasterio
@@ -18,23 +31,114 @@ import xarray as xr
 from ecmwf.opendata import Client
 from rasterio.transform import from_origin
 
-# Add the backend directory to sys.path to allow 'from app' imports
-sys.path.append(str(Path(__file__).parents[2]))
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
 
-# Set dummy environment variables for required fields not used by this script
-# to prevent Pydantic validation errors during standalone runs.
-os.environ.setdefault("POSTGRES_PASSWORD", "dummy")
-os.environ.setdefault("MINIO_ACCESS_KEY", "dummy")
-os.environ.setdefault("MINIO_SECRET_KEY", "dummy")
+MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://localhost:9000")
+MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY")
+MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY")
+MINIO_BUCKET = os.getenv("MINIO_BUCKET", "ais")
 
-from app.core.config import settings
+WEATHER_S3_PREFIX = "weather"
+WEATHER_BASE_URL = "/api/v1/weather/files"
+GDAL_CMD = os.getenv("GDAL_CMD", "gdal_translate")
 
+# Logging setup
+LOG_DIR = Path(__file__).resolve().parents[3] / "logs"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+LOG_FILE = LOG_DIR / "weather_pipeline.log"
+
+
+def _setup_logging() -> None:
+    """Configure structlog with file + console output."""
+    file_handler = logging.FileHandler(str(LOG_FILE))
+    file_handler.setLevel(logging.DEBUG)
+
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+
+    logging.basicConfig(
+        format="%(message)s",
+        level=logging.DEBUG,
+        handlers=[file_handler, console_handler],
+    )
+
+    structlog.configure(
+        processors=[
+            structlog.stdlib.add_log_level,
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            structlog.dev.ConsoleRenderer(),
+        ],
+        wrapper_class=structlog.stdlib.BoundLogger,
+        context_class=dict,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        cache_logger_on_first_use=True,
+    )
+
+
+_setup_logging()
 logger = structlog.get_logger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# S3 helpers
+# ---------------------------------------------------------------------------
+
+
+def _get_s3_client():
+    """Create a boto3 S3 client pointing at MinIO."""
+    return boto3.client(
+        "s3",
+        endpoint_url=MINIO_ENDPOINT,
+        aws_access_key_id=MINIO_ACCESS_KEY,
+        aws_secret_access_key=MINIO_SECRET_KEY,
+        region_name="us-east-1",
+    )
+
+
+def _upload_file(s3, local_path: str, s3_key: str) -> None:
+    """Upload a local file to S3."""
+    s3.upload_file(local_path, MINIO_BUCKET, s3_key)
+    logger.info("uploaded_to_s3", key=s3_key, bucket=MINIO_BUCKET)
+
+
+def _upload_json(s3, data: dict, s3_key: str) -> None:
+    """Upload a JSON document to S3."""
+    s3.put_object(
+        Bucket=MINIO_BUCKET,
+        Key=s3_key,
+        Body=json.dumps(data, indent=2).encode("utf-8"),
+        ContentType="application/json",
+    )
+    logger.info("uploaded_manifest_to_s3", key=s3_key, bucket=MINIO_BUCKET)
+
+
+def _cleanup_stale_s3_files(s3, active_filenames: set[str]) -> None:
+    """Delete weather/*.tif files in S3 that are not in the active set."""
+    paginator = s3.get_paginator("list_objects_v2")
+    for page in paginator.paginate(Bucket=MINIO_BUCKET, Prefix=f"{WEATHER_S3_PREFIX}/"):
+        for obj in page.get("Contents", []):
+            key = obj["Key"]
+            basename = os.path.basename(key)
+            if basename.endswith(".tif") and basename not in active_filenames:
+                try:
+                    s3.delete_object(Bucket=MINIO_BUCKET, Key=key)
+                    logger.info("deleted_stale_s3_file", key=key)
+                except Exception as e:
+                    logger.error("failed_to_delete_stale_s3_file", key=key, error=str(e))
+
+
+# ---------------------------------------------------------------------------
+# GDAL resolution
+# ---------------------------------------------------------------------------
 
 
 def _resolve_gdal_cmd() -> str:
     """Resolve the GDAL binary for non-interactive environments like cron/launchd."""
-    configured_cmd = settings.GDAL_CMD
+    configured_cmd = GDAL_CMD
 
     # Respect an explicit absolute/relative path first.
     if os.path.sep in configured_cmd:
@@ -67,28 +171,12 @@ def _resolve_gdal_cmd() -> str:
     )
 
 
-def cleanup_old_files(output_dir: str, manifest_data: dict):
-    """Keep only the files referenced in the current manifest."""
-    active_files = set()
-    if "forecasts" in manifest_data:
-        for forecast in manifest_data["forecasts"]:
-            if "files" in forecast:
-                for url in forecast["files"].values():
-                    filename = os.path.basename(url)
-                    active_files.add(filename)
-
-    tif_files = glob.glob(os.path.join(output_dir, "weather_*.tif"))
-    for f in tif_files:
-        basename = os.path.basename(f)
-        if basename not in active_files:
-            try:
-                os.remove(f)
-                logger.info("deleted_stale_weather_file", filename=basename)
-            except Exception as e:
-                logger.error("failed_to_delete_stale_weather_file", filename=f, error=str(e))
+# ---------------------------------------------------------------------------
+# GRIB cleanup
+# ---------------------------------------------------------------------------
 
 
-def safe_remove_grib(file_path: str):
+def safe_remove_grib(file_path: str) -> None:
     """Remove a GRIB file and any associated .idx files created by cfgrib."""
     if not file_path:
         return
@@ -104,6 +192,11 @@ def safe_remove_grib(file_path: str):
         logger.error("failed_to_cleanup_temp_grib", path=file_path, error=str(e))
 
 
+# ---------------------------------------------------------------------------
+# Forecast run/step calculation
+# ---------------------------------------------------------------------------
+
+
 def _get_run_and_steps_for_time(
     now: datetime, offset_hours: int = 0
 ) -> tuple[int, datetime, list[int]]:
@@ -112,15 +205,11 @@ def _get_run_and_steps_for_time(
     by a multiple of 6 hours.
     """
     latency_hours = 2 + offset_hours
-    # The target available time snapped back by the offset
     available_now = now - timedelta(hours=latency_hours)
-    # Snap to the previous 6-hour cycle (00, 06, 12, 18)
     run_hour = (available_now.hour // 6) * 6
     run_time = available_now.replace(hour=run_hour, minute=0, second=0, microsecond=0)
 
-    # Calculate steps relative to "now"
     elapsed_hours = (now - run_time).total_seconds() / 3600
-    # Round to nearest 3-hour step, minimum 3
     start_step = max(3, round(elapsed_hours / 3) * 3)
 
     # 5 steps = 12 hour window (0, +3, +6, +9, +12)
@@ -132,9 +221,6 @@ def _get_run_and_steps(now: datetime) -> tuple[int, datetime, list[int]]:
     """
     Determine the most recent available ECMWF run and the forecast steps to
     target a 12-hour valid_time window starting close to "now".
-
-    ECMWF IFS Open Data runs every 6 hours (00, 06, 12, 18 UTC) with a
-    ~2-hour publication latency. Forecast steps are available in 3-hour intervals.
     """
     run_hour, run_time, steps = _get_run_and_steps_for_time(now, 0)
     logger.info(
@@ -146,6 +232,11 @@ def _get_run_and_steps(now: datetime) -> tuple[int, datetime, list[int]]:
     return run_hour, run_time, steps
 
 
+# ---------------------------------------------------------------------------
+# Pipeline
+# ---------------------------------------------------------------------------
+
+
 def run_pipeline() -> bool:
     with tempfile.TemporaryDirectory() as temp_dir:
         return _run_pipeline_impl(temp_dir)
@@ -154,7 +245,7 @@ def run_pipeline() -> bool:
 def _run_pipeline_impl(temp_dir: str) -> bool:
     logger.info("starting_weather_pipeline")
 
-    os.makedirs(settings.WEATHER_OUTPUT_DIR, exist_ok=True)
+    s3 = _get_s3_client()
     gdal_cmd = _resolve_gdal_cmd()
 
     now = datetime.now(UTC)
@@ -162,12 +253,11 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
 
     raw_sfc_file = os.path.join(temp_dir, f"temp_sfc_{timestamp_str}.grib2")
     raw_pl_file = os.path.join(temp_dir, f"temp_pl_{timestamp_str}.grib2")
-    manifest_path = os.path.join(settings.WEATHER_OUTPUT_DIR, "weather_manifest.json")
 
     # --- STEP 1: Download with Fallback Loop ---
     max_backwards_cycles = 4
     download_success = False
-    run_hour, run_time, steps = _get_run_and_steps_for_time(now, 0)  # default initial values
+    run_hour, run_time, steps = _get_run_and_steps_for_time(now, 0)
 
     for cycle_idx in range(max_backwards_cycles):
         offset_hours = cycle_idx * 6
@@ -251,7 +341,7 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
 
     # --- STEP 2: Interpolate & Generate COGs ---
     logger.info("processing_and_interpolating_data")
-    manifest_data = {
+    manifest_data: dict = {
         "generated_at": now.isoformat().replace("+00:00", "Z"),
         "run_info": {
             "run_hour": run_hour,
@@ -279,10 +369,11 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
         "forecasts": [],
     }
 
+    # Track all filenames uploaded for later cleanup
+    active_filenames: set[str] = set()
+
     try:
         # cfgrib.open_datasets auto-splits the GRIB into compatible groups
-        # (one per unique combination of level type / height), avoiding the
-        # DatasetBuildError that occurs when mixing 10m, 2m, and surface data.
         sfc_datasets = cfgrib.open_datasets(raw_sfc_file)
         logger.info(
             "sfc_grib_groups",
@@ -322,7 +413,6 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
         }
 
         # ECMWF Open Data 0.25 degree resolution
-        # Grid uses -180 to +179.75 longitude, 90 to -90 latitude.
         transform = from_origin(-180.0, 90.0, 0.25, 0.25)
         target_alts = np.arange(0, 40000, 1000)
 
@@ -336,12 +426,10 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
 
         # Export each slice step-by-step to save memory
         for step_idx, step_td in enumerate(ds_pl.step.values):
-            # Calculate valid time for this step
-            # step_td is typically a timedelta64[ns]
             step_hours = int(step_td.astype("timedelta64[h]").astype(int))
             valid_time = run_time + timedelta(hours=step_hours)
 
-            step_manifest = {
+            step_manifest: dict = {
                 "valid_time": valid_time.isoformat().replace("+00:00", "Z"),
                 "step": step_hours,
                 "files": {},
@@ -416,14 +504,12 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
 
                 # Prepare data bands
                 bands = []
-                # Common 4 bands for all altitudes
                 bands.append(np.nan_to_num(alt_slice["u"].values.astype(np.float32), nan=0.0))
                 bands.append(np.nan_to_num(alt_slice["v"].values.astype(np.float32), nan=0.0))
                 bands.append(np.nan_to_num(alt_slice["t"].values.astype(np.float32), nan=0.0))
                 bands.append(np.nan_to_num(alt_slice["r"].values.astype(np.float32), nan=0.0))
 
                 if alt == 0:
-                    # Add extra surface bands
                     for var in ["fg10", "tp", "tcc", "msl"]:
                         bands.append(
                             np.nan_to_num(alt_slice[var].values.astype(np.float32), nan=0.0)
@@ -450,7 +536,7 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
                 final_cog_filename = (
                     f"weather_{level_name}_{timestamp_str}_step{step_hours:03d}.tif"
                 )
-                final_cog_path = os.path.join(settings.WEATHER_OUTPUT_DIR, final_cog_filename)
+                final_cog_path = os.path.join(temp_dir, final_cog_filename)
 
                 # Prepare GDAL bands arguments
                 band_args = []
@@ -481,11 +567,17 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
                 ]
                 subprocess.run(gdal_args, check=True, capture_output=True, text=True)
 
+                # Upload COG to S3
+                s3_key = f"{WEATHER_S3_PREFIX}/{final_cog_filename}"
+                _upload_file(s3, final_cog_path, s3_key)
+                active_filenames.add(final_cog_filename)
+
                 step_manifest["files"][level_name] = (
-                    f"{settings.WEATHER_BASE_URL}/{final_cog_filename}"
+                    f"{WEATHER_BASE_URL}/{final_cog_filename}"
                 )
 
                 os.remove(temp_tif)
+                os.remove(final_cog_path)
 
             manifest_data["forecasts"].append(step_manifest)
 
@@ -502,29 +594,26 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
         safe_remove_grib(raw_sfc_file)
         return False
     finally:
-        # Explicitly close datasets to free resources
         if "ds_pl" in locals():
             ds_pl.close()
         if "sfc_datasets" in locals():
             for ds in sfc_datasets:
                 ds.close()
 
-    # --- STEP 3: Generate Manifest ---
-    logger.info("updating_manifest", path=manifest_path)
-    temp_manifest = manifest_path + ".tmp"
+    # --- STEP 3: Upload Manifest to S3 ---
+    manifest_s3_key = f"{WEATHER_S3_PREFIX}/weather_manifest.json"
+    logger.info("uploading_manifest", key=manifest_s3_key)
     try:
-        with open(temp_manifest, "w") as f:
-            json.dump(manifest_data, f, indent=2)
-        os.replace(temp_manifest, manifest_path)
-        logger.info("manifest_updated")
+        _upload_json(s3, manifest_data, manifest_s3_key)
+        logger.info("manifest_uploaded")
     except Exception as e:
-        logger.error("manifest_update_failed", error=str(e))
+        logger.error("manifest_upload_failed", error=str(e))
 
-    # --- STEP 4: Cleanup ---
+    # --- STEP 4: Cleanup stale files in S3 ---
     safe_remove_grib(raw_pl_file)
     safe_remove_grib(raw_sfc_file)
 
-    cleanup_old_files(settings.WEATHER_OUTPUT_DIR, manifest_data)
+    _cleanup_stale_s3_files(s3, active_filenames)
     logger.info("pipeline_completed_successfully")
     return True
 

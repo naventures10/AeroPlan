@@ -29,8 +29,9 @@ frontend: dev ## Alias for dev
 
 # ── Testing ───────────────────────────────────────────────────────────────────
 
-test: ## Run all tests (frontend and backend)
+test: ## Run all tests (frontend, backend, and scrapper)
 	$(MAKE) test-backend
+	$(MAKE) test-scrapper
 	$(MAKE) test-frontend
 	$(MAKE) test-build
 
@@ -39,6 +40,9 @@ test-frontend: ## Run frontend unit tests (Vitest)
 
 test-backend: ## Run backend integration tests (Pytest)
 	cd backend && uv run pytest
+
+test-scrapper: ## Run scrapper tests (Pytest)
+	cd eaip_scrapper && uv run pytest
 
 test-build: ## Run frontend build
 	cd frontend && npm run build
