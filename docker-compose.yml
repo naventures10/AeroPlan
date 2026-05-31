@@ -85,6 +85,8 @@ services:
 
 volumes:
   postgres_data:
+    name: cea54d8184a203b630ab55ae2e2429ee565b144cbc8e5430cd5fe4d6dc90c4de
+    external: true
 
 
 networks:
