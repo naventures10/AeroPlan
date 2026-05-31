@@ -50,6 +50,7 @@ export default function UserProfileModal() {
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="user-profile-modal-container"
             onClick={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="user-profile-modal-header">

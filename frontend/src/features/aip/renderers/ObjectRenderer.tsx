@@ -8,7 +8,7 @@ interface ObjectRendererProps {
 }
 
 /**
- * Renders AIP data_type: "object" sections as a styled key-value table.
+ * Renders AIP data_type:"object" sections as a styled key-value table.
  * Matches the AIP document structure: | Ref | Description | Data |
  *
  * If columnConfig is provided, uses official AIP labels and ordering.
@@ -63,13 +63,13 @@ export default function ObjectRenderer({ data, columnConfig }: ObjectRendererPro
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
-            <th className="text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-on-surface-variant bg-surface-container border-b border-outline-variant w-12">
+            <th className="text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-on-surface-variant border-b border-outline-variant w-12">
               Ref
             </th>
-            <th className="text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-on-surface-variant bg-surface-container border-b border-outline-variant w-1/3">
+            <th className="text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-on-surface-variant border-b border-outline-variant w-1/3">
               Description
             </th>
-            <th className="text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-on-surface-variant bg-surface-container border-b border-outline-variant">
+            <th className="text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-on-surface-variant border-b border-outline-variant">
               Data
             </th>
           </tr>
@@ -80,8 +80,8 @@ export default function ObjectRenderer({ data, columnConfig }: ObjectRendererPro
             return (
               <tr
                 key={row.ref}
-                className={`border-b border-outline-variant  transition-colors hover:bg-surface-container-high/50 dark:hover:bg-zinc-800/30 ${
-                  row.ref % 2 === 0 ? 'bg-transparent' : 'bg-surface/50 '
+                className={`border-b border-outline-variant transition-colors hover:bg-surface-container-high/50 dark:hover:bg-zinc-800/30 ${
+                  row.ref % 2 === 0 ? 'bg-transparent' : 'bg-surface/50'
                 }`}
               >
                 <td className="px-4 py-3 text-on-surface-variant text-[13px] font-mono font-bold align-top">

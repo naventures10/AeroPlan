@@ -25,7 +25,7 @@ const MIN_WIDTHS: Record<string, string> = {
 };
 
 /**
- * Renders AIP data_type: "array" sections as styled HTML tables.
+ * Renders AIP data_type:"array"sections as styled HTML tables.
  *
  * Includes Horizontal Scroll optimization:
  * - Sticky Top Headers: Always visible while scrolling long tables.
@@ -57,7 +57,7 @@ export default function TableRenderer({ data, columnConfig }: TableRendererProps
             {columns.map((col, idx) => (
               <th
                 key={col.key}
-                className={`text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-on-surface-variant  bg-surface-container  border-b border-outline-variant  whitespace-nowrap ${
+                className={`text-left px-4 py-3 text-[11px] font-bold tracking-widest uppercase text-on-surface-variant border-b border-outline-variant whitespace-nowrap bg-[var(--surface-container-high)] ${
                   idx === 0
                     ? 'sticky left-0 z-40 shadow-[2px_0_5px_rgba(0,0,0,0.1)] dark:shadow-[2px_0_5px_rgba(0,0,0,0.3)]'
                     : ''
@@ -73,8 +73,8 @@ export default function TableRenderer({ data, columnConfig }: TableRendererProps
           {data.map((row: any, rowIdx: number) => (
             <tr
               key={rowIdx}
-              className={`transition-colors hover:bg-surface-container-high/50 ${
-                rowIdx % 2 === 0 ? 'bg-surface/50' : 'bg-transparent'
+              className={`transition-colors hover:bg-[var(--surface-container)] ${
+                rowIdx % 2 === 0 ? 'bg-[var(--surface-container-lowest)]' : 'bg-transparent'
               }`}
             >
               {columns.map((col, idx) => {
@@ -84,15 +84,15 @@ export default function TableRenderer({ data, columnConfig }: TableRendererProps
                 return (
                   <td
                     key={col.key}
-                    className={`px-4 py-3 text-on-surface  text-[13px] leading-relaxed align-top border-b border-outline-variant  ${
+                    className={`px-4 py-3 text-on-surface text-[13px] leading-relaxed align-top border-b border-outline-variant ${
                       isSticky
                         ? 'sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.1)] dark:shadow-[2px_0_5px_rgba(0,0,0,0.3)]'
                         : ''
                     } ${
                       isSticky && rowIdx % 2 === 0
-                        ? 'bg-surface '
+                        ? 'bg-[var(--surface-container-lowest)]'
                         : isSticky
-                          ? 'bg-surface-bright '
+                          ? 'bg-[var(--surface)]'
                           : ''
                     }`}
                     dangerouslySetInnerHTML={{

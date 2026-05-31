@@ -38,10 +38,8 @@ class Settings(BaseSettings):
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
-    # ── MinIO / S3 ───────────────────────────────────────────────────────
-    MINIO_ENDPOINT: str = "http://localhost:9000"
-    MINIO_ACCESS_KEY: str
-    MINIO_SECRET_KEY: str
+    # ── Storage (Local / GCS FUSE) ───────────────────────────────────────
+    STORAGE_PATH: str = "./data"
 
     # ── Dev / Debug ────────────────────────────────────────────────────
     DEBUG: bool = False
@@ -52,15 +50,6 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     SSL_VERIFY: bool = True
-
-    # ── Weather Pipeline ──────────────────────────────────────────────
-    # Path to the frontend public folder where assets are served
-    WEATHER_OUTPUT_DIR: str = str(PROJECT_ROOT / "frontend/public/weather")
-    # Base URL relative to the domain
-    WEATHER_BASE_URL: str = "/weather"
-    # GDAL command (uses PATH by default)
-    GDAL_CMD: str = "gdal_translate"
-    # Number of historical runs to keep
 
 
 settings = Settings()

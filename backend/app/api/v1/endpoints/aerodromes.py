@@ -2,9 +2,8 @@
 Aerodromes Router — Aerodrome data, metadata, and AIP section lookups.
 """
 
-from typing import Any
-
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -122,6 +121,13 @@ async def get_all_aerodromes(db: AsyncSession = Depends(get_db)) -> GeoJsonFeatu
     Returns a GeoJSON FeatureCollection natively from PostGIS.
     """
     query = text("""
+        WITH active_notams AS (
+            SELECT airport_icao, count(*) as count
+            FROM notams
+            WHERE (valid_from IS NULL OR valid_from <= NOW())
+              AND (valid_to >= NOW() OR is_permanent = TRUE)
+            GROUP BY airport_icao
+        )
         SELECT jsonb_build_object(
             'type', 'FeatureCollection',
             'features', COALESCE(
@@ -136,13 +142,7 @@ async def get_all_aerodromes(db: AsyncSession = Depends(get_db)) -> GeoJsonFeatu
                             'magnetic_variation', ad.aip_document->'data'->'geographical_data'->>'magnetic_variation',
                             'remarks', COALESCE(ad.aip_document->'data'->'geographical_data'->>'remarks', 'None'),
                             'communications', ad.aip_document->'data'->'communications',
-                            'notam_count', (
-                                SELECT count(*)
-                                FROM notams n
-                                WHERE n.airport_icao = sf.icao_code
-                                  AND (n.valid_from IS NULL OR n.valid_from <= NOW())
-                                  AND (n.valid_to >= NOW() OR n.is_permanent = TRUE)
-                            )
+                            'notam_count', COALESCE(n.count, 0)
                         )
                     )
                 ),
@@ -151,6 +151,7 @@ async def get_all_aerodromes(db: AsyncSession = Depends(get_db)) -> GeoJsonFeatu
         ) AS geojson
         FROM spatial_features sf
         JOIN aerodrome_documents ad ON sf.icao_code = ad.icao_code
+        LEFT JOIN active_notams n ON sf.icao_code = n.airport_icao
         WHERE sf.feature_category = 'ARP';
     """)
     result = await db.execute(query)
@@ -160,11 +161,11 @@ async def get_all_aerodromes(db: AsyncSession = Depends(get_db)) -> GeoJsonFeatu
     return GeoJsonFeatureCollection(type="FeatureCollection", features=[])
 
 
-@router.get("/aerodromes/{icao_code}/metadata", response_model=dict[str, Any])
+@router.get("/aerodromes/{icao_code}/metadata")
 async def get_aerodrome_metadata(
     icao_code: str, db: AsyncSession = Depends(get_db)
-) -> dict[str, Any]:
-    """Fetches the JSONB AIP document metadata for a specific aerodrome."""
+) -> JSONResponse:
+    """Fetches the JSONB AIP document metadata for a specific aerodrome, bypassing serialization overhead."""
     query = text("""
         SELECT aip_document
         FROM aerodrome_documents
@@ -173,8 +174,8 @@ async def get_aerodrome_metadata(
     result = await db.execute(query, {"icao": icao_code.upper()})
     row = result.fetchone()
     if row and row[0]:
-        return row[0] if isinstance(row[0], dict) else {}
-    return {}
+        return JSONResponse(content=row[0] if isinstance(row[0], dict) else {})
+    return JSONResponse(content={})
 
 
 @router.get("/aerodromes/{icao_code}/section/{section_id}", response_model=AerodromeSectionResponse)

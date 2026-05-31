@@ -2,7 +2,7 @@ import { LabelVal } from './SharedLabel';
 
 /**
  * Helper to format coordinate strings into readable blocks.
- * eAIP coordinates often look like "123456N 1234567E"
+ * eAIP coordinates often look like"123456N 1234567E"
  */
 function formatAipText(text: any): React.ReactNode {
   if (typeof text !== 'string') return text;
@@ -76,7 +76,7 @@ export function AirspaceDetailsPanel({ data }: { data: any }) {
             <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider border-t border-outline-variant pt-2">
               Lateral Limits
             </span>
-            <div className="text-[11px] text-on-surface-variant font-mono bg-surface border-outline-variant p-2 rounded border overflow-hidden break-words">
+            <div className="text-[11px] text-on-surface-variant font-mono border-outline-variant p-2 rounded border overflow-hidden break-words">
               {formatAipText(p.lateral_limits)}
             </div>
           </div>

@@ -13,6 +13,7 @@
 
 .error-boundary-title {
   @apply text-2xl font-semibold mb-2;
+  text-wrap: balance;
 }
 
 .error-boundary-desc {
@@ -30,8 +31,10 @@
   padding: 1rem;
   border-radius: 0.5rem;
   font-size: 0.75rem;
-  max-width: 600px;
+  max-inline-size: 600px;
   overflow: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
   text-align: left;
   white-space: pre-wrap;
   word-break: break-word;

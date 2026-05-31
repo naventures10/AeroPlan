@@ -6,27 +6,54 @@ import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from opentelemetry import metrics, trace
+from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from sqlalchemy import text
 
 from app.api.v1.api import api_router
 from app.core.database import AsyncSessionLocal
 from app.core.logging_config import setup_logging
-from app.core.telemetry import setup_tracing
 from app.schemas.geojson import HealthResponse
 
 # ── Initialise structured logging ────────────────────────────────────────────
 setup_logging(json_format=os.getenv("LOG_FORMAT", "").lower() == "json")
 logger = structlog.get_logger()
 
-# ── Initialise OpenTelemetry tracing ─────────────────────────────────────────
-setup_tracing()
+
+# ── OpenTelemetry Instrumentation ────────────────────────────────────────────
+resource = Resource.create({"service.name": "eaip-backend"})
+
+# Traces
+provider = TracerProvider(resource=resource)
+trace_endpoint = os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "http://localhost:4318/v1/traces")
+processor = BatchSpanProcessor(OTLPSpanExporter(endpoint=trace_endpoint))
+provider.add_span_processor(processor)
+trace.set_tracer_provider(provider)
+
+# Metrics
+metric_endpoint = os.getenv(
+    "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "http://localhost:4318/v1/metrics"
+)
+metric_reader = PeriodicExportingMetricReader(OTLPMetricExporter(endpoint=metric_endpoint))
+meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
+metrics.set_meter_provider(meter_provider)
 
 # ── Application ──────────────────────────────────────────────────────────────
 app = FastAPI(title="Aero Plan API", version="0.1.0")
 
+FastAPIInstrumentor.instrument_app(app)
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
 ]
 
 app.add_middleware(
@@ -104,10 +131,3 @@ async def health_check() -> dict:
 
 # ── Register Routers ─────────────────────────────────────────────────────────
 app.include_router(api_router, prefix="/api/v1")
-
-# ── Dev-only: Async profiling endpoints (yappi) ──────────────────────────────
-if os.getenv("DEBUG", "").lower() in ("1", "true"):
-    from app.core.profiling import profiling_router
-
-    app.include_router(profiling_router)
-    logger.info("profiling_endpoints_enabled")

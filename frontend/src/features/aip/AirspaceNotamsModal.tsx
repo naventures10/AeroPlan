@@ -79,6 +79,7 @@ export function AirspaceNotamsModal() {
         transition={{ duration: 0.2 }}
         className="airspace-notams-modal-container"
         onClick={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="airspace-notams-header">

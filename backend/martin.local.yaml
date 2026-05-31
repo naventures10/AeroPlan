@@ -1,0 +1,126 @@
+# Martin Tile Server Configuration (Local Development)
+# Docs: https://maplibre.org/martin/config-file.html
+
+
+postgres:
+  connection_string: postgres://postgres:postgres@host.docker.internal:5432/aeronautical_information_system
+
+  tables:
+
+    significant_points:
+      schema: public
+      table: significant_points
+      id_column: id
+      geometry_column: geom
+      srid: 4326
+      properties:
+        waypoint_name: "varchar"
+        raw_coordinates: "varchar"
+        routes: "text[]"
+
+    spatial_features:
+      schema: public
+      table: spatial_features
+      id_column: feature_id
+      geometry_column: geom
+      srid: 4326
+      properties:
+        icao_code: "varchar"
+        feature_category: "varchar"
+        feature_name: "varchar"
+        elevation_m: "numeric"
+        marking_lgt: "varchar"
+        is_grouped: "bool"
+        height_m: "numeric"
+
+    radio_nav_aids:
+      schema: public
+      table: radio_nav_aids
+      id_column: id
+      geometry_column: geom
+      srid: 4326
+      properties:
+        station_name: "varchar"
+        ident: "varchar"
+        aid_type: "varchar"
+        frequency: "varchar"
+        hours_of_operation: "varchar"
+        elevation: "varchar"
+        remarks: "text"
+        raw_coordinates: "varchar"
+
+    airspaces_geometry:
+      schema: public
+      table: airspaces_geometry
+      id_column: ogc_fid
+      geometry_column: wkb_geometry
+      srid: 4326
+      buffer: 256
+      minzoom: 2
+      properties:
+        airspace_type: "varchar"
+        layer_name: "varchar"
+
+    airspaces_metadata:
+      schema: public
+      table: airspaces_metadata
+      id_column: id
+      geometry_column: geom
+      srid: 4326
+      buffer: 256
+      minzoom: 2
+      properties:
+        airspace_type: "varchar"
+        name: "varchar"
+        identification: "varchar"
+        upper_limit: "varchar"
+        lower_limit: "varchar"
+        remarks: "text"
+        source_file: "varchar"
+
+    ats_route_waypoints:
+      schema: public
+      table: ats_waypoints_grouped
+      geometry_column: geom
+      srid: 4326
+      properties:
+        route_ids: "text[]"
+        waypoint_name: "varchar"
+
+    ats_route_segments:
+      schema: public
+      table: v_ats_route_segments
+      id_column: id
+      geometry_column: geom
+      srid: 4326
+      properties:
+        route_id: "varchar"
+        route_type: "varchar"
+        route_designator: "varchar"
+        remarks: "varchar"
+        sequence_number: "int4"
+        track_magnetic: "varchar"
+        distance_nm: "numeric"
+        upper_limit: "varchar"
+        lower_limit: "varchar"
+        airspace_class: "varchar"
+        moca: "varchar"
+        lateral_limits: "varchar"
+        direction_odd: "varchar"
+        direction_even: "varchar"
+
+
+pmtiles:
+  access_key_id: "${AWS_ACCESS_KEY_ID}"
+  secret_access_key: "${AWS_SECRET_ACCESS_KEY}"
+  region: "us-east-1"
+  endpoint: "http://minio:9000"
+  endpoint_url: "http://minio:9000"
+  sources:
+    erc_india: s3://ais/output/ERC-VOMF.pmtiles
+
+observability:
+  metrics:
+    listen_address: "0.0.0.0:9091"
+    add_labels:
+      env: development

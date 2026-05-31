@@ -298,8 +298,9 @@ if __name__ == "__main__":
             bufsize=1,
         )
         script_name = Path(script_path).stem
-        for line in process.stdout:
-            logger.info(f"[{script_name}] {line.strip()}")
+        if process.stdout:
+            for line in process.stdout:
+                logger.info(f"[{script_name}] {line.strip()}")
 
         process.wait()
         if process.returncode != 0:

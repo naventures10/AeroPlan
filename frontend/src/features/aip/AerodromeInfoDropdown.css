@@ -6,7 +6,7 @@
   border-radius: 0.75rem;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: var(--glass-shadow);
+  box-shadow: light-dark(0 4px 15px rgba(0, 0, 0, 0.06), var(--glass-shadow));
   transition: all 0.2s ease;
   cursor: pointer;
 }
@@ -30,12 +30,14 @@
   border-radius: 0.75rem;
   backdrop-filter: blur(32px);
   -webkit-backdrop-filter: blur(32px);
-  box-shadow: var(--glass-shadow);
+  box-shadow: light-dark(0 20px 40px rgba(0, 0, 0, 0.1), var(--glass-shadow));
   overflow-y: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
 }
 
 .aip-dropdown-item {
-  width: 100%;
+  inline-size: 100%;
   text-align: left;
   display: flex;
   align-items: start;
@@ -46,7 +48,10 @@
 }
 
 .aip-dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: light-dark(
+    color-mix(in srgb, var(--on-surface-variant) 3%, transparent),
+    rgba(255, 255, 255, 0.04)
+  );
 }
 
 .aip-dropdown-item-code {
@@ -54,9 +59,9 @@
   font-weight: 700;
   font-size: 10px;
   color: var(--on-surface-variant);
-  width: 3.5rem;
+  min-inline-size: 3.5rem;
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-block-start: 2px;
 }
 
 .aip-dropdown-item:hover .aip-dropdown-item-code {
@@ -68,21 +73,12 @@
   font-weight: 500;
   color: var(--on-surface-variant);
   line-height: 1.3;
+  text-wrap: balance;
 }
 
 .aip-dropdown-item:hover .aip-dropdown-item-title {
   color: var(--primary);
+  text-wrap: balance;
 }
 
 /* --- Dropdown --- */
-html:not(.dark) .aip-dropdown-trigger {
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
-}
-
-html:not(.dark) .aip-dropdown-item:hover {
-  background: color-mix(in srgb, var(--on-surface-variant) 3%, transparent);
-}
-
-html:not(.dark) .aip-dropdown-menu {
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-}

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import * as WeatherLayers from 'weatherlayers-gl';
 import { ClipExtension } from '@deck.gl/extensions';
 import { useMapStore } from '../../../store/useMapStore';
@@ -25,6 +25,7 @@ export function useWindLayer() {
   const [loadedImages, setLoadedImages] = useState<Record<number, WeatherLayers.TextureData>>({});
   const [renderImages, setRenderImages] = useState<Record<number, WeatherLayers.TextureData>>({});
   const [status, setStatus] = useState<WindStatus>({ state: 'idle' });
+  const staleManifestAttemptedRef = useRef<Record<string, boolean>>({});
 
   const windStatus: WindStatus = useMemo(() => {
     if (weatherStatus.state === 'loading') return weatherStatus;
@@ -54,9 +55,17 @@ export function useWindLayer() {
 
       const levelKey = windAltitude === 0 ? 'surface' : String(windAltitude).padStart(3, '0');
 
-      const loadPromises = forecastTimestamps.map((t) => {
+      const loadPromises = forecastTimestamps.map(async (t) => {
         const url = t.files[levelKey];
         if (!url) throw new Error(`Missing URL for level ${levelKey}`);
+
+        // Pre-flight check to prevent HTML parsing errors
+        const headRes = await fetch(url, { method: 'HEAD' });
+        const contentType = headRes.headers.get('content-type');
+        if (contentType && contentType.includes('text/html')) {
+          throw new Error(`File no longer exists (received HTML fallback) for ${url}`);
+        }
+
         return WeatherLayers.loadTextureData(url);
       });
 
@@ -88,9 +97,26 @@ export function useWindLayer() {
         setLoadedImages(imageMap);
         setRenderImages(renderMap);
         setStatus({ state: 'ready', message: 'All frames ready' });
-      } catch (err) {
+      } catch (err: any) {
         if (!active) return;
         console.error('[useWindLayer] Load error:', err);
+
+        if (err.message?.includes('File no longer exists')) {
+          const forecastKey = `${forecastTimestamps.map((t) => t.validTime).join(',')}_${windAltitude}`;
+          if (!staleManifestAttemptedRef.current[forecastKey]) {
+            staleManifestAttemptedRef.current[forecastKey] = true;
+            console.warn(
+              '[useWindLayer] Stale manifest detected. Auto-healing by fetching fresh manifest...',
+            );
+            fetchWeatherManifest(true);
+            return;
+          } else {
+            console.error(
+              '[useWindLayer] Stale manifest detected, but auto-heal was already attempted for this timestamp/altitude key.',
+            );
+          }
+        }
+
         setStatus({ state: 'error', message: 'Failed to pre-load some frames' });
       }
     }

@@ -13,10 +13,10 @@ const buildTooltip = (content: string) =>
  * Refactored to use global CSS classes from index.css instead of inline styles.
  */
 export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
-  const { activeAerodromeMetadata, activeLayers, selectedRouteIds } = useMapStore();
-
   const getTooltip = useCallback(
     ({ object, layer, x, y }: any) => {
+      const { activeAerodromeMetadata, activeLayers, selectedRouteIds } = useMapStore.getState();
+
       if (object && layer?.id === 'aerodromes-layer') {
         const p = object.properties ?? {};
         let enrouteElev = p.elevation;
@@ -344,7 +344,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
       }
       return null;
     },
-    [activeAerodromeMetadata, activeLayers, selectedRouteIds, mapRef],
+    [mapRef],
   );
 
   return getTooltip;

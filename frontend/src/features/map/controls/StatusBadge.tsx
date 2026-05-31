@@ -3,12 +3,20 @@ import { useMapStore } from '../../../store/useMapStore';
 import type { WindStatus } from '../layers/useWindLayer';
 
 export function StatusBadge({ status }: { status: WindStatus }) {
-  const stateClass = {
-    idle: 'status--idle',
-    loading: 'status--loading',
-    ready: 'status--ready',
-    error: 'status--error',
-  }[status.state];
+  let stateClass = 'status--idle';
+  switch (status.state) {
+    case 'loading':
+      stateClass = 'status--loading';
+      break;
+    case 'ready':
+      stateClass = 'status--ready';
+      break;
+    case 'error':
+      stateClass = 'status--error';
+      break;
+    default:
+      stateClass = 'status--idle';
+  }
 
   const { setIsWindMode, setIsCloudMode, setIsWeatherMode } = useMapStore();
 
@@ -27,7 +35,7 @@ export function StatusBadge({ status }: { status: WindStatus }) {
       </span>
       <button
         onClick={handleClose}
-        className="ml-3 p-1 hover:bg-surface-container-high rounded-full transition-colors pointer-events-auto flex items-center justify-center text-on-surface-variant hover:text-on-surface"
+        className="ml-3 p-1 rounded-full transition-colors pointer-events-auto flex items-center justify-center text-on-surface-variant hover:text-on-surface"
         title="Close Weather Layer"
       >
         <X size={14} />

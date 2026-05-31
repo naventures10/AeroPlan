@@ -1,0 +1,31 @@
+
+networks:
+  eaip_network:
+    name: eaip_network
+    external: true
+
+volumes:
+  alloy_data:
+
+services:
+  alloy:
+    image: grafana/alloy:latest
+    container_name: eaip-alloy
+    user: root
+    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    volumes:
+      - ./alloy-config.alloy:/etc/alloy/config.alloy
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ../backend/logs:/var/log/backend:ro
+      - alloy_data:/var/lib/alloy/data
+    ports:
+      - "4317:4317"    # OTLP gRPC receiver
+      - "4318:4318"    # OTLP HTTP receiver
+      - "12347:12347"  # Faro web receiver (frontend RUM)
+      - "12345:12345"  # Alloy internal UI / debugging
+    env_file:
+      - .env
+    networks:
+      - eaip_network
+    restart: unless-stopped
+

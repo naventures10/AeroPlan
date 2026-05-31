@@ -9,11 +9,13 @@
 !.gitignore
 !Makefile
 !README.md
+!.github/
 # Allow the packages
 !/frontend/
 !/backend/
 !/scripts/
 !/eaip_scrapper/
+!/monitoring/
 !.gitlab-ci.yml
 
 # ============================================================
@@ -86,3 +88,7 @@ backend/temp_out_*.tif
 # Local Scratch / Development
 # ============================================================
 backend/scripts/scratch/
+
+# Local data / docker bind mounts
+data/
+

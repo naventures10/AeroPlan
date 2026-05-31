@@ -1,16 +1,22 @@
 """
-Weather Router — Non-persistent, on-demand METAR/TAF with in-memory TTL cache.
+Weather Router — Non-persistent, on-demand METAR/TAF with in-memory TTL cache,
+plus MinIO proxy endpoints for weather forecast GeoTIFF data.
 
-Redundant dual-source architecture:
+Redundant dual-source architecture for METAR/TAF:
   1. Chennai OLBS  (olbs.amsschennai.gov.in)
   2. Delhi OLBS    (olbs.amssdelhi.gov.in)
 
 Both sources are scraped concurrently. If both succeed, the data is compared and
 the most recent observation is returned. If one source fails, the other is used
 as fallback. Results are cached in-memory for CACHE_TTL_SECONDS (default 300s).
+
+Weather Forecast Data:
+  GeoTIFF files and manifest are stored in MinIO (ais bucket, weather/ prefix)
+  and served via API proxy endpoints.
 """
 
 import asyncio
+import json
 import re
 import time
 from datetime import UTC, datetime
@@ -18,13 +24,13 @@ from datetime import UTC, datetime
 import httpx
 import structlog
 from bs4 import BeautifulSoup
-from fastapi import APIRouter, HTTPException
-from opentelemetry import trace
+from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
+from app.core.storage import get_storage_path
 from app.schemas.weather import WeatherResponse
 
 logger = structlog.get_logger()
-tracer = trace.get_tracer(__name__)
 
 router = APIRouter(prefix="", tags=["Weather"])
 
@@ -34,6 +40,11 @@ SOURCES = {
     "delhi": "https://olbs.amssdelhi.gov.in/nsweb/FlightBriefing/weathermap/station.php?icao={}",
 }
 CACHE_TTL_SECONDS = 300  # 5 minutes
+
+WEATHER_S3_PREFIX = "weather"
+
+# Strict filename whitelist: alphanumeric, underscores, hyphens, and .tif/.tiff/.json extensions
+SAFE_FILENAME_RE = re.compile(r"^[A-Za-z0-9_\-]+\.(tiff?|json)$")
 
 # ── In-Memory Cache ──────────────────────────────────────────────────────────
 # { "VABB": { "data": {...}, "fetched_at": float, "source": str } }
@@ -96,22 +107,14 @@ def _extract_metar_time(metar: str | None) -> int:
 
 async def _fetch_from_source(source_name: str, url: str) -> dict | None:
     """Fetch and parse weather from a single source. Returns None on failure."""
-    with tracer.start_as_current_span(
-        "weather.fetch_source",
-        attributes={"weather.source": source_name, "http.url": url},
-    ) as span:
-        try:
-            async with httpx.AsyncClient(verify=False, timeout=15.0) as client:
-                resp = await client.get(url)
-                resp.raise_for_status()
-            span.set_attribute("http.status_code", resp.status_code)
-            span.set_attribute("http.response_size", len(resp.text))
-            return {"source": source_name, "html": resp.text}
-        except Exception as exc:
-            span.set_attribute("error", True)
-            span.set_attribute("error.message", str(exc))
-            logger.warning("weather_source_failed", source=source_name, error=str(exc))
-            return None
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get(url)
+            resp.raise_for_status()
+        return {"source": source_name, "html": resp.text}
+    except Exception as exc:
+        logger.warning("weather_source_failed", source=source_name, error=str(exc))
+        return None
 
 
 async def _fetch_weather(icao: str) -> dict:
@@ -121,16 +124,12 @@ async def _fetch_weather(icao: str) -> dict:
     """
     icao_upper = icao.upper()
 
-    with tracer.start_as_current_span(
-        "weather.fetch_all",
-        attributes={"weather.icao": icao_upper},
-    ) as _span:
-        # Fire both requests concurrently
-        tasks = {
-            name: _fetch_from_source(name, url.format(icao_upper)) for name, url in SOURCES.items()
-        }
-        results = await asyncio.gather(*tasks.values())
-        source_results = dict(zip(tasks.keys(), results, strict=False))
+    # Fire both requests concurrently
+    tasks = {
+        name: _fetch_from_source(name, url.format(icao_upper)) for name, url in SOURCES.items()
+    }
+    results = await asyncio.gather(*tasks.values())
+    source_results = dict(zip(tasks.keys(), results, strict=False))
 
     # Parse successful responses
     parsed: list[dict] = []
@@ -189,7 +188,118 @@ async def _fetch_weather(icao: str) -> dict:
     }
 
 
-# ── Endpoint ─────────────────────────────────────────────────────────────────
+# ── Forecast Data Proxy Endpoints (from MinIO) ──────────────────────────────
+# These MUST be defined BEFORE the dynamic /weather/{icao_code} route below.
+
+
+@router.get("/weather/weather_manifest.json")
+async def get_weather_manifest() -> JSONResponse:
+    """
+    Fetch the weather manifest from MinIO and rewrite file URLs to point
+    through the API proxy.
+    """
+    s3_key = f"{WEATHER_S3_PREFIX}/weather_manifest.json"
+    filepath = get_storage_path(s3_key)
+
+    try:
+        if not filepath.exists():
+            raise HTTPException(status_code=404, detail="Weather manifest not found")
+
+        with open(filepath, encoding="utf-8") as f:
+            manifest = json.load(f)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("weather_manifest_fetch_failed", error=str(e))
+        raise HTTPException(status_code=502, detail="Failed to fetch weather manifest") from e
+
+    return JSONResponse(
+        content=manifest,
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+    )
+
+
+@router.api_route("/weather/files/{filename}", methods=["GET", "HEAD"])
+async def get_weather_file(filename: str, request: Request):
+    """
+    Stream a weather GeoTIFF file from MinIO with long-lived cache headers.
+    Supports HTTP HEAD and Range requests for Cloud-Optimized GeoTIFF (COG) streaming.
+    """
+    # Validate filename with strict whitelist to prevent path traversal (including URL-encoded)
+    if not SAFE_FILENAME_RE.match(filename):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    s3_key = f"{WEATHER_S3_PREFIX}/{filename}"
+    filepath = get_storage_path(s3_key)
+
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail=f"Weather file not found: {filename}")
+
+    file_size = filepath.stat().st_size
+    content_type = "application/json" if filename.endswith(".json") else "image/tiff"
+
+    if request.method == "HEAD":
+        return Response(
+            headers={
+                "Content-Length": str(file_size),
+                "Accept-Ranges": "bytes",
+                "Cache-Control": "public, max-age=31536000, immutable",
+            }
+        )
+
+    range_header = request.headers.get("range")
+    if range_header:
+        # Simple range parser
+        match = re.search(r"bytes=(\d+)-(\d*)", range_header)
+        if match:
+            byte1 = int(match.group(1))
+            byte2 = int(match.group(2)) if match.group(2) else file_size - 1
+
+            # Validate bounds
+            if byte1 >= file_size or byte1 < 0:
+                return Response(
+                    status_code=416,
+                    headers={
+                        "Content-Range": f"bytes */{file_size}",
+                        "Cache-Control": "public, max-age=31536000, immutable",
+                    },
+                )
+
+            byte2 = min(byte2, file_size - 1)
+            length = byte2 - byte1 + 1
+
+            def file_iterator():
+                with open(filepath, "rb") as f:
+                    f.seek(byte1)
+                    yield f.read(length)
+
+            headers = {
+                "Content-Range": f"bytes {byte1}-{byte2}/{file_size}",
+                "Accept-Ranges": "bytes",
+                "Content-Length": str(length),
+                "Cache-Control": "public, max-age=31536000, immutable",
+                "Content-Disposition": f"inline; filename={filename}",
+            }
+            return StreamingResponse(
+                file_iterator(),
+                status_code=206,
+                media_type=content_type,
+                headers=headers,
+            )
+
+    # Return full file if no range header
+    return FileResponse(
+        path=filepath,
+        media_type=content_type,
+        filename=filename,
+        headers={
+            "Accept-Ranges": "bytes",
+            "Cache-Control": "public, max-age=31536000, immutable",
+        },
+    )
+
+
+# ── METAR/TAF Endpoint ──────────────────────────────────────────────────────
 @router.get("/weather/{icao_code}", response_model=WeatherResponse)
 async def get_weather(icao_code: str) -> WeatherResponse:
     """

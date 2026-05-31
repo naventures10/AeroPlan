@@ -346,3 +346,153 @@ async def test_extract_metar_time_branches() -> None:
 
     assert _extract_metar_time(None) == 0
     assert _extract_metar_time("foo") == 0
+
+
+@pytest.mark.asyncio
+async def test_get_weather_manifest_success(api_client: AsyncClient, monkeypatch, tmp_path) -> None:
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "STORAGE_PATH", str(tmp_path))
+
+    # Create weather directory and write manifest file
+    weather_dir = tmp_path / "weather"
+    weather_dir.mkdir(parents=True, exist_ok=True)
+    manifest_file = weather_dir / "weather_manifest.json"
+
+    mock_manifest = {
+        "metadata": {"generated_at": "2026-05-31T09:20:27Z"},
+        "layers": {
+            "wind": ["weather_001_20260531_092027_step009.tif"],
+            "cloud": ["weather_002_20260531_092027_step009.tif"],
+        },
+    }
+
+    import json
+
+    manifest_file.write_text(json.dumps(mock_manifest), encoding="utf-8")
+
+    response = await api_client.get("/api/v1/weather/weather_manifest.json")
+    assert response.status_code == 200
+    assert response.json() == mock_manifest
+
+
+@pytest.mark.asyncio
+async def test_get_weather_manifest_not_found(
+    api_client: AsyncClient, monkeypatch, tmp_path
+) -> None:
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "STORAGE_PATH", str(tmp_path))
+
+    response = await api_client.get("/api/v1/weather/weather_manifest.json")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_get_weather_file_success(api_client: AsyncClient, monkeypatch, tmp_path) -> None:
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "STORAGE_PATH", str(tmp_path))
+
+    # Create weather directory and write mock tif file
+    weather_dir = tmp_path / "weather"
+    weather_dir.mkdir(parents=True, exist_ok=True)
+    tif_file = weather_dir / "weather_001_20260531_092027_step009.tif"
+    tif_file.write_bytes(b"mock_geotiff_data_bytes_long_enough_to_test")
+
+    response = await api_client.get("/api/v1/weather/files/weather_001_20260531_092027_step009.tif")
+    assert response.status_code == 200
+    assert response.content == b"mock_geotiff_data_bytes_long_enough_to_test"
+
+
+@pytest.mark.asyncio
+async def test_get_weather_file_range_request(
+    api_client: AsyncClient, monkeypatch, tmp_path
+) -> None:
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "STORAGE_PATH", str(tmp_path))
+
+    # Create weather directory and write mock tif file
+    weather_dir = tmp_path / "weather"
+    weather_dir.mkdir(parents=True, exist_ok=True)
+    tif_file = weather_dir / "weather_001_20260531_092027_step009.tif"
+    content = b"mock_geotiff_data_bytes_long_enough_to_test"
+    tif_file.write_bytes(content)
+
+    headers = {"Range": "bytes=5-14"}
+    response = await api_client.get(
+        "/api/v1/weather/files/weather_001_20260531_092027_step009.tif", headers=headers
+    )
+    assert response.status_code == 206
+    assert response.content == content[5:15]
+    assert response.headers["Content-Range"] == f"bytes 5-14/{len(content)}"
+    assert response.headers["Content-Length"] == "10"
+
+
+@pytest.mark.asyncio
+async def test_get_weather_file_range_request_out_of_bounds(
+    api_client: AsyncClient, monkeypatch, tmp_path
+) -> None:
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "STORAGE_PATH", str(tmp_path))
+
+    # Create weather directory and write mock tif file
+    weather_dir = tmp_path / "weather"
+    weather_dir.mkdir(parents=True, exist_ok=True)
+    tif_file = weather_dir / "weather_001_20260531_092027_step009.tif"
+    content = b"mock_geotiff_data_bytes_long_enough_to_test"
+    tif_file.write_bytes(content)
+
+    headers = {"Range": "bytes=100-200"}
+    response = await api_client.get(
+        "/api/v1/weather/files/weather_001_20260531_092027_step009.tif", headers=headers
+    )
+    assert response.status_code == 416
+    assert response.headers["Content-Range"] == f"bytes */{len(content)}"
+
+
+@pytest.mark.asyncio
+async def test_get_weather_file_head_request(
+    api_client: AsyncClient, monkeypatch, tmp_path
+) -> None:
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "STORAGE_PATH", str(tmp_path))
+
+    # Create weather directory and write mock tif file
+    weather_dir = tmp_path / "weather"
+    weather_dir.mkdir(parents=True, exist_ok=True)
+    tif_file = weather_dir / "weather_001_20260531_092027_step009.tif"
+    content = b"mock_geotiff_data_bytes_long_enough_to_test"
+    tif_file.write_bytes(content)
+
+    response = await api_client.request(
+        "HEAD", "/api/v1/weather/files/weather_001_20260531_092027_step009.tif"
+    )
+    assert response.status_code == 200
+    assert response.headers["Content-Length"] == str(len(content))
+    assert response.headers["Accept-Ranges"] == "bytes"
+
+
+@pytest.mark.asyncio
+async def test_get_weather_file_not_found(api_client: AsyncClient, monkeypatch, tmp_path) -> None:
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "STORAGE_PATH", str(tmp_path))
+
+    response = await api_client.get("/api/v1/weather/files/nonexistent.tif")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_get_weather_file_invalid_name(
+    api_client: AsyncClient, monkeypatch, tmp_path
+) -> None:
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "STORAGE_PATH", str(tmp_path))
+
+    response = await api_client.get("/api/v1/weather/files/foo..bar")
+    assert response.status_code == 400

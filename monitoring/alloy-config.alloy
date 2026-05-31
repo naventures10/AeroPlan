@@ -1,0 +1,119 @@
+// 1. Receivers (OTLP & Faro)
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+  output {
+    metrics = [otelcol.processor.batch.default.input]
+    traces  = [otelcol.processor.batch.default.input]
+  }
+}
+
+faro.receiver "default" {
+  extra_log_labels = {
+    service_name = "eaip-frontend",
+    job          = "frontend",
+  }
+  server {
+    listen_address       = "0.0.0.0"
+    listen_port          = 12347
+    cors_allowed_origins = ["*"]
+  }
+  output {
+    logs    = [loki.write.grafana_cloud.receiver]
+    traces  = [otelcol.processor.batch.default.input]
+  }
+}
+
+// 2. Processors (Batch processing for telemetry)
+otelcol.processor.batch "default" {
+  output {
+    metrics = [otelcol.exporter.prometheus.to_prometheus.input]
+    traces  = [otelcol.exporter.otlphttp.tempo.input]
+  }
+}
+
+// 3. Exporters
+// OTel Metrics to Prometheus format
+otelcol.exporter.prometheus "to_prometheus" {
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+}
+
+// Prometheus remote write to Grafana Cloud
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_PROMETHEUS_URL")
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_PROMETHEUS_USER")
+      password = sys.env("GRAFANA_CLOUD_API_KEY")
+    }
+  }
+}
+
+// Tempo Basic Authentication
+otelcol.auth.basic "tempo" {
+  username = sys.env("GRAFANA_CLOUD_OTLP_USER")
+  password = sys.env("GRAFANA_CLOUD_API_KEY")
+}
+
+// OTLP Trace exporter to Grafana Cloud
+otelcol.exporter.otlphttp "tempo" {
+  client {
+    endpoint = sys.env("GRAFANA_CLOUD_OTLP_ENDPOINT")
+    auth     = otelcol.auth.basic.tempo.handler
+  }
+}
+
+// 4. Log Collection (Docker stdout — no shared volume needed)
+discovery.docker "backend" {
+  host = "unix:///var/run/docker.sock"
+  filter {
+    name   = "name"
+    values = ["eaip-backend"]
+  }
+}
+
+loki.source.docker "backend" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.docker.backend.targets
+  forward_to = [loki.process.backend_pipeline.receiver]
+}
+
+// Parse trace IDs, levels, etc. from JSON backend stdout logs
+loki.process "backend_pipeline" {
+  stage.json {
+    expressions = {
+      level    = "level",
+      message  = "event",
+      trace_id = "trace_id",
+      span_id  = "span_id",
+    }
+  }
+  stage.labels {
+    values = {
+      level = "level",
+    }
+  }
+  stage.static_labels {
+    values = {
+      service_name = "eaip-backend",
+      job          = "docker_backend",
+    }
+  }
+  forward_to = [loki.write.grafana_cloud.receiver]
+}
+
+// Loki logs exporter to Grafana Cloud
+loki.write "grafana_cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_LOKI_URL")
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_LOKI_USER")
+      password = sys.env("GRAFANA_CLOUD_API_KEY")
+    }
+  }
+}
+

@@ -9,7 +9,7 @@
   backdrop-filter: blur(16px) saturate(200%);
   -webkit-backdrop-filter: blur(16px) saturate(200%);
   border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  box-shadow: light-dark(0 25px 50px -12px rgba(0, 0, 0, 0.1), var(--glass-shadow));
 }
 
 .aip-feature-card-wrapper {
@@ -36,6 +36,7 @@
 .aip-feature-card-title {
   @apply text-sm font-bold tracking-wide;
   color: var(--primary);
+  text-wrap: balance;
 }
 
 .aip-feature-card-close {
@@ -79,7 +80,7 @@
   text-transform: uppercase;
   color: var(--on-surface-variant);
   white-space: nowrap;
-  border-bottom: 1px solid var(--glass-border);
+  border-block-end: 1px solid var(--glass-border);
 }
 
 .route-td {
@@ -89,6 +90,3 @@
 }
 
 /* --- Feature Cards --- */
-html:not(.dark) .aip-feature-card {
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
-}

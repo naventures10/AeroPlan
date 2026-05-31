@@ -47,11 +47,20 @@ describe('useWindLayer', () => {
   beforeEach(() => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(() =>
-        Promise.resolve({
+      vi.fn((url) => {
+        if (typeof url === 'string' && url.includes('url-')) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            headers: { get: () => 'image/tiff' },
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
           json: () => Promise.resolve(mockManifest),
-        }),
-      ),
+        });
+      }),
     );
 
     (WeatherLayers.loadTextureData as any).mockResolvedValue(mockTextureData);

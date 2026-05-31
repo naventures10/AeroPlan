@@ -68,6 +68,7 @@ export default function SectionModal({
               onClick={(e) => {
                 e.stopPropagation();
               }}
+              onWheel={(e) => e.stopPropagation()}
             >
               {/* Header */}
               <div className="aip-modal-header">

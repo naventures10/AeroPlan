@@ -176,6 +176,15 @@ test.describe('Terminal View - Detailed Interactions', () => {
     await terminalPage.openChart('RNP Y RWY 07');
     await terminalPage.clickViewIn3D();
 
+    // Wait for the transition to progress past pitch 40 (transition target is 45)
+    await page.waitForFunction(
+      () => {
+        // @ts-expect-error - useMapStore is attached to window for testing
+        return window.useMapStore.getState().viewState.pitch > 40;
+      },
+      { timeout: 5000 },
+    );
+
     const state = await page.evaluate(() => {
       // @ts-expect-error - useMapStore is attached to window for testing
       const s = window.useMapStore.getState();

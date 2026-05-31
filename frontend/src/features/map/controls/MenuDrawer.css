@@ -16,17 +16,17 @@
 /* Drawer panel — slides in from left edge, overlays toolbar and search bar */
 .aip-menu-drawer {
   position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 22rem;
+  inset-block-start: 0;
+  inset-block-end: 0;
+  inset-inline-start: 0;
+  min-inline-size: 22rem;
   z-index: 110;
   display: flex;
   flex-direction: column;
   background: var(--glass-bg-solid);
   backdrop-filter: blur(32px) saturate(1.4);
   -webkit-backdrop-filter: blur(32px) saturate(1.4);
-  border-right: 1px solid var(--glass-border);
+  border-inline-end: 1px solid var(--glass-border);
   box-shadow: 12px 0 40px rgba(0, 0, 0, 0.35);
   overflow: hidden;
 }
@@ -44,8 +44,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
   border-radius: 0.5rem;
   background: linear-gradient(135deg, var(--accent-cyan) 0%, hsl(200, 90%, 45%) 100%);
   color: #fff;
@@ -54,8 +54,8 @@
 }
 
 .aip-drawer-logo svg {
-  width: 1.1rem;
-  height: 1.1rem;
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
 }
 
 .aip-drawer-title-group {
@@ -63,6 +63,7 @@
   flex-direction: column;
   line-height: 1;
   flex: 1;
+  text-wrap: balance;
 }
 
 .aip-drawer-title {
@@ -71,61 +72,61 @@
   font-weight: 700;
   color: var(--primary);
   letter-spacing: 0.04em;
+  text-wrap: balance;
 }
 
 .aip-drawer-subtitle {
   font-family: var(--font-hanken);
   font-size: 0.6875rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.4);
+  color: light-dark(
+    color-mix(in srgb, var(--on-surface-variant) 55%, transparent),
+    rgba(255, 255, 255, 0.4)
+  );
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  margin-top: 0.2rem;
-}
-
-html:not(.dark) .aip-drawer-subtitle {
-  color: color-mix(in srgb, var(--on-surface-variant) 55%, transparent);
+  margin-block-start: 0.2rem;
+  text-wrap: balance;
 }
 
 .aip-drawer-close {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  inline-size: 2rem;
+  block-size: 2rem;
   border-radius: 0.375rem;
   border: 1px solid var(--glass-border);
   background: transparent;
-  color: rgba(255, 255, 255, 0.4);
+  color: light-dark(
+    color-mix(in srgb, var(--on-surface-variant) 50%, transparent),
+    rgba(255, 255, 255, 0.4)
+  );
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
   outline: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-cyan);
+    outline-offset: 2px;
+  }
 }
 
 .aip-drawer-close svg {
-  width: 1rem;
-  height: 1rem;
+  inline-size: 1rem;
+  block-size: 1rem;
 }
 
 .aip-drawer-close:hover {
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.08);
+  color: light-dark(var(--on-surface-variant), rgba(255, 255, 255, 0.9));
+  background: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.08));
   border-color: rgba(255, 255, 255, 0.2);
-}
-
-html:not(.dark) .aip-drawer-close {
-  color: color-mix(in srgb, var(--on-surface-variant) 50%, transparent);
-}
-
-html:not(.dark) .aip-drawer-close:hover {
-  color: var(--on-surface-variant);
-  background: rgba(0, 0, 0, 0.06);
 }
 
 /* Divider */
 .aip-drawer-divider {
-  height: 1px;
+  block-size: 1px;
   margin: 0 1.25rem;
   background: var(--glass-border);
   flex-shrink: 0;
@@ -135,19 +136,23 @@ html:not(.dark) .aip-drawer-close:hover {
 .aip-drawer-nav {
   flex: 1;
   overflow-y: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
   overflow-x: hidden;
   padding: 0.75rem 0.75rem;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
 }
 
-.aip-drawer-nav::-webkit-scrollbar {
-  width: 4px;
-}
+@supports not (scrollbar-color: auto) {
+  .aip-drawer-nav::-webkit-scrollbar {
+    inline-size: 4px;
+  }
 
-.aip-drawer-nav::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
+  .aip-drawer-nav::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+  }
 }
 
 .aip-drawer-list {
@@ -164,7 +169,7 @@ html:not(.dark) .aip-drawer-close:hover {
   display: flex;
   align-items: center;
   gap: 0.875rem;
-  width: 100%;
+  inline-size: 100%;
   padding: 0.875rem 0.875rem;
   border-radius: 0.625rem;
   border: 1px solid transparent;
@@ -175,15 +180,20 @@ html:not(.dark) .aip-drawer-close:hover {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   outline: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-cyan);
+    outline-offset: 2px;
+  }
 }
 
 .aip-drawer-item:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: var(--glass-border);
+  background: light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.06));
+  border-color: light-dark(rgba(0, 0, 0, 0.08), var(--glass-border));
 }
 
 .aip-drawer-item:hover .aip-drawer-item-icon {
-  color: var(--accent-cyan);
+  color: light-dark(var(--accent-cyan), var(--accent-cyan));
   transform: scale(1.1);
 }
 
@@ -197,37 +207,26 @@ html:not(.dark) .aip-drawer-close:hover {
   box-shadow: 0 0 0 2px rgba(0, 200, 220, 0.25);
 }
 
-html:not(.dark) .aip-drawer-item:hover {
-  background: rgba(0, 0, 0, 0.04);
-  border-color: rgba(0, 0, 0, 0.08);
-}
-
 /* Item icon */
 .aip-drawer-item-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
   border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.07);
-  color: rgba(255, 255, 255, 0.55);
+  background: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.07));
+  color: light-dark(
+    color-mix(in srgb, var(--on-surface-variant) 65%, transparent),
+    rgba(255, 255, 255, 0.55)
+  );
   flex-shrink: 0;
   transition: all 0.2s ease;
 }
 
 .aip-drawer-item-icon svg {
-  width: 1.125rem;
-  height: 1.125rem;
-}
-
-html:not(.dark) .aip-drawer-item-icon {
-  background: rgba(0, 0, 0, 0.05);
-  color: color-mix(in srgb, var(--on-surface-variant) 65%, transparent);
-}
-
-html:not(.dark) .aip-drawer-item:hover .aip-drawer-item-icon {
-  color: var(--accent-cyan);
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
 }
 
 /* Item text */
@@ -236,7 +235,7 @@ html:not(.dark) .aip-drawer-item:hover .aip-drawer-item-icon {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  min-width: 0;
+  min-inline-size: 0;
 }
 
 .aip-drawer-item-title {
@@ -247,21 +246,21 @@ html:not(.dark) .aip-drawer-item:hover .aip-drawer-item-icon {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-wrap: balance;
 }
 
 .aip-drawer-item-desc {
   font-family: var(--font-hanken);
   font-size: 0.7rem;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.38);
+  color: light-dark(
+    color-mix(in srgb, var(--on-surface-variant) 45%, transparent),
+    rgba(255, 255, 255, 0.38)
+  );
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   letter-spacing: 0.01em;
-}
-
-html:not(.dark) .aip-drawer-item-desc {
-  color: color-mix(in srgb, var(--on-surface-variant) 45%, transparent);
 }
 
 /* Badge */
@@ -269,8 +268,8 @@ html:not(.dark) .aip-drawer-item-desc {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.375rem;
-  height: 1.375rem;
+  inline-size: 1.375rem;
+  block-size: 1.375rem;
   padding: 0 0.375rem;
   border-radius: 100px;
   background: var(--accent-cyan-opacity-20);
@@ -299,7 +298,10 @@ html:not(.dark) .aip-drawer-item-desc {
 .aip-drawer-item-arrow {
   display: flex;
   align-items: center;
-  color: rgba(255, 255, 255, 0.2);
+  color: light-dark(
+    color-mix(in srgb, var(--on-surface-variant) 35%, transparent),
+    rgba(255, 255, 255, 0.2)
+  );
   opacity: 0;
   transform: translateX(-4px);
   transition: all 0.2s ease;
@@ -307,12 +309,8 @@ html:not(.dark) .aip-drawer-item-desc {
 }
 
 .aip-drawer-item-arrow svg {
-  width: 0.875rem;
-  height: 0.875rem;
-}
-
-html:not(.dark) .aip-drawer-item-arrow {
-  color: color-mix(in srgb, var(--on-surface-variant) 35%, transparent);
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
 }
 
 /* Footer */
@@ -321,7 +319,7 @@ html:not(.dark) .aip-drawer-item-arrow {
   align-items: center;
   justify-content: center;
   padding: 0.875rem 1.25rem;
-  border-top: 1px solid var(--glass-border);
+  border-block-start: 1px solid var(--glass-border);
   flex-shrink: 0;
 }
 
@@ -329,13 +327,12 @@ html:not(.dark) .aip-drawer-item-arrow {
   font-family: var(--font-hanken);
   font-size: 0.6875rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.2);
+  color: light-dark(
+    color-mix(in srgb, var(--on-surface-variant) 35%, transparent),
+    rgba(255, 255, 255, 0.2)
+  );
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-html:not(.dark) .aip-drawer-version {
-  color: color-mix(in srgb, var(--on-surface-variant) 35%, transparent);
 }
 
 /* Item entry animations are handled by Framer Motion stagger variants */

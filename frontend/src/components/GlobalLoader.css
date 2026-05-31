@@ -10,7 +10,7 @@
 .global-loader-spinner {
   @apply w-10 h-10 border-4 rounded-full animate-spin mb-4;
   border-color: var(--surface-container-highest);
-  border-top-color: var(--status-success);
+  border-block-start-color: var(--status-success);
 }
 
 .global-loader-text {

@@ -12,8 +12,8 @@
 }
 
 .auth-modal-container {
-  width: 100%;
-  max-width: 420px;
+  inline-size: 100%;
+  max-inline-size: 420px;
   background: var(--glass-bg-solid);
   backdrop-filter: blur(32px);
   -webkit-backdrop-filter: blur(32px);
@@ -38,6 +38,7 @@
   font-weight: 700;
   color: var(--on-surface);
   margin: 0;
+  text-wrap: balance;
 }
 
 .auth-modal-close-btn {
@@ -78,7 +79,7 @@
 }
 
 .auth-input {
-  width: 100%;
+  inline-size: 100%;
   background: var(--surface-container);
   border: 1px solid var(--glass-border);
   color: var(--on-surface);
@@ -86,12 +87,17 @@
   border-radius: 0.5rem;
   font-size: 1rem;
   outline: none;
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-cyan);
+    outline-offset: 2px;
+  }
   transition:
     border-color 0.2s,
     box-shadow 0.2s;
 }
 
-.auth-input:focus {
+.auth-input:focus-visible {
   border-color: var(--accent-cyan);
   box-shadow: 0 0 0 2px var(--accent-cyan-opacity-20);
 }
@@ -106,7 +112,7 @@
 }
 
 .auth-submit-btn {
-  width: 100%;
+  inline-size: 100%;
   background: var(--accent-cyan-opacity-10);
   color: var(--accent-cyan);
   border: 1px solid var(--accent-cyan-opacity-20);
@@ -143,7 +149,7 @@
   font-weight: 600;
   cursor: pointer;
   padding: 0;
-  margin-left: 0.25rem;
+  margin-inline-start: 0.25rem;
 }
 
 .auth-toggle-btn:hover {

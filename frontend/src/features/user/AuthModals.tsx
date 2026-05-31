@@ -71,6 +71,7 @@ export default function AuthModals({ isOpen, onClose, initialMode = 'login' }: A
           transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
           className="auth-modal-container"
           onClick={(e) => e.stopPropagation()}
+          onWheel={(e) => e.stopPropagation()}
         >
           <div className="auth-modal-header">
             <h2 className="auth-modal-title">

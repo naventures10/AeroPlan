@@ -116,9 +116,8 @@ def stitch_cluster(airspace_type, cluster_id, group):
         # 2. Ensure we only have LineStrings/MultiLineStrings for linemerge
         if union_result.geom_type == "GeometryCollection":
             lines = [
-                # pyrefly: ignore [missing-attribute]
                 g
-                for g in union_result.geoms
+                for g in union_result.geoms  # pyrefly: ignore [missing-attribute]
                 if g.geom_type in ["LineString", "MultiLineString"]
             ]
             if lines:

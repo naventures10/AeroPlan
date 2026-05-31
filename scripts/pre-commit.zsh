@@ -39,18 +39,22 @@ run_check() {
 }
 
 # 1. Static Analysis
-echo "\n[1/2] Phase 1: Static Analysis..."
+echo "\n[1/3] Phase 1: Static Analysis..."
 run_check "Frontend Lint" "npm run lint" "frontend"
 run_check "Frontend Format" "npm run format:check" "frontend"
 run_check "Frontend Type Check" "npm run type-check" "frontend"
 run_check "Backend Ruff" "uv run ruff check ." "backend"
 run_check "Backend Format" "uv run ruff format --check ." "backend"
 run_check "Backend pyrefly" "uv run pyrefly check" "backend"
+run_check "Scraper Ruff" "uv run ruff check ." "eaip_scrapper"
+run_check "Scraper Format" "uv run ruff format --check ." "eaip_scrapper"
+run_check "Scraper pyrefly" "uv run pyrefly check" "eaip_scrapper"
 
 # 2. Automated Testing
 echo "\n[2/3] Phase 2: Automated Testing..."
 run_check "Frontend Tests" "npm test" "frontend"
 run_check "Backend Tests" "uv run python -m pytest" "backend"
+run_check "Scraper Tests" "uv run python -m pytest" "eaip_scrapper"
 
 # 3. Build Verification
 echo "\n[3/3] Phase 3: Build Verification..."

@@ -6,7 +6,7 @@ test.describe('Weather Layers Userflows (Wind & Clouds)', () => {
     const mapPage = new MapPage(page);
 
     // Intercept weather manifest to ensure stable test data
-    await page.route('**/weather/weather_manifest.json', async (route) => {
+    await page.route('**/api/v1/weather/weather_manifest.json', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -66,7 +66,9 @@ test.describe('Weather Layers Userflows (Wind & Clouds)', () => {
     await expect(page.locator('.wind-timeline')).toBeVisible();
 
     // 6. Close Weather Layer via the badge X button
-    await page.locator('.wind-status button').click({ force: true });
+    const closeBtn = page.locator('.wind-status button');
+    await closeBtn.scrollIntoViewIfNeeded();
+    await closeBtn.dispatchEvent('click');
     await expect(page.locator('.wind-status')).not.toBeVisible();
     await expect(page.getByRole('button', { name: 'Toggle Weather' })).not.toHaveClass(/active/);
   });
@@ -124,23 +126,36 @@ test.describe('Weather Layers Userflows (Wind & Clouds)', () => {
     await expect(page.locator('.wind-timeline')).toBeVisible();
 
     // 1. Initial play state should be false
-    const playButton = page.locator('.wind-timeline__play-circle');
+    const initialState = await page.evaluate(
+      () => (window as any).useMapStore.getState().windIsPlaying,
+    );
+    expect(initialState).toBe(false);
 
     // 2. Toggle Play
+    const playButton = page.locator('.wind-timeline__play-circle');
     await playButton.click({ force: true });
 
-    // 3. Verify store state for playing (shared weather playback)
-    const isPlaying = await page.evaluate(
-      () => (window as any).useMapStore.getState().windIsPlaying,
+    // 3. Wait for store state for playing to become true
+    await page.waitForFunction(
+      () => (window as any).useMapStore.getState().windIsPlaying === true,
+      undefined,
+      { timeout: 5000 },
     );
-    expect(isPlaying).toBe(true);
 
-    // 4. Verify pause works
+    // Verify the play button now shows the pause icon (two rects)
+    await expect(page.locator('.wind-timeline__play-circle rect')).toHaveCount(2);
+
+    // 4. Toggle Pause
     await playButton.click({ force: true });
-    await page.waitForTimeout(500);
-    const isPlayingAfterPause = await page.evaluate(
-      () => (window as any).useMapStore.getState().windIsPlaying,
+
+    // Wait for store state to become false
+    await page.waitForFunction(
+      () => (window as any).useMapStore.getState().windIsPlaying === false,
+      undefined,
+      { timeout: 5000 },
     );
-    expect(isPlayingAfterPause).toBe(false);
+
+    // Verify the play button now shows the play icon (a single path)
+    await expect(page.locator('.wind-timeline__play-circle path')).toHaveCount(1);
   });
 });

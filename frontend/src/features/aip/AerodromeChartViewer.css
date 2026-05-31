@@ -3,11 +3,11 @@
    ───────────────────────────────────────────────────────────────────────────── */
 .aip-view-3d-container {
   position: absolute;
-  bottom: 2rem;
-  right: 2rem;
+  inset-block-end: 2rem;
+  inset-inline-end: 2rem;
   z-index: 55;
   pointer-events: auto;
-  min-height: 40px;
+  min-block-size: 40px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -27,6 +27,7 @@
   border: 1px solid var(--glass-border);
   transition: all 0.2s ease;
   cursor: pointer;
+  box-shadow: light-dark(0 4px 15px rgba(0, 0, 0, 0.06), transparent);
 }
 
 .aip-view-3d-button:hover {
@@ -34,6 +35,10 @@
   border-color: var(--accent-cyan);
   color: var(--primary);
   transform: translateY(-1px);
+  box-shadow: light-dark(
+    0 8px 25px color-mix(in srgb, var(--accent-cyan-700) 12%, transparent),
+    transparent
+  );
 }
 
 .aip-view-3d-button:active {
@@ -41,10 +46,3 @@
 }
 
 /* --- 3D View Button --- */
-html:not(.dark) .aip-view-3d-button {
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
-}
-
-html:not(.dark) .aip-view-3d-button:hover {
-  box-shadow: 0 8px 25px color-mix(in srgb, var(--accent-cyan-700) 12%, transparent);
-}

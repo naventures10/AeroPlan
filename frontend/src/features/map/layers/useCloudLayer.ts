@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import * as WeatherLayers from 'weatherlayers-gl';
 import { IconLayer } from '@deck.gl/layers';
 import { WebMercatorViewport } from '@deck.gl/core';
@@ -185,6 +185,7 @@ export function useCloudLayer() {
   } = useMapStore();
 
   const [frameData, setFrameData] = useState<Record<number, CloudFrameData>>({});
+  const staleManifestAttemptedRef = useRef<Record<string, boolean>>({});
 
   const isCloudActive = isWeatherMode && isCloudMode && viewMode === 'ENROUTE';
 
@@ -229,9 +230,17 @@ export function useCloudLayer() {
       const isSurface = windAltitude === 0;
       const levelKey = isSurface ? 'surface' : String(windAltitude).padStart(3, '0');
 
-      const loadPromises = forecastTimestamps.map((t) => {
+      const loadPromises = forecastTimestamps.map(async (t) => {
         const url = t.files[levelKey];
         if (!url) throw new Error(`Missing URL for level ${levelKey}`);
+
+        // Pre-flight check to prevent HTML parsing errors
+        const headRes = await fetch(url, { method: 'HEAD' });
+        const contentType = headRes.headers.get('content-type');
+        if (contentType && contentType.includes('text/html')) {
+          throw new Error(`File no longer exists (received HTML fallback) for ${url}`);
+        }
+
         return WeatherLayers.loadTextureData(url);
       });
 
@@ -263,9 +272,26 @@ export function useCloudLayer() {
 
         setFrameData(dataMap);
         setCloudLoadingStatus({ state: 'ready', message: 'All cloud frames ready' });
-      } catch (err) {
+      } catch (err: any) {
         if (!active) return;
         console.error('[useCloudLayer] Load error:', err);
+
+        if (err.message?.includes('File no longer exists')) {
+          const forecastKey = `${forecastTimestamps.map((t) => t.validTime).join(',')}_${windAltitude}`;
+          if (!staleManifestAttemptedRef.current[forecastKey]) {
+            staleManifestAttemptedRef.current[forecastKey] = true;
+            console.warn(
+              '[useCloudLayer] Stale manifest detected. Auto-healing by fetching fresh manifest...',
+            );
+            fetchWeatherManifest(true);
+            return;
+          } else {
+            console.error(
+              '[useCloudLayer] Stale manifest detected, but auto-heal was already attempted for this timestamp/altitude key.',
+            );
+          }
+        }
+
         setCloudLoadingStatus({ state: 'error', message: 'Failed to pre-load cloud frames' });
       }
     }

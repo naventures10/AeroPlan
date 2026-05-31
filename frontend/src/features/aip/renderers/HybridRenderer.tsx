@@ -7,7 +7,7 @@ interface HybridRendererProps {
 }
 
 /**
- * Checks if data is an array of typed blocks: [{type: "paragraph"|"table", content: ...}, ...]
+ * Checks if data is an array of typed blocks: [{type:"paragraph"|"table", content: ...}, ...]
  */
 function isTypedBlockArray(data: any): boolean {
   return (
@@ -76,12 +76,12 @@ function RawTableRenderer({ rows }: { rows: any[][] }) {
 }
 
 /**
- * Renders AIP data_type: "hybrid" sections (local regulations, flight procedures, etc.).
+ * Renders AIP data_type:"hybrid"sections (local regulations, flight procedures, etc.).
  * Handles multiple data shapes:
- *   1. Array of typed blocks: [{type: "paragraph", content: "..."}, {type: "table", content: [[...]]}]
- *   2. Plain string → text block
- *   3. Plain array of objects → TableRenderer
- *   4. Object with mixed values → sub-renderers per key
+ * 1. Array of typed blocks: [{type:"paragraph", content:"..."}, {type:"table", content: [[...]]}]
+ * 2. Plain string → text block
+ * 3. Plain array of objects → TableRenderer
+ * 4. Object with mixed values → sub-renderers per key
  */
 export default function HybridRenderer({ data }: HybridRendererProps) {
   // Null / undefined / empty

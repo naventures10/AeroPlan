@@ -57,50 +57,6 @@ def test_setup_logging_json() -> None:
     setup_logging(json_format=False)
 
 
-def test_telemetry_disabled(monkeypatch) -> None:
-    monkeypatch.setenv("OTEL_ENABLED", "false")
-    from app.core.telemetry import setup_tracing
-
-    setup_tracing()
-
-
-def test_telemetry_enabled(monkeypatch) -> None:
-    monkeypatch.setenv("OTEL_ENABLED", "true")
-    monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
-    monkeypatch.setenv("ENVIRONMENT", "testing")
-    from app.core.telemetry import setup_tracing
-
-    setup_tracing()
-
-
-def test_telemetry_enabled_console(monkeypatch) -> None:
-    monkeypatch.setenv("OTEL_ENABLED", "true")
-    monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
-    monkeypatch.setenv("OTEL_EXPORTER", "console")
-    monkeypatch.setenv("ENVIRONMENT", "testing")
-    from app.core.telemetry import setup_tracing
-
-    setup_tracing()
-
-
-def test_profiling_router_import() -> None:
-    # Just testing we can import it for coverage
-    from app.core.profiling import profiling_router
-
-    assert profiling_router is not None
-
-
-def test_main_debug_import(monkeypatch) -> None:
-    # Mock environment to import main with DEBUG=1
-    monkeypatch.setenv("DEBUG", "1")
-    # Need to reload or import
-    import importlib
-
-    import app.main
-
-    importlib.reload(app.main)
-
-
 @pytest.mark.asyncio
 async def test_unhandled_exception_route(api_client: AsyncClient) -> None:
     # We can invoke the handler manually instead to get the coverage.

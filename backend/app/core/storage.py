@@ -1,15 +1,25 @@
-import boto3
-from botocore.client import Config
+from pathlib import Path
 
 from app.core.config import settings
 
 
-def get_storage_client():
-    return boto3.client(
-        "s3",
-        endpoint_url=settings.MINIO_ENDPOINT,
-        aws_access_key_id=settings.MINIO_ACCESS_KEY,
-        aws_secret_access_key=settings.MINIO_SECRET_KEY,
-        config=Config(signature_version="s3v4"),
-        region_name="us-east-1",
-    )
+def get_storage_path(key: str) -> Path:
+    """
+    Resolves a storage path using the configured STORAGE_PATH (which can be a local
+    folder in dev, or a GCS FUSE mount like /mnt/gcs in production).
+    """
+    base_path = Path(settings.STORAGE_PATH).resolve()
+
+    # Strip any leading slashes to prevent directory traversal
+    clean_key = key.lstrip("/")
+
+    # Resolve the combined path
+    full_path = (base_path / clean_key).resolve()
+
+    # Verify the path is within the base_path
+    try:
+        full_path.relative_to(base_path)
+    except ValueError as e:
+        raise ValueError(f"Directory traversal attempt detected: {key}") from e
+
+    return full_path
