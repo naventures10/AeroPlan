@@ -50,7 +50,7 @@ services:
       - "3000:3000"
       - "9091:9091"
     volumes:
-      - ./backend/martin.yaml:/config/martin.yaml
+      - ./backend/martin.local.yaml:/config/martin.yaml
       - ./backend/data:/data
     depends_on:
       - postgres
