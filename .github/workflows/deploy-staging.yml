@@ -88,7 +88,8 @@ jobs:
             --execution-environment gen2 \
             --add-volume=name=gcs-volume,type=cloud-storage,bucket=${{ env.GCS_BUCKET }} \
             --add-volume-mount=volume=gcs-volume,mount-path=/mnt/gcs \
-            --set-env-vars="^|^MARTIN_CONFIG=/mnt/gcs/martin.yaml|DATABASE_URL=$MARTIN_DB_URL" \
+            --set-env-vars="DATABASE_URL=$MARTIN_DB_URL" \
+            --args="--config,/mnt/gcs/martin.yaml" \
             --service-account=${{ env.SERVICE_ACCOUNT }}
 
       - name: Build, Push, and Deploy Frontend Image
