@@ -137,6 +137,9 @@ test.describe('Weather Layers Userflows (Wind & Clouds)', () => {
     );
     expect(isPlaying).toBe(true);
 
+    // Give React time to re-render play/pause state in Firefox
+    await page.waitForTimeout(500);
+
     // 4. Verify pause works
     await playButton.dispatchEvent('click');
     await page.waitForTimeout(500);
