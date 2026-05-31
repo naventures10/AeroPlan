@@ -86,6 +86,7 @@ jobs:
             --region ${{ env.REGION }} \
             --allow-unauthenticated \
             --execution-environment gen2 \
+            --network default \
             --add-volume=name=gcs-volume,type=cloud-storage,bucket=${{ env.GCS_BUCKET }} \
             --add-volume-mount=volume=gcs-volume,mount-path=/mnt/gcs \
             --set-env-vars="DATABASE_URL=$MARTIN_DB_URL" \
