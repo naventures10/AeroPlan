@@ -3,7 +3,7 @@
 
 
 postgres:
-  connection_string: postgres://postgres:postgres@host.docker.internal:5432/aeronautical_information_system
+  connection_string: ${DATABASE_URL}
 
   tables:
 
