@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     # ── PostgreSQL ───────────────────────────────────────────────────────
     DATABASE_URL: str | None = None
     POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str
+    POSTGRES_PASSWORD: str | None = None
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5432
     POSTGRES_DB: str = "aeronautical_information_system"
@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     def database_url(self) -> str:
         if self.DATABASE_URL:
             return self.DATABASE_URL
+        if not self.POSTGRES_PASSWORD:
+            raise ValueError("POSTGRES_PASSWORD is required when DATABASE_URL is not set.")
         return (
             f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
