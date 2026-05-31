@@ -17,7 +17,6 @@ Weather Forecast Data:
 
 import asyncio
 import json
-import os
 import re
 import time
 from datetime import UTC, datetime
@@ -42,8 +41,10 @@ SOURCES = {
 }
 CACHE_TTL_SECONDS = 300  # 5 minutes
 
-MINIO_BUCKET = os.getenv("MINIO_BUCKET", "ais")
 WEATHER_S3_PREFIX = "weather"
+
+# Strict filename whitelist: alphanumeric, underscores, hyphens, and .tif/.tiff/.json extensions
+SAFE_FILENAME_RE = re.compile(r"^[A-Za-z0-9_\-]+\.(tiff?|json)$")
 
 # ── In-Memory Cache ──────────────────────────────────────────────────────────
 # { "VABB": { "data": {...}, "fetched_at": float, "source": str } }
@@ -198,7 +199,7 @@ async def get_weather_manifest() -> JSONResponse:
     through the API proxy.
     """
     s3_key = f"{WEATHER_S3_PREFIX}/weather_manifest.json"
-    filepath = get_storage_path(MINIO_BUCKET, s3_key)
+    filepath = get_storage_path(s3_key)
 
     try:
         if not filepath.exists():
@@ -224,12 +225,12 @@ async def get_weather_file(filename: str, request: Request):
     Stream a weather GeoTIFF file from MinIO with long-lived cache headers.
     Supports HTTP HEAD and Range requests for Cloud-Optimized GeoTIFF (COG) streaming.
     """
-    # Validate filename to prevent path traversal
-    if "/" in filename or "\\" in filename or ".." in filename:
+    # Validate filename with strict whitelist to prevent path traversal (including URL-encoded)
+    if not SAFE_FILENAME_RE.match(filename):
         raise HTTPException(status_code=400, detail="Invalid filename")
 
     s3_key = f"{WEATHER_S3_PREFIX}/{filename}"
-    filepath = get_storage_path(MINIO_BUCKET, s3_key)
+    filepath = get_storage_path(s3_key)
 
     if not filepath.exists():
         raise HTTPException(status_code=404, detail=f"Weather file not found: {filename}")

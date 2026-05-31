@@ -116,10 +116,10 @@ if (typeof global.DOMMatrix === 'undefined') {
 }
 
 // Mock localStorage and sessionStorage for store persistence
-const localStorageMock = (() => {
+function createStorageMock() {
   let store: Record<string, string> = {};
   return {
-    getItem: (key: string) => store[key] || null,
+    getItem: (key: string) => (key in store ? store[key] : null),
     setItem: (key: string, value: string) => {
       store[key] = value;
     },
@@ -135,14 +135,17 @@ const localStorageMock = (() => {
       return Object.keys(store).length;
     },
   };
-})();
+}
+
+const localStorageMock = createStorageMock();
+const sessionStorageMock = createStorageMock();
 
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
   writable: true,
 });
 Object.defineProperty(window, 'sessionStorage', {
-  value: localStorageMock,
+  value: sessionStorageMock,
   writable: true,
 });
 Object.defineProperty(global, 'localStorage', {
@@ -150,6 +153,6 @@ Object.defineProperty(global, 'localStorage', {
   writable: true,
 });
 Object.defineProperty(global, 'sessionStorage', {
-  value: localStorageMock,
+  value: sessionStorageMock,
   writable: true,
 });

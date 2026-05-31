@@ -8,7 +8,7 @@ interface ObjectRendererProps {
 }
 
 /**
- * Renders AIP data_type:"object"sections as a styled key-value table.
+ * Renders AIP data_type:"object" sections as a styled key-value table.
  * Matches the AIP document structure: | Ref | Description | Data |
  *
  * If columnConfig is provided, uses official AIP labels and ordering.

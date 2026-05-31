@@ -3,7 +3,7 @@ from pathlib import Path
 from app.core.config import settings
 
 
-def get_storage_path(bucket_like_prefix: str, key: str) -> Path:
+def get_storage_path(key: str) -> Path:
     """
     Resolves a storage path using the configured STORAGE_PATH (which can be a local
     folder in dev, or a GCS FUSE mount like /mnt/gcs in production).

@@ -51,10 +51,12 @@ else
     if ! HMAC_OUTPUT=$(gcloud storage hmac create $HMAC_SA_EMAIL --project=$PROJECT_ID 2>&1); then
         echo "ERROR: Failed to create HMAC key for service account $HMAC_SA_EMAIL. Output:" >&2
         echo "$HMAC_OUTPUT" >&2
-        exit 1
+        echo "WARNING: Continuing despite HMAC key failure (often blocked by org policy)."
+        # exit 1
+    else
+        echo "HMAC Key created successfully:"
+        echo "$HMAC_OUTPUT"
     fi
-    echo "HMAC Key created successfully:"
-    echo "$HMAC_OUTPUT"
 fi
 
 # 2. Artifact Registry
@@ -70,8 +72,40 @@ fi
 # 3. Compute Engine VM (Database)
 VM_NAME="eaip-db-vm"
 echo "Creating Database VM..."
+
+# Require DB_PASSWORD to be set explicitly — no weak defaults
+if [ -z "$DB_PASSWORD" ]; then
+    echo "ERROR: DB_PASSWORD environment variable must be set." >&2
+    exit 1
+fi
+
+# Store password in Secret Manager
+SECRET_NAME="eaip-db-password"
+echo "Storing DB password in Secret Manager..."
+if ! gcloud secrets describe $SECRET_NAME --project=$PROJECT_ID > /dev/null 2>&1; then
+    gcloud secrets create $SECRET_NAME \
+        --replication-policy="automatic" \
+        --project=$PROJECT_ID
+fi
+echo -n "$DB_PASSWORD" | gcloud secrets versions add $SECRET_NAME \
+    --data-file=- \
+    --project=$PROJECT_ID
+
+# Grant the default compute SA permission to access the secret
+COMPUTE_SA=$(gcloud iam service-accounts list \
+    --project=$PROJECT_ID \
+    --filter="email~compute@developer.gserviceaccount.com" \
+    --format="value(email)" | head -1)
+
+if [ -n "$COMPUTE_SA" ]; then
+    echo "Granting Secret Manager access to $COMPUTE_SA..."
+    gcloud secrets add-iam-policy-binding $SECRET_NAME \
+        --member="serviceAccount:$COMPUTE_SA" \
+        --role="roles/secretmanager.secretAccessor" \
+        --project=$PROJECT_ID --condition=None
+fi
+
 if ! gcloud compute instances describe $VM_NAME --zone=$ZONE > /dev/null 2>&1; then
-    DB_PASSWORD=${DB_PASSWORD:-"postgres"}
     gcloud compute instances create $VM_NAME \
         --zone=$ZONE \
         --machine-type=e2-micro \
@@ -80,17 +114,31 @@ if ! gcloud compute instances describe $VM_NAME --zone=$ZONE > /dev/null 2>&1; t
         --boot-disk-size=30GB \
         --boot-disk-type=pd-standard \
         --tags=allow-postgres \
-        --metadata=startup-script="#!/bin/bash
+        --scopes=https://www.googleapis.com/auth/cloud-platform \
+        --metadata=startup-script='#!/bin/bash
+set -e
+
+# Install Docker
 apt-get update
 apt-get install -y ca-certificates curl gnupg
 install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 chmod a+r /etc/apt/keyrings/docker.gpg
-echo \"deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \$(. /etc/os-release && echo \"\$VERSION_CODENAME\") stable\" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-docker run -d --name eaip-postgres --restart unless-stopped -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=$DB_PASSWORD -e POSTGRES_DB=aeronautical_information_system -p 5432:5432 -v postgres_data:/var/lib/postgresql/data postgis/postgis:15-3.4
-"
+
+# Fetch DB password from Secret Manager at runtime
+DB_PASSWORD=$(gcloud secrets versions access latest --secret=eaip-db-password --project='"$PROJECT_ID"')
+
+docker run -d --name eaip-postgres --restart unless-stopped \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD="$DB_PASSWORD" \
+  -e POSTGRES_DB=aeronautical_information_system \
+  -p 5432:5432 \
+  -v postgres_data:/var/lib/postgresql/data \
+  postgis/postgis:15-3.4
+'
 fi
 
 # VPC Firewall Rule

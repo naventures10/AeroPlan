@@ -72,7 +72,7 @@ jobs:
           # Maplibre Martin is a public image, we can just push it directly to Cloud Run
           # Or we can deploy the standard ghcr.io image directly!
           gcloud run deploy eaip-martin \
-            --image ghcr.io/maplibre/martin:latest \
+            --image ghcr.io/maplibre/martin:v0.14.2 \
             --region ${{ env.REGION }} \
             --allow-unauthenticated \
             --execution-environment gen2 \

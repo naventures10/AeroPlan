@@ -26,8 +26,13 @@ class UnifiedStorageClient:
         else:
             # boto3 S3 client for MinIO local dev
             minio_endpoint = os.getenv("MINIO_ENDPOINT", "http://localhost:9000")
-            minio_access_key = os.getenv("MINIO_ACCESS_KEY", "ais_admin")
-            minio_secret_key = os.getenv("MINIO_SECRET_KEY", "AviationData2026!")
+            minio_access_key = os.getenv("MINIO_ACCESS_KEY")
+            minio_secret_key = os.getenv("MINIO_SECRET_KEY")
+            if not minio_access_key or not minio_secret_key:
+                raise ValueError(
+                    "MINIO_ACCESS_KEY and MINIO_SECRET_KEY environment variables must be set "
+                    "for development mode"
+                )
 
             self.s3_client = boto3.client(
                 "s3",
