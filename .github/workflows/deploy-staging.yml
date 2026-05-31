@@ -68,12 +68,21 @@ jobs:
             --set-env-vars="^|^STORAGE_PATH=/mnt/gcs|DATABASE_URL=${{ secrets.DATABASE_URL }}|ENVIRONMENT=staging" \
             --service-account=${{ env.SERVICE_ACCOUNT }}
 
+      - name: Pull, Tag, and Push Martin Image to Artifact Registry
+        run: |-
+          MARTIN_IMAGE_SRC="ghcr.io/maplibre/martin:v0.14.2"
+          MARTIN_IMAGE_DEST="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-martin:v0.14.2"
+          docker pull $MARTIN_IMAGE_SRC
+          docker tag $MARTIN_IMAGE_SRC $MARTIN_IMAGE_DEST
+          docker push $MARTIN_IMAGE_DEST
+
       - name: Deploy Martin Tile Server to Cloud Run
         run: |-
           # Convert postgresql+asyncpg:// to postgres:// for Martin compatibility
           MARTIN_DB_URL=$(echo "${{ secrets.DATABASE_URL }}" | sed 's/postgresql+asyncpg/postgres/')
+          IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-martin:v0.14.2"
           gcloud run deploy eaip-martin \
-            --image ghcr.io/maplibre/martin:v0.14.2 \
+            --image $IMAGE \
             --region ${{ env.REGION }} \
             --allow-unauthenticated \
             --execution-environment gen2 \
