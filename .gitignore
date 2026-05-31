@@ -17,6 +17,7 @@
 !/eaip_scrapper/
 !/monitoring/
 !.gitlab-ci.yml
+!/infra/
 
 # ============================================================
 # Frontend – Node / Vite artifacts

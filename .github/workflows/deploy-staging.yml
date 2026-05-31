@@ -14,9 +14,8 @@ env:
   REGION: us-central1
   GAR_LOCATION: us-central1-docker.pkg.dev
   REPOSITORY: eaip-repo
-  GCS_BUCKET: eaip-staging-data-project-d5038013-e773-4f0b-98a
-  WORKLOAD_IDENTITY_PROVIDER: projects/452632649441/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider
   SERVICE_ACCOUNT: eaip-github-actions@project-d5038013-e773-4f0b-98a.iam.gserviceaccount.com
+  WORKLOAD_IDENTITY_PROVIDER: projects/452632649441/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider
 
 jobs:
   build-and-deploy:
@@ -46,27 +45,27 @@ jobs:
         run: |-
           gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
 
+      # ── Backend ────────────────────────────────────────────────────────────
+
       - name: Build and Push Backend Image
         run: |-
-          DOCKER_TAG="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-backend:${{ github.sha }}"
-          docker build -t $DOCKER_TAG ./backend
-          docker push $DOCKER_TAG
-
-
+          IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-backend:${{ github.sha }}"
+          docker build -t $IMAGE ./backend
+          docker push $IMAGE
 
       - name: Deploy Backend to Cloud Run
         run: |-
           IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-backend:${{ github.sha }}"
-          gcloud run deploy eaip-backend \
-            --image $IMAGE \
+          sed -e "s|__IMAGE__|$IMAGE|g" \
+              -e "s|__DATABASE_URL__|${{ secrets.DATABASE_URL }}|g" \
+              infra/cloud-run/backend.yaml | \
+            gcloud run services replace - --region ${{ env.REGION }}
+          gcloud run services add-iam-policy-binding eaip-backend \
             --region ${{ env.REGION }} \
-            --allow-unauthenticated \
-            --execution-environment gen2 \
-            --network default \
-            --add-volume=name=gcs-volume,type=cloud-storage,bucket=${{ env.GCS_BUCKET }} \
-            --add-volume-mount=volume=gcs-volume,mount-path=/mnt/gcs \
-            --set-env-vars="^|^STORAGE_PATH=/mnt/gcs|DATABASE_URL=${{ secrets.DATABASE_URL }}|ENVIRONMENT=staging" \
-            --service-account=${{ env.SERVICE_ACCOUNT }}
+            --member="allUsers" \
+            --role="roles/run.invoker"
+
+      # ── Martin Tile Server ─────────────────────────────────────────────────
 
       - name: Pull, Tag, and Push Martin Image to Artifact Registry
         run: |-
@@ -78,36 +77,35 @@ jobs:
 
       - name: Deploy Martin Tile Server to Cloud Run
         run: |-
-          # Convert postgresql+asyncpg:// to postgres:// for Martin compatibility
-          MARTIN_DB_URL=$(echo "${{ secrets.DATABASE_URL }}" | sed 's/postgresql+asyncpg/postgres/')
           IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-martin:v0.14.2"
-          gcloud run deploy eaip-martin \
-            --image $IMAGE \
+          sed -e "s|__IMAGE__|$IMAGE|g" \
+              -e "s|__MARTIN_DATABASE_URL__|${{ secrets.MARTIN_DATABASE_URL }}|g" \
+              infra/cloud-run/martin.yaml | \
+            gcloud run services replace - --region ${{ env.REGION }}
+          gcloud run services add-iam-policy-binding eaip-martin \
             --region ${{ env.REGION }} \
-            --allow-unauthenticated \
-            --execution-environment gen2 \
-            --network default \
-            --port 3000 \
-            --add-volume=name=gcs-volume,type=cloud-storage,bucket=${{ env.GCS_BUCKET }} \
-            --add-volume-mount=volume=gcs-volume,mount-path=/mnt/gcs \
-            --set-env-vars="DATABASE_URL=$MARTIN_DB_URL" \
-            --args="--config,/mnt/gcs/martin.yaml" \
-            --service-account=${{ env.SERVICE_ACCOUNT }}
+            --member="allUsers" \
+            --role="roles/run.invoker"
+
+      # ── Frontend ───────────────────────────────────────────────────────────
 
       - name: Build, Push, and Deploy Frontend Image
         run: |-
           # Fetch backend and martin URLs to inject into the frontend at build time
           BACKEND_URL=$(gcloud run services describe eaip-backend --region ${{ env.REGION }} --format 'value(status.url)')
           MARTIN_URL=$(gcloud run services describe eaip-martin --region ${{ env.REGION }} --format 'value(status.url)')
-          
-          DOCKER_TAG="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-frontend:${{ github.sha }}"
+
+          IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-frontend:${{ github.sha }}"
           docker build \
             --build-arg VITE_API_URL=$BACKEND_URL \
             --build-arg VITE_MARTIN_URL=$MARTIN_URL \
-            -t $DOCKER_TAG ./frontend
-          docker push $DOCKER_TAG
-          
-          gcloud run deploy eaip-frontend \
-            --image $DOCKER_TAG \
+            -t $IMAGE ./frontend
+          docker push $IMAGE
+
+          sed -e "s|__IMAGE__|$IMAGE|g" \
+              infra/cloud-run/frontend.yaml | \
+            gcloud run services replace - --region ${{ env.REGION }}
+          gcloud run services add-iam-policy-binding eaip-frontend \
             --region ${{ env.REGION }} \
-            --allow-unauthenticated
+            --member="allUsers" \
+            --role="roles/run.invoker"
