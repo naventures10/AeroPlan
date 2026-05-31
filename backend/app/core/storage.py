@@ -10,7 +10,7 @@ def get_storage_path(key: str) -> Path:
     """
     base_path = Path(settings.STORAGE_PATH).resolve()
 
-    # Strip any leading slashes or dots to prevent directory traversal
+    # Strip any leading slashes to prevent directory traversal
     clean_key = key.lstrip("/")
 
     # Resolve the combined path

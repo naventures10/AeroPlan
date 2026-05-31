@@ -1,5 +1,6 @@
-.PHONY: frontend dev test test-frontend test-backend test-build frontend-audit \
-       docker-up docker-down observability-up observability-down help
+.PHONY: frontend dev test test-frontend test-backend test-scrapper test-build frontend-audit \
+       docker-up docker-down observability-up observability-down help \
+       etl-airspaces etl-metadata etl-all
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'

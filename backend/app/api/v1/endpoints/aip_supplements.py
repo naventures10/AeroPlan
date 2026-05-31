@@ -16,7 +16,7 @@ FILE_KEY = "output/aip_supplements.json"
 @router.get("/", response_model=list[AipSupplement])
 async def get_aip_supplements():
     """
-    Fetch the latest AIP Supplements extracted from MinIO.
+    Fetch the latest AIP Supplements from the local storage path returned by get_storage_path.
     """
     filepath = get_storage_path(FILE_KEY)
 

@@ -87,9 +87,36 @@ if ! gcloud secrets describe $SECRET_NAME --project=$PROJECT_ID > /dev/null 2>&1
         --replication-policy="automatic" \
         --project=$PROJECT_ID
 fi
-echo -n "$DB_PASSWORD" | gcloud secrets versions add $SECRET_NAME \
-    --data-file=- \
-    --project=$PROJECT_ID
+# Only add a new version if the secret value has changed
+CURRENT_SECRET=$(gcloud secrets versions access latest --secret=$SECRET_NAME --project=$PROJECT_ID 2>/dev/null || echo "")
+if [ "$CURRENT_SECRET" != "$DB_PASSWORD" ]; then
+    echo "Updating secret $SECRET_NAME in Secret Manager..."
+    echo -n "$DB_PASSWORD" | gcloud secrets versions add $SECRET_NAME \
+        --data-file=- \
+        --project=$PROJECT_ID
+else
+    echo "Secret $SECRET_NAME already has the correct value."
+fi
+
+# Cleanup: destroy all older enabled versions, retaining only the latest
+LATEST_VERSION=$(gcloud secrets versions list "$SECRET_NAME" \
+    --project="$PROJECT_ID" \
+    --sort-by="~create-time" \
+    --limit=1 \
+    --format="value(name)" 2>/dev/null || echo "")
+
+if [ -n "$LATEST_VERSION" ]; then
+    echo "Retaining latest secret version: $LATEST_VERSION"
+    gcloud secrets versions list "$SECRET_NAME" \
+        --project="$PROJECT_ID" \
+        --format="value(name)" \
+        --filter="name != '$LATEST_VERSION' AND state=enabled" 2>/dev/null | while read -r ver; do
+            if [ -n "$ver" ]; then
+                echo "Destroying old secret version: $ver"
+                gcloud secrets versions destroy "$ver" --quiet
+            fi
+        done
+fi
 
 # Grant the default compute SA permission to access the secret
 COMPUTE_SA=$(gcloud iam service-accounts list \
