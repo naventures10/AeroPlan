@@ -15,10 +15,17 @@ RUN npm run build
 
 # Setup Nginx server
 FROM nginx:alpine
+
+# Pass ARGs down and export as ENVs for envsubst
+ARG VITE_API_URL
+ARG VITE_MARTIN_URL
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_MARTIN_URL=$VITE_MARTIN_URL
+
 # Remove default nginx static assets
 RUN rm -rf /usr/share/nginx/html/*
-# Copy custom configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy custom configuration as a template for envsubst
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
