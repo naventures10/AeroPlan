@@ -3,12 +3,20 @@ import { useMapStore } from '../../../store/useMapStore';
 import type { WindStatus } from '../layers/useWindLayer';
 
 export function StatusBadge({ status }: { status: WindStatus }) {
-  const stateClass = {
-    idle: 'status--idle',
-    loading: 'status--loading',
-    ready: 'status--ready',
-    error: 'status--error',
-  }[status.state];
+  let stateClass = 'status--idle';
+  switch (status.state) {
+    case 'loading':
+      stateClass = 'status--loading';
+      break;
+    case 'ready':
+      stateClass = 'status--ready';
+      break;
+    case 'error':
+      stateClass = 'status--error';
+      break;
+    default:
+      stateClass = 'status--idle';
+  }
 
   const { setIsWindMode, setIsCloudMode, setIsWeatherMode } = useMapStore();
 

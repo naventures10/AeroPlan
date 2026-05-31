@@ -9,6 +9,7 @@
 !.gitignore
 !Makefile
 !README.md
+!.github/
 # Allow the packages
 !/frontend/
 !/backend/

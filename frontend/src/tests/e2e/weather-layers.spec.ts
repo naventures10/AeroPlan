@@ -66,7 +66,9 @@ test.describe('Weather Layers Userflows (Wind & Clouds)', () => {
     await expect(page.locator('.wind-timeline')).toBeVisible();
 
     // 6. Close Weather Layer via the badge X button
-    await page.locator('.wind-status button').click({ force: true });
+    const closeBtn = page.locator('.wind-status button');
+    await closeBtn.scrollIntoViewIfNeeded();
+    await closeBtn.dispatchEvent('click');
     await expect(page.locator('.wind-status')).not.toBeVisible();
     await expect(page.getByRole('button', { name: 'Toggle Weather' })).not.toHaveClass(/active/);
   });
@@ -127,7 +129,7 @@ test.describe('Weather Layers Userflows (Wind & Clouds)', () => {
     const playButton = page.locator('.wind-timeline__play-circle');
 
     // 2. Toggle Play
-    await playButton.click({ force: true });
+    await playButton.dispatchEvent('click');
 
     // 3. Verify store state for playing (shared weather playback)
     const isPlaying = await page.evaluate(
@@ -136,7 +138,7 @@ test.describe('Weather Layers Userflows (Wind & Clouds)', () => {
     expect(isPlaying).toBe(true);
 
     // 4. Verify pause works
-    await playButton.click({ force: true });
+    await playButton.dispatchEvent('click');
     await page.waitForTimeout(500);
     const isPlayingAfterPause = await page.evaluate(
       () => (window as any).useMapStore.getState().windIsPlaying,

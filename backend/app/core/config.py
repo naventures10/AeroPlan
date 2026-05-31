@@ -38,10 +38,8 @@ class Settings(BaseSettings):
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
-    # ── MinIO / S3 ───────────────────────────────────────────────────────
-    MINIO_ENDPOINT: str = "http://localhost:9000"
-    MINIO_ACCESS_KEY: str
-    MINIO_SECRET_KEY: str
+    # ── Storage (Local / GCS FUSE) ───────────────────────────────────────
+    STORAGE_PATH: str = "./data"
 
     # ── Dev / Debug ────────────────────────────────────────────────────
     DEBUG: bool = False

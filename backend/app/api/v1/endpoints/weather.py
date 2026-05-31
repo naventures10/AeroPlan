@@ -26,9 +26,9 @@ import httpx
 import structlog
 from bs4 import BeautifulSoup
 from fastapi import APIRouter, HTTPException, Request, Response
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
-from app.core.storage import get_storage_client
+from app.core.storage import get_storage_path
 from app.schemas.weather import WeatherResponse
 
 logger = structlog.get_logger()
@@ -197,14 +197,17 @@ async def get_weather_manifest() -> JSONResponse:
     Fetch the weather manifest from MinIO and rewrite file URLs to point
     through the API proxy.
     """
-    s3 = get_storage_client()
     s3_key = f"{WEATHER_S3_PREFIX}/weather_manifest.json"
+    filepath = get_storage_path(MINIO_BUCKET, s3_key)
 
     try:
-        response = s3.get_object(Bucket=MINIO_BUCKET, Key=s3_key)
-        manifest = json.loads(response["Body"].read().decode("utf-8"))
-    except s3.exceptions.NoSuchKey:
-        raise HTTPException(status_code=404, detail="Weather manifest not found") from None
+        if not filepath.exists():
+            raise HTTPException(status_code=404, detail="Weather manifest not found")
+
+        with open(filepath, encoding="utf-8") as f:
+            manifest = json.load(f)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("weather_manifest_fetch_failed", error=str(e))
         raise HTTPException(status_code=502, detail="Failed to fetch weather manifest") from e
@@ -225,60 +228,61 @@ async def get_weather_file(filename: str, request: Request):
     if "/" in filename or "\\" in filename or ".." in filename:
         raise HTTPException(status_code=400, detail="Invalid filename")
 
-    s3 = get_storage_client()
     s3_key = f"{WEATHER_S3_PREFIX}/{filename}"
+    filepath = get_storage_path(MINIO_BUCKET, s3_key)
 
-    try:
-        if request.method == "HEAD":
-            # For HEAD requests, just get the object metadata
-            head_resp = s3.head_object(Bucket=MINIO_BUCKET, Key=s3_key)
-            return Response(
-                headers={
-                    "Content-Length": str(head_resp.get("ContentLength", 0)),
-                    "Accept-Ranges": "bytes",
-                    "Cache-Control": "public, max-age=31536000, immutable",
-                }
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail=f"Weather file not found: {filename}")
+
+    file_size = filepath.stat().st_size
+    content_type = "application/json" if filename.endswith(".json") else "image/tiff"
+
+    if request.method == "HEAD":
+        return Response(
+            headers={
+                "Content-Length": str(file_size),
+                "Accept-Ranges": "bytes",
+                "Cache-Control": "public, max-age=31536000, immutable",
+            }
+        )
+
+    range_header = request.headers.get("range")
+    if range_header:
+        # Simple range parser
+        match = re.search(r"bytes=(\d+)-(\d*)", range_header)
+        if match:
+            byte1 = int(match.group(1))
+            byte2 = int(match.group(2)) if match.group(2) else file_size - 1
+            length = byte2 - byte1 + 1
+
+            def file_iterator():
+                with open(filepath, "rb") as f:
+                    f.seek(byte1)
+                    yield f.read(length)
+
+            headers = {
+                "Content-Range": f"bytes {byte1}-{byte2}/{file_size}",
+                "Accept-Ranges": "bytes",
+                "Content-Length": str(length),
+                "Cache-Control": "public, max-age=31536000, immutable",
+                "Content-Disposition": f"inline; filename={filename}",
+            }
+            return StreamingResponse(
+                file_iterator(),
+                status_code=206,
+                media_type=content_type,
+                headers=headers,
             )
 
-        # For GET requests, check if there's a Range header
-        range_header = request.headers.get("range")
-        kwargs = {"Bucket": MINIO_BUCKET, "Key": s3_key}
-        if range_header:
-            kwargs["Range"] = range_header
-
-        response = s3.get_object(**kwargs)
-    except s3.exceptions.ClientError as e:
-        error_code = e.response["Error"]["Code"]
-        if error_code == "404" or error_code == "NoSuchKey":
-            raise HTTPException(
-                status_code=404, detail=f"Weather file not found: {filename}"
-            ) from None
-        logger.error("weather_file_fetch_failed", filename=filename, error=str(e))
-        raise HTTPException(status_code=502, detail="Failed to fetch weather file") from e
-    except Exception as e:
-        logger.error("weather_file_fetch_failed", filename=filename, error=str(e))
-        raise HTTPException(status_code=502, detail="Failed to fetch weather file") from e
-
-    content_type = "image/tiff"
-    if filename.endswith(".json"):
-        content_type = "application/json"
-
-    status_code = 206 if range_header else 200
-    headers = {
-        "Cache-Control": "public, max-age=31536000, immutable",
-        "Content-Disposition": f"inline; filename={filename}",
-        "Accept-Ranges": "bytes",
-        "Content-Length": str(response.get("ContentLength", 0)),
-    }
-
-    if "ContentRange" in response:
-        headers["Content-Range"] = response["ContentRange"]
-
-    return StreamingResponse(
-        response["Body"],
-        status_code=status_code,
+    # Return full file if no range header
+    return FileResponse(
+        path=filepath,
         media_type=content_type,
-        headers=headers,
+        filename=filename,
+        headers={
+            "Accept-Ranges": "bytes",
+            "Cache-Control": "public, max-age=31536000, immutable",
+        },
     )
 
 

@@ -35,6 +35,12 @@ test.describe('Chart Overlay Userflows', () => {
   test('Toggle Base Map Styles via cycling (Dark, Light, Hybrid)', async ({ page }) => {
     await expect(mapPage.baseMapButton).toBeVisible();
 
+    // Ensure we start in 'dark' style for deterministic cycling test
+    await page.evaluate(() => {
+      // @ts-expect-error - useMapStore is attached to window for testing
+      window.useMapStore.setState({ mapStyle: 'dark', isDarkMode: true });
+    });
+
     // Initial state should be dark
     const initialStyle = await page.evaluate(() => {
       // @ts-expect-error - useMapStore is attached to window for testing

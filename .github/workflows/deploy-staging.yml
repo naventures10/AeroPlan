@@ -1,0 +1,99 @@
+name: Deploy to GCP Staging
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/deploy-staging.yml'
+
+env:
+  PROJECT_ID: project-d5038013-e773-4f0b-98a
+  REGION: us-central1
+  GAR_LOCATION: us-central1-docker.pkg.dev
+  REPOSITORY: eaip-repo
+  GCS_BUCKET: eaip-staging-data-project-d5038013-e773-4f0b-98a
+  WORKLOAD_IDENTITY_PROVIDER: projects/452632649441/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider
+  SERVICE_ACCOUNT: eaip-github-actions@project-d5038013-e773-4f0b-98a.iam.gserviceaccount.com
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write' # Required for Workload Identity Federation
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f # v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Configure Docker to use Artifact Registry
+        run: |-
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      - name: Build and Push Backend Image
+        run: |-
+          DOCKER_TAG="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-backend:${{ github.sha }}"
+          docker build -t $DOCKER_TAG ./backend
+          docker push $DOCKER_TAG
+
+      - name: Build and Push Frontend Image
+        run: |-
+          DOCKER_TAG="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-frontend:${{ github.sha }}"
+          docker build -t $DOCKER_TAG ./frontend
+          docker push $DOCKER_TAG
+
+      - name: Deploy Backend to Cloud Run
+        run: |-
+          IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-backend:${{ github.sha }}"
+          gcloud run deploy eaip-backend \
+            --image $IMAGE \
+            --region ${{ env.REGION }} \
+            --allow-unauthenticated \
+            --execution-environment gen2 \
+            --network default \
+            --add-volume=name=gcs-volume,type=cloud-storage,bucket=${{ env.GCS_BUCKET }} \
+            --add-volume-mount=volume=gcs-volume,mount-path=/mnt/gcs \
+            --set-env-vars="STORAGE_PATH=/mnt/gcs,DATABASE_URL=\${{ secrets.DATABASE_URL }},ENVIRONMENT=staging" \
+            --service-account=${{ env.SERVICE_ACCOUNT }}
+
+      - name: Deploy Martin Tile Server to Cloud Run
+        run: |-
+          # Maplibre Martin is a public image, we can just push it directly to Cloud Run
+          # Or we can deploy the standard ghcr.io image directly!
+          gcloud run deploy eaip-martin \
+            --image ghcr.io/maplibre/martin:latest \
+            --region ${{ env.REGION }} \
+            --allow-unauthenticated \
+            --execution-environment gen2 \
+            --add-volume=name=gcs-volume,type=cloud-storage,bucket=${{ env.GCS_BUCKET }} \
+            --add-volume-mount=volume=gcs-volume,mount-path=/mnt/gcs \
+            --set-env-vars="MARTIN_CONFIG=/mnt/gcs/martin.yaml" \
+            --service-account=${{ env.SERVICE_ACCOUNT }}
+
+      - name: Deploy Frontend to Cloud Run
+        run: |-
+          IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-frontend:${{ github.sha }}"
+          # Fetch backend and martin URLs to inject into the frontend if needed
+          BACKEND_URL=$(gcloud run services describe eaip-backend --region ${{ env.REGION }} --format 'value(status.url)')
+          MARTIN_URL=$(gcloud run services describe eaip-martin --region ${{ env.REGION }} --format 'value(status.url)')
+          
+          gcloud run deploy eaip-frontend \
+            --image $IMAGE \
+            --region ${{ env.REGION }} \
+            --allow-unauthenticated \
+            --set-env-vars="VITE_API_URL=$BACKEND_URL,VITE_MARTIN_URL=$MARTIN_URL"

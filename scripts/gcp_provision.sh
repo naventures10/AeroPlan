@@ -1,0 +1,120 @@
+#!/bin/bash
+set -e
+
+PROJECT_ID="project-d5038013-e773-4f0b-98a"
+REGION="us-central1"
+ZONE="us-central1-a"
+
+echo "Setting project to $PROJECT_ID..."
+gcloud config set project $PROJECT_ID
+
+echo "Enabling necessary APIs (this might take a minute)..."
+gcloud services enable \
+    compute.googleapis.com \
+    run.googleapis.com \
+    storage-api.googleapis.com \
+    artifactregistry.googleapis.com \
+    iam.googleapis.com \
+    cloudbuild.googleapis.com \
+    secretmanager.googleapis.com
+
+# 1. GCS Bucket
+BUCKET_NAME="eaip-staging-data-$PROJECT_ID"
+echo "Creating GCS Bucket: $BUCKET_NAME..."
+if ! gcloud storage ls "gs://$BUCKET_NAME" > /dev/null 2>&1; then
+    gcloud storage buckets create "gs://$BUCKET_NAME" --location=$REGION
+else
+    echo "Bucket gs://$BUCKET_NAME already exists."
+fi
+
+# Service Account for GCS HMAC Keys
+HMAC_SA="eaip-storage-sa"
+HMAC_SA_EMAIL="$HMAC_SA@$PROJECT_ID.iam.gserviceaccount.com"
+echo "Setting up Storage Service Account..."
+if ! gcloud iam service-accounts describe $HMAC_SA_EMAIL > /dev/null 2>&1; then
+    gcloud iam service-accounts create $HMAC_SA --display-name="eAIP Storage Account"
+    # Wait for IAM propagation
+    sleep 5
+fi
+
+# Add role (outside the if block in case it failed previously)
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$HMAC_SA_EMAIL" \
+    --role="roles/storage.objectAdmin" --condition=None
+
+echo "Generating HMAC Keys for $HMAC_SA_EMAIL"
+echo "IMPORTANT: The keys will be printed below. We will use them in the next step."
+# We check if a key exists to avoid generating hundreds of keys, but for now we just generate one.
+gcloud storage hmac create $HMAC_SA_EMAIL --project=$PROJECT_ID || true
+
+# 2. Artifact Registry
+REPO_NAME="eaip-repo"
+echo "Creating Artifact Registry..."
+if ! gcloud artifacts repositories describe $REPO_NAME --location=$REGION > /dev/null 2>&1; then
+    gcloud artifacts repositories create $REPO_NAME \
+        --repository-format=docker \
+        --location=$REGION \
+        --description="eAIP Docker repository"
+fi
+
+# 3. Compute Engine VM (Database)
+VM_NAME="eaip-db-vm"
+echo "Creating Database VM..."
+if ! gcloud compute instances describe $VM_NAME --zone=$ZONE > /dev/null 2>&1; then
+    gcloud compute instances create $VM_NAME \
+        --zone=$ZONE \
+        --machine-type=e2-micro \
+        --image-family=debian-12 \
+        --image-project=debian-cloud \
+        --boot-disk-size=30GB \
+        --boot-disk-type=pd-standard \
+        --tags=allow-postgres \
+        --metadata=startup-script="#!/bin/bash
+apt-get update
+apt-get install -y ca-certificates curl gnupg
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+chmod a+r /etc/apt/keyrings/docker.gpg
+echo \"deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \$(. /etc/os-release && echo \"\$VERSION_CODENAME\") stable\" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+apt-get update
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+docker run -d --name eaip-postgres --restart unless-stopped -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=aeronautical_information_system -p 5432:5432 -v postgres_data:/var/lib/postgresql/data postgis/postgis:15-3.4
+"
+fi
+
+# VPC Firewall Rule
+echo "Creating Firewall Rule for Postgres..."
+if ! gcloud compute firewall-rules describe allow-postgres > /dev/null 2>&1; then
+    gcloud compute firewall-rules create allow-postgres \
+        --direction=INGRESS \
+        --priority=1000 \
+        --network=default \
+        --action=ALLOW \
+        --rules=tcp:5432 \
+        --source-ranges=0.0.0.0/0 \
+        --target-tags=allow-postgres
+fi
+
+# 4. Service Account for GitHub Actions
+GH_SA="eaip-github-actions"
+GH_SA_EMAIL="$GH_SA@$PROJECT_ID.iam.gserviceaccount.com"
+echo "Setting up GitHub Actions Service Account..."
+if ! gcloud iam service-accounts describe $GH_SA_EMAIL > /dev/null 2>&1; then
+    gcloud iam service-accounts create $GH_SA --display-name="eAIP GitHub Actions"
+    sleep 5
+fi
+
+echo "Adding roles to GitHub Actions SA..."
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$GH_SA_EMAIL" \
+    --role="roles/artifactregistry.writer" --condition=None
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$GH_SA_EMAIL" \
+    --role="roles/run.admin" --condition=None
+    
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$GH_SA_EMAIL" \
+    --role="roles/iam.serviceAccountUser" --condition=None
+
+echo "Infrastructure Provisioning Script Complete!"
