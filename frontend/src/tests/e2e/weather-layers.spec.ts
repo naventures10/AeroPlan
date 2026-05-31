@@ -129,20 +129,26 @@ test.describe('Weather Layers Userflows (Wind & Clouds)', () => {
     const playButton = page.locator('.wind-timeline__play-circle');
 
     // 2. Toggle Play
-    await playButton.dispatchEvent('click');
+    await playButton.click({ force: true });
 
-    // 3. Verify store state for playing (shared weather playback)
-    const isPlaying = await page.evaluate(
-      () => (window as any).useMapStore.getState().windIsPlaying,
+    // 3. Wait for store state for playing to become true
+    await page.waitForFunction(
+      () => (window as any).useMapStore.getState().windIsPlaying === true,
+      undefined,
+      { timeout: 5000 },
     );
-    expect(isPlaying).toBe(true);
-
-    // Give React time to re-render play/pause state in Firefox
-    await page.waitForTimeout(500);
 
     // 4. Verify pause works
-    await playButton.dispatchEvent('click');
-    await page.waitForTimeout(500);
+    await playButton.click({ force: true });
+
+    // Wait for store state to become false
+    await page.waitForFunction(
+      () => (window as any).useMapStore.getState().windIsPlaying === false,
+      undefined,
+      { timeout: 5000 },
+    );
+
+    // Final check for the test runner output
     const isPlayingAfterPause = await page.evaluate(
       () => (window as any).useMapStore.getState().windIsPlaying,
     );
