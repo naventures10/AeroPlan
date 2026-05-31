@@ -19,6 +19,8 @@ import subprocess
 import sys
 import tempfile
 import time
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeoutError
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -281,30 +283,43 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
 
             client = Client(source=source)
             try:
-                # Surface levels
-                client.retrieve(
-                    date=run_date_str,
-                    time=run_hour,
-                    step=steps,
-                    type="fc",
-                    levtype="sfc",
-                    param=["10u", "10v", "2t", "2d", "msl", "tcc", "10fg", "tp"],
-                    target=raw_sfc_file,
-                )
 
-                time.sleep(5)  # Avoid SlowDown error
+                def _download(c=client, d=run_date_str, t=run_hour, s=steps):
+                    # Surface levels
+                    c.retrieve(
+                        date=d,
+                        time=t,
+                        step=s,
+                        type="fc",
+                        levtype="sfc",
+                        param=["10u", "10v", "2t", "2d", "msl", "tcc", "10fg", "tp"],
+                        target=raw_sfc_file,
+                    )
 
-                # Pressure levels
-                client.retrieve(
-                    date=run_date_str,
-                    time=run_hour,
-                    step=steps,
-                    type="fc",
-                    levtype="pl",
-                    levelist=[1000, 925, 850, 700, 500, 400, 300, 250, 200, 150],
-                    param=["u", "v", "t", "r"],
-                    target=raw_pl_file,
-                )
+                    time.sleep(5)  # Avoid SlowDown error
+
+                    # Pressure levels
+                    c.retrieve(
+                        date=d,
+                        time=t,
+                        step=s,
+                        type="fc",
+                        levtype="pl",
+                        levelist=[1000, 925, 850, 700, 500, 400, 300, 250, 200, 150],
+                        param=["u", "v", "t", "r"],
+                        target=raw_pl_file,
+                    )
+
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(_download)
+                    try:
+                        # 3-minute timeout to avoid infinite hangs on cloud storage providers
+                        future.result(timeout=180)
+                    except FuturesTimeoutError as e:
+                        raise TimeoutError(
+                            f"Download from {source} timed out after 3 minutes"
+                        ) from e
+
                 logger.info(
                     "download_complete",
                     num_steps=len(steps),
@@ -572,9 +587,7 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
                 _upload_file(s3, final_cog_path, s3_key)
                 active_filenames.add(final_cog_filename)
 
-                step_manifest["files"][level_name] = (
-                    f"{WEATHER_BASE_URL}/{final_cog_filename}"
-                )
+                step_manifest["files"][level_name] = f"{WEATHER_BASE_URL}/{final_cog_filename}"
 
                 os.remove(temp_tif)
                 os.remove(final_cog_path)
