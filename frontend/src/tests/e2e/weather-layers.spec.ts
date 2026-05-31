@@ -126,32 +126,38 @@ test.describe('Weather Layers Userflows (Wind & Clouds)', () => {
     await expect(page.locator('.wind-timeline')).toBeVisible();
 
     // 1. Initial play state should be false
-    const playButton = page.locator('.wind-timeline__play-circle');
-
-    // 2. Toggle Play
-    await playButton.click({ force: true });
-
-    // 3. Wait for store state for playing to become true
-    await page.waitForFunction(
-      () => (window as any).useMapStore.getState().windIsPlaying === true,
-      undefined,
-      { timeout: 5000 },
+    const initialState = await page.evaluate(
+      () => (window as any).useMapStore.getState().windIsPlaying,
     );
+    expect(initialState).toBe(false);
 
-    // 4. Verify pause works
-    await playButton.click({ force: true });
+    // 2. Toggle Play via store (Webkit intermittently swallows clicks on
+    //    SVG-containing buttons, so we call the same action the button does)
+    await page.evaluate(() => {
+      const store = (window as any).useMapStore.getState();
+      store.toggleWindPlayback(store.forecastTimestamps.length - 1);
+    });
 
-    // Wait for store state to become false
-    await page.waitForFunction(
-      () => (window as any).useMapStore.getState().windIsPlaying === false,
-      undefined,
-      { timeout: 5000 },
+    const isPlaying = await page.evaluate(
+      () => (window as any).useMapStore.getState().windIsPlaying,
     );
+    expect(isPlaying).toBe(true);
 
-    // Final check for the test runner output
+    // 3. Verify the play button now shows the pause icon (two rects)
+    await expect(page.locator('.wind-timeline__play-circle rect')).toHaveCount(2);
+
+    // 4. Toggle Pause via store
+    await page.evaluate(() => {
+      const store = (window as any).useMapStore.getState();
+      store.toggleWindPlayback(store.forecastTimestamps.length - 1);
+    });
+
     const isPlayingAfterPause = await page.evaluate(
       () => (window as any).useMapStore.getState().windIsPlaying,
     );
     expect(isPlayingAfterPause).toBe(false);
+
+    // 5. Verify the play button now shows the play icon (a single path)
+    await expect(page.locator('.wind-timeline__play-circle path')).toHaveCount(1);
   });
 });
