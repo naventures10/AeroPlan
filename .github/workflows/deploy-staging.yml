@@ -1,13 +1,13 @@
 name: Deploy to GCP Staging
 
 on:
-  push:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
     branches:
       - main
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - '.github/workflows/deploy-staging.yml'
 
 env:
   PROJECT_ID: project-d5038013-e773-4f0b-98a
@@ -21,6 +21,7 @@ env:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     permissions:
       contents: 'read'
       id-token: 'write' # Required for Workload Identity Federation

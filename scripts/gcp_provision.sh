@@ -203,4 +203,8 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:$GH_SA_EMAIL" \
     --role="roles/iam.serviceAccountUser" --condition=None
 
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$GH_SA_EMAIL" \
+    --role="roles/storage.objectAdmin" --condition=None
+
 echo "Infrastructure Provisioning Script Complete!"
