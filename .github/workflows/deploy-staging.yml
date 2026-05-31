@@ -99,6 +99,7 @@ jobs:
           docker build \
             --build-arg VITE_API_URL=$BACKEND_URL \
             --build-arg VITE_MARTIN_URL=$MARTIN_URL \
+            --build-arg VITE_MAPTILER_KEY=${{ secrets.VITE_MAPTILER_KEY }} \
             -t $IMAGE ./frontend
           docker push $IMAGE
 
