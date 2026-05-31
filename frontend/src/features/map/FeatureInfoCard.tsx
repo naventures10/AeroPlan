@@ -153,7 +153,7 @@ export function FeatureInfoCard() {
                   setSelectedFeature(null);
                   setSelectedRouteIds([]);
                 }}
-                className="aip-feature-card-close p-2 hover: rounded-full transition-colors ml-auto flex-shrink-0 self-start"
+                className="aip-feature-card-close p-2 hover:bg-surface-container-high rounded-full transition-colors ml-auto flex-shrink-0 self-start"
                 aria-label="Close"
               >
                 <X size={18} />

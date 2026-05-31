@@ -1,11 +1,14 @@
-import json
 import os
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 
-from eaip_scrapper.etl.etl_weather import _cleanup_stale_s3_files, _run_pipeline_impl, safe_remove_grib
+from eaip_scrapper.etl.etl_weather import (
+    _cleanup_stale_s3_files,
+    _run_pipeline_impl,
+    safe_remove_grib,
+)
 
 
 @pytest.fixture
@@ -35,26 +38,21 @@ def test_safe_remove_grib_exception(monkeypatch):
         os.remove(dummy)
 
 
-def test_cleanup_stale_s3_files(mock_s3_client):
-    mock_s3_client.get_paginator.return_value.paginate.return_value = [
-        {
-            "Contents": [
-                {"Key": "weather/weather_active.tif"},
-                {"Key": "weather/weather_stale.tif"},
-            ]
-        }
+def test_cleanup_stale_s3_files():
+    mock_storage = MagicMock()
+    mock_storage.list_objects.return_value = [
+        {"Key": "weather/weather_active.tif"},
+        {"Key": "weather/weather_stale.tif"},
     ]
-    
+
     active_filenames = {"weather_active.tif"}
-    _cleanup_stale_s3_files(mock_s3_client, active_filenames)
-    
+    _cleanup_stale_s3_files(mock_storage, active_filenames)
+
     # Should delete stale file, but not active file
-    mock_s3_client.delete_object.assert_called_once_with(
-        Bucket="ais", Key="weather/weather_stale.tif"
-    )
+    mock_storage.delete_object.assert_called_once_with("weather/weather_stale.tif")
 
 
-@patch("eaip_scrapper.etl.etl_weather._get_s3_client")
+@patch("eaip_scrapper.etl.etl_weather.UnifiedStorageClient")
 @patch("eaip_scrapper.etl.etl_weather.cfgrib.open_datasets")
 @patch("eaip_scrapper.etl.etl_weather.xr.open_dataset")
 @patch("eaip_scrapper.etl.etl_weather.xr.concat")
@@ -70,12 +68,12 @@ def test_run_pipeline_success(
     mock_xr_concat,
     mock_xr_open,
     mock_cfgrib_open,
-    mock_get_s3_client,
+    mock_storage_class,
     tmp_path,
     monkeypatch,
 ):
-    mock_s3 = MagicMock()
-    mock_get_s3_client.return_value = mock_s3
+    mock_storage = MagicMock()
+    mock_storage_class.return_value = mock_storage
 
     # Mock arange to return only 0 altitude (surface) to speed up test
     mock_arange.return_value = np.array([0])
@@ -156,16 +154,16 @@ def test_run_pipeline_success(
 
     monkeypatch.setattr("eaip_scrapper.etl.etl_weather.GDAL_CMD", "echo")
     monkeypatch.setattr("eaip_scrapper.etl.etl_weather.os.remove", lambda x: None)
-    
+
     success = _run_pipeline_impl(str(tmp_path))
     assert success is True
 
-    # Check S3 manifest upload
-    assert mock_s3.put_object.called
-    call_args = mock_s3.put_object.call_args[1]
-    assert call_args["Key"] == "weather/weather_manifest.json"
-    
-    manifest_data = json.loads(call_args["Body"].decode("utf-8"))
+    # Check Storage manifest upload
+    assert mock_storage.upload_json.called
+    call_args = mock_storage.upload_json.call_args[0]
+    manifest_data = call_args[0]
+    assert call_args[1] == "weather/weather_manifest.json"
+
     assert "generated_at" in manifest_data
     assert "forecasts" in manifest_data
     assert len(manifest_data["forecasts"]) > 0
@@ -174,9 +172,9 @@ def test_run_pipeline_success(
     assert manifest_data["band_mapping"]["surface"]["7"] == "total_cloud_cover_0_1"
 
 
-@patch("eaip_scrapper.etl.etl_weather._get_s3_client")
+@patch("eaip_scrapper.etl.etl_weather.UnifiedStorageClient")
 @patch("eaip_scrapper.etl.etl_weather.Client")
-def test_run_pipeline_download_fails(mock_client_class, mock_get_s3_client, tmp_path):
+def test_run_pipeline_download_fails(mock_client_class, mock_storage_class, tmp_path):
     mock_client = MagicMock()
     # Raise exception during download
     mock_client.retrieve.side_effect = Exception("Mock download error")

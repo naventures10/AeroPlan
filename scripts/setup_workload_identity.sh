@@ -3,6 +3,13 @@ set -e
 
 PROJECT_ID="project-d5038013-e773-4f0b-98a"
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+
+# Validate PROJECT_NUMBER is non-empty
+if [ -z "$PROJECT_NUMBER" ]; then
+    echo "ERROR: Failed to retrieve PROJECT_NUMBER for project '$PROJECT_ID'." >&2
+    exit 1
+fi
+
 POOL_NAME="github-actions-pool"
 PROVIDER_NAME="github-actions-provider"
 GH_SA_EMAIL="eaip-github-actions@${PROJECT_ID}.iam.gserviceaccount.com"

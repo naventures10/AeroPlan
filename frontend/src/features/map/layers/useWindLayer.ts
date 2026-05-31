@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import * as WeatherLayers from 'weatherlayers-gl';
 import { ClipExtension } from '@deck.gl/extensions';
 import { useMapStore } from '../../../store/useMapStore';
@@ -25,6 +25,7 @@ export function useWindLayer() {
   const [loadedImages, setLoadedImages] = useState<Record<number, WeatherLayers.TextureData>>({});
   const [renderImages, setRenderImages] = useState<Record<number, WeatherLayers.TextureData>>({});
   const [status, setStatus] = useState<WindStatus>({ state: 'idle' });
+  const staleManifestAttemptedRef = useRef<Record<string, boolean>>({});
 
   const windStatus: WindStatus = useMemo(() => {
     if (weatherStatus.state === 'loading') return weatherStatus;
@@ -101,11 +102,19 @@ export function useWindLayer() {
         console.error('[useWindLayer] Load error:', err);
 
         if (err.message?.includes('File no longer exists')) {
-          console.warn(
-            '[useWindLayer] Stale manifest detected. Auto-healing by fetching fresh manifest...',
-          );
-          fetchWeatherManifest(true);
-          return;
+          const forecastKey = `${forecastTimestamps.map((t) => t.validTime).join(',')}_${windAltitude}`;
+          if (!staleManifestAttemptedRef.current[forecastKey]) {
+            staleManifestAttemptedRef.current[forecastKey] = true;
+            console.warn(
+              '[useWindLayer] Stale manifest detected. Auto-healing by fetching fresh manifest...',
+            );
+            fetchWeatherManifest(true);
+            return;
+          } else {
+            console.error(
+              '[useWindLayer] Stale manifest detected, but auto-heal was already attempted for this timestamp/altitude key.',
+            );
+          }
         }
 
         setStatus({ state: 'error', message: 'Failed to pre-load some frames' });

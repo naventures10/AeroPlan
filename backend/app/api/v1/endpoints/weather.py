@@ -107,7 +107,7 @@ def _extract_metar_time(metar: str | None) -> int:
 async def _fetch_from_source(source_name: str, url: str) -> dict | None:
     """Fetch and parse weather from a single source. Returns None on failure."""
     try:
-        async with httpx.AsyncClient(verify=False, timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.get(url)
             resp.raise_for_status()
         return {"source": source_name, "html": resp.text}
@@ -253,6 +253,18 @@ async def get_weather_file(filename: str, request: Request):
         if match:
             byte1 = int(match.group(1))
             byte2 = int(match.group(2)) if match.group(2) else file_size - 1
+
+            # Validate bounds
+            if byte1 >= file_size or byte1 < 0:
+                return Response(
+                    status_code=416,
+                    headers={
+                        "Content-Range": f"bytes */{file_size}",
+                        "Cache-Control": "public, max-age=31536000, immutable",
+                    },
+                )
+
+            byte2 = min(byte2, file_size - 1)
             length = byte2 - byte1 + 1
 
             def file_iterator():

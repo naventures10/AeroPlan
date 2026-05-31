@@ -27,7 +27,7 @@ services:
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - /Users/naveendevapalan/ais_data/minio:/data
+      - ./data/minio:/data
     networks:
       - eaip_network
 
@@ -85,8 +85,7 @@ services:
 
 volumes:
   postgres_data:
-    name: cea54d8184a203b630ab55ae2e2429ee565b144cbc8e5430cd5fe4d6dc90c4de
-    external: true
+
 
 networks:
   eaip_network:

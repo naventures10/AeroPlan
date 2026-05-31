@@ -7,6 +7,10 @@ RUN npm ci
 
 # Copy source and build
 COPY . .
+ARG VITE_API_URL
+ARG VITE_MARTIN_URL
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_MARTIN_URL=$VITE_MARTIN_URL
 RUN npm run build
 
 # Setup Nginx server

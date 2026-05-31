@@ -50,10 +50,14 @@ describe('useWindLayer', () => {
       vi.fn((url) => {
         if (typeof url === 'string' && url.includes('url-')) {
           return Promise.resolve({
+            ok: true,
+            status: 200,
             headers: { get: () => 'image/tiff' },
           });
         }
         return Promise.resolve({
+          ok: true,
+          status: 200,
           json: () => Promise.resolve(mockManifest),
         });
       }),

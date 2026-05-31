@@ -63,10 +63,14 @@ describe('useCloudLayer', () => {
     const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation((url) => {
       if (typeof url === 'string' && url.endsWith('.tif')) {
         return Promise.resolve({
+          ok: true,
+          status: 200,
           headers: { get: () => 'image/tiff' },
         } as any);
       }
       return Promise.resolve({
+        ok: true,
+        status: 200,
         json: () => Promise.resolve(mockManifest),
       } as any);
     });
@@ -97,10 +101,14 @@ describe('useCloudLayer', () => {
     vi.spyOn(global, 'fetch').mockImplementation((url) => {
       if (typeof url === 'string' && url.endsWith('.tif')) {
         return Promise.resolve({
+          ok: true,
+          status: 200,
           headers: { get: () => 'image/tiff' },
         } as any);
       }
       return Promise.resolve({
+        ok: true,
+        status: 200,
         json: () => Promise.resolve(mockManifest),
       } as any);
     });
@@ -151,10 +159,14 @@ describe('useCloudLayer', () => {
     vi.spyOn(global, 'fetch').mockImplementation((url) => {
       if (typeof url === 'string' && url.endsWith('.tif')) {
         return Promise.resolve({
+          ok: true,
+          status: 200,
           headers: { get: () => 'image/tiff' },
         } as any);
       }
       return Promise.resolve({
+        ok: true,
+        status: 200,
         json: () => Promise.resolve(mockManifest),
       } as any);
     });

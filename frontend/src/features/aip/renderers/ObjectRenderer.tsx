@@ -80,8 +80,8 @@ export default function ObjectRenderer({ data, columnConfig }: ObjectRendererPro
             return (
               <tr
                 key={row.ref}
-                className={`border-b border-outline-variant transition-colors hover:/50 dark:hover:bg-zinc-800/30 ${
-                  row.ref % 2 === 0 ? 'bg-transparent' : '/50 '
+                className={`border-b border-outline-variant transition-colors hover:bg-surface-container-high/50 dark:hover:bg-zinc-800/30 ${
+                  row.ref % 2 === 0 ? 'bg-transparent' : 'bg-surface/50'
                 }`}
               >
                 <td className="px-4 py-3 text-on-surface-variant text-[13px] font-mono font-bold align-top">

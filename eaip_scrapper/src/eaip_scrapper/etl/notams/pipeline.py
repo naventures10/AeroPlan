@@ -1,38 +1,28 @@
+import argparse
 import json
 import re
 import sys
 import tempfile
 from pathlib import Path
 
-import boto3
 from sqlalchemy import create_engine, text
 
-from eaip_scrapper.etl.notams.base_parser import (
-    MINIO_ACCESS_KEY,
-    MINIO_BUCKET,
-    MINIO_ENDPOINT,
-    MINIO_SECRET_KEY,
-    BaseNotamParser,
-)
+from eaip_scrapper.etl.notams.base_parser import BaseNotamParser
 from eaip_scrapper.etl.notams.parsers import (
     ChennaiLlamaParser,
     DelhiLlamaParser,
     KolkataLlamaParser,
     MumbaiLlamaParser,
 )
+from eaip_scrapper.etl.storage_client import UnifiedStorageClient
 from eaip_scrapper.validation.schemas.database.notams import NotamDatabaseRecord
 
 
 class NOTAMETL:
-    def __init__(self, db_url):
+    def __init__(self, db_url, force_recreate=False):
         self.engine = create_engine(db_url)
-        self.s3 = boto3.client(
-            "s3",
-            endpoint_url=MINIO_ENDPOINT,
-            aws_access_key_id=MINIO_ACCESS_KEY,
-            aws_secret_access_key=MINIO_SECRET_KEY,
-        )
-        self.bucket = MINIO_BUCKET
+        self.storage_client = UnifiedStorageClient()
+        self.force_recreate = force_recreate
 
     def select_parser(self, filepath: Path) -> BaseNotamParser:
         name = filepath.name.lower()
@@ -48,22 +38,21 @@ class NOTAMETL:
         return BaseNotamParser()
 
     def process_from_minio(self):
-        print(f"[*] Fetching NOTAM markdowns from MinIO bucket '{self.bucket}'...")
+        print("[*] Fetching NOTAM markdowns from storage...")
         try:
-            response = self.s3.list_objects_v2(Bucket=self.bucket, Prefix="output/notams/")
-            if "Contents" not in response:
-                print("[!] No NOTAM files found in MinIO.")
+            objects = self.storage_client.list_objects("output/notams/")
+            if not objects:
+                print("[!] No NOTAM files found in storage.")
                 return
-
-            objects = response["Contents"]
 
             with tempfile.TemporaryDirectory() as temp_dir:
                 temp_path = Path(temp_dir)
                 for obj in objects:
-                    if not obj["Key"].endswith(".md"):
+                    key = obj["Key"]
+                    if not key.endswith(".md"):
                         continue
-                    local_path = temp_path / obj["Key"].split("/")[-1]
-                    self.s3.download_file(self.bucket, obj["Key"], str(local_path))
+                    local_path = temp_path / key.split("/")[-1]
+                    self.storage_client.download_file(key, str(local_path))
 
                 # Process the downloaded files in the temporary directory
                 self.process_all(temp_path)
@@ -133,30 +122,39 @@ class NOTAMETL:
             f"[*] Loading {len(records)} records to PostgreSQL mapping entirely to ICAO (3.5.1/3.5.2)..."
         )
 
+        schema_query = """
+        CREATE TABLE IF NOT EXISTS notams (
+            notam_id TEXT,
+            source_file TEXT,
+            series TEXT,
+            scope TEXT,
+            fir TEXT,
+            combined_fir TEXT,
+            airport_icao TEXT,
+            valid_from TIMESTAMP,
+            valid_to TIMESTAMP,
+            is_permanent BOOLEAN,
+            is_estimated BOOLEAN,
+            duration_category TEXT,
+            description TEXT,
+            raw_json JSONB,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (notam_id, source_file)
+        );
+        """
+
+        # Perform atomic table creation and truncation inside a transaction
         with self.engine.begin() as conn:
-            conn.execute(
-                text("""
-                DROP TABLE IF EXISTS notams;
-                CREATE TABLE notams (
-                    notam_id TEXT,
-                    source_file TEXT,
-                    series TEXT,
-                    scope TEXT,
-                    fir TEXT,
-                    combined_fir TEXT,
-                    airport_icao TEXT,
-                    valid_from TIMESTAMP,
-                    valid_to TIMESTAMP,
-                    is_permanent BOOLEAN,
-                    is_estimated BOOLEAN,
-                    duration_category TEXT,
-                    description TEXT,
-                    raw_json JSONB,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    PRIMARY KEY (notam_id, source_file)
-                );
-            """)
-            )
+            if self.force_recreate:
+                print("[!] --force-recreate passed. Recreating notams table...")
+                conn.execute(text("DROP TABLE IF EXISTS notams;"))
+
+            # Ensure the table is constructed
+            conn.execute(text(schema_query))
+
+            # Empty the table atomically under a single transaction
+            print("[*] Performing atomic truncation of notams table...")
+            conn.execute(text("TRUNCATE TABLE notams;"))
 
         with self.engine.begin() as conn:
             for r in records:
@@ -214,8 +212,27 @@ class NOTAMETL:
 
 
 def main():
-    db_url = "postgresql://postgres:postgres@localhost:5432/aeronautical_information_system"
-    etl_pipeline = NOTAMETL(db_url)
+    import os
+
+    parser = argparse.ArgumentParser(description="AeroPlan NOTAM ETL Pipeline")
+    parser.add_argument(
+        "--force-recreate",
+        action="store_true",
+        help="Drop and recreate the notams table before inserting",
+    )
+    args = parser.parse_args()
+
+    # Get database URL from env, or construct it from separate parts, or fallback to default
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url:
+        db_user = os.getenv("DB_USER", "postgres")
+        db_pass = os.getenv("DB_PASS", "postgres")
+        db_host = os.getenv("DB_HOST", "localhost")
+        db_port = os.getenv("DB_PORT", "5432")
+        db_name = os.getenv("DB_NAME", "aeronautical_information_system")
+        db_url = f"postgresql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}"
+
+    etl_pipeline = NOTAMETL(db_url, force_recreate=args.force_recreate)
     etl_pipeline.process_from_minio()
 
 

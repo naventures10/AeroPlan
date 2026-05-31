@@ -40,7 +40,7 @@ class DelhiLlamaParser(BaseNotamParser):
 
         def commit_notam():
             nonlocal current_notam
-            if current_notam and current_notam.get("valid_from_raw"):
+            if current_notam:
                 # pyrefly: ignore [no-matching-overload]
                 current_notam["description"] = re.sub(
                     r"\n{3,}", "\n\n", current_notam["description"]
@@ -62,14 +62,28 @@ class DelhiLlamaParser(BaseNotamParser):
                     if s.startswith("SW")
                     else "UNKNOWN"
                 )
-                current_notam["is_permanent"] = (
-                    "PERM" in (current_notam.get("valid_to_raw") or "").upper()
-                )
-                current_notam["is_estimated"] = (
-                    "EST" in (current_notam.get("valid_to_raw") or "").upper()
-                )
-                current_notam["valid_from"] = self.parse_notam_time(current_notam["valid_from_raw"])
-                current_notam["valid_to"] = self.parse_notam_time(current_notam["valid_to_raw"])
+                valid_to_raw = current_notam.get("valid_to_raw") or ""
+                current_notam["is_permanent"] = "PERM" in valid_to_raw.upper()
+                current_notam["is_estimated"] = "EST" in valid_to_raw.upper()
+
+                # Safe date parsing
+                valid_from_raw = current_notam.get("valid_from_raw")
+                if valid_from_raw:
+                    current_notam["valid_from"] = self.parse_notam_time(valid_from_raw)
+                else:
+                    current_notam["valid_from"] = None
+
+                if valid_to_raw:
+                    current_notam["valid_to"] = self.parse_notam_time(valid_to_raw)
+                else:
+                    current_notam["valid_to"] = None
+
+                # Log warnings for malformed or missing validity patterns
+                if not current_notam["valid_from"]:
+                    print(
+                        f"  [WARN] Delhi parser: NOTAM ID {current_notam.get('notam_id')} in {file_path.name} has missing or malformed VALIDITY_FROM. Appending with valid_from=None."
+                    )
+
                 current_notam["duration_category"] = self.calculate_duration_category(current_notam)
                 current_notam["raw_json"] = {"source": file_path.name}
                 self.records.append(current_notam)

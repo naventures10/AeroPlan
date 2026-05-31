@@ -7,18 +7,21 @@ import { useMapStore } from './store/useMapStore.ts';
 import { initializeFaro, getWebInstrumentations } from '@grafana/faro-web-sdk';
 
 // Initialize Grafana Faro Web SDK for observability
-initializeFaro({
-  url: 'http://localhost:12347/collect', // Faro receiver on OTel Collector
-  app: {
-    name: 'eaip-frontend',
-    version: '0.1.0',
-    environment: 'development',
-  },
-  instrumentations: [
-    // Load default web instrumentations (console, errors, web vitals)
-    ...getWebInstrumentations(),
-  ],
-});
+const faroUrl = import.meta.env.VITE_FARO_URL;
+if (faroUrl) {
+  initializeFaro({
+    url: faroUrl,
+    app: {
+      name: 'eaip-frontend',
+      version: import.meta.env.VITE_APP_VERSION ?? '0.1.0',
+      environment: import.meta.env.MODE,
+    },
+    instrumentations: [
+      // Load default web instrumentations (console, errors, web vitals)
+      ...getWebInstrumentations(),
+    ],
+  });
+}
 
 // Expose useMapStore to window during development, E2E tests, or when running production builds locally on localhost (both IPv4 and IPv6) for local debugging/testing.
 if (

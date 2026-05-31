@@ -32,8 +32,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-inline-size: 2rem;
-  min-block-size: 2rem;
+  inline-size: 2rem;
+  block-size: 2rem;
   border-radius: 50%;
   background: var(--accent-cyan-opacity-10);
   border: 1px solid var(--accent-cyan-opacity-20);
@@ -84,8 +84,8 @@
 }
 
 .profile-avatar {
-  min-inline-size: 5rem;
-  min-block-size: 5rem;
+  inline-size: 5rem;
+  block-size: 5rem;
   border-radius: 50%;
   background: var(--surface-container-highest);
   border: 1px solid var(--glass-border);
@@ -143,8 +143,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-inline-size: 2rem;
-  min-block-size: 2rem;
+  inline-size: 2rem;
+  block-size: 2rem;
   border-radius: 0.5rem;
   background: var(--surface-container-high);
   color: var(--on-surface-variant);

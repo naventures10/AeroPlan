@@ -88,3 +88,7 @@ backend/temp_out_*.tif
 # Local Scratch / Development
 # ============================================================
 backend/scripts/scratch/
+
+# Local data / docker bind mounts
+data/
+

@@ -9,9 +9,17 @@ def get_storage_path(bucket_like_prefix: str, key: str) -> Path:
     folder in dev, or a GCS FUSE mount like /mnt/gcs in production).
     """
     base_path = Path(settings.STORAGE_PATH).resolve()
-    # In S3, bucket and key are distinct. For a local file system, we combine them.
-    # We ignore the 'bucket' part in our FUSE setup, as the FUSE mount IS the bucket.
-    # Alternatively, if we mount multiple buckets, it would be /mnt/gcs/bucket_name.
-    # Here we assume STORAGE_PATH points directly inside the bucket or local data folder.
-    full_path = base_path / key
+
+    # Strip any leading slashes or dots to prevent directory traversal
+    clean_key = key.lstrip("/")
+
+    # Resolve the combined path
+    full_path = (base_path / clean_key).resolve()
+
+    # Verify the path is within the base_path
+    try:
+        full_path.relative_to(base_path)
+    except ValueError as e:
+        raise ValueError(f"Directory traversal attempt detected: {key}") from e
+
     return full_path

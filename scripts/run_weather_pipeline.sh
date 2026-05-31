@@ -42,10 +42,10 @@ function run_with_retry() {
     echo "[$(date)] Starting weather pipeline (Attempt $attempt/$max_attempts)..." >> "$LOG_FILE"
     
     # Cleanup any stale pipeline processes from previous runs
-    STALE_PIDS=$(pgrep -f "eaip_scrapper.etl.etl_weather" | grep -v $$)
+    STALE_PIDS=$(pgrep -f "eaip_scrapper\.etl\.etl_weather" | grep -v $$)
     if [ -n "$STALE_PIDS" ]; then
       echo "[$(date)] Found stale weather pipeline processes. Cleaning up..." >> "$LOG_FILE"
-      pkill -f "eaip_scrapper.etl.etl_weather"
+      pkill -f "eaip_scrapper\.etl\.etl_weather"
       sleep 2
     fi
 

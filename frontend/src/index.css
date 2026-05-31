@@ -5,8 +5,14 @@
    1. Tokens & Theme Base (Tailwind v4 Integration)
    ───────────────────────────────────────────────────────────────────────────── */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
+}
 
+html.dark {
+  color-scheme: dark;
+}
+
+:root {
   /* Surface System */
   --surface: light-dark(#fbf8f1, #0b1326);
   --surface-dim: light-dark(#f3efe5, #0b1326);

@@ -11,7 +11,6 @@ Usage:
 
 import gc
 import glob
-import json
 import logging
 import os
 import shutil
@@ -24,7 +23,6 @@ from concurrent.futures import TimeoutError as FuturesTimeoutError
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-import boto3
 import cfgrib
 import numpy as np
 import rasterio
@@ -32,6 +30,8 @@ import structlog
 import xarray as xr
 from ecmwf.opendata import Client
 from rasterio.transform import from_origin
+
+from eaip_scrapper.etl.storage_client import UnifiedStorageClient
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -90,47 +90,21 @@ logger = structlog.get_logger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _get_s3_client():
-    """Create a boto3 S3 client pointing at MinIO."""
-    return boto3.client(
-        "s3",
-        endpoint_url=MINIO_ENDPOINT,
-        aws_access_key_id=MINIO_ACCESS_KEY,
-        aws_secret_access_key=MINIO_SECRET_KEY,
-        region_name="us-east-1",
-    )
-
-
-def _upload_file(s3, local_path: str, s3_key: str) -> None:
-    """Upload a local file to S3."""
-    s3.upload_file(local_path, MINIO_BUCKET, s3_key)
-    logger.info("uploaded_to_s3", key=s3_key, bucket=MINIO_BUCKET)
-
-
-def _upload_json(s3, data: dict, s3_key: str) -> None:
-    """Upload a JSON document to S3."""
-    s3.put_object(
-        Bucket=MINIO_BUCKET,
-        Key=s3_key,
-        Body=json.dumps(data, indent=2).encode("utf-8"),
-        ContentType="application/json",
-    )
-    logger.info("uploaded_manifest_to_s3", key=s3_key, bucket=MINIO_BUCKET)
-
-
-def _cleanup_stale_s3_files(s3, active_filenames: set[str]) -> None:
-    """Delete weather/*.tif files in S3 that are not in the active set."""
-    paginator = s3.get_paginator("list_objects_v2")
-    for page in paginator.paginate(Bucket=MINIO_BUCKET, Prefix=f"{WEATHER_S3_PREFIX}/"):
-        for obj in page.get("Contents", []):
+def _cleanup_stale_s3_files(storage_client, active_filenames: set[str]) -> None:
+    """Delete weather/*.tif files in storage that are not in the active set."""
+    try:
+        objects = storage_client.list_objects(f"{WEATHER_S3_PREFIX}/")
+        for obj in objects:
             key = obj["Key"]
             basename = os.path.basename(key)
             if basename.endswith(".tif") and basename not in active_filenames:
                 try:
-                    s3.delete_object(Bucket=MINIO_BUCKET, Key=key)
+                    storage_client.delete_object(key)
                     logger.info("deleted_stale_s3_file", key=key)
                 except Exception as e:
                     logger.error("failed_to_delete_stale_s3_file", key=key, error=str(e))
+    except Exception as e:
+        logger.error("failed_to_list_for_cleanup", error=str(e))
 
 
 # ---------------------------------------------------------------------------
@@ -247,7 +221,7 @@ def run_pipeline() -> bool:
 def _run_pipeline_impl(temp_dir: str) -> bool:
     logger.info("starting_weather_pipeline")
 
-    s3 = _get_s3_client()
+    storage_client = UnifiedStorageClient()
     gdal_cmd = _resolve_gdal_cmd()
 
     now = datetime.now(UTC)
@@ -514,21 +488,20 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
             # Interpolate (only for this single step)
             ds_step = step_full.interp(altitude=target_alts, method="linear")
 
+            SENTINEL = -9999.0
             for alt in target_alts:
                 alt_slice = ds_step.sel(altitude=alt)
 
-                # Prepare data bands
+                # Prepare data bands with NaN-to-Sentinel conversion
                 bands = []
-                bands.append(np.nan_to_num(alt_slice["u"].values.astype(np.float32), nan=0.0))
-                bands.append(np.nan_to_num(alt_slice["v"].values.astype(np.float32), nan=0.0))
-                bands.append(np.nan_to_num(alt_slice["t"].values.astype(np.float32), nan=0.0))
-                bands.append(np.nan_to_num(alt_slice["r"].values.astype(np.float32), nan=0.0))
+                for var in ["u", "v", "t", "r"]:
+                    val = alt_slice[var].values
+                    bands.append(np.where(np.isnan(val), SENTINEL, val).astype(np.float32))
 
                 if alt == 0:
                     for var in ["fg10", "tp", "tcc", "msl"]:
-                        bands.append(
-                            np.nan_to_num(alt_slice[var].values.astype(np.float32), nan=0.0)
-                        )
+                        val = alt_slice[var].values
+                        bands.append(np.where(np.isnan(val), SENTINEL, val).astype(np.float32))
 
                 temp_tif = os.path.join(temp_dir, f"temp_out_{int(alt)}_{step_hours}.tif")
 
@@ -542,7 +515,7 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
                     dtype=bands[0].dtype,
                     crs="+proj=latlong",
                     transform=transform,
-                    nodata=0.0,
+                    nodata=SENTINEL,
                 ) as dst:
                     for i, band_data in enumerate(bands):
                         dst.write(band_data, i + 1)
@@ -582,9 +555,9 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
                 ]
                 subprocess.run(gdal_args, check=True, capture_output=True, text=True)
 
-                # Upload COG to S3
+                # Upload COG to storage
                 s3_key = f"{WEATHER_S3_PREFIX}/{final_cog_filename}"
-                _upload_file(s3, final_cog_path, s3_key)
+                storage_client.upload_file(final_cog_path, s3_key)
                 active_filenames.add(final_cog_filename)
 
                 step_manifest["files"][level_name] = f"{WEATHER_BASE_URL}/{final_cog_filename}"
@@ -617,7 +590,7 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
     manifest_s3_key = f"{WEATHER_S3_PREFIX}/weather_manifest.json"
     logger.info("uploading_manifest", key=manifest_s3_key)
     try:
-        _upload_json(s3, manifest_data, manifest_s3_key)
+        storage_client.upload_json(manifest_data, manifest_s3_key)
         logger.info("manifest_uploaded")
     except Exception as e:
         logger.error("manifest_upload_failed", error=str(e))
@@ -626,7 +599,7 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
     safe_remove_grib(raw_pl_file)
     safe_remove_grib(raw_sfc_file)
 
-    _cleanup_stale_s3_files(s3, active_filenames)
+    _cleanup_stale_s3_files(storage_client, active_filenames)
     logger.info("pipeline_completed_successfully")
     return True
 

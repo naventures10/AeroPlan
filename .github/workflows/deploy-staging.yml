@@ -51,11 +51,7 @@ jobs:
           docker build -t $DOCKER_TAG ./backend
           docker push $DOCKER_TAG
 
-      - name: Build and Push Frontend Image
-        run: |-
-          DOCKER_TAG="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-frontend:${{ github.sha }}"
-          docker build -t $DOCKER_TAG ./frontend
-          docker push $DOCKER_TAG
+
 
       - name: Deploy Backend to Cloud Run
         run: |-
@@ -68,7 +64,7 @@ jobs:
             --network default \
             --add-volume=name=gcs-volume,type=cloud-storage,bucket=${{ env.GCS_BUCKET }} \
             --add-volume-mount=volume=gcs-volume,mount-path=/mnt/gcs \
-            --set-env-vars="STORAGE_PATH=/mnt/gcs,DATABASE_URL=\${{ secrets.DATABASE_URL }},ENVIRONMENT=staging" \
+            --set-env-vars="^@^STORAGE_PATH=/mnt/gcs@DATABASE_URL=${{ secrets.DATABASE_URL }}@ENVIRONMENT=staging" \
             --service-account=${{ env.SERVICE_ACCOUNT }}
 
       - name: Deploy Martin Tile Server to Cloud Run
@@ -85,15 +81,20 @@ jobs:
             --set-env-vars="MARTIN_CONFIG=/mnt/gcs/martin.yaml" \
             --service-account=${{ env.SERVICE_ACCOUNT }}
 
-      - name: Deploy Frontend to Cloud Run
+      - name: Build, Push, and Deploy Frontend Image
         run: |-
-          IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-frontend:${{ github.sha }}"
-          # Fetch backend and martin URLs to inject into the frontend if needed
+          # Fetch backend and martin URLs to inject into the frontend at build time
           BACKEND_URL=$(gcloud run services describe eaip-backend --region ${{ env.REGION }} --format 'value(status.url)')
           MARTIN_URL=$(gcloud run services describe eaip-martin --region ${{ env.REGION }} --format 'value(status.url)')
           
+          DOCKER_TAG="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-frontend:${{ github.sha }}"
+          docker build \
+            --build-arg VITE_API_URL=$BACKEND_URL \
+            --build-arg VITE_MARTIN_URL=$MARTIN_URL \
+            -t $DOCKER_TAG ./frontend
+          docker push $DOCKER_TAG
+          
           gcloud run deploy eaip-frontend \
-            --image $IMAGE \
+            --image $DOCKER_TAG \
             --region ${{ env.REGION }} \
-            --allow-unauthenticated \
-            --set-env-vars="VITE_API_URL=$BACKEND_URL,VITE_MARTIN_URL=$MARTIN_URL"
+            --allow-unauthenticated

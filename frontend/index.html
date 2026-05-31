@@ -13,22 +13,28 @@
       (function () {
         try {
           var store = localStorage.getItem('eaip-map-store');
+          var isDark = false;
           if (store) {
             var parsed = JSON.parse(store);
             if (parsed.state && parsed.state.mapStyle) {
-              if (parsed.state.mapStyle === 'hybrid') {
+              var style = parsed.state.mapStyle;
+              if (style === 'hybrid') {
                 document.documentElement.style.colorScheme = '';
+                isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
               } else {
-                document.documentElement.style.colorScheme =
-                  parsed.state.mapStyle === 'light' ? 'light' : 'dark';
+                document.documentElement.style.colorScheme = style;
+                isDark = style === 'dark';
               }
+              document.documentElement.classList.toggle('dark', isDark);
               return;
             }
           }
           if (window.matchMedia('(prefers-color-scheme: light)').matches) {
             document.documentElement.style.colorScheme = 'light';
+            document.documentElement.classList.toggle('dark', false);
           } else {
             document.documentElement.style.colorScheme = 'dark';
+            document.documentElement.classList.toggle('dark', true);
           }
         } catch (e) {}
       })();

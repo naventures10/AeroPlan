@@ -167,7 +167,7 @@ async def get_aerodrome_metadata(
 ) -> JSONResponse:
     """Fetches the JSONB AIP document metadata for a specific aerodrome, bypassing serialization overhead."""
     query = text("""
-        SELECT aip_document::text
+        SELECT aip_document
         FROM aerodrome_documents
         WHERE icao_code = :icao;
     """)

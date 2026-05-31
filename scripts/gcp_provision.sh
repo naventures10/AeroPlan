@@ -42,10 +42,20 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:$HMAC_SA_EMAIL" \
     --role="roles/storage.objectAdmin" --condition=None
 
-echo "Generating HMAC Keys for $HMAC_SA_EMAIL"
-echo "IMPORTANT: The keys will be printed below. We will use them in the next step."
-# We check if a key exists to avoid generating hundreds of keys, but for now we just generate one.
-gcloud storage hmac create $HMAC_SA_EMAIL --project=$PROJECT_ID || true
+echo "Checking existing HMAC Keys for $HMAC_SA_EMAIL..."
+EXISTING_KEYS=$(gcloud storage hmac list --service-account=$HMAC_SA_EMAIL --project=$PROJECT_ID --format="value(accessId)" 2>/dev/null || true)
+if [ -n "$EXISTING_KEYS" ]; then
+    echo "HMAC key already exists for $HMAC_SA_EMAIL."
+else
+    echo "Generating new GCS HMAC Key..."
+    if ! HMAC_OUTPUT=$(gcloud storage hmac create $HMAC_SA_EMAIL --project=$PROJECT_ID 2>&1); then
+        echo "ERROR: Failed to create HMAC key for service account $HMAC_SA_EMAIL. Output:" >&2
+        echo "$HMAC_OUTPUT" >&2
+        exit 1
+    fi
+    echo "HMAC Key created successfully:"
+    echo "$HMAC_OUTPUT"
+fi
 
 # 2. Artifact Registry
 REPO_NAME="eaip-repo"
@@ -61,6 +71,7 @@ fi
 VM_NAME="eaip-db-vm"
 echo "Creating Database VM..."
 if ! gcloud compute instances describe $VM_NAME --zone=$ZONE > /dev/null 2>&1; then
+    DB_PASSWORD=${DB_PASSWORD:-"postgres"}
     gcloud compute instances create $VM_NAME \
         --zone=$ZONE \
         --machine-type=e2-micro \
@@ -78,7 +89,7 @@ chmod a+r /etc/apt/keyrings/docker.gpg
 echo \"deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \$(. /etc/os-release && echo \"\$VERSION_CODENAME\") stable\" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-docker run -d --name eaip-postgres --restart unless-stopped -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=aeronautical_information_system -p 5432:5432 -v postgres_data:/var/lib/postgresql/data postgis/postgis:15-3.4
+docker run -d --name eaip-postgres --restart unless-stopped -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=$DB_PASSWORD -e POSTGRES_DB=aeronautical_information_system -p 5432:5432 -v postgres_data:/var/lib/postgresql/data postgis/postgis:15-3.4
 "
 fi
 
@@ -91,7 +102,7 @@ if ! gcloud compute firewall-rules describe allow-postgres > /dev/null 2>&1; the
         --network=default \
         --action=ALLOW \
         --rules=tcp:5432 \
-        --source-ranges=0.0.0.0/0 \
+        --source-ranges=${POSTGRES_INGRESS_RANGE:-"10.0.0.0/8"} \
         --target-tags=allow-postgres
 fi
 

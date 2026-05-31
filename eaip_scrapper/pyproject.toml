@@ -14,6 +14,7 @@ dependencies = [
     "geoalchemy>=0.7.2",
     "geoalchemy2>=0.18.4",
     "geopandas>=1.1.2",
+    "google-cloud-storage>=3.4.1",
     "google-generativeai>=0.8.6",
     "joblib>=1.4.2",
     "langchain-google-genai>=4.2.1",

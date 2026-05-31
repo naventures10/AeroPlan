@@ -205,13 +205,18 @@ export const useMapStore = create<MapState>()(
       mapStyle: getSystemTheme(),
       isDarkMode: getSystemTheme() !== 'light',
       setMapStyle: (style) => {
-        set({ mapStyle: style, isDarkMode: style !== 'light' });
+        const isDark = style !== 'light';
+        set({ mapStyle: style, isDarkMode: isDark });
         // Update the native color-scheme to trigger light-dark() CSS function
         if (typeof document !== 'undefined') {
+          const root = document.documentElement;
           if (style === 'hybrid') {
-            document.documentElement.style.colorScheme = ''; // Let OS theme dictate UI
+            root.style.colorScheme = '';
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            root.classList.toggle('dark', systemDark);
           } else {
-            document.documentElement.style.colorScheme = style;
+            root.style.colorScheme = style;
+            root.classList.toggle('dark', style === 'dark');
           }
         }
       },
@@ -426,6 +431,9 @@ export const useMapStore = create<MapState>()(
 
         try {
           const response = await fetch('/api/v1/weather/weather_manifest.json');
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
           const manifestData = await response.json();
           if (manifestData && manifestData.forecasts) {
             const timestamps = manifestData.forecasts.map((f: any) => {
