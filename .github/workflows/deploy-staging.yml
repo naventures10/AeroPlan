@@ -69,8 +69,8 @@ jobs:
 
       - name: Deploy Martin Tile Server to Cloud Run
         run: |-
-          # Maplibre Martin is a public image, we can just push it directly to Cloud Run
-          # Or we can deploy the standard ghcr.io image directly!
+          # Convert postgresql+asyncpg:// to postgres:// for Martin compatibility
+          MARTIN_DB_URL=$(echo "${{ secrets.DATABASE_URL }}" | sed 's/postgresql+asyncpg/postgres/')
           gcloud run deploy eaip-martin \
             --image ghcr.io/maplibre/martin:v0.14.2 \
             --region ${{ env.REGION }} \
@@ -78,7 +78,7 @@ jobs:
             --execution-environment gen2 \
             --add-volume=name=gcs-volume,type=cloud-storage,bucket=${{ env.GCS_BUCKET }} \
             --add-volume-mount=volume=gcs-volume,mount-path=/mnt/gcs \
-            --set-env-vars="MARTIN_CONFIG=/mnt/gcs/martin.yaml" \
+            --set-env-vars="MARTIN_CONFIG=/mnt/gcs/martin.yaml,DATABASE_URL=$MARTIN_DB_URL" \
             --service-account=${{ env.SERVICE_ACCOUNT }}
 
       - name: Build, Push, and Deploy Frontend Image
