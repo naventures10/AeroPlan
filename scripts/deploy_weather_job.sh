@@ -58,8 +58,8 @@ if gcloud run jobs describe "${JOB_NAME}" --region="${REGION}" --project="${PROJ
         --image="${IMAGE_URI}" \
         --service-account="${SERVICE_ACCOUNT}" \
         --set-env-vars="ENVIRONMENT=staging,MINIO_BUCKET=${BUCKET_NAME}" \
-        --memory=2Gi \
-        --cpu=2 \
+        --memory=8Gi \
+        --cpu=4 \
         --task-timeout=20m \
         --max-retries=2
 else
@@ -70,8 +70,8 @@ else
         --image="${IMAGE_URI}" \
         --service-account="${SERVICE_ACCOUNT}" \
         --set-env-vars="ENVIRONMENT=staging,MINIO_BUCKET=${BUCKET_NAME}" \
-        --memory=2Gi \
-        --cpu=2 \
+        --memory=8Gi \
+        --cpu=4 \
         --task-timeout=20m \
         --max-retries=2
 fi

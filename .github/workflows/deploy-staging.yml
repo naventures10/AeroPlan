@@ -85,8 +85,8 @@ jobs:
               --image=$IMAGE \
               --service-account=$STORAGE_SA \
               --set-env-vars="ENVIRONMENT=staging,MINIO_BUCKET=$BUCKET_NAME" \
-              --memory=2Gi \
-              --cpu=2 \
+              --memory=8Gi \
+              --cpu=4 \
               --task-timeout=20m \
               --max-retries=2
           else
@@ -95,8 +95,8 @@ jobs:
               --image=$IMAGE \
               --service-account=$STORAGE_SA \
               --set-env-vars="ENVIRONMENT=staging,MINIO_BUCKET=$BUCKET_NAME" \
-              --memory=2Gi \
-              --cpu=2 \
+              --memory=8Gi \
+              --cpu=4 \
               --task-timeout=20m \
               --max-retries=2
           fi
