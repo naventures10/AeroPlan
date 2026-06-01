@@ -80,6 +80,8 @@ interface MapState {
   isAtsGeometryLoaded: boolean;
   setAtsGeometryLoaded: (loaded: boolean) => void;
 
+  atsRoutesToggleCounter: number;
+
   boundsToFit: [number, number, number, number] | null;
   fitBounds: (bounds: [number, number, number, number] | null) => void;
 
@@ -290,6 +292,12 @@ export const useMapStore = create<MapState>()(
             if (state.selectedFeature?.type === 'ATS_ROUTE') {
               stateUpdates.selectedFeature = null;
             }
+          } else if (layer === 'atsRoutes' && newActiveLayers.atsRoutes) {
+            stateUpdates = {
+              ...stateUpdates,
+              isAtsGeometryLoaded: false,
+              atsRoutesToggleCounter: state.atsRoutesToggleCounter + 1,
+            };
           }
 
           if (
@@ -381,6 +389,8 @@ export const useMapStore = create<MapState>()(
 
       isAtsGeometryLoaded: false,
       setAtsGeometryLoaded: (loaded) => set({ isAtsGeometryLoaded: loaded }),
+
+      atsRoutesToggleCounter: 0,
 
       boundsToFit: null,
       fitBounds: (bounds) => {
@@ -626,6 +636,7 @@ export const useMapStore = create<MapState>()(
           isWeatherMode,
           isWindMode,
           isAtsGeometryLoaded,
+          atsRoutesToggleCounter,
           activeLayers,
           ...rest
         } = state;

@@ -15,6 +15,7 @@ describe('createAtsRouteLayers', () => {
       selectedRouteType: 'RNAV',
       isAtsGeometryLoaded: true,
       setAtsGeometryLoaded: vi.fn(),
+      atsRoutesToggleCounter: 1,
       animatedTrips: [
         {
           path: [
@@ -79,7 +80,7 @@ describe('createAtsRouteLayers', () => {
     expect(tripsLayer.props.getColor({ route_type: 'CONV' })).toEqual([68, 172, 255]);
 
     const mvtWaypoints = layers[5];
-    expect(mvtWaypoints.id).toBe('atsRoutes-waypoints-layer');
+    expect(mvtWaypoints.id).toBe('atsRoutes-waypoints-layer-1');
 
     const wpFeature = { properties: { route_ids: '{"A1","B2"}', waypoint_name: 'FIX' } };
     expect(mvtWaypoints.props.getIconColor(wpFeature)).toEqual([115, 236, 139, 255]); // Mint for selected RNAV
@@ -135,6 +136,7 @@ describe('createAtsRouteLayers', () => {
       selectedRouteType: null,
       isAtsGeometryLoaded: false,
       setAtsGeometryLoaded: vi.fn(),
+      atsRoutesToggleCounter: 2,
       animatedTrips: [],
       currentTime: 0,
       atsRouteLabels: null,
@@ -180,6 +182,7 @@ describe('createAtsRouteLayers', () => {
       selectedRouteType: 'RNAV',
       isAtsGeometryLoaded: true,
       setAtsGeometryLoaded: vi.fn(),
+      atsRoutesToggleCounter: 3,
       animatedTrips: [],
       currentTime: 0,
       atsRouteLabels: null,
@@ -205,6 +208,7 @@ describe('createAtsRouteLayers', () => {
       selectedRouteType: 'WAYPOINT', // testing the waypoint override logic
       isAtsGeometryLoaded: true,
       setAtsGeometryLoaded: vi.fn(),
+      atsRoutesToggleCounter: 4,
       animatedTrips: [{ path: [[0, 0, 1]] }],
       currentTime: 1.5,
       atsRouteLabels: null,
@@ -252,6 +256,7 @@ describe('createAtsRouteLayers', () => {
       setSelectedRouteIds: vi.fn(),
       setSelectedFeature: vi.fn(),
       setAtsGeometryLoaded: vi.fn(),
+      atsRoutesToggleCounter: 5,
     };
 
     const layers = createAtsRouteLayers(ctx as any);

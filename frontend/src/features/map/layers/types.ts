@@ -61,4 +61,5 @@ export interface LayerContext {
   /** Tracks if MVT tiles for route lines have loaded */
   isAtsGeometryLoaded: boolean;
   setAtsGeometryLoaded: (loaded: boolean) => void;
+  atsRoutesToggleCounter: number;
 }
