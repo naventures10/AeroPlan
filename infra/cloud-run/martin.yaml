@@ -8,13 +8,13 @@ spec:
   template:
     metadata:
       annotations:
-        autoscaling.knative.dev/maxScale: "3"
+        autoscaling.knative.dev/maxScale: "10"
         run.googleapis.com/execution-environment: gen2
         run.googleapis.com/network-interfaces: '[{"network":"default"}]'
         run.googleapis.com/vpc-access-egress: private-ranges-only
     spec:
       serviceAccountName: eaip-github-actions@project-d5038013-e773-4f0b-98a.iam.gserviceaccount.com
-      containerConcurrency: 80
+      containerConcurrency: 1000
       timeoutSeconds: 300
       containers:
         - image: __IMAGE__
