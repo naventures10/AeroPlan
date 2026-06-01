@@ -240,11 +240,12 @@ async def get_weather_file(filename: str, request: Request):
 
     if request.method == "HEAD":
         return Response(
+            media_type=content_type,
             headers={
                 "Content-Length": str(file_size),
                 "Accept-Ranges": "bytes",
                 "Cache-Control": "public, max-age=31536000, immutable",
-            }
+            },
         )
 
     range_header = request.headers.get("range")
