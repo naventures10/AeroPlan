@@ -207,4 +207,14 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:$GH_SA_EMAIL" \
     --role="roles/storage.objectAdmin" --condition=None
 
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$GH_SA_EMAIL" \
+    --role="roles/cloudscheduler.admin" --condition=None
+
+# Grant run.invoker to storage SA so Cloud Scheduler can trigger Cloud Run Jobs
+STORAGE_SA_EMAIL="eaip-storage-sa@${PROJECT_ID}.iam.gserviceaccount.com"
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$STORAGE_SA_EMAIL" \
+    --role="roles/run.invoker" --condition=None
+
 echo "Infrastructure Provisioning Script Complete!"

@@ -65,6 +65,65 @@ jobs:
             --member="allUsers" \
             --role="roles/run.invoker"
 
+      # ── Weather Pipeline (Cloud Run Job) ────────────────────────────────────
+
+      - name: Build and Push Weather Pipeline Image
+        run: |-
+          IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/weather-pipeline:${{ github.sha }}"
+          docker build -f backend/Dockerfile.weather -t $IMAGE ./backend
+          docker push $IMAGE
+
+      - name: Deploy Weather Pipeline Cloud Run Job
+        run: |-
+          IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/weather-pipeline:${{ github.sha }}"
+          STORAGE_SA="eaip-storage-sa@${{ env.PROJECT_ID }}.iam.gserviceaccount.com"
+          BUCKET_NAME="eaip-staging-data-${{ env.PROJECT_ID }}"
+
+          if gcloud run jobs describe weather-pipeline --region ${{ env.REGION }} > /dev/null 2>&1; then
+            gcloud run jobs update weather-pipeline \
+              --region ${{ env.REGION }} \
+              --image=$IMAGE \
+              --service-account=$STORAGE_SA \
+              --set-env-vars="ENVIRONMENT=staging,MINIO_BUCKET=$BUCKET_NAME" \
+              --memory=2Gi \
+              --cpu=2 \
+              --task-timeout=20m \
+              --max-retries=2
+          else
+            gcloud run jobs create weather-pipeline \
+              --region ${{ env.REGION }} \
+              --image=$IMAGE \
+              --service-account=$STORAGE_SA \
+              --set-env-vars="ENVIRONMENT=staging,MINIO_BUCKET=$BUCKET_NAME" \
+              --memory=2Gi \
+              --cpu=2 \
+              --task-timeout=20m \
+              --max-retries=2
+          fi
+
+      - name: Create or Update Cloud Scheduler for Weather Pipeline
+        run: |-
+          STORAGE_SA="eaip-storage-sa@${{ env.PROJECT_ID }}.iam.gserviceaccount.com"
+          SCHEDULER_URI="https://${{ env.REGION }}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${{ env.PROJECT_ID }}/jobs/weather-pipeline:run"
+
+          if gcloud scheduler jobs describe weather-pipeline-schedule --location ${{ env.REGION }} > /dev/null 2>&1; then
+            gcloud scheduler jobs update http weather-pipeline-schedule \
+              --location ${{ env.REGION }} \
+              --schedule="0 */6 * * *" \
+              --time-zone="UTC" \
+              --uri="$SCHEDULER_URI" \
+              --http-method=POST \
+              --oauth-service-account-email=$STORAGE_SA
+          else
+            gcloud scheduler jobs create http weather-pipeline-schedule \
+              --location ${{ env.REGION }} \
+              --schedule="0 */6 * * *" \
+              --time-zone="UTC" \
+              --uri="$SCHEDULER_URI" \
+              --http-method=POST \
+              --oauth-service-account-email=$STORAGE_SA
+          fi
+
       # ── Martin Tile Server ─────────────────────────────────────────────────
 
       - name: Pull, Tag, and Push Martin Image to Artifact Registry

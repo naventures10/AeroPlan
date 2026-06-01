@@ -1,0 +1,27 @@
+FROM python:3.13-slim
+
+# System dependencies: GDAL for gdal_translate, eccodes for cfgrib
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gdal-bin \
+    libgdal-dev \
+    libeccodes-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:0.5.21 /uv /uvx /usr/local/bin/
+
+WORKDIR /app
+
+# Copy dependency manifests first for layer caching
+COPY pyproject.toml uv.lock ./
+
+# Install production dependencies only
+RUN uv sync --frozen --no-dev
+
+# Copy only the jobs module (no app/ needed)
+COPY jobs/ ./jobs/
+
+# Create logs directory
+RUN mkdir -p /app/logs
+
+CMD ["uv", "run", "python", "-m", "jobs.etl_weather"]
