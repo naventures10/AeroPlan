@@ -6,6 +6,8 @@ from app.core.config import settings
 engine = create_async_engine(
     settings.database_url,
     echo=getattr(settings, "DEBUG", False),
+    pool_size=5,
+    max_overflow=5,
 )
 
 AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
