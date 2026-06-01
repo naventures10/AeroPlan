@@ -45,6 +45,8 @@ export function useDeckLayers({
     selectedRnpApproachId,
     setSelectedRnpApproachId,
     mapStyle,
+    isAtsGeometryLoaded,
+    setAtsGeometryLoaded,
   } = useMapStore();
 
   // Derive isDarkMode from the reactive mapStyle field (getter is not reactive)
@@ -98,6 +100,8 @@ export function useDeckLayers({
     currentTime,
     setSelectedRouteIds,
     setSelectedFeature,
+    isAtsGeometryLoaded,
+    setAtsGeometryLoaded,
   };
 
   const layers = useMemo(() => {
@@ -167,6 +171,8 @@ export function useDeckLayers({
     cloudLayers,
     isDarkMode,
     mapStyle,
+    isAtsGeometryLoaded,
+    setAtsGeometryLoaded,
   ]);
 
   return layers;

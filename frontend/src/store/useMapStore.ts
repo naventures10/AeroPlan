@@ -77,6 +77,9 @@ interface MapState {
   atsRouteLabels: any | null;
   setAtsRouteLabels: (data: any) => void;
 
+  isAtsGeometryLoaded: boolean;
+  setAtsGeometryLoaded: (loaded: boolean) => void;
+
   boundsToFit: [number, number, number, number] | null;
   fitBounds: (bounds: [number, number, number, number] | null) => void;
 
@@ -376,6 +379,9 @@ export const useMapStore = create<MapState>()(
         set({ atsRouteLabels: data });
       },
 
+      isAtsGeometryLoaded: false,
+      setAtsGeometryLoaded: (loaded) => set({ isAtsGeometryLoaded: loaded }),
+
       boundsToFit: null,
       fitBounds: (bounds) => {
         set({ boundsToFit: bounds });
@@ -619,6 +625,7 @@ export const useMapStore = create<MapState>()(
           windIsPlaying,
           isWeatherMode,
           isWindMode,
+          isAtsGeometryLoaded,
           activeLayers,
           ...rest
         } = state;

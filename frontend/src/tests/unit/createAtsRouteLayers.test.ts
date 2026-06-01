@@ -13,6 +13,8 @@ describe('createAtsRouteLayers', () => {
       selectedRouteIds: ['A1'],
       selectedFeature: null,
       selectedRouteType: 'RNAV',
+      isAtsGeometryLoaded: true,
+      setAtsGeometryLoaded: vi.fn(),
       animatedTrips: [
         {
           path: [
@@ -131,6 +133,8 @@ describe('createAtsRouteLayers', () => {
       selectedRouteIds: [],
       selectedFeature: null,
       selectedRouteType: null,
+      isAtsGeometryLoaded: false,
+      setAtsGeometryLoaded: vi.fn(),
       animatedTrips: [],
       currentTime: 0,
       atsRouteLabels: null,
@@ -174,6 +178,8 @@ describe('createAtsRouteLayers', () => {
       selectedRouteIds: ['A1'],
       selectedFeature: { type: 'ATS_ROUTE', data: { route_id: 'A1' } },
       selectedRouteType: 'RNAV',
+      isAtsGeometryLoaded: true,
+      setAtsGeometryLoaded: vi.fn(),
       animatedTrips: [],
       currentTime: 0,
       atsRouteLabels: null,
@@ -197,6 +203,8 @@ describe('createAtsRouteLayers', () => {
       selectedRouteIds: ['A1'],
       selectedFeature: null,
       selectedRouteType: 'WAYPOINT', // testing the waypoint override logic
+      isAtsGeometryLoaded: true,
+      setAtsGeometryLoaded: vi.fn(),
       animatedTrips: [{ path: [[0, 0, 1]] }],
       currentTime: 1.5,
       atsRouteLabels: null,
@@ -217,5 +225,41 @@ describe('createAtsRouteLayers', () => {
     const wpFeature = { properties: { route_ids: '{"A1"}' } };
     expect(layers[2].props.getIconColor(wpFeature)).toEqual([192, 132, 252, 255]); // COLOR_NEON_PURPLE
     expect(layers[2].props.getTextColor(wpFeature)).toEqual([192, 132, 252, 255]); // COLOR_NEON_PURPLE
+  });
+
+  it('hides labels when ats route geometry is not loaded', () => {
+    const ctx = {
+      isDarkMode: true,
+      viewMode: 'ENROUTE',
+      zoom: 8,
+      activeLayers: {
+        atsRoutes: true,
+      },
+      selectedRouteIds: [],
+      selectedFeature: null,
+      selectedRouteType: null,
+      animatedTrips: [],
+      currentTime: 1.5,
+      isAtsGeometryLoaded: false,
+      atsRouteLabels: {
+        features: [
+          {
+            geometry: { coordinates: [0, 0] },
+            properties: { route_id: 'A1', bearing: 90, route_type: 'RNAV' },
+          },
+        ],
+      },
+      setSelectedRouteIds: vi.fn(),
+      setSelectedFeature: vi.fn(),
+      setAtsGeometryLoaded: vi.fn(),
+    };
+
+    const layers = createAtsRouteLayers(ctx as any);
+    const labelHexLayer = layers[3]; // ats-route-labels-hex-layer
+
+    // When not loaded and not selected, alpha is 0
+    expect(
+      labelHexLayer.props.getColor({ properties: { route_id: 'A1', route_type: 'RNAV' } }),
+    ).toEqual([0, 0, 0, 0]);
   });
 });

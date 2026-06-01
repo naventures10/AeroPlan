@@ -57,4 +57,8 @@ export interface LayerContext {
 
   setSelectedRouteIds: (ids: string[], type?: string | null) => void;
   setSelectedFeature: (feature: SelectedFeature | null) => void;
+
+  /** Tracks if MVT tiles for route lines have loaded */
+  isAtsGeometryLoaded: boolean;
+  setAtsGeometryLoaded: (loaded: boolean) => void;
 }

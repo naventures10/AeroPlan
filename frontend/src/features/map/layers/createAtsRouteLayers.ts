@@ -103,6 +103,8 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
     atsRouteLabels,
     setSelectedRouteIds,
     setSelectedFeature,
+    isAtsGeometryLoaded,
+    setAtsGeometryLoaded,
   } = ctx;
 
   const isZoomAtsWaypoints = ctx.zoom > ZOOM_ATS_WAYPOINTS;
@@ -148,6 +150,11 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         return isSelected ? width + 2 : width;
       },
       lineWidthMinPixels: 1,
+      onViewportLoad: () => {
+        if (!isAtsGeometryLoaded) {
+          setAtsGeometryLoaded(true);
+        }
+      },
       onClick: (info: any) => {
         if (info.object && info.object.properties.route_id) {
           const rId = info.object.properties.route_id;
@@ -223,7 +230,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         },
         getColor: (d: any): [number, number, number, number] => {
           const isSelected = selectedRouteIds.includes(d.properties.route_id);
-          const isActive = isLayerActive || isSelected;
+          const isActive = (isLayerActive && isAtsGeometryLoaded) || isSelected;
           return [0, 0, 0, isActive ? (ctx.isDarkMode ? 255 : 230) : 0];
         },
         sizeUnits: 'meters',
@@ -233,7 +240,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
         updateTriggers: {
           getSize: [selectedRouteIds, currentTime, selectedFeature],
-          getColor: [isLayerActive, selectedRouteIds, ctx.isDarkMode],
+          getColor: [isLayerActive, selectedRouteIds, ctx.isDarkMode, isAtsGeometryLoaded],
         },
         parameters: {
           depthTest: false,
@@ -262,7 +269,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         getSize: 5000,
         getColor: (d: any): [number, number, number, number] => {
           const isSelected = selectedRouteIds.includes(d.properties.route_id);
-          const isActive = isLayerActive || isSelected;
+          const isActive = (isLayerActive && isAtsGeometryLoaded) || isSelected;
           if (!isActive) return [0, 0, 0, 0];
 
           const baseRgb = routeBaseRgb(d.properties.route_type, palette);
@@ -278,7 +285,13 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         collisionGroup: 'ats-labels',
         collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
         updateTriggers: {
-          getColor: [selectedRouteIds, currentTime, selectedFeature, isLayerActive],
+          getColor: [
+            selectedRouteIds,
+            currentTime,
+            selectedFeature,
+            isLayerActive,
+            isAtsGeometryLoaded,
+          ],
         },
         parameters: { depthTest: false },
         transitions: {
@@ -301,7 +314,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         sizeMaxPixels: ATS_ROUTE_LABEL_TEXT_MAX_PIXELS,
         getColor: (d: any): [number, number, number, number] => {
           const isSelected = selectedRouteIds.includes(d.properties.route_id);
-          const isActive = isLayerActive || isSelected;
+          const isActive = (isLayerActive && isAtsGeometryLoaded) || isSelected;
           if (!isActive) return [0, 0, 0, 0];
 
           const baseRgb = routeBaseRgb(d.properties.route_type, palette);
@@ -317,7 +330,13 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         collisionGroup: 'ats-labels',
         collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
         updateTriggers: {
-          getColor: [selectedRouteIds, currentTime, selectedFeature, isLayerActive],
+          getColor: [
+            selectedRouteIds,
+            currentTime,
+            selectedFeature,
+            isLayerActive,
+            isAtsGeometryLoaded,
+          ],
         },
         parameters: { depthTest: false },
         transitions: {

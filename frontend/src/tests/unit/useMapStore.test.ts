@@ -45,6 +45,7 @@ describe('useMapStore', () => {
       isWindMode: false,
       mapStyle: 'dark',
       isDarkMode: true,
+      isAtsGeometryLoaded: false,
     });
   });
 
@@ -78,6 +79,16 @@ describe('useMapStore', () => {
     state.toggleLayer('ercMap');
     state = useMapStore.getState();
     expect(state.activeLayers.ercMap).toBe(false);
+  });
+
+  it('should NOT reset isAtsGeometryLoaded when atsRoutes layer is toggled on', () => {
+    const state = useMapStore.getState();
+    state.setAtsGeometryLoaded(true);
+    expect(useMapStore.getState().isAtsGeometryLoaded).toBe(true);
+
+    // Toggle ATS routes layer ON
+    state.toggleLayer('atsRoutes');
+    expect(useMapStore.getState().isAtsGeometryLoaded).toBe(true);
   });
 
   it('should test remaining actions correctly', () => {
