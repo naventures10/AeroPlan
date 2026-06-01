@@ -139,7 +139,7 @@ describe('useMapTooltip', () => {
           track_magnetic: '090',
         },
       },
-      layer: { id: 'atsRoutes-geom-layer' },
+      layer: { id: 'atsRoutes-geom-layer-1' },
       x: 10,
       y: 10,
     });
@@ -179,7 +179,7 @@ describe('useMapTooltip', () => {
 
     const tooltip = result.current({
       object: { properties: { waypoint_name: 'FIX2', route_ids: 'L333' } },
-      layer: { id: 'atsRoutes-waypoints-layer' },
+      layer: { id: 'atsRoutes-waypoints-layer-1' },
       x: 10,
       y: 10,
     });

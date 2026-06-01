@@ -119,7 +119,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
               ${hours}
             </div>`),
         };
-      } else if (object && layer?.id === 'atsRoutes-geom-layer') {
+      } else if (object && layer?.id && String(layer.id).startsWith('atsRoutes-geom-layer')) {
         const p = object.properties ?? {};
         if (!activeLayers.atsRoutes && !selectedRouteIds.includes(p.route_id)) return null;
         const isOneWay = p.direction_odd === 'O' || p.direction_even === 'E';
@@ -161,7 +161,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
               ${trackStr}
             </div>`),
         };
-      } else if (object && layer?.id === 'atsRoutes-waypoints-layer') {
+      } else if (object && layer?.id && String(layer.id).startsWith('atsRoutes-waypoints-layer')) {
         const p = object.properties ?? {};
         const routes = p.route_ids
           ? String(p.route_ids)
