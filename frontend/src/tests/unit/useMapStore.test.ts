@@ -81,14 +81,17 @@ describe('useMapStore', () => {
     expect(state.activeLayers.ercMap).toBe(false);
   });
 
-  it('should NOT reset isAtsGeometryLoaded when atsRoutes layer is toggled on', () => {
-    const state = useMapStore.getState();
+  it('should reset isAtsGeometryLoaded and increment toggle counter when atsRoutes layer is toggled on', () => {
+    let state = useMapStore.getState();
+    const initialCounter = state.atsRoutesToggleCounter;
     state.setAtsGeometryLoaded(true);
     expect(useMapStore.getState().isAtsGeometryLoaded).toBe(true);
 
     // Toggle ATS routes layer ON
     state.toggleLayer('atsRoutes');
-    expect(useMapStore.getState().isAtsGeometryLoaded).toBe(true);
+    state = useMapStore.getState();
+    expect(state.isAtsGeometryLoaded).toBe(false);
+    expect(state.atsRoutesToggleCounter).toBe(initialCounter + 1);
   });
 
   it('should test remaining actions correctly', () => {

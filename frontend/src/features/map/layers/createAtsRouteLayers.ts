@@ -116,7 +116,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
 
   layers.push(
     new MVTLayer({
-      id: 'atsRoutes-geom-layer',
+      id: `atsRoutes-geom-layer-${ctx.atsRoutesToggleCounter}`,
       data: `${window.location.origin}/tiles/ats_route_segments/{z}/{x}/{y}`,
       visible: viewMode === 'ENROUTE',
       pickable: isLayerActive || selectedRouteIds.length > 0,
@@ -350,7 +350,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
 
   layers.push(
     new MVTLayer({
-      id: 'atsRoutes-waypoints-layer',
+      id: `atsRoutes-waypoints-layer-${ctx.atsRoutesToggleCounter}`,
       data: `${window.location.origin}/tiles/ats_route_waypoints/{z}/{x}/{y}`,
       visible: viewMode === 'ENROUTE',
       pickable: isLayerActive || selectedRouteIds.length > 0,

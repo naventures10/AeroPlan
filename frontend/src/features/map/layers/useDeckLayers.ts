@@ -47,6 +47,7 @@ export function useDeckLayers({
     mapStyle,
     isAtsGeometryLoaded,
     setAtsGeometryLoaded,
+    atsRoutesToggleCounter,
   } = useMapStore();
 
   // Derive isDarkMode from the reactive mapStyle field (getter is not reactive)
@@ -102,6 +103,7 @@ export function useDeckLayers({
     setSelectedFeature,
     isAtsGeometryLoaded,
     setAtsGeometryLoaded,
+    atsRoutesToggleCounter,
   };
 
   const layers = useMemo(() => {
@@ -173,6 +175,7 @@ export function useDeckLayers({
     mapStyle,
     isAtsGeometryLoaded,
     setAtsGeometryLoaded,
+    atsRoutesToggleCounter,
   ]);
 
   return layers;
