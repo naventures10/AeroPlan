@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-from eaip_scrapper.etl.etl_weather import (
+from jobs.etl_weather import (
     _cleanup_stale_s3_files,
     _run_pipeline_impl,
     safe_remove_grib,
@@ -52,14 +52,14 @@ def test_cleanup_stale_s3_files():
     mock_storage.delete_object.assert_called_once_with("weather/weather_stale.tif")
 
 
-@patch("eaip_scrapper.etl.etl_weather.UnifiedStorageClient")
-@patch("eaip_scrapper.etl.etl_weather.cfgrib.open_datasets")
-@patch("eaip_scrapper.etl.etl_weather.xr.open_dataset")
-@patch("eaip_scrapper.etl.etl_weather.xr.concat")
-@patch("eaip_scrapper.etl.etl_weather.rasterio.open")
-@patch("eaip_scrapper.etl.etl_weather.Client")
-@patch("eaip_scrapper.etl.etl_weather.subprocess.run")
-@patch("eaip_scrapper.etl.etl_weather.np.arange")
+@patch("jobs.etl_weather.UnifiedStorageClient")
+@patch("jobs.etl_weather.cfgrib.open_datasets")
+@patch("jobs.etl_weather.xr.open_dataset")
+@patch("jobs.etl_weather.xr.concat")
+@patch("jobs.etl_weather.rasterio.open")
+@patch("jobs.etl_weather.Client")
+@patch("jobs.etl_weather.subprocess.run")
+@patch("jobs.etl_weather.np.arange")
 def test_run_pipeline_success(
     mock_arange,
     mock_run,
@@ -152,8 +152,8 @@ def test_run_pipeline_success(
     # Mock rasterio context manager
     mock_rasterio.return_value.__enter__.return_value = MagicMock()
 
-    monkeypatch.setattr("eaip_scrapper.etl.etl_weather.GDAL_CMD", "echo")
-    monkeypatch.setattr("eaip_scrapper.etl.etl_weather.os.remove", lambda x: None)
+    monkeypatch.setattr("jobs.etl_weather.GDAL_CMD", "echo")
+    monkeypatch.setattr("jobs.etl_weather.os.remove", lambda x: None)
 
     success = _run_pipeline_impl(str(tmp_path))
     assert success is True
@@ -172,8 +172,8 @@ def test_run_pipeline_success(
     assert manifest_data["band_mapping"]["surface"]["7"] == "total_cloud_cover_0_1"
 
 
-@patch("eaip_scrapper.etl.etl_weather.UnifiedStorageClient")
-@patch("eaip_scrapper.etl.etl_weather.Client")
+@patch("jobs.etl_weather.UnifiedStorageClient")
+@patch("jobs.etl_weather.Client")
 def test_run_pipeline_download_fails(mock_client_class, mock_storage_class, tmp_path):
     mock_client = MagicMock()
     # Raise exception during download

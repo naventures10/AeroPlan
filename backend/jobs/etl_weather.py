@@ -3,10 +3,10 @@ Weather Pipeline ETL — Download ECMWF forecast data, generate Cloud-Optimized
 GeoTIFFs, and upload them to MinIO object storage.
 
 This module is the canonical entrypoint for weather data ingestion. It runs as
-a standalone script, typically triggered by macOS launchd on a schedule.
+a standalone script designed to be run manually by the user.
 
 Usage:
-    uv run python -m eaip_scrapper.etl.etl_weather
+    uv run python -m jobs.etl_weather
 """
 
 import gc
@@ -31,7 +31,7 @@ import xarray as xr
 from ecmwf.opendata import Client
 from rasterio.transform import from_origin
 
-from eaip_scrapper.etl.storage_client import UnifiedStorageClient
+from jobs.storage_client import UnifiedStorageClient
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -47,7 +47,7 @@ WEATHER_BASE_URL = "/api/v1/weather/files"
 GDAL_CMD = os.getenv("GDAL_CMD", "gdal_translate")
 
 # Logging setup
-LOG_DIR = Path(__file__).resolve().parents[3] / "logs"
+LOG_DIR = Path(__file__).resolve().parents[1] / "logs"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 LOG_FILE = LOG_DIR / "weather_pipeline.log"
 
@@ -113,7 +113,7 @@ def _cleanup_stale_s3_files(storage_client, active_filenames: set[str]) -> None:
 
 
 def _resolve_gdal_cmd() -> str:
-    """Resolve the GDAL binary for non-interactive environments like cron/launchd."""
+    """Resolve the GDAL binary."""
     configured_cmd = GDAL_CMD
 
     # Respect an explicit absolute/relative path first.
@@ -488,7 +488,7 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
             # Interpolate (only for this single step)
             ds_step = step_full.interp(altitude=target_alts, method="linear")
 
-            SENTINEL = -9999.0
+            sentinel = -9999.0
             for alt in target_alts:
                 alt_slice = ds_step.sel(altitude=alt)
 
@@ -496,12 +496,12 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
                 bands = []
                 for var in ["u", "v", "t", "r"]:
                     val = alt_slice[var].values
-                    bands.append(np.where(np.isnan(val), SENTINEL, val).astype(np.float32))
+                    bands.append(np.where(np.isnan(val), sentinel, val).astype(np.float32))
 
                 if alt == 0:
                     for var in ["fg10", "tp", "tcc", "msl"]:
                         val = alt_slice[var].values
-                        bands.append(np.where(np.isnan(val), SENTINEL, val).astype(np.float32))
+                        bands.append(np.where(np.isnan(val), sentinel, val).astype(np.float32))
 
                 temp_tif = os.path.join(temp_dir, f"temp_out_{int(alt)}_{step_hours}.tif")
 
@@ -515,7 +515,7 @@ def _run_pipeline_impl(temp_dir: str) -> bool:
                     dtype=bands[0].dtype,
                     crs="+proj=latlong",
                     transform=transform,
-                    nodata=SENTINEL,
+                    nodata=sentinel,
                 ) as dst:
                     for i, band_data in enumerate(bands):
                         dst.write(band_data, i + 1)
