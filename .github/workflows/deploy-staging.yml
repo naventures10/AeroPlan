@@ -56,14 +56,7 @@ jobs:
       - name: Deploy Backend to Cloud Run
         run: |-
           IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-backend:${{ github.sha }}"
-          sed -e "s|__IMAGE__|$IMAGE|g" \
-              -e "s|__DATABASE_URL__|${{ secrets.DATABASE_URL }}|g" \
-              infra/cloud-run/backend.yaml | \
-            gcloud run services replace - --region ${{ env.REGION }}
-          gcloud run services add-iam-policy-binding eaip-backend \
-            --region ${{ env.REGION }} \
-            --member="allUsers" \
-            --role="roles/run.invoker"
+          gcloud run deploy eaip-backend --image $IMAGE --region ${{ env.REGION }}
 
       # ── Weather Pipeline (Cloud Run Job) ────────────────────────────────────
 
@@ -76,53 +69,7 @@ jobs:
       - name: Deploy Weather Pipeline Cloud Run Job
         run: |-
           IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/weather-pipeline:${{ github.sha }}"
-          STORAGE_SA="eaip-storage-sa@${{ env.PROJECT_ID }}.iam.gserviceaccount.com"
-          BUCKET_NAME="eaip-staging-data-${{ env.PROJECT_ID }}"
-
-          if gcloud run jobs describe weather-pipeline --region ${{ env.REGION }} > /dev/null 2>&1; then
-            gcloud run jobs update weather-pipeline \
-              --region ${{ env.REGION }} \
-              --image=$IMAGE \
-              --service-account=$STORAGE_SA \
-              --set-env-vars="ENVIRONMENT=staging,MINIO_BUCKET=$BUCKET_NAME" \
-              --memory=8Gi \
-              --cpu=4 \
-              --task-timeout=20m \
-              --max-retries=2
-          else
-            gcloud run jobs create weather-pipeline \
-              --region ${{ env.REGION }} \
-              --image=$IMAGE \
-              --service-account=$STORAGE_SA \
-              --set-env-vars="ENVIRONMENT=staging,MINIO_BUCKET=$BUCKET_NAME" \
-              --memory=8Gi \
-              --cpu=4 \
-              --task-timeout=20m \
-              --max-retries=2
-          fi
-
-      - name: Create or Update Cloud Scheduler for Weather Pipeline
-        run: |-
-          STORAGE_SA="eaip-storage-sa@${{ env.PROJECT_ID }}.iam.gserviceaccount.com"
-          SCHEDULER_URI="https://${{ env.REGION }}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${{ env.PROJECT_ID }}/jobs/weather-pipeline:run"
-
-          if gcloud scheduler jobs describe weather-pipeline-schedule --location ${{ env.REGION }} > /dev/null 2>&1; then
-            gcloud scheduler jobs update http weather-pipeline-schedule \
-              --location ${{ env.REGION }} \
-              --schedule="0 */6 * * *" \
-              --time-zone="UTC" \
-              --uri="$SCHEDULER_URI" \
-              --http-method=POST \
-              --oauth-service-account-email=$STORAGE_SA
-          else
-            gcloud scheduler jobs create http weather-pipeline-schedule \
-              --location ${{ env.REGION }} \
-              --schedule="0 */6 * * *" \
-              --time-zone="UTC" \
-              --uri="$SCHEDULER_URI" \
-              --http-method=POST \
-              --oauth-service-account-email=$STORAGE_SA
-          fi
+          gcloud run jobs update weather-pipeline --image $IMAGE --region ${{ env.REGION }}
 
       # ── Martin Tile Server ─────────────────────────────────────────────────
 
@@ -137,14 +84,7 @@ jobs:
       - name: Deploy Martin Tile Server to Cloud Run
         run: |-
           IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-martin:v0.14.2"
-          sed -e "s|__IMAGE__|$IMAGE|g" \
-              -e "s|__MARTIN_DATABASE_URL__|${{ secrets.MARTIN_DATABASE_URL }}|g" \
-              infra/cloud-run/martin.yaml | \
-            gcloud run services replace - --region ${{ env.REGION }}
-          gcloud run services add-iam-policy-binding eaip-martin \
-            --region ${{ env.REGION }} \
-            --member="allUsers" \
-            --role="roles/run.invoker"
+          gcloud run deploy eaip-martin --image $IMAGE --region ${{ env.REGION }}
 
       # ── Frontend ───────────────────────────────────────────────────────────
 
@@ -162,10 +102,4 @@ jobs:
             -t $IMAGE ./frontend
           docker push $IMAGE
 
-          sed -e "s|__IMAGE__|$IMAGE|g" \
-              infra/cloud-run/frontend.yaml | \
-            gcloud run services replace - --region ${{ env.REGION }}
-          gcloud run services add-iam-policy-binding eaip-frontend \
-            --region ${{ env.REGION }} \
-            --member="allUsers" \
-            --role="roles/run.invoker"
+          gcloud run deploy eaip-frontend --image $IMAGE --region ${{ env.REGION }}
