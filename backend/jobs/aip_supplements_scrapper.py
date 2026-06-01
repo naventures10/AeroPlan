@@ -1,12 +1,13 @@
 import json
 import logging
 import os
+import tempfile
 
-import boto3
 import requests
 import urllib3
-from botocore.exceptions import ClientError
 from bs4 import BeautifulSoup
+
+from jobs.storage_client import UnifiedStorageClient
 
 # Disable insecure request warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -18,19 +19,10 @@ logger = logging.getLogger(__name__)
 # Constants
 URL = "https://aim-india.aai.aero/aip-supplements"
 BASE_URL = "https://aim-india.aai.aero"
-
-# MinIO Config
-MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://localhost:9000")
-MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY")
-MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY")
-MINIO_BUCKET = os.getenv("MINIO_BUCKET", "ais")
 FILE_KEY = "output/aip_supplements.json"
 
-# 12 hours in seconds
-SCRAPE_INTERVAL = 12 * 3600
 
-
-def scrape_supplements():
+def scrape_supplements() -> list | None:
     logger.info(f"Fetching AIP Supplements from {URL}")
     try:
         response = requests.get(URL, verify=False, timeout=60)
@@ -58,7 +50,6 @@ def scrape_supplements():
             s_no = cols[0].get_text(strip=True)
 
             title_cell = cols[1]
-            # Get text but remove nested elements like 'New' img text if any
             title = title_cell.get_text(strip=True)
 
             link_tag = title_cell.find("a")
@@ -85,40 +76,55 @@ def scrape_supplements():
     return results
 
 
-def upload_to_minio(data):
-    logger.info(f"Uploading to MinIO bucket '{MINIO_BUCKET}' at '{FILE_KEY}'")
-    s3 = boto3.client(
-        "s3",
-        endpoint_url=MINIO_ENDPOINT,
-        aws_access_key_id=MINIO_ACCESS_KEY,
-        aws_secret_access_key=MINIO_SECRET_KEY,
-    )
-
-    try:
-        # Ensure bucket exists or just put object (assuming bucket is managed externally)
-        json_data = json.dumps(data, indent=2)
-        s3.put_object(
-            Bucket=MINIO_BUCKET,
-            Key=FILE_KEY,
-            Body=json_data.encode("utf-8"),
-            ContentType="application/json",
-        )
-        logger.info("Upload complete.")
-    except ClientError as e:
-        logger.error(f"Failed to upload to MinIO: {e}")
-
-
-def main():
+def run_scraper() -> bool:
     logger.info("Starting AIP Supplements Scraper...")
     try:
         data = scrape_supplements()
-        if data:
-            upload_to_minio(data)
-        else:
+        if not data:
             logger.warning("No data extracted. Skipping upload.")
+            return False
+
+        storage_client = UnifiedStorageClient()
+        latest_supplement = data[0].get("supplement_number") if data else None
+
+        # Download existing to check for updates
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as tmp:
+            tmp_path = tmp.name
+
+        needs_upload = True
+        try:
+            logger.info(f"Checking existing supplements at '{FILE_KEY}'")
+            storage_client.download_file(FILE_KEY, tmp_path)
+
+            with open(tmp_path, encoding="utf-8") as f:
+                existing_data = json.load(f)
+
+            if existing_data and len(existing_data) > 0:
+                existing_latest = existing_data[0].get("supplement_number")
+                if latest_supplement == existing_latest:
+                    logger.info(
+                        f"No updates detected (latest supplement: {latest_supplement}). Skipping upload."
+                    )
+                    needs_upload = False
+        except Exception as e:
+            logger.warning(f"Could not retrieve or parse existing data (might be first run): {e}")
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+
+        if needs_upload:
+            logger.info(f"Uploading new supplements data to '{FILE_KEY}'")
+            # pyrefly: ignore [bad-argument-type]
+            storage_client.upload_json(data, FILE_KEY)
+            logger.info("Upload complete.")
+
+        return True
     except Exception as e:
         logger.error(f"Unexpected error in scraping cycle: {e}")
+        return False
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    sys.exit(0 if run_scraper() else 1)

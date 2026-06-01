@@ -259,17 +259,11 @@ if __name__ == "__main__":
     import asyncio
 
     from eaip_scrapper.scrapper.scrappers import (
-        aip_supplements_scrapper,
         daylight_scrapper,
         notam_scrapper,
     )
 
     try:
-        if run_scrape_supplements:
-            aip_supplements_scrapper.main()
-        else:
-            logger.info("[*] Skipping AIP Supplements...")
-
         if run_scrape_daylight:
             asyncio.run(daylight_scrapper.main())
         else:
