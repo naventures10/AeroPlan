@@ -4,6 +4,7 @@
 
 postgres:
   connection_string: ${DATABASE_URL}
+  pool_size: 5
 
   tables:
 
