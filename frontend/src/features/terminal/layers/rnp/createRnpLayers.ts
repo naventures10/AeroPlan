@@ -501,6 +501,82 @@ export function createRnpLayers({
         opacity: opacity ?? 1,
       }),
     );
+
+    // Hold pattern annotations (red-orange, matching missed approach)
+    const holdAnnotations = (pathData.hold_patterns || []).map((hp: RnpHoldPattern) => {
+      const lines: string[] = [];
+
+      // Inbound course
+      if (hp.inbound_course != null) {
+        const courseStr = Math.round(hp.inbound_course).toString().padStart(3, '0');
+        lines.push(`↑ ${courseStr}°`);
+      }
+
+      // Turn direction
+      if (hp.turn_direction) {
+        lines.push(hp.turn_direction === 'L' ? '⟲ Left' : '⟳ Right');
+      }
+
+      // Altitude
+      if (hp.altitude_ft != null) {
+        lines.push(`MNM ALT ${Math.round(hp.altitude_ft)}`);
+      }
+
+      // Hold time/distance
+      if (hp.original_distance_str) {
+        const distUpper = hp.original_distance_str.toUpperCase();
+        if (distUpper.includes('MIN')) {
+          const val = parseFloat(distUpper.replace('MIN', '').trim());
+          if (!isNaN(val)) lines.push(`${val.toFixed(0)} MIN`);
+        } else {
+          lines.push(`${hp.leg_distance_nm.toFixed(1)} NM`);
+        }
+      } else {
+        lines.push(`${hp.leg_distance_nm.toFixed(1)} NM`);
+      }
+
+      // Speed limit
+      if (hp.speed_limit_kt != null) {
+        lines.push(`MAX ${Math.round(hp.speed_limit_kt)} KT`);
+      }
+
+      // Position at the fix (first point of the hold pattern path)
+      const fixPt = hp.path[0] ?? [0, 0, 0];
+      return {
+        position: [fixPt[0], fixPt[1], minZ + (fixPt[2] - minZ) * ALT_EXAGGERATION + 4] as [
+          number,
+          number,
+          number,
+        ],
+        text: lines.join('\n'),
+      };
+    });
+
+    if (holdAnnotations.length > 0) {
+      layers.push(
+        new TextLayer({
+          id: 'rnp-hold-annotations-layer',
+          data: holdAnnotations,
+          getPosition: (d: { position: [number, number, number] }) => d.position,
+          getText: (d: { text: string }) => d.text,
+          getSize: 10,
+          getColor: [255, 100, 80, 255], // Red-orange (missed approach color)
+          opacity: opacity ?? 1,
+          getTextAnchor: 'start',
+          getAlignmentBaseline: 'top',
+          getPixelOffset: [14, 6],
+          parameters: { depthTest: true },
+          characterSet: 'auto',
+          fontFamily: 'Geist, sans-serif',
+          fontWeight: 600,
+          outlineWidth: 3,
+          outlineColor: [0, 0, 0, 255],
+          fontSettings: { sdf: true },
+          billboard: true,
+          pickable: false,
+        }),
+      );
+    }
   }
 
   // ── 4. Waypoint markers ───────────────────────────────

@@ -204,4 +204,47 @@ describe('createRnpLayers', () => {
     // transitions cause flicker — they must not be present
     expect(linestring.props.transitions).toBeFalsy();
   });
+
+  it('creates hold patterns layer when present', () => {
+    const pathDataWithHolds = {
+      ...mockPathData,
+      hold_patterns: [
+        {
+          waypoint_ident: 'HOLD1',
+          path: [
+            [0, 0, 100],
+            [1, 1, 200],
+          ],
+          turn_direction: 'R',
+          inbound_course: 90,
+          leg_distance_nm: 4,
+          original_distance_str: '4NM',
+          altitude_ft: 2000,
+          speed_limit_kt: null,
+        },
+      ],
+    };
+
+    const ctx = {
+      pathData: pathDataWithHolds,
+      selectedRnpApproachId: null,
+      hoveredRnpApproachId: null,
+      setSelectedRnpApproachId: vi.fn(),
+      rnpCurrentTime: 0,
+      approachDist: 0,
+    };
+
+    const layers = createRnpLayers(ctx as any);
+    // Linestrings, Hold patterns, Hold annotations, Waypoints scatter, Waypoints labels
+    expect(layers.length).toBe(5);
+
+    const holdLayer = layers[1];
+    expect(holdLayer.id).toBe('rnp-hold-patterns-layer');
+    expect(holdLayer.props.getColor).toEqual([50, 220, 80, 220]); // Harmonies premium lime green
+    expect(holdLayer.props.getWidth).toBe(3);
+
+    const annotationLayer = layers[2];
+    expect(annotationLayer.id).toBe('rnp-hold-annotations-layer');
+    expect(annotationLayer.props.getColor).toEqual([255, 100, 80, 255]); // Red-orange
+  });
 });

@@ -56,6 +56,8 @@ class RnpHoldPattern(BaseModel):
     inbound_course: float | None = None
     leg_distance_nm: float
     original_distance_str: str | None = None
+    altitude_ft: float | None = None
+    speed_limit_kt: float | None = None
 
 
 class RnpPath3dResponse(BaseModel):

@@ -1,3 +1,4 @@
+import contextlib
 import math
 import re
 from collections.abc import Sequence
@@ -912,6 +913,12 @@ def build_3d_paths(
                 leg_distance_nm=dist_nm,
             )
 
+            # Extract speed limit (stored as negative value in DB, e.g. -230.00)
+            speed_kt: float | None = None
+            if hasattr(leg, "speed_limit") and leg.speed_limit is not None:
+                with contextlib.suppress(ValueError, TypeError):
+                    speed_kt = abs(float(str(leg.speed_limit).strip()))
+
             hold_patterns.append(
                 RnpHoldPattern(
                     waypoint_ident=leg.waypoint_ident or "HOLD",
@@ -920,6 +927,8 @@ def build_3d_paths(
                     inbound_course=inbound_course,
                     leg_distance_nm=dist_nm,
                     original_distance_str=dist_str_original,
+                    altitude_ft=alt_ft,
+                    speed_limit_kt=speed_kt,
                 )
             )
 

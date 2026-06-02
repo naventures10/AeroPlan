@@ -113,6 +113,8 @@ export interface RnpHoldPattern {
   inbound_course: number | null;
   leg_distance_nm: number;
   original_distance_str: string | null;
+  altitude_ft: number | null;
+  speed_limit_kt: number | null;
 }
 
 export interface RnpPath3d {
