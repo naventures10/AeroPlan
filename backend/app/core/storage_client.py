@@ -71,6 +71,25 @@ class UnifiedStorageClient:
                 ContentType="application/json",
             )
 
+    def read_json(self, s3_key: str) -> dict | list | None:
+        """Read and deserialize a JSON document from the storage provider."""
+        try:
+            if self.is_gcs:
+                bucket = self.gcs_client.bucket(self.bucket_name)
+                blob = bucket.blob(s3_key)
+                if not blob.exists():
+                    return None
+                return json.loads(blob.download_as_string())
+            else:
+                try:
+                    response = self.s3_client.get_object(Bucket=self.bucket_name, Key=s3_key)
+                    return json.loads(response["Body"].read().decode("utf-8"))
+                except self.s3_client.exceptions.NoSuchKey:
+                    return None
+        except Exception as e:
+            print(f"Error reading JSON for key {s3_key}: {e}")
+            return None
+
     def list_objects(self, prefix: str) -> list[dict]:
         """
         List all object summaries under a prefix.

@@ -31,7 +31,7 @@ import xarray as xr
 from ecmwf.opendata import Client
 from rasterio.transform import from_origin
 
-from jobs.storage_client import UnifiedStorageClient
+from app.core.storage_client import UnifiedStorageClient
 
 # ---------------------------------------------------------------------------
 # Configuration

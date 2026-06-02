@@ -7,7 +7,7 @@ import requests
 import urllib3
 from bs4 import BeautifulSoup
 
-from jobs.storage_client import UnifiedStorageClient
+from app.core.storage_client import UnifiedStorageClient
 
 # Disable insecure request warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
