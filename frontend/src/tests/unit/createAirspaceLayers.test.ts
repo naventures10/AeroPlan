@@ -70,6 +70,27 @@ describe('createAirspaceLayers', () => {
     expect(layers[1].props.getTextSize({ properties: { airspace_type: 'FIR' } })).toBe(0);
   });
 
+  it('makes airspace metadata labels not pickable when airspaces layer is toggled off', () => {
+    const ctx = {
+      isDarkMode: true,
+      viewMode: 'ENROUTE',
+      zoom: 8,
+      activeLayers: {
+        airspaces: false,
+      },
+    };
+
+    const layersOff = createAirspaceLayers(ctx as any);
+    expect(layersOff[1].props.pickable).toBe(false);
+
+    const ctxOn = {
+      ...ctx,
+      activeLayers: { ...ctx.activeLayers, airspaces: true },
+    };
+    const layersOn = createAirspaceLayers(ctxOn as any);
+    expect(layersOn[1].props.pickable).toBe(true);
+  });
+
   it('respects layer toggles for all types', () => {
     const ctx = {
       isDarkMode: true,
