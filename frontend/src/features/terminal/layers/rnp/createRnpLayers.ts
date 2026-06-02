@@ -648,7 +648,7 @@ export function createRnpLayers({
           outlineWidth: 3,
           outlineColor: [0, 0, 0, 200],
           fontSettings: { sdf: true },
-          billboard: true,
+          billboard: false, // Lay flat on the ground to align with 3D path
           pickable: false,
         }),
       );
