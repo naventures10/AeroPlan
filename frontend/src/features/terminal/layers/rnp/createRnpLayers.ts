@@ -282,7 +282,8 @@ export function createRnpLayers({
     layers.push(
       new PathLayer({
         id: 'rnp-approach-linestrings-layer',
-        data: approachTripData.filter((d) => d.entry_waypoint !== selectedRnpApproachId),
+        // If a path is selected, hide the unselected ones completely to avoid depth buffer artifacts
+        data: selectedRnpApproachId === null ? approachTripData : [],
         getPath: (d: any) => d.path,
         getColor: (d: any) => {
           const isHovered = d.entry_waypoint === hoveredRnpApproachId;
@@ -291,13 +292,8 @@ export function createRnpLayers({
             return [255, 255, 255, 255]; // Full bright white on hover
           }
 
-          if (selectedRnpApproachId === null) {
-            // Nothing selected: show all magenta paths
-            return [...RGB_APPROACH, 160] as [number, number, number, number];
-          }
-
-          // Others: dimmed magenta
-          return [...RGB_APPROACH, 30] as [number, number, number, number];
+          // Nothing selected: show all magenta paths
+          return [...RGB_APPROACH, 160] as [number, number, number, number];
         },
         getWidth: (d: any) => (d.entry_waypoint === hoveredRnpApproachId ? 6 : 2),
         widthMinPixels: 2,
@@ -358,7 +354,10 @@ export function createRnpLayers({
               parameters: {
                 blend: true,
               },
-              pickable: false,
+              pickable: pickable ?? true,
+              onClick: () => {
+                setSelectedRnpApproachId(null);
+              },
             }),
           );
         }
@@ -475,7 +474,47 @@ export function createRnpLayers({
   }
 
   // ── 3.5 Hold patterns (Lime Green) ──────────────────────
-  const holdPatternsTripData = (pathData.hold_patterns || []).map((hp: RnpHoldPattern) => ({
+  let holdPatternsToRender = pathData.hold_patterns || [];
+
+  // ── 4. Setup Waypoint and Hold Pattern Filtering ───────────────────────
+  // If an approach path is selected, only show waypoints and hold patterns
+  // relevant to that specific path and the missed approach segment.
+  const relevantWaypointIdents = new Set<string>();
+  if (selectedRnpApproachId) {
+    const selectedApproach = pathData.approach_paths.find(
+      (ap) => ap.entry_waypoint === selectedRnpApproachId,
+    );
+    if (selectedApproach) {
+      relevantWaypointIdents.add(selectedApproach.entry_waypoint);
+      selectedApproach.legs?.forEach((leg: RnpLeg) => {
+        if (leg.waypoint_ident) relevantWaypointIdents.add(leg.waypoint_ident);
+      });
+    }
+    if (pathData.missed_approach_path) {
+      pathData.missed_approach_path.legs?.forEach((leg: RnpLeg) => {
+        if (leg.waypoint_ident) relevantWaypointIdents.add(leg.waypoint_ident);
+      });
+    }
+    // Also include the MAPt and Runways by default
+    pathData.waypoints.forEach((w) => {
+      const role = w.role?.toUpperCase() || '';
+      const name = w.name?.toUpperCase() || '';
+      if (
+        role.includes('MAPT') ||
+        role.includes('RWY') ||
+        role.includes('RW') ||
+        name.startsWith('RW')
+      ) {
+        relevantWaypointIdents.add(w.name);
+      }
+    });
+
+    holdPatternsToRender = holdPatternsToRender.filter((hp: RnpHoldPattern) =>
+      relevantWaypointIdents.has(hp.waypoint_ident),
+    );
+  }
+
+  const holdPatternsTripData = holdPatternsToRender.map((hp: RnpHoldPattern) => ({
     waypoint_ident: hp.waypoint_ident,
     path: hp.path.map((p: [number, number, number]) => [
       p[0],
@@ -503,7 +542,7 @@ export function createRnpLayers({
     );
 
     // Hold pattern annotations (red-orange, matching missed approach)
-    const holdAnnotations = (pathData.hold_patterns || []).map((hp: RnpHoldPattern) => {
+    const holdAnnotations = holdPatternsToRender.map((hp: RnpHoldPattern) => {
       const lines: string[] = [];
 
       // Inbound course
@@ -619,7 +658,7 @@ export function createRnpLayers({
       label: string;
     }> = [];
 
-    (pathData.hold_patterns || []).forEach((hp: RnpHoldPattern) => {
+    holdPatternsToRender.forEach((hp: RnpHoldPattern) => {
       if (!hp.path || hp.path.length < STEPS * 2 + 4) return;
       const inboundBearing = hp.inbound_course ?? 0;
       const outboundBearing = (inboundBearing + 180) % 360;
@@ -732,11 +771,15 @@ export function createRnpLayers({
 
     const excludeMapt = selectedRnpApproachId !== null;
 
-    const runwayWaypoints = pathData.waypoints.filter(isRunway);
-    const flybyWaypoints = pathData.waypoints.filter(
+    const waypointsToRender = selectedRnpApproachId
+      ? pathData.waypoints.filter((w) => relevantWaypointIdents.has(w.name))
+      : pathData.waypoints;
+
+    const runwayWaypoints = waypointsToRender.filter(isRunway);
+    const flybyWaypoints = waypointsToRender.filter(
       (d) => !isRunway(d) && !(excludeMapt && isMapt(d)),
     );
-    const labelWaypoints = pathData.waypoints.filter(
+    const labelWaypoints = waypointsToRender.filter(
       (d) => !isRunway(d) && !(excludeMapt && isMapt(d)),
     );
 

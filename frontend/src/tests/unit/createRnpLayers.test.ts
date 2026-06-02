@@ -31,7 +31,7 @@ describe('createRnpLayers', () => {
       timestamps: [0, 1],
       total_distance_nm: 10,
     },
-    waypoints: [{ name: 'W1', position: [0, 0, 100], role: 'entry' }],
+    waypoints: [{ name: 'A1', position: [0, 0, 100], role: 'entry' }],
   };
 
   it('handles null pathData', () => {
@@ -97,9 +97,7 @@ describe('createRnpLayers', () => {
     expect(layers.length).toBe(8);
 
     const linestring = layers[0];
-    expect(linestring.props.data.length).toBe(1); // A1 filtered out
-    expect(linestring.props.getColor({ entry_waypoint: 'A1' })).toEqual([255, 0, 255, 30]);
-    expect(linestring.props.getColor({ entry_waypoint: 'A2' })).toEqual([255, 0, 255, 30]);
+    expect(linestring.props.data.length).toBe(0); // All unselected paths are filtered out to prevent depth buffer artifacts
 
     const gradient = layers[1];
     expect(gradient.id).toBe('rnp-selected-approach-static-gradient-layer');
@@ -151,7 +149,7 @@ describe('createRnpLayers', () => {
       pathData: {
         ...mockPathData,
         waypoints: [
-          { name: 'W1', position: [0, 0, 100], role: 'entry' },
+          { name: 'A1', position: [0, 0, 100], role: 'entry' },
           { name: 'RW09', position: [0.1, 0.1, 50], role: 'MAPt' },
           { name: 'RW36', position: [0.2, 0.2, 10], role: 'RWY' },
         ],
@@ -178,8 +176,8 @@ describe('createRnpLayers', () => {
 
     // Verify correct MAPt / runway filtering
     expect(rwyLayer.props.data.map((d: any) => d.name)).toEqual(['RW36']);
-    expect(flybyLayer.props.data.map((d: any) => d.name)).toEqual(['W1', 'RW09']);
-    expect(labelsLayer.props.data.map((d: any) => d.name)).toEqual(['W1', 'RW09']);
+    expect(flybyLayer.props.data.map((d: any) => d.name)).toEqual(['A1', 'RW09']);
+    expect(labelsLayer.props.data.map((d: any) => d.name)).toEqual(['A1', 'RW09']);
 
     expect(rwyLayer.props.getFillColor({ role: 'iaf' })).toEqual([255, 100, 200, 255]); // roleColor
     expect(rwyLayer.props.getFillColor({ role: 'something_else' })).toEqual([255, 191, 0, 220]); // COLOR_WAYPOINT
