@@ -410,15 +410,19 @@ def _extract_path(
         turn_directions.append(None)
 
     for leg in legs_list:
+        if (
+            decision_point
+            and leg.waypoint_ident
+            and str(leg.waypoint_ident).upper().startswith("RW")
+        ):
+            leg_indices.append(None)
+            continue
+
         alt_ft = extract_altitude(leg)
         alt_m = alt_ft * FT_TO_M if alt_ft is not None else None
 
-        # If a decision point is prepended, clear the altitude of the first real leg (runway threshold)
-        # to ensure it gets interpolated as climbing.
-        if decision_point and len(path_3d) == 1:
-            alt_m = None
-
         # The turn direction in the database (L/R) describes the turn
+
         # required to ENTER this leg. Therefore, it applies to the turn
         # at the PREVIOUS waypoint (the one currently at the end of path_3d).
         turn_dir = _extract_turn_direction(leg)
@@ -575,15 +579,12 @@ def build_3d_paths(
             if next_g and len(next_g) > 0:
                 first_leg = next_g[0]
                 role_str = str(first_leg.role).upper() if first_leg.role else ""
-                raw_coords_str = str(getattr(first_leg, "coordinates_raw", "")).upper()
-                if (
-                    "MAPT" in role_str
-                    or "MAHF" in role_str
-                    or "MATF" in role_str
-                    or "MAPT" in raw_coords_str
-                    or "MAHF" in raw_coords_str
-                    or "MATF" in raw_coords_str
-                ):
+                waypoint_role_raw = getattr(first_leg, "waypoint_role", None)
+                waypoint_role_str = (
+                    str(waypoint_role_raw).upper() if isinstance(waypoint_role_raw, str) else ""
+                )
+                raw_coords_str = str(getattr(first_leg, "coordinates_raw", "") or "").upper()
+                if "MAPT" in role_str or "MAPT" in waypoint_role_str or "MAPT" in raw_coords_str:
                     has_explicit_mapt = True
 
         raw_missed_approach = [] if has_explicit_mapt else final_group[rw_index:]
@@ -710,15 +711,12 @@ def build_3d_paths(
         is_explicit_mapt = False
         first_leg = raw_missed_approach[0]
         role_str = str(first_leg.role).upper() if first_leg.role else ""
-        raw_coords_str = str(getattr(first_leg, "coordinates_raw", "")).upper()
-        if (
-            "MAPT" in role_str
-            or "MAHF" in role_str
-            or "MATF" in role_str
-            or "MAPT" in raw_coords_str
-            or "MAHF" in raw_coords_str
-            or "MATF" in raw_coords_str
-        ):
+        waypoint_role_raw = getattr(first_leg, "waypoint_role", None)
+        waypoint_role_str = (
+            str(waypoint_role_raw).upper() if isinstance(waypoint_role_raw, str) else ""
+        )
+        raw_coords_str = str(getattr(first_leg, "coordinates_raw", "") or "").upper()
+        if "MAPT" in role_str or "MAPT" in waypoint_role_str or "MAPT" in raw_coords_str:
             is_explicit_mapt = True
 
         thresh_alt = extract_altitude(first_leg)
@@ -766,8 +764,13 @@ def build_3d_paths(
             else:
                 alt_m = waypoint_altitudes.get(w_id, 0.0)
 
+            w_role = getattr(leg, "waypoint_role", None)
+            if not isinstance(w_role, str):
+                w_role = None
+            if not w_role:
+                w_role = leg.role if isinstance(leg.role, str) else None
             waypoints.append(
-                RnpWaypointMarker(name=w_id, position=[leg.lon, leg.lat, alt_m], role=leg.role)
+                RnpWaypointMarker(name=w_id, position=[leg.lon, leg.lat, alt_m], role=w_role)
             )
 
     return RnpPath3dResponse(

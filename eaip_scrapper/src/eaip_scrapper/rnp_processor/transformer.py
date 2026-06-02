@@ -209,25 +209,130 @@ class RNPTransformer:
         wpts = []
         seen_ids = set()
         rows = table.find_all("tr")
-        for row in rows:
+
+        # 1. Try to find a header row and map columns
+        ident_idx = None
+        role_idx = None
+        coord_indices = []
+        header_row_index = -1
+
+        for idx, row in enumerate(rows):
+            tds = row.find_all(["td", "th"])
+            cells = [clean_text(td.get_text(strip=True)) for td in tds]
+            if not cells:
+                continue
+
+            # A row is a header row if it contains header keywords and no coordinate values
+            row_text_lower = [c.lower() for c in cells if c]
+            if not row_text_lower:
+                continue
+
+            is_header = any(
+                any(
+                    kw in cell
+                    for kw in [
+                        "waypoint",
+                        "identifier",
+                        "latitude",
+                        "longitude",
+                        "wgs84",
+                        "role",
+                        "function",
+                        "coordinate",
+                    ]
+                )
+                for cell in row_text_lower
+            )
+            # Exclude rows that contain coordinates (to avoid matching body data rows)
+            is_data = any(
+                re.search(r"\d{2}:\d{2}", c) or re.search(r"\d{6}[NS]", c) for c in cells if c
+            )
+
+            if is_header and not is_data:
+                headers_clean = []
+                for cell in cells:
+                    if not cell:
+                        headers_clean.append("")
+                        continue
+                    h = re.sub(r"\s+", " ", cell).lower()
+                    h = re.sub(r"[°\'\"*`]", "", h).strip()
+                    headers_clean.append(h)
+
+                # Identify columns
+                for c_idx, h in enumerate(headers_clean):
+                    if any(
+                        k in h
+                        for k in [
+                            "waypoint identifier",
+                            "waypoint identified",
+                            "waypoint ident",
+                            "ident",
+                            "fix",
+                            "wpt",
+                            "waypoint",
+                        ]
+                    ):
+                        if ident_idx is None:
+                            ident_idx = c_idx
+
+                for c_idx, h in enumerate(headers_clean):
+                    if any(k in h for k in ["role", "function"]):
+                        role_idx = c_idx
+                        break
+                    if "type" in h and c_idx != ident_idx:
+                        role_idx = c_idx
+                        break
+
+                for c_idx, h in enumerate(headers_clean):
+                    if any(
+                        k in h for k in ["latitude", "longitude", "coordinate", "wgs84", "coords"]
+                    ):
+                        coord_indices.append(c_idx)
+
+                if ident_idx is not None:
+                    header_row_index = idx
+                    break
+
+        # 2. Iterate through all rows and extract waypoints
+        for idx, row in enumerate(rows):
+            if header_row_index != -1 and idx <= header_row_index:
+                continue
+
             tds = row.find_all(["td", "th"])
             cells = [clean_text(td.get_text(strip=True)) for td in tds]
             if len(cells) < 2:
                 continue
 
-            # Try parsing coordinates from individual cells first (split lat/lon columns)
             lat_dd, lon_dd = None, None
 
-            # Check if individual cells contain coordinate data
-            for cell in cells:
-                if cell:
-                    lat_dd, lon_dd = parse_coordinate(cell)
-                    if lat_dd is not None and lon_dd is not None:
-                        break
+            # If we mapped columns via headers, try using them first
+            if header_row_index != -1 and ident_idx is not None:
+                for c_idx in coord_indices:
+                    if c_idx < len(cells) and cells[c_idx]:
+                        lat_dd, lon_dd = parse_coordinate(cells[c_idx])
+                        if lat_dd is not None and lon_dd is not None:
+                            break
 
-            # If single-cell parse failed, try combining cells
+                if (lat_dd is None or lon_dd is None) and len(coord_indices) >= 2:
+                    for i in range(len(coord_indices) - 1):
+                        c1 = coord_indices[i]
+                        c2 = coord_indices[i + 1]
+                        if c1 < len(cells) and c2 < len(cells) and cells[c1] and cells[c2]:
+                            combined = f"{cells[c1]} {cells[c2]}"
+                            lat_dd, lon_dd = parse_coordinate(combined)
+                            if lat_dd is not None and lon_dd is not None:
+                                break
+
+            # Fallback coordinate parsing (check all cells individually)
             if lat_dd is None or lon_dd is None:
-                # Try combining adjacent cells that might be split lat + lon
+                for cell in cells:
+                    if cell:
+                        lat_dd, lon_dd = parse_coordinate(cell)
+                        if lat_dd is not None and lon_dd is not None:
+                            break
+
+            # Fallback coordinate parsing (check combined adjacent cells)
+            if lat_dd is None or lon_dd is None:
                 for i in range(len(cells) - 1):
                     if cells[i] and cells[i + 1]:
                         combined = f"{cells[i]} {cells[i + 1]}"
@@ -243,29 +348,64 @@ class RNPTransformer:
                 logger.debug(f"Rejecting out-of-bounds coordinate: {lat_dd}, {lon_dd}")
                 continue
 
-            # Find identifier: skip roles, numbers, and blacklisted terms
+            # Extract waypoint identifier & role
             ident = None
-            for c in cells:
-                if not c:
-                    continue
-                c_clean = str(c).upper().strip().strip("'").strip("`")
-                if (
-                    2 <= len(c_clean) <= 7
-                    and c_clean.isalnum()
-                    and not c_clean.isdigit()
-                    and c_clean not in self.id_blacklist
-                ):
-                    ident = c_clean
-                    break
+            role = None
+
+            if header_row_index != -1 and ident_idx is not None:
+                ident_val = cells[ident_idx] if ident_idx < len(cells) else None
+                role_val = (
+                    cells[role_idx] if (role_idx is not None and role_idx < len(cells)) else None
+                )
+
+                # Detect if columns are swapped (ident_val is blacklisted, but role_val is not)
+                if ident_val and role_val:
+                    id_upper = str(ident_val).upper().strip()
+                    role_upper = str(role_val).upper().strip()
+                    if id_upper in self.id_blacklist and role_upper not in self.id_blacklist:
+                        ident_val, role_val = role_val, ident_val
+
+                # Parse identifier
+                if ident_val:
+                    val_clean = str(ident_val).upper().strip().strip("'").strip("`")
+                    if (
+                        2 <= len(val_clean) <= 7
+                        and val_clean.isalnum()
+                        and not val_clean.isdigit()
+                        and val_clean not in self.id_blacklist
+                    ):
+                        ident = val_clean
+
+                # Parse role
+                if role_val:
+                    role_clean = str(role_val).strip().upper()
+                    if role_clean and role_clean not in ("-", "N/A", "N/A.", "N / A"):
+                        role = role_clean
+
+            if not ident:
+                for c in cells:
+                    if not c:
+                        continue
+                    c_clean = str(c).upper().strip().strip("'").strip("`")
+                    if (
+                        2 <= len(c_clean) <= 7
+                        and c_clean.isalnum()
+                        and not c_clean.isdigit()
+                        and c_clean not in self.id_blacklist
+                    ):
+                        ident = c_clean
+                        break
 
             if ident and ident not in seen_ids:
                 seen_ids.add(ident)
+
                 wpts.append(
                     {
                         "waypoint_id": ident,
                         "coordinates_raw": " ".join(filter(None, cells)),
                         "lat_dd": lat_dd,
                         "lon_dd": lon_dd,
+                        "role": role,
                     }
                 )
         return wpts

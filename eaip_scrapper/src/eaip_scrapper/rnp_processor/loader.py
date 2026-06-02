@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS rnp_waypoints (
     ident VARCHAR(10),
     geom GEOMETRY(Point, 4326),
     coordinates_raw TEXT,
+    role VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (procedure_id, ident)
 );
@@ -52,6 +53,8 @@ CREATE TABLE IF NOT EXISTS rnp_legs (
 
 CREATE INDEX IF NOT EXISTS idx_rnp_proc_geom ON rnp_procedures USING GIST (geom_3d);
 CREATE INDEX IF NOT EXISTS idx_rnp_waypoints_geom ON rnp_waypoints USING GIST (geom);
+
+ALTER TABLE rnp_waypoints ADD COLUMN IF NOT EXISTS role VARCHAR(50);
 """
 
 
@@ -193,9 +196,12 @@ class RNPLoader:
                         continue
                     cur.execute(
                         """
-                            INSERT INTO rnp_waypoints (procedure_id, ident, geom, coordinates_raw)
-                            VALUES (%s, %s, ST_SetSRID(ST_MakePoint(%s, %s), 4326), %s)
-                            ON CONFLICT (procedure_id, ident) DO UPDATE SET geom = EXCLUDED.geom
+                            INSERT INTO rnp_waypoints (procedure_id, ident, geom, coordinates_raw, role)
+                            VALUES (%s, %s, ST_SetSRID(ST_MakePoint(%s, %s), 4326), %s, %s)
+                            ON CONFLICT (procedure_id, ident) DO UPDATE SET
+                                geom = EXCLUDED.geom,
+                                coordinates_raw = EXCLUDED.coordinates_raw,
+                                role = EXCLUDED.role
                         """,
                         (
                             proc_pk,
@@ -203,6 +209,7 @@ class RNPLoader:
                             lon,
                             lat,
                             wp.get("coordinates_raw"),
+                            wp.get("role"),
                         ),
                     )
 

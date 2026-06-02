@@ -1483,13 +1483,13 @@ def test_missed_approach_start_altitude_offset():
     expected_alt_m = expected_alt_ft * FT_TO_M
     assert math.isclose(first_pt[2], expected_alt_m, rel_tol=1e-5)
 
-    # Second coordinate should be close to the runway threshold (1, 0) due to Bezier smoothing
+    # Second coordinate should be W1 (2, 0) because the runway threshold is bypassed
     second_pt = res.missed_approach_path.path[1]
-    assert math.isclose(second_pt[0], 1.0, abs_tol=0.01)
-    assert math.isclose(second_pt[1], 0.0, abs_tol=0.01)
+    assert math.isclose(second_pt[0], 2.0, rel_tol=1e-5)
+    assert math.isclose(second_pt[1], 0.0, rel_tol=1e-5)
 
-    # The runway threshold altitude should be interpolated as climbing (higher than 617 ft)
-    assert second_pt[2] > expected_alt_m
+    # W1's altitude should be exactly the configured 2300 ft in meters
+    assert math.isclose(second_pt[2], 2300.0 * FT_TO_M, rel_tol=1e-5)
 
 
 def test_explicit_mapt_via_role():
