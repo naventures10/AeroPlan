@@ -606,9 +606,15 @@ export function createRnpLayers({
         (outA[1] + outB[1]) / 2,
         minZ + (((outA[2] + outB[2]) / 2 - minZ) * ALT_EXAGGERATION + 4),
       ];
+
+      // Calculate exact visual bearing for the segment
+      const outDx = (outB[0] - outA[0]) * Math.cos((outA[1] * Math.PI) / 180);
+      const outDy = outB[1] - outA[1];
+      const outVisualBearing = (Math.atan2(outDx, outDy) * (180 / Math.PI) + 360) % 360;
+
       holdChevrons.push({
         position: outMid,
-        angle: (outboundBearing - 90 + 360) % 360,
+        angle: (outVisualBearing - 90 + 360) % 360,
         label: `${Math.round(outboundBearing).toString().padStart(3, '0')}°`,
       });
 
@@ -620,9 +626,15 @@ export function createRnpLayers({
         (inA[1] + inB[1]) / 2,
         minZ + (((inA[2] + inB[2]) / 2 - minZ) * ALT_EXAGGERATION + 4),
       ];
+
+      // Calculate exact visual bearing for the segment
+      const inDx = (inB[0] - inA[0]) * Math.cos((inA[1] * Math.PI) / 180);
+      const inDy = inB[1] - inA[1];
+      const inVisualBearing = (Math.atan2(inDx, inDy) * (180 / Math.PI) + 360) % 360;
+
       holdChevrons.push({
         position: inMid,
-        angle: (inboundBearing - 90 + 360) % 360,
+        angle: (inVisualBearing - 90 + 360) % 360,
         label: `${Math.round(inboundBearing).toString().padStart(3, '0')}°`,
       });
     });
