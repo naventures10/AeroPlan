@@ -472,8 +472,8 @@ def _extract_path(
         return [], [], []
 
     if len(path_3d[0]) < 3:
-        path_3d[0].append(start_alt_ft * FT_TO_M)
-    elif path_3d[0][2] is None or override_first_alt:
+        path_3d[0].append(start_alt_ft * FT_TO_M if start_alt_ft is not None else None)
+    elif (path_3d[0][2] is None or override_first_alt) and start_alt_ft is not None:
         path_3d[0][2] = start_alt_ft * FT_TO_M
     if path_3d[-1][2] is None:
         path_3d[-1][2] = end_alt_ft * FT_TO_M if end_alt_ft is not None else path_3d[0][2]
@@ -566,9 +566,17 @@ def build_3d_paths(
 
     if final_group:
         final_approach = final_group[: rw_index + 1]
-        raw_missed_approach = final_group[rw_index:]
-
         final_group_idx = groups.index(final_group)
+
+        # Check if the missed approach explicitly starts with an IF leg (Explicit MAPt)
+        has_explicit_mapt = False
+        if final_group_idx + 1 < len(groups):
+            next_g = groups[final_group_idx + 1]
+            if next_g and next_g[0].path_descriptor == "IF":
+                has_explicit_mapt = True
+
+        raw_missed_approach = [] if has_explicit_mapt else final_group[rw_index:]
+
         for g in groups[final_group_idx + 1 :]:
             raw_missed_approach.extend(g)
 
@@ -688,16 +696,18 @@ def build_3d_paths(
 
     missed_approach_path = None
     if raw_missed_approach:
+        is_explicit_mapt = raw_missed_approach[0].path_descriptor == "IF"
         thresh_alt = extract_altitude(raw_missed_approach[0])
-        start_alt_ft = (thresh_alt + 300.0) if thresh_alt is not None else 10300.0
 
         decision_point = None
-        if final_app_p3d and len(final_app_p3d) >= 2:
+        if not is_explicit_mapt and final_app_p3d and len(final_app_p3d) >= 2:
             decision_point = calculate_decision_point(
                 final_app_p3d[-2], final_app_p3d[-1], offset_nm=1.0
             )
 
-        if decision_point and len(decision_point) > 2 and decision_point[2] is not None:
+        if is_explicit_mapt:
+            start_alt_ft = thresh_alt if thresh_alt is not None else 10300.0
+        elif decision_point and len(decision_point) > 2 and decision_point[2] is not None:
             start_alt_ft = decision_point[2] / FT_TO_M
         else:
             start_alt_ft = (thresh_alt + 300.0) if thresh_alt is not None else 10300.0

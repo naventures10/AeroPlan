@@ -1449,11 +1449,11 @@ def test_missed_approach_start_altitude_offset():
         # Missed approach starts here
         DummyLeg(
             source_serial="10",
-            path_descriptor="IF",
+            path_descriptor="TF",
             waypoint_ident="RW09",
             lon=1,
             lat=0,
-            role="IF",
+            role="TF",
             altitude_numeric=None,
         ),
         DummyLeg(
