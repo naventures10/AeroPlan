@@ -93,7 +93,7 @@ describe('createRnpLayers', () => {
 
     const layers = createRnpLayers(ctx as any);
 
-    // Linestrings, Trips, Missed Ghost, Missed Revealed (none because time < approachDist), Waypoints scatter, Waypoints labels
+    // Linestrings, Trips, Missed Static, Waypoints scatter, Waypoints labels
     expect(layers.length).toBe(5);
 
     const linestring = layers[0];
@@ -105,11 +105,11 @@ describe('createRnpLayers', () => {
     expect(trips.id).toBe('rnp-approach-trips-layer');
     expect(trips.props.currentTime).toBe(5);
 
-    const ghost = layers[2];
-    expect(ghost.id).toBe('rnp-missed-approach-ghost-layer');
+    const staticLayer = layers[2];
+    expect(staticLayer.id).toBe('rnp-missed-approach-static-layer');
   });
 
-  it('creates missed approach revealed layer', () => {
+  it('clamping behavior when time exceeds approachDist', () => {
     const ctx = {
       pathData: mockPathData,
       selectedRnpApproachId: 'A1',
@@ -120,14 +120,14 @@ describe('createRnpLayers', () => {
     };
 
     const layers = createRnpLayers(ctx as any);
-    // Linestrings, Trips, Missed Ghost, Missed Revealed, Waypoints scatter, Waypoints labels
-    expect(layers.length).toBe(6);
+    // Linestrings, Trips, Missed Static, Waypoints scatter, Waypoints labels
+    expect(layers.length).toBe(5);
 
     const trips = layers[1];
     expect(trips.props.currentTime).toBe(10); // clamped
 
-    const revealed = layers[3];
-    expect(revealed.id).toBe('rnp-missed-approach-revealed-layer');
+    const staticLayer = layers[2];
+    expect(staticLayer.id).toBe('rnp-missed-approach-static-layer');
   });
 
   it('handles waypoints', () => {

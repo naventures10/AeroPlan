@@ -246,20 +246,17 @@ export function createRnpLayers({
     }
   }
 
-  // ── 3. Missed Approach — pre-computed uniform dashes ──────────────────────
+  // ── 3. Missed Approach — static dashed path ──────────────────────
   // We walk the 3D path in NM-space and slice it into fixed-length dash segments.
-  // Ghost = all dashes at low opacity (preview). Revealed = dashes up to missedTime
-  // at full opacity. Each dash is a real path geometry so they follow curves and
-  // are always the same NM length — no compression or extension artifacts.
+  // Each dash is a real path geometry so they follow curves and
+  // are always the same NM length.
   if (
     selectedRnpApproachId &&
     pathData.missed_approach_path &&
-    pathData.missed_approach_path.path.length >= 2 &&
-    approachDist > 0
+    pathData.missed_approach_path.path.length >= 2
   ) {
     const missedDist = pathData.missed_approach_path.total_distance_nm;
     const missedTimestamps = pathData.missed_approach_path.timestamps;
-    const missedTime = Math.max(0, rnpCurrentTime - approachDist);
 
     const missedPath3d = pathData.missed_approach_path.path.map((p: [number, number, number]) => [
       p[0],
@@ -267,48 +264,19 @@ export function createRnpLayers({
       minZ + (p[2] - minZ) * ALT_EXAGGERATION + 2,
     ]);
 
-    // All dashes along the full route (ghost / preview)
+    // All dashes along the full route
     const allDashes = computeMissedDashes(missedPath3d, missedTimestamps, missedDist, missedDist);
-    // Only dashes that have been "drawn" so far
-    const revealedDashes = computeMissedDashes(
-      missedPath3d,
-      missedTimestamps,
-      missedDist,
-      missedTime,
-    );
 
-    // 3a. Ghost — faint dashes showing the full route
     if (allDashes.length > 0) {
       layers.push(
         new PathLayer({
-          id: 'rnp-missed-approach-ghost-layer',
-          data: allDashes.map((seg) => ({ path: seg.map((p: any) => [p[0], p[1], p[2] + 0.1]) })), // Tiny lift above static paths
+          id: 'rnp-missed-approach-static-layer',
+          data: allDashes.map((seg) => ({ path: seg.map((p: any) => [p[0], p[1], p[2] + 0.1]) })),
           getPath: (d: any) => d.path,
-          getColor: [255, 100, 80, 45],
+          getColor: [255, 100, 80, 200],
           opacity: opacity ?? 1,
           getWidth: 4,
           widthMinPixels: 2,
-          pickable: false,
-          billboard: true,
-          capRounded: true,
-          jointRounded: true,
-        }),
-      );
-    }
-
-    // 3b. Revealed — bright dashes drawn up to missedTime
-    if (revealedDashes.length > 0) {
-      layers.push(
-        new PathLayer({
-          id: 'rnp-missed-approach-revealed-layer',
-          data: revealedDashes.map((seg) => ({
-            path: seg.map((p: any) => [p[0], p[1], p[2] + 0.5]),
-          })), // Stack with TripsLayer
-          getPath: (d: any) => d.path,
-          getColor: [255, 100, 80, 235],
-          opacity: opacity ?? 1,
-          getWidth: 6,
-          widthMinPixels: 3,
           pickable: false,
           billboard: true,
           capRounded: true,
