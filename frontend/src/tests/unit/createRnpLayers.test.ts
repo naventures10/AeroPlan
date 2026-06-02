@@ -245,6 +245,6 @@ describe('createRnpLayers', () => {
 
     const annotationLayer = layers[2];
     expect(annotationLayer.id).toBe('rnp-hold-annotations-layer');
-    expect(annotationLayer.props.getColor).toEqual([255, 100, 80, 255]); // Red-orange
+    expect(annotationLayer.props.getColor).toEqual([50, 220, 80, 255]); // Green (matches hold line)
   });
 });

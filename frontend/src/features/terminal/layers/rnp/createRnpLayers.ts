@@ -540,10 +540,11 @@ export function createRnpLayers({
         lines.push(`MAX ${Math.round(hp.speed_limit_kt)} KT`);
       }
 
-      // Position at the fix (first point of the hold pattern path)
-      const fixPt = hp.path[0] ?? [0, 0, 0];
+      // Position somewhere along the pattern (halfway through the path array)
+      const ptIndex = Math.floor((hp.path.length || 1) / 2);
+      const posPt = hp.path[ptIndex] ?? [0, 0, 0];
       return {
-        position: [fixPt[0], fixPt[1], minZ + (fixPt[2] - minZ) * ALT_EXAGGERATION + 4] as [
+        position: [posPt[0], posPt[1], minZ + (posPt[2] - minZ) * ALT_EXAGGERATION + 4] as [
           number,
           number,
           number,
@@ -560,11 +561,109 @@ export function createRnpLayers({
           getPosition: (d: { position: [number, number, number] }) => d.position,
           getText: (d: { text: string }) => d.text,
           getSize: 10,
-          getColor: [255, 100, 80, 255], // Red-orange (missed approach color)
+          getColor: [50, 220, 80, 255], // Green (matches hold pattern line)
+          opacity: opacity ?? 1,
+          getTextAnchor: 'middle',
+          getAlignmentBaseline: 'center',
+          getPixelOffset: [0, -20],
+          parameters: { depthTest: true },
+          characterSet: 'auto',
+          fontFamily: 'Geist, sans-serif',
+          fontWeight: 600,
+          outlineWidth: 3,
+          outlineColor: [0, 0, 0, 255],
+          fontSettings: { sdf: true },
+          billboard: true,
+          pickable: false,
+        }),
+      );
+    }
+
+    // ── Hold pattern directional arrows on straight legs ──────────────────
+    // Path structure (steps=16): [0..16]=outbound arc, [17]=outbound end,
+    // [18..34]=inbound arc, [35]=fix. Straight legs are [16]→[17] and [34]→[35].
+    //
+    // deck.gl getAngle is CCW from east (+x axis), so:
+    //   angle = (90 - bearing + 360) % 360
+    const STEPS = 16;
+    const holdChevrons: Array<{
+      position: [number, number, number];
+      angle: number;
+      label: string;
+    }> = [];
+
+    (pathData.hold_patterns || []).forEach((hp: RnpHoldPattern) => {
+      if (!hp.path || hp.path.length < STEPS * 2 + 4) return;
+      const inboundBearing = hp.inbound_course ?? 0;
+      const outboundBearing = (inboundBearing + 180) % 360;
+
+      // Outbound straight: midpoint between path[STEPS] and path[STEPS+1]
+      const outA = hp.path[STEPS] ?? [0, 0, 0];
+      const outB = hp.path[STEPS + 1] ?? [0, 0, 0];
+      const outMid: [number, number, number] = [
+        (outA[0] + outB[0]) / 2,
+        (outA[1] + outB[1]) / 2,
+        minZ + (((outA[2] + outB[2]) / 2 - minZ) * ALT_EXAGGERATION + 4),
+      ];
+      holdChevrons.push({
+        position: outMid,
+        angle: (90 - outboundBearing + 360) % 360,
+        label: `${Math.round(outboundBearing).toString().padStart(3, '0')}°`,
+      });
+
+      // Inbound straight: midpoint between path[STEPS*2+2] and path[STEPS*2+3]
+      const inA = hp.path[STEPS * 2 + 2] ?? [0, 0, 0];
+      const inB = hp.path[STEPS * 2 + 3] ?? [0, 0, 0];
+      const inMid: [number, number, number] = [
+        (inA[0] + inB[0]) / 2,
+        (inA[1] + inB[1]) / 2,
+        minZ + (((inA[2] + inB[2]) / 2 - minZ) * ALT_EXAGGERATION + 4),
+      ];
+      holdChevrons.push({
+        position: inMid,
+        angle: (90 - inboundBearing + 360) % 360,
+        label: `${Math.round(inboundBearing).toString().padStart(3, '0')}°`,
+      });
+    });
+
+    if (holdChevrons.length > 0) {
+      // Arrow chevron glyph
+      layers.push(
+        new TextLayer({
+          id: 'rnp-hold-chevrons-layer',
+          data: holdChevrons,
+          getPosition: (d: (typeof holdChevrons)[0]) => d.position,
+          getText: () => '▶',
+          getAngle: (d: (typeof holdChevrons)[0]) => d.angle,
+          getSize: 14,
+          getColor: [50, 220, 80, 230],
+          opacity: opacity ?? 1,
+          getTextAnchor: 'middle',
+          getAlignmentBaseline: 'center',
+          parameters: { depthTest: true },
+          characterSet: 'auto',
+          fontFamily: 'Geist, sans-serif',
+          fontWeight: 900,
+          outlineWidth: 3,
+          outlineColor: [0, 0, 0, 200],
+          fontSettings: { sdf: true },
+          billboard: true,
+          pickable: false,
+        }),
+      );
+      // Course label beside each arrow
+      layers.push(
+        new TextLayer({
+          id: 'rnp-hold-chevron-labels-layer',
+          data: holdChevrons,
+          getPosition: (d: (typeof holdChevrons)[0]) => d.position,
+          getText: (d: (typeof holdChevrons)[0]) => d.label,
+          getSize: 10,
+          getColor: [50, 220, 80, 200],
           opacity: opacity ?? 1,
           getTextAnchor: 'start',
-          getAlignmentBaseline: 'top',
-          getPixelOffset: [14, 6],
+          getAlignmentBaseline: 'center',
+          getPixelOffset: [16, 0],
           parameters: { depthTest: true },
           characterSet: 'auto',
           fontFamily: 'Geist, sans-serif',
