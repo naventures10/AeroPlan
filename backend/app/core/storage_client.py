@@ -1,9 +1,13 @@
 import json
+import logging
 import os
 
 import boto3
+import botocore.exceptions
 from dotenv import load_dotenv
 from google.cloud import storage
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -70,6 +74,30 @@ class UnifiedStorageClient:
                 Body=json.dumps(data, indent=2).encode("utf-8"),
                 ContentType="application/json",
             )
+
+    def read_json(self, s3_key: str) -> dict | list | None:
+        """Read and deserialize a JSON document from the storage provider."""
+        try:
+            if self.is_gcs:
+                bucket = self.gcs_client.bucket(self.bucket_name)
+                blob = bucket.blob(s3_key)
+                if not blob.exists():
+                    return None
+                return json.loads(blob.download_as_string())
+            else:
+                try:
+                    response = self.s3_client.get_object(Bucket=self.bucket_name, Key=s3_key)
+                    return json.loads(response["Body"].read().decode("utf-8"))
+                except botocore.exceptions.ClientError as e:
+                    if e.response["Error"]["Code"] == "NoSuchKey":
+                        return None
+                    raise
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.error("Recoverable error reading JSON for key %s: %s", s3_key, type(e).__name__)
+            return None
+        except Exception:
+            logger.exception("Unexpected error reading JSON for key %s", s3_key)
+            raise
 
     def list_objects(self, prefix: str) -> list[dict]:
         """

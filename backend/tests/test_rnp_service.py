@@ -565,6 +565,111 @@ def test_build_3d_paths():
     assert res.missed_approach_path is not None
 
 
+def test_build_3d_paths_holding_patterns():
+    proc = DummyProc(id=1, name="TEST", type="STAR", airport_id="TEST", runway="09")
+    legs = [
+        DummyLeg(
+            source_serial="10",
+            path_descriptor="IF",
+            waypoint_ident="START",
+            lon=0,
+            lat=0,
+            altitude_numeric=1000.0,
+            role="IF",
+        ),
+        DummyLeg(
+            source_serial="20",
+            path_descriptor="HA",
+            waypoint_ident="HOLDFIX",
+            lon=1,
+            lat=1,
+            course="090.00° Mag / 090.00° True",
+            distance="4NM",
+            turn_direction="R",
+            altitude_numeric=2000.0,
+        ),
+    ]
+    res = build_3d_paths(proc, legs)
+    assert len(res.hold_patterns) == 1
+    hold = res.hold_patterns[0]
+    assert hold.waypoint_ident == "HOLDFIX"
+    assert len(hold.path) > 30
+    assert hold.turn_direction == "R"
+    assert hold.inbound_course == 90.0
+    assert hold.leg_distance_nm == 4.0
+
+    # Test the geometric shape of the holding pattern
+    # Fix is at lon=1, lat=1. Inbound course=90 (arriving from West, heading East).
+    # Right turn means turning South, then West.
+    # Outbound leg is 4NM West.
+    # Then Right turn means turning North, then East.
+    # Inbound leg is 4NM East back to fix.
+
+    # Path format: [Sweep 1 arc points] + [p_out_end] + [Sweep 2 arc points] + [Fix]
+    # Sweep 1 is steps+1 points. Outbound leg is 1 point. Sweep 2 is steps+1 points. Inbound leg is 1 point.
+    # Total points = 17 + 1 + 17 + 1 = 36 points.
+    assert len(hold.path) == 36
+
+    p_out_start = hold.path[16]  # End of Sweep 1
+    p_out_end = hold.path[17]  # End of Outbound leg
+    p_in_start = hold.path[34]  # End of Sweep 2 (start of Inbound leg)
+    p_fix = hold.path[35]  # Back to Fix
+
+    # End of Sweep 1 should be South of the Fix (same lon, lower lat)
+    assert abs(p_out_start[0] - 1.0) < 0.001
+    assert p_out_start[1] < 1.0
+
+    # End of Outbound leg should be West of p_out_start (lower lon, same lat)
+    assert p_out_end[0] < p_out_start[0]
+    assert abs(p_out_end[1] - p_out_start[1]) < 0.001
+
+    # End of Sweep 2 should be North of p_out_end (same lon, higher lat)
+    assert abs(p_in_start[0] - p_out_end[0]) < 0.001
+    assert p_in_start[1] > p_out_end[1]
+
+    # End of Sweep 2 should be at the same latitude as the Fix
+    assert abs(p_in_start[1] - 1.0) < 0.001
+
+    # Middle of Sweep 2: for a Right turn, we should be turning along the West side of the circle.
+    # Therefore, the longitude of the midpoint of Sweep 2 should be LESS than p_out_end (further West).
+    # (Since p_out_end is at the bottom of the circle, West side has lower lon).
+    p_sweep2_mid = hold.path[18 + 8]  # middle of the 16 steps
+    assert p_sweep2_mid[0] < p_out_end[0]
+
+    # Last point should be exactly the Fix
+    assert p_fix[0] == 1.0
+    assert p_fix[1] == 1.0
+
+    # Test Left turn and missing course
+    legs_left = [
+        DummyLeg(
+            source_serial="10",
+            path_descriptor="IF",
+            waypoint_ident="START",
+            lon=0,
+            lat=0,
+            altitude_numeric=1000.0,
+            role="IF",
+        ),
+        DummyLeg(
+            source_serial="20",
+            path_descriptor="HF",
+            waypoint_ident="HOLDFIX",
+            lon=0,
+            lat=1,
+            distance="3NM",
+            turn_direction="L",
+        ),
+    ]
+    res_left = build_3d_paths(proc, legs_left)
+    assert len(res_left.hold_patterns) == 1
+    hold_left = res_left.hold_patterns[0]
+    assert hold_left.turn_direction == "L"
+    assert hold_left.leg_distance_nm == 3.0
+    assert hold_left.inbound_course is not None
+    assert round(hold_left.inbound_course, 1) == 0.0
+
+
 def test_extract_path_more_branches_final():
     proc = DummyProc(id=1, name="TEST", type="STAR", airport_id="TEST", runway="09")
 
@@ -1415,3 +1520,128 @@ def test_trigger():
     ]
     res2 = build_3d_paths(proc, legs2)
     assert len(res2.approach_paths) >= 1
+
+
+def test_missed_approach_start_altitude_offset():
+    import math
+
+    from app.services.rnp_service import FT_TO_M
+
+    proc = DummyProc(id=1, name="TEST", type="STAR", airport_id="TEST", runway="09")
+
+    # Legs structure matching approach + missed approach:
+    # 1. Approach starts at START, ends at RW09 (threshold elevation 317 ft)
+    # 2. Missed approach group starts at RW09, climbs to W1 (at 2300 ft)
+    legs = [
+        DummyLeg(
+            source_serial="10",
+            path_descriptor="IF",
+            waypoint_ident="START",
+            lon=0,
+            lat=0,
+            role="IF",
+            altitude_numeric=1000.0,
+        ),
+        DummyLeg(
+            source_serial="20",
+            path_descriptor="TF",
+            waypoint_ident="RW09",
+            lon=1,
+            lat=0,
+            role="TF",
+            altitude_numeric=317.0,
+        ),
+        # Missed approach starts here
+        DummyLeg(
+            source_serial="10",
+            path_descriptor="TF",
+            waypoint_ident="RW09",
+            lon=1,
+            lat=0,
+            role="TF",
+            altitude_numeric=None,
+        ),
+        DummyLeg(
+            source_serial="20",
+            path_descriptor="TF",
+            waypoint_ident="W1",
+            lon=2,
+            lat=0,
+            role="TF",
+            altitude_numeric=2300.0,
+        ),
+    ]
+
+    res = build_3d_paths(proc, legs)
+    assert res.missed_approach_path is not None
+
+    # Path should start 1.0 NM before the threshold along the approach segment
+    # START: (0, 0), RW09: (1, 0).
+    dist_nm = haversine_nm(0.0, 0.0, 1.0, 0.0)
+    expected_lon = 1.0 - (1.0 / dist_nm)
+    first_pt = res.missed_approach_path.path[0]
+    assert math.isclose(first_pt[0], expected_lon, rel_tol=1e-5)
+    assert math.isclose(first_pt[1], 0.0, rel_tol=1e-5)
+
+    # First coordinate of missed approach path should have interpolated altitude
+    expected_alt_ft = 317.0 + (1.0 / dist_nm) * (1000.0 - 317.0)
+    expected_alt_m = expected_alt_ft * FT_TO_M
+    assert math.isclose(first_pt[2], expected_alt_m, rel_tol=1e-5)
+
+    # Second coordinate should be W1 (2, 0) because the runway threshold is bypassed
+    second_pt = res.missed_approach_path.path[1]
+    assert math.isclose(second_pt[0], 2.0, rel_tol=1e-5)
+    assert math.isclose(second_pt[1], 0.0, rel_tol=1e-5)
+
+    # W1's altitude should be exactly the configured 2300 ft in meters
+    assert math.isclose(second_pt[2], 2300.0 * FT_TO_M, rel_tol=1e-5)
+
+
+def test_explicit_mapt_via_role():
+    import math
+
+    proc = DummyProc(id=1, name="TEST", type="STAR", airport_id="TEST", runway="09")
+
+    legs = [
+        DummyLeg(
+            source_serial="10",
+            path_descriptor="IF",
+            waypoint_ident="START",
+            lon=0,
+            lat=0,
+            role="IF",
+            altitude_numeric=1000.0,
+        ),
+        DummyLeg(
+            source_serial="20",
+            path_descriptor="TF",
+            waypoint_ident="RW09",
+            lon=1,
+            lat=0,
+            role="TF",
+            altitude_numeric=317.0,
+        ),
+        DummyLeg(
+            source_serial="10",
+            path_descriptor="IF",
+            waypoint_ident="RW09",
+            lon=1,
+            lat=0,
+            role="MAPT",
+            altitude_numeric=None,
+        ),
+        DummyLeg(
+            source_serial="20",
+            path_descriptor="TF",
+            waypoint_ident="W1",
+            lon=2,
+            lat=0,
+            role="TF",
+            altitude_numeric=2300.0,
+        ),
+    ]
+
+    res = build_3d_paths(proc, legs)
+    assert res.missed_approach_path is not None
+    first_pt = res.missed_approach_path.path[0]
+    assert math.isclose(first_pt[0], 1.0, rel_tol=1e-5)

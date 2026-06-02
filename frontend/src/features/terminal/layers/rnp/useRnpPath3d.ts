@@ -6,8 +6,8 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { fetchRnpPath3d } from '../../../api/client';
-import type { RnpPath3d } from '../../../types';
+import { fetchRnpPath3d } from '../../../../api/client';
+import type { RnpPath3d } from '../../../../types';
 
 export function useRnpPath3d(procedureId: number | null): RnpPath3d | null {
   const [data, setData] = useState<RnpPath3d | null>(null);

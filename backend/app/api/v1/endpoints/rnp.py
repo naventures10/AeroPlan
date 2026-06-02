@@ -106,10 +106,12 @@ async def get_rnp_path_3d(
             l.distance,
             l.turn_direction,
             w.lon,
-            w.lat
+            w.lat,
+            w.coordinates_raw,
+            w.waypoint_role
         FROM rnp_legs l
         LEFT JOIN LATERAL (
-            SELECT ST_X(geom) AS lon, ST_Y(geom) AS lat
+            SELECT ST_X(geom) AS lon, ST_Y(geom) AS lat, coordinates_raw, role AS waypoint_role
             FROM rnp_waypoints
             WHERE procedure_id = l.procedure_id
               AND (

@@ -1,3 +1,4 @@
+import contextlib
 import math
 import re
 from collections.abc import Sequence
@@ -5,6 +6,8 @@ from typing import Any
 
 from app.schemas.rnp import (
     RnpApproachPath,
+    RnpHoldPattern,
+    RnpLeg,
     RnpMissedApproachPath,
     RnpPath3dResponse,
     RnpWaypointMarker,
@@ -368,25 +371,62 @@ def _extract_turn_direction(leg: Any) -> str | None:
     return None
 
 
+def calculate_decision_point(
+    p_prev: list[float], p_rw: list[float], offset_nm: float = 1.0
+) -> list[Any]:
+    """Calculates a point along the approach segment `offset_nm` before the runway threshold, exactly on the 3D line."""
+    dist_nm = haversine_nm(p_prev[0], p_prev[1], p_rw[0], p_rw[1])
+    if dist_nm > 0:
+        f = min(offset_nm / dist_nm, 0.5)
+        lon_start = p_rw[0] + f * (p_prev[0] - p_rw[0])
+        lat_start = p_rw[1] + f * (p_prev[1] - p_rw[1])
+        if len(p_rw) > 2 and len(p_prev) > 2 and p_rw[2] is not None and p_prev[2] is not None:
+            alt_start_m = p_rw[2] + f * (p_prev[2] - p_rw[2])
+        else:
+            alt_start_m = None
+    else:
+        lon_start = p_rw[0]
+        lat_start = p_rw[1]
+        alt_start_m = p_rw[2] if len(p_rw) > 2 else None
+
+    return [lon_start, lat_start, alt_start_m]
+
+
 def _extract_path(
     legs_list: list,
     start_alt_ft: float = 10000.0,
     initial_pos: list[float] | None = None,
     end_alt_ft: float | None = None,
+    override_first_alt: bool = False,
+    decision_point: list[float] | None = None,
 ) -> tuple[list[list[float]], list[float | None], list[str | None]]:
+
     path_3d = []
     leg_indices: list[int | None] = []
     turn_directions: list[str | None] = []
 
-    if initial_pos:
+    if decision_point:
+        path_3d.append(list(decision_point))
+        turn_directions.append(None)
+    elif initial_pos:
         path_3d.append(list(initial_pos))
         turn_directions.append(None)
 
     for leg in legs_list:
+        if (
+            decision_point
+            and leg.waypoint_ident
+            and str(leg.waypoint_ident).upper().startswith("RW")
+        ):
+            leg_indices.append(None)
+            turn_directions.append(None)
+            continue
+
         alt_ft = extract_altitude(leg)
         alt_m = alt_ft * FT_TO_M if alt_ft is not None else None
 
         # The turn direction in the database (L/R) describes the turn
+
         # required to ENTER this leg. Therefore, it applies to the turn
         # at the PREVIOUS waypoint (the one currently at the end of path_3d).
         turn_dir = _extract_turn_direction(leg)
@@ -440,8 +480,8 @@ def _extract_path(
         return [], [], []
 
     if len(path_3d[0]) < 3:
-        path_3d[0].append(start_alt_ft * FT_TO_M)
-    elif path_3d[0][2] is None:
+        path_3d[0].append(start_alt_ft * FT_TO_M if start_alt_ft is not None else None)
+    elif (path_3d[0][2] is None or override_first_alt) and start_alt_ft is not None:
         path_3d[0][2] = start_alt_ft * FT_TO_M
     if path_3d[-1][2] is None:
         path_3d[-1][2] = end_alt_ft * FT_TO_M if end_alt_ft is not None else path_3d[0][2]
@@ -504,6 +544,84 @@ def _collect_waypoint_alts(
             dest[leg.waypoint_ident] = alt
 
 
+def _map_legs(legs_list: list) -> list[RnpLeg]:
+    mapped = []
+    for leg in legs_list:
+        mapped.append(
+            RnpLeg(
+                path_descriptor=leg.path_descriptor,
+                waypoint_ident=leg.waypoint_ident,
+                altitude_constraint=getattr(leg, "altitude_constraint", None),
+                speed_limit=getattr(leg, "speed_limit", None),
+                course=getattr(leg, "course", None),
+                distance=getattr(leg, "distance", None),
+                role=getattr(leg, "role", None),
+                turn_direction=_extract_turn_direction(leg),
+            )
+        )
+    return mapped
+
+
+def initial_bearing(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
+    """Calculates initial bearing from point 1 to point 2 in degrees."""
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    delta_lambda = math.radians(lon2 - lon1)
+    y = math.sin(delta_lambda) * math.cos(phi2)
+    x = math.cos(phi1) * math.sin(phi2) - math.sin(phi1) * math.cos(phi2) * math.cos(delta_lambda)
+    brg = math.degrees(math.atan2(y, x))
+    return (brg + 360) % 360
+
+
+def _generate_hold_pattern(
+    lon: float,
+    lat: float,
+    alt_m: float,
+    inbound_course: float,
+    turn_direction: str | None,
+    leg_distance_nm: float,
+    steps: int = 16,
+) -> list[list[float]]:
+    """Procedurally generates a 3D hold racetrack pattern at a fix location."""
+    turn_sign = -1.0 if turn_direction == "L" else 1.0
+    r_nm = 1.25
+    path: list[list[float]] = []
+
+    # Sweep 1: Outbound turn from Fix to Outbound entry
+    c_out_bearing = (inbound_course + turn_sign * 90) % 360
+    c_out = project_point(lon, lat, c_out_bearing, r_nm)
+    p_out_start_lon = 0.0
+    p_out_start_lat = 0.0
+    for i in range(steps + 1):
+        frac = i / steps
+        brg = (inbound_course - turn_sign * 90 + turn_sign * frac * 180) % 360
+        pt = project_point(c_out[0], c_out[1], brg, r_nm)
+        path.append([pt[0], pt[1], alt_m])
+        if i == steps:
+            p_out_start_lon = pt[0]
+            p_out_start_lat = pt[1]
+
+    # Outbound straight leg
+    p_out_end = project_point(
+        p_out_start_lon, p_out_start_lat, (inbound_course + 180) % 360, leg_distance_nm
+    )
+    path.append([p_out_end[0], p_out_end[1], alt_m])
+
+    # Sweep 2: Inbound turn from Outbound end to Inbound entry
+    c_in_bearing = (inbound_course - turn_sign * 90) % 360
+    c_in = project_point(p_out_end[0], p_out_end[1], c_in_bearing, r_nm)
+    for i in range(steps + 1):
+        frac = i / steps
+        brg = (inbound_course + turn_sign * 90 + turn_sign * frac * 180) % 360
+        pt = project_point(c_in[0], c_in[1], brg, r_nm)
+        path.append([pt[0], pt[1], alt_m])
+
+    # Inbound straight leg back to Fix
+    path.append([lon, lat, alt_m])
+
+    return path
+
+
 def build_3d_paths(
     proc_row: Any, legs_rows: Sequence[Any], runway_threshold: list[float] | None = None
 ) -> RnpPath3dResponse:
@@ -534,9 +652,25 @@ def build_3d_paths(
 
     if final_group:
         final_approach = final_group[: rw_index + 1]
-        raw_missed_approach = final_group[rw_index:]
-
         final_group_idx = groups.index(final_group)
+
+        # Check if the missed approach explicitly starts with an explicit MAPt (indicated by role or coordinates_raw)
+        has_explicit_mapt = False
+        if final_group_idx + 1 < len(groups):
+            next_g = groups[final_group_idx + 1]
+            if next_g and len(next_g) > 0:
+                first_leg = next_g[0]
+                role_str = str(first_leg.role).upper() if first_leg.role else ""
+                waypoint_role_raw = getattr(first_leg, "waypoint_role", None)
+                waypoint_role_str = (
+                    str(waypoint_role_raw).upper() if isinstance(waypoint_role_raw, str) else ""
+                )
+                raw_coords_str = str(getattr(first_leg, "coordinates_raw", "") or "").upper()
+                if "MAPT" in role_str or "MAPT" in waypoint_role_str or "MAPT" in raw_coords_str:
+                    has_explicit_mapt = True
+
+        raw_missed_approach = [] if has_explicit_mapt else final_group[rw_index:]
+
         for g in groups[final_group_idx + 1 :]:
             raw_missed_approach.extend(g)
 
@@ -578,6 +712,7 @@ def build_3d_paths(
                     ig.append(terminal_hm_leg)
 
     approach_paths = []
+    final_app_p3d = None
 
     # SID/STAR context: initial_pos is the runway threshold for SIDs
     is_sid = hasattr(proc_row, "type") and proc_row.type == "SID"
@@ -587,6 +722,7 @@ def build_3d_paths(
 
     if not initial_groups and final_approach:
         p3d, leg_alts, turn_dirs = _extract_path(final_approach, initial_pos=initial_pos)
+        final_app_p3d = p3d
         _collect_waypoint_alts(final_approach, leg_alts, waypoint_altitudes)
 
         smooth_p, ts, dist = _process_path(p3d, turn_dirs=turn_dirs)
@@ -600,6 +736,7 @@ def build_3d_paths(
                     timestamps=ts,
                     total_distance_nm=dist,
                     segment_type="approach",
+                    legs=_map_legs(final_approach),
                 )
             )
     else:
@@ -618,6 +755,8 @@ def build_3d_paths(
 
             if not p3d:
                 continue
+
+            final_app_p3d = p3d
 
             _collect_waypoint_alts(full_legs, leg_alts, waypoint_altitudes)
 
@@ -647,21 +786,60 @@ def build_3d_paths(
                         timestamps=ts,
                         total_distance_nm=dist,
                         segment_type="approach",
+                        legs=_map_legs(full_legs),
                     )
                 )
 
     missed_approach_path = None
     if raw_missed_approach:
-        start_alt_ft = extract_altitude(raw_missed_approach[0]) or 10000.0
+        is_explicit_mapt = False
+        first_leg = raw_missed_approach[0]
+        role_str = str(first_leg.role).upper() if first_leg.role else ""
+        waypoint_role_raw = getattr(first_leg, "waypoint_role", None)
+        waypoint_role_str = (
+            str(waypoint_role_raw).upper() if isinstance(waypoint_role_raw, str) else ""
+        )
+        raw_coords_str = str(getattr(first_leg, "coordinates_raw", "") or "").upper()
+        if "MAPT" in role_str or "MAPT" in waypoint_role_str or "MAPT" in raw_coords_str:
+            is_explicit_mapt = True
+
+        thresh_alt = extract_altitude(first_leg)
+
+        decision_point = None
+        if not is_explicit_mapt and final_app_p3d and len(final_app_p3d) >= 2:
+            decision_point = calculate_decision_point(
+                final_app_p3d[-2], final_app_p3d[-1], offset_nm=1.0
+            )
+
+        if is_explicit_mapt:
+            start_alt_ft = thresh_alt if thresh_alt is not None else 10300.0
+        elif decision_point and len(decision_point) > 2 and decision_point[2] is not None:
+            start_alt_ft = decision_point[2] / FT_TO_M
+        else:
+            start_alt_ft = (thresh_alt + 300.0) if thresh_alt is not None else 10300.0
+
+        missed_end_alt_ft = 10000.0
+        if raw_missed_approach:
+            last_alt = extract_altitude(raw_missed_approach[-1])
+            if last_alt is not None:
+                missed_end_alt_ft = last_alt
+
         p3d, leg_alts, turn_dirs = _extract_path(
-            raw_missed_approach, start_alt_ft=start_alt_ft, end_alt_ft=10000.0 if is_sid else 0.0
+            raw_missed_approach,
+            start_alt_ft=start_alt_ft,
+            end_alt_ft=10000.0 if is_sid else missed_end_alt_ft,
+            override_first_alt=True,
+            decision_point=decision_point,
         )
         _collect_waypoint_alts(raw_missed_approach, leg_alts, waypoint_altitudes)
 
         smooth_p, ts, dist = _process_path(p3d, turn_dirs=turn_dirs)
         if smooth_p:
             missed_approach_path = RnpMissedApproachPath(
-                path=smooth_p, timestamps=ts, total_distance_nm=dist
+                path=smooth_p,
+                timestamps=ts,
+                total_distance_nm=dist,
+                legs=_map_legs(raw_missed_approach),
             )
 
     max_dist = max([ap.total_distance_nm for ap in approach_paths], default=0.0)
@@ -679,8 +857,86 @@ def build_3d_paths(
             else:
                 alt_m = waypoint_altitudes.get(w_id, 0.0)
 
+            w_role = getattr(leg, "waypoint_role", None)
+            if not isinstance(w_role, str):
+                w_role = None
+            if not w_role:
+                w_role = leg.role if isinstance(leg.role, str) else None
             waypoints.append(
-                RnpWaypointMarker(name=w_id, position=[leg.lon, leg.lat, alt_m], role=leg.role)
+                RnpWaypointMarker(name=w_id, position=[leg.lon, leg.lat, alt_m], role=w_role)
+            )
+
+    hold_patterns = []
+    for i, leg in enumerate(legs_rows):
+        if (
+            leg.path_descriptor in ("HA", "HF", "HM")
+            and leg.lon is not None
+            and leg.lat is not None
+        ):
+            inbound_course = extract_true_course(leg.course)
+            if inbound_course is None:
+                # Find previous waypoint
+                prev_lon, prev_lat = None, None
+                for prev_leg in reversed(legs_rows[:i]):
+                    if prev_leg.lon is not None and prev_leg.lat is not None:
+                        prev_lon, prev_lat = prev_leg.lon, prev_leg.lat
+                        break
+                if prev_lon is not None and prev_lat is not None:
+                    inbound_course = initial_bearing(prev_lon, prev_lat, leg.lon, leg.lat)
+                else:
+                    inbound_course = 0.0
+
+            dist_nm = 4.0
+            dist_str_original = None
+            if leg.distance:
+                dist_str_original = str(leg.distance).strip()
+                dist_upper = dist_str_original.upper()
+                try:
+                    if "MIN" in dist_upper:
+                        # Standard holding speed assumption: ~210 knots -> ~3.5 NM / min
+                        val = float(dist_upper.replace("MIN", "").strip())
+                        dist_nm = val * 3.5
+                    else:
+                        val = float(dist_upper.replace("NM", "").strip())
+                        dist_nm = val
+                except ValueError:
+                    pass
+
+            alt_ft = extract_altitude(leg)
+            alt_m = (
+                alt_ft * FT_TO_M
+                if alt_ft is not None
+                else waypoint_altitudes.get(leg.waypoint_ident, 0.0)
+            )
+
+            turn_dir = _extract_turn_direction(leg)
+
+            hold_path = _generate_hold_pattern(
+                lon=leg.lon,
+                lat=leg.lat,
+                alt_m=alt_m,
+                inbound_course=inbound_course,
+                turn_direction=turn_dir,
+                leg_distance_nm=dist_nm,
+            )
+
+            # Extract speed limit (stored as negative value in DB, e.g. -230.00)
+            speed_kt: float | None = None
+            if hasattr(leg, "speed_limit") and leg.speed_limit is not None:
+                with contextlib.suppress(ValueError, TypeError):
+                    speed_kt = abs(float(str(leg.speed_limit).strip()))
+
+            hold_patterns.append(
+                RnpHoldPattern(
+                    waypoint_ident=leg.waypoint_ident or "HOLD",
+                    path=hold_path,
+                    turn_direction=turn_dir,
+                    inbound_course=inbound_course,
+                    leg_distance_nm=dist_nm,
+                    original_distance_str=dist_str_original,
+                    altitude_ft=alt_ft,
+                    speed_limit_kt=speed_kt,
+                )
             )
 
     return RnpPath3dResponse(
@@ -692,4 +948,5 @@ def build_3d_paths(
         missed_approach_path=missed_approach_path,
         max_distance_nm=max_dist,
         waypoints=waypoints,
+        hold_patterns=hold_patterns,
     )

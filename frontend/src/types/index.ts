@@ -78,6 +78,17 @@ export interface RnpWaypointMarker {
   role: string | null;
 }
 
+export interface RnpLeg {
+  path_descriptor: string | null;
+  waypoint_ident: string | null;
+  altitude_constraint: string | null;
+  speed_limit: string | null;
+  course: string | null;
+  distance: string | null;
+  role: string | null;
+  turn_direction: string | null;
+}
+
 export interface RnpApproachPath {
   label: string;
   entry_waypoint: string;
@@ -85,12 +96,25 @@ export interface RnpApproachPath {
   timestamps: number[];
   total_distance_nm: number;
   segment_type: string;
+  legs: RnpLeg[];
 }
 
 export interface RnpMissedApproachPath {
   path: [number, number, number][];
   timestamps: number[];
   total_distance_nm: number;
+  legs: RnpLeg[];
+}
+
+export interface RnpHoldPattern {
+  waypoint_ident: string;
+  path: [number, number, number][];
+  turn_direction: string | null;
+  inbound_course: number | null;
+  leg_distance_nm: number;
+  original_distance_str: string | null;
+  altitude_ft: number | null;
+  speed_limit_kt: number | null;
 }
 
 export interface RnpPath3d {
@@ -102,6 +126,7 @@ export interface RnpPath3d {
   missed_approach_path: RnpMissedApproachPath | null;
   max_distance_nm: number;
   waypoints: RnpWaypointMarker[];
+  hold_patterns?: RnpHoldPattern[];
 }
 
 export interface AipSupplement {

@@ -30,7 +30,7 @@ export const getPolygonPaint = (isDarkMode: boolean) => ({
       ['>=', ['index-of', 'APRON', ['var', 's']], 0],
       isDarkMode ? '#71717a' : '#e7e5e4',
       ['>=', ['index-of', 'BUILDING', ['var', 's']], 0],
-      isDarkMode ? '#94a3b8' : '#94a3b8',
+      isDarkMode ? '#94a3b8' : '#cbd5e1',
       isDarkMode ? '#9ca3af' : '#a8a29e',
     ],
   ],

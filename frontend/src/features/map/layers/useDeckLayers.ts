@@ -6,9 +6,9 @@ import { createAerodromeLayers } from './createAerodromeLayers';
 import { createWaypointLayer } from './createWaypointLayer';
 import { createNavaidLayer } from './createNavaidLayer';
 import { createAtsRouteLayers } from './createAtsRouteLayers';
-import { createRnpLayers } from '../../terminal/layers/createRnpLayers';
-import { useRnpPath3d } from '../../terminal/layers/useRnpPath3d';
-import { useRnpAnimation } from '../../terminal/layers/useRnpAnimation';
+import { createRnpLayers } from '../../terminal/layers/rnp/createRnpLayers';
+import { useRnpPath3d } from '../../terminal/layers/rnp/useRnpPath3d';
+import { useRnpAnimation } from '../../terminal/layers/rnp/useRnpAnimation';
 import { useWindLayer } from './useWindLayer';
 import { useCloudLayer } from './useCloudLayer';
 import { useDelayedUnmount } from '../../../hooks/useDelayedUnmount';
@@ -67,10 +67,8 @@ export function useDeckLayers({
 
   // Approach distance (NM) — animation boundary between approach and missed approach phases
   const approachDist = selectedApproach?.total_distance_nm ?? 0;
-  // Missed approach distance — extends the animation loop beyond the RW waypoint
-  const missedDist = rnpPathData?.missed_approach_path?.total_distance_nm ?? 0;
-  // Total loop covers approach + missed approach so both phases play sequentially
-  const totalAnimDist = selectedApproach ? approachDist + missedDist : null;
+  // Total loop covers only approach phase since missed approach is static
+  const totalAnimDist = selectedApproach ? approachDist : null;
 
   const rnpCurrentTime = useRnpAnimation(totalAnimDist);
 
@@ -184,7 +182,6 @@ export function useDeckLayers({
     setSelectedRnpApproachId,
     rnpCurrentTime,
     approachDist,
-    missedDist,
     windLayer,
     cloudLayers,
     isDarkMode,

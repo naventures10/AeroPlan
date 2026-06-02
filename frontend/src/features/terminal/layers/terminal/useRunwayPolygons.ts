@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useMapStore } from '../../../store/useMapStore';
+import { useMapStore } from '../../../../store/useMapStore';
 import type { FeatureCollection, Feature, Polygon, Point } from 'geojson';
 
 /** Default runway width in meters when dimensions data is unavailable */
@@ -33,10 +33,6 @@ function parseWidthM(dimensions?: string): number {
   return match ? Number(match[2]) : DEFAULT_WIDTH_M;
 }
 
-/**
- * Extract a numeric elevation (meters) from a threshold elevation string
- * like "THR: 1126.6FT\nTDZ:". Returns elevation in feet divided by 3.28084 to meters.
- */
 /**
  * Compute the reciprocal runway designation.
  *   08  → 26    (number + 18, wrap at 36)

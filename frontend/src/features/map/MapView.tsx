@@ -19,7 +19,7 @@ import { FeatureInfoCard } from './FeatureInfoCard';
 import {
   TerminalSpatialLayers,
   TERMINAL_INTERACTIVE_LAYERS,
-} from '../terminal/layers/TerminalSpatialLayers';
+} from '../terminal/layers/terminal/TerminalSpatialLayers';
 import { WindTooltip } from './tooltips/WindTooltip';
 import { useWindTooltip } from './tooltips/useWindTooltip';
 

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useRnpAnimation } from '../../features/terminal/layers/useRnpAnimation';
+import { useRnpAnimation } from '../../features/terminal/layers/rnp/useRnpAnimation';
 
 describe('useRnpAnimation', () => {
   beforeEach(() => {
