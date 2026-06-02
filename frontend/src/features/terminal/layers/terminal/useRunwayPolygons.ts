@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useMapStore } from '../../../store/useMapStore';
+import { useMapStore } from '../../../../store/useMapStore';
 import type { FeatureCollection, Feature, Polygon, Point } from 'geojson';
 
 /** Default runway width in meters when dimensions data is unavailable */

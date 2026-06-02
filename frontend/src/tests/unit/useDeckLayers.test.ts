@@ -4,7 +4,7 @@ import { useDeckLayers } from '../../features/map/layers/useDeckLayers';
 import { useMapStore } from '../../store/useMapStore';
 import * as aRoutes from '../../features/map/layers/createAtsRouteLayers';
 import * as aAirspaces from '../../features/map/layers/createAirspaceLayers';
-import * as aTerminal from '../../features/terminal/layers/createRnpLayers';
+import * as aTerminal from '../../features/terminal/layers/rnp/createRnpLayers';
 
 vi.mock('../../api/client', () => ({
   fetchRnpPath3d: vi.fn(),
@@ -30,7 +30,7 @@ vi.mock('../../features/map/layers/createAirspaceLayers', () => ({
   createAirspaceLayers: vi.fn(() => [{ id: 'air1' }]),
 }));
 
-vi.mock('../../features/terminal/layers/createRnpLayers', () => ({
+vi.mock('../../features/terminal/layers/rnp/createRnpLayers', () => ({
   createRnpLayers: vi.fn(() => [{ id: 'rnp1' }]),
 }));
 
@@ -38,7 +38,7 @@ vi.mock('../../features/map/layers/useRouteAnimation', () => ({
   useRouteAnimation: () => ({ isAtsRendered: true, currentTime: 10 }),
 }));
 
-vi.mock('../../features/terminal/layers/useRnpPath3d', () => ({
+vi.mock('../../features/terminal/layers/rnp/useRnpPath3d', () => ({
   useRnpPath3d: vi.fn(() => ({ path: [1, 2], timestamps: [1, 2], waypoints: [] })),
 }));
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { createRnpLayers } from '../../features/terminal/layers/createRnpLayers';
+import { createRnpLayers } from '../../features/terminal/layers/rnp/createRnpLayers';
 
 describe('createRnpLayers', () => {
   const mockPathData = {

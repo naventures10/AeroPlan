@@ -7,8 +7,8 @@ import {
   POINT_LAYOUT,
   RUNWAY_FILL_PAINT,
   RUNWAY_OUTLINE_PAINT,
-} from './terminalMapStyles';
-import { TERMINAL_ICONS } from './terminalIcons';
+} from './styles';
+import { TERMINAL_ICONS } from './icons';
 import { useRunwayPolygons } from './useRunwayPolygons';
 
 export const SPATIAL_TILES = [`${window.location.origin}/tiles/spatial_features/{z}/{x}/{y}`];
@@ -34,7 +34,7 @@ export const SPATIAL_POLYGON_FILTER: FilterSpecification = [
 
 export const TERMINAL_INTERACTIVE_LAYERS = ['mvt-points', 'mvt-polygons'];
 
-import { useMapStore } from '../../../store/useMapStore';
+import { useMapStore } from '../../../../store/useMapStore';
 
 /** Empty GeoJSON to avoid MapLibre source errors when no data is available */
 const EMPTY_FC: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };

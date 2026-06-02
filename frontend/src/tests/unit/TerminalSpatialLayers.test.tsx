@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
-import { TerminalSpatialLayers } from '../../features/terminal/layers/TerminalSpatialLayers';
+import { TerminalSpatialLayers } from '../../features/terminal/layers/terminal/TerminalSpatialLayers';
 import { useMap } from 'react-map-gl/maplibre';
-import { useRunwayPolygons } from '../../features/terminal/layers/useRunwayPolygons';
-import { TERMINAL_ICONS } from '../../features/terminal/layers/terminalIcons';
+import { useRunwayPolygons } from '../../features/terminal/layers/terminal/useRunwayPolygons';
+import { TERMINAL_ICONS } from '../../features/terminal/layers/terminal/icons';
 
 // Mock react-map-gl/maplibre
 vi.mock('react-map-gl/maplibre', () => ({
@@ -13,7 +13,7 @@ vi.mock('react-map-gl/maplibre', () => ({
 }));
 
 // Mock useRunwayPolygons
-vi.mock('../../features/terminal/layers/useRunwayPolygons', () => ({
+vi.mock('../../features/terminal/layers/terminal/useRunwayPolygons', () => ({
   useRunwayPolygons: vi.fn(() => ({
     polygons: { type: 'FeatureCollection', features: [] },
     labels: { type: 'FeatureCollection', features: [] },

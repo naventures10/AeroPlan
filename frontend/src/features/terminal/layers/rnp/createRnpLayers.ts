@@ -10,8 +10,8 @@
 
 import { TripsLayer } from '@deck.gl/geo-layers';
 import { ScatterplotLayer, TextLayer, PathLayer, IconLayer } from '@deck.gl/layers';
-import type { RnpPath3d, RnpApproachPath, RnpWaypointMarker, RnpLeg } from '../../../types';
-import { RNP_ICON_ATLAS_URL, RNP_ICON_MAPPING } from './rnpIcons';
+import type { RnpPath3d, RnpApproachPath, RnpWaypointMarker, RnpLeg } from '../../../../types';
+import { RNP_ICON_ATLAS_URL, RNP_ICON_MAPPING } from './icons';
 
 /** Altitude exaggeration — makes the vertical offset visually prominent */
 const ALT_EXAGGERATION = 3;

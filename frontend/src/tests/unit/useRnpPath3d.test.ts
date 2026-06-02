@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { useRnpPath3d } from '../../features/terminal/layers/useRnpPath3d';
+import { useRnpPath3d } from '../../features/terminal/layers/rnp/useRnpPath3d';
 import * as api from '../../api/client';
 
 vi.mock('../../api/client', () => ({

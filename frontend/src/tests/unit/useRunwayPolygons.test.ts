@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { useRunwayPolygons } from '../../features/terminal/layers/useRunwayPolygons';
+import { useRunwayPolygons } from '../../features/terminal/layers/terminal/useRunwayPolygons';
 import { useMapStore } from '../../store/useMapStore';
 
 // Mock fetch
