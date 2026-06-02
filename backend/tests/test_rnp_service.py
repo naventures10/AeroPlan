@@ -565,6 +565,111 @@ def test_build_3d_paths():
     assert res.missed_approach_path is not None
 
 
+def test_build_3d_paths_holding_patterns():
+    proc = DummyProc(id=1, name="TEST", type="STAR", airport_id="TEST", runway="09")
+    legs = [
+        DummyLeg(
+            source_serial="10",
+            path_descriptor="IF",
+            waypoint_ident="START",
+            lon=0,
+            lat=0,
+            altitude_numeric=1000.0,
+            role="IF",
+        ),
+        DummyLeg(
+            source_serial="20",
+            path_descriptor="HA",
+            waypoint_ident="HOLDFIX",
+            lon=1,
+            lat=1,
+            course="090.00° Mag / 090.00° True",
+            distance="4NM",
+            turn_direction="R",
+            altitude_numeric=2000.0,
+        ),
+    ]
+    res = build_3d_paths(proc, legs)
+    assert len(res.hold_patterns) == 1
+    hold = res.hold_patterns[0]
+    assert hold.waypoint_ident == "HOLDFIX"
+    assert len(hold.path) > 30
+    assert hold.turn_direction == "R"
+    assert hold.inbound_course == 90.0
+    assert hold.leg_distance_nm == 4.0
+
+    # Test the geometric shape of the holding pattern
+    # Fix is at lon=1, lat=1. Inbound course=90 (arriving from West, heading East).
+    # Right turn means turning South, then West.
+    # Outbound leg is 4NM West.
+    # Then Right turn means turning North, then East.
+    # Inbound leg is 4NM East back to fix.
+
+    # Path format: [Sweep 1 arc points] + [p_out_end] + [Sweep 2 arc points] + [Fix]
+    # Sweep 1 is steps+1 points. Outbound leg is 1 point. Sweep 2 is steps+1 points. Inbound leg is 1 point.
+    # Total points = 17 + 1 + 17 + 1 = 36 points.
+    assert len(hold.path) == 36
+
+    p_out_start = hold.path[16]  # End of Sweep 1
+    p_out_end = hold.path[17]  # End of Outbound leg
+    p_in_start = hold.path[34]  # End of Sweep 2 (start of Inbound leg)
+    p_fix = hold.path[35]  # Back to Fix
+
+    # End of Sweep 1 should be South of the Fix (same lon, lower lat)
+    assert abs(p_out_start[0] - 1.0) < 0.001
+    assert p_out_start[1] < 1.0
+
+    # End of Outbound leg should be West of p_out_start (lower lon, same lat)
+    assert p_out_end[0] < p_out_start[0]
+    assert abs(p_out_end[1] - p_out_start[1]) < 0.001
+
+    # End of Sweep 2 should be North of p_out_end (same lon, higher lat)
+    assert abs(p_in_start[0] - p_out_end[0]) < 0.001
+    assert p_in_start[1] > p_out_end[1]
+
+    # End of Sweep 2 should be at the same latitude as the Fix
+    assert abs(p_in_start[1] - 1.0) < 0.001
+
+    # Middle of Sweep 2: for a Right turn, we should be turning along the West side of the circle.
+    # Therefore, the longitude of the midpoint of Sweep 2 should be LESS than p_out_end (further West).
+    # (Since p_out_end is at the bottom of the circle, West side has lower lon).
+    p_sweep2_mid = hold.path[18 + 8]  # middle of the 16 steps
+    assert p_sweep2_mid[0] < p_out_end[0]
+
+    # Last point should be exactly the Fix
+    assert p_fix[0] == 1.0
+    assert p_fix[1] == 1.0
+
+    # Test Left turn and missing course
+    legs_left = [
+        DummyLeg(
+            source_serial="10",
+            path_descriptor="IF",
+            waypoint_ident="START",
+            lon=0,
+            lat=0,
+            altitude_numeric=1000.0,
+            role="IF",
+        ),
+        DummyLeg(
+            source_serial="20",
+            path_descriptor="HF",
+            waypoint_ident="HOLDFIX",
+            lon=0,
+            lat=1,
+            distance="3NM",
+            turn_direction="L",
+        ),
+    ]
+    res_left = build_3d_paths(proc, legs_left)
+    assert len(res_left.hold_patterns) == 1
+    hold_left = res_left.hold_patterns[0]
+    assert hold_left.turn_direction == "L"
+    assert hold_left.leg_distance_nm == 3.0
+    assert hold_left.inbound_course is not None
+    assert round(hold_left.inbound_course, 1) == 0.0
+
+
 def test_extract_path_more_branches_final():
     proc = DummyProc(id=1, name="TEST", type="STAR", airport_id="TEST", runway="09")
 

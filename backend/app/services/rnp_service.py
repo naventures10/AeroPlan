@@ -5,6 +5,7 @@ from typing import Any
 
 from app.schemas.rnp import (
     RnpApproachPath,
+    RnpHoldPattern,
     RnpLeg,
     RnpMissedApproachPath,
     RnpPath3dResponse,
@@ -559,6 +560,66 @@ def _map_legs(legs_list: list) -> list[RnpLeg]:
     return mapped
 
 
+def initial_bearing(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
+    """Calculates initial bearing from point 1 to point 2 in degrees."""
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    delta_lambda = math.radians(lon2 - lon1)
+    y = math.sin(delta_lambda) * math.cos(phi2)
+    x = math.cos(phi1) * math.sin(phi2) - math.sin(phi1) * math.cos(phi2) * math.cos(delta_lambda)
+    brg = math.degrees(math.atan2(y, x))
+    return (brg + 360) % 360
+
+
+def _generate_hold_pattern(
+    lon: float,
+    lat: float,
+    alt_m: float,
+    inbound_course: float,
+    turn_direction: str | None,
+    leg_distance_nm: float,
+    steps: int = 16,
+) -> list[list[float]]:
+    """Procedurally generates a 3D hold racetrack pattern at a fix location."""
+    turn_sign = -1.0 if turn_direction == "L" else 1.0
+    r_nm = 1.25
+    path: list[list[float]] = []
+
+    # Sweep 1: Outbound turn from Fix to Outbound entry
+    c_out_bearing = (inbound_course + turn_sign * 90) % 360
+    c_out = project_point(lon, lat, c_out_bearing, r_nm)
+    p_out_start_lon = 0.0
+    p_out_start_lat = 0.0
+    for i in range(steps + 1):
+        frac = i / steps
+        brg = (inbound_course - turn_sign * 90 + turn_sign * frac * 180) % 360
+        pt = project_point(c_out[0], c_out[1], brg, r_nm)
+        path.append([pt[0], pt[1], alt_m])
+        if i == steps:
+            p_out_start_lon = pt[0]
+            p_out_start_lat = pt[1]
+
+    # Outbound straight leg
+    p_out_end = project_point(
+        p_out_start_lon, p_out_start_lat, (inbound_course + 180) % 360, leg_distance_nm
+    )
+    path.append([p_out_end[0], p_out_end[1], alt_m])
+
+    # Sweep 2: Inbound turn from Outbound end to Inbound entry
+    c_in_bearing = (inbound_course - turn_sign * 90) % 360
+    c_in = project_point(p_out_end[0], p_out_end[1], c_in_bearing, r_nm)
+    for i in range(steps + 1):
+        frac = i / steps
+        brg = (inbound_course + turn_sign * 90 + turn_sign * frac * 180) % 360
+        pt = project_point(c_in[0], c_in[1], brg, r_nm)
+        path.append([pt[0], pt[1], alt_m])
+
+    # Inbound straight leg back to Fix
+    path.append([lon, lat, alt_m])
+
+    return path
+
+
 def build_3d_paths(
     proc_row: Any, legs_rows: Sequence[Any], runway_threshold: list[float] | None = None
 ) -> RnpPath3dResponse:
@@ -797,6 +858,62 @@ def build_3d_paths(
                 RnpWaypointMarker(name=w_id, position=[leg.lon, leg.lat, alt_m], role=w_role)
             )
 
+    hold_patterns = []
+    for i, leg in enumerate(legs_rows):
+        if (
+            leg.path_descriptor in ("HA", "HF", "HM")
+            and leg.lon is not None
+            and leg.lat is not None
+        ):
+            inbound_course = extract_true_course(leg.course)
+            if inbound_course is None:
+                # Find previous waypoint
+                prev_lon, prev_lat = None, None
+                for prev_leg in reversed(legs_rows[:i]):
+                    if prev_leg.lon is not None and prev_leg.lat is not None:
+                        prev_lon, prev_lat = prev_leg.lon, prev_leg.lat
+                        break
+                if prev_lon is not None and prev_lat is not None:
+                    inbound_course = initial_bearing(prev_lon, prev_lat, leg.lon, leg.lat)
+                else:
+                    inbound_course = 0.0
+
+            dist_nm = 4.0
+            if leg.distance:
+                try:
+                    dist_str = str(leg.distance).replace("NM", "").replace("min", "").strip()
+                    dist_nm = float(dist_str)
+                except ValueError:
+                    pass
+
+            alt_ft = extract_altitude(leg)
+            alt_m = (
+                alt_ft * FT_TO_M
+                if alt_ft is not None
+                else waypoint_altitudes.get(leg.waypoint_ident, 0.0)
+            )
+
+            turn_dir = _extract_turn_direction(leg)
+
+            hold_path = _generate_hold_pattern(
+                lon=leg.lon,
+                lat=leg.lat,
+                alt_m=alt_m,
+                inbound_course=inbound_course,
+                turn_direction=turn_dir,
+                leg_distance_nm=dist_nm,
+            )
+
+            hold_patterns.append(
+                RnpHoldPattern(
+                    waypoint_ident=leg.waypoint_ident or "HOLD",
+                    path=hold_path,
+                    turn_direction=turn_dir,
+                    inbound_course=inbound_course,
+                    leg_distance_nm=dist_nm,
+                )
+            )
+
     return RnpPath3dResponse(
         procedure_id=proc_row.id,
         name=proc_row.name,
@@ -806,4 +923,5 @@ def build_3d_paths(
         missed_approach_path=missed_approach_path,
         max_distance_nm=max_dist,
         waypoints=waypoints,
+        hold_patterns=hold_patterns,
     )
