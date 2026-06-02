@@ -368,23 +368,51 @@ def _extract_turn_direction(leg: Any) -> str | None:
     return None
 
 
+def calculate_decision_point(
+    p_prev: list[float], p_rw: list[float], thresh_alt_ft: float, offset_nm: float = 1.0
+) -> list[float]:
+    """Calculates a point along the approach segment `offset_nm` before the runway threshold, at threshold + 300 ft."""
+    dist_nm = haversine_nm(p_prev[0], p_prev[1], p_rw[0], p_rw[1])
+    if dist_nm > 0:
+        f = min(offset_nm / dist_nm, 0.5)
+        lon_start = p_rw[0] + f * (p_prev[0] - p_rw[0])
+        lat_start = p_rw[1] + f * (p_prev[1] - p_rw[1])
+    else:
+        lon_start = p_rw[0]
+        lat_start = p_rw[1]
+
+    alt_start_m = (thresh_alt_ft + 300.0) * FT_TO_M
+    return [lon_start, lat_start, alt_start_m]
+
+
 def _extract_path(
     legs_list: list,
     start_alt_ft: float = 10000.0,
     initial_pos: list[float] | None = None,
     end_alt_ft: float | None = None,
+    override_first_alt: bool = False,
+    decision_point: list[float] | None = None,
 ) -> tuple[list[list[float]], list[float | None], list[str | None]]:
+
     path_3d = []
     leg_indices: list[int | None] = []
     turn_directions: list[str | None] = []
 
-    if initial_pos:
+    if decision_point:
+        path_3d.append(list(decision_point))
+        turn_directions.append(None)
+    elif initial_pos:
         path_3d.append(list(initial_pos))
         turn_directions.append(None)
 
     for leg in legs_list:
         alt_ft = extract_altitude(leg)
         alt_m = alt_ft * FT_TO_M if alt_ft is not None else None
+
+        # If a decision point is prepended, clear the altitude of the first real leg (runway threshold)
+        # to ensure it gets interpolated as climbing.
+        if decision_point and len(path_3d) == 1:
+            alt_m = None
 
         # The turn direction in the database (L/R) describes the turn
         # required to ENTER this leg. Therefore, it applies to the turn
@@ -441,7 +469,7 @@ def _extract_path(
 
     if len(path_3d[0]) < 3:
         path_3d[0].append(start_alt_ft * FT_TO_M)
-    elif path_3d[0][2] is None:
+    elif path_3d[0][2] is None or override_first_alt:
         path_3d[0][2] = start_alt_ft * FT_TO_M
     if path_3d[-1][2] is None:
         path_3d[-1][2] = end_alt_ft * FT_TO_M if end_alt_ft is not None else path_3d[0][2]
@@ -578,6 +606,7 @@ def build_3d_paths(
                     ig.append(terminal_hm_leg)
 
     approach_paths = []
+    final_app_p3d = None
 
     # SID/STAR context: initial_pos is the runway threshold for SIDs
     is_sid = hasattr(proc_row, "type") and proc_row.type == "SID"
@@ -587,6 +616,7 @@ def build_3d_paths(
 
     if not initial_groups and final_approach:
         p3d, leg_alts, turn_dirs = _extract_path(final_approach, initial_pos=initial_pos)
+        final_app_p3d = p3d
         _collect_waypoint_alts(final_approach, leg_alts, waypoint_altitudes)
 
         smooth_p, ts, dist = _process_path(p3d, turn_dirs=turn_dirs)
@@ -618,6 +648,8 @@ def build_3d_paths(
 
             if not p3d:
                 continue
+
+            final_app_p3d = p3d
 
             _collect_waypoint_alts(full_legs, leg_alts, waypoint_altitudes)
 
@@ -652,9 +684,21 @@ def build_3d_paths(
 
     missed_approach_path = None
     if raw_missed_approach:
-        start_alt_ft = extract_altitude(raw_missed_approach[0]) or 10000.0
+        thresh_alt = extract_altitude(raw_missed_approach[0])
+        start_alt_ft = (thresh_alt + 300.0) if thresh_alt is not None else 10300.0
+
+        decision_point = None
+        if final_app_p3d and len(final_app_p3d) >= 2:
+            decision_point = calculate_decision_point(
+                final_app_p3d[-2], final_app_p3d[-1], thresh_alt or 10000.0, offset_nm=1.0
+            )
+
         p3d, leg_alts, turn_dirs = _extract_path(
-            raw_missed_approach, start_alt_ft=start_alt_ft, end_alt_ft=10000.0 if is_sid else 0.0
+            raw_missed_approach,
+            start_alt_ft=start_alt_ft,
+            end_alt_ft=10000.0 if is_sid else 0.0,
+            override_first_alt=True,
+            decision_point=decision_point,
         )
         _collect_waypoint_alts(raw_missed_approach, leg_alts, waypoint_altitudes)
 
