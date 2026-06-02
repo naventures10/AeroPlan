@@ -51,7 +51,7 @@ export function createAerodromeLayers(
       id: 'aerodromes-layer',
       data: aerodromes,
       visible: ctx.viewMode === 'ENROUTE',
-      pickable: true,
+      pickable: isLayerActive,
       pointType: 'icon',
       getIcon: () => ({
         url: '/ARP.svg',
