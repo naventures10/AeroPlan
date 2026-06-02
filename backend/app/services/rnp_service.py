@@ -879,10 +879,18 @@ def build_3d_paths(
                     inbound_course = 0.0
 
             dist_nm = 4.0
+            dist_str_original = None
             if leg.distance:
+                dist_str_original = str(leg.distance).strip()
+                dist_upper = dist_str_original.upper()
                 try:
-                    dist_str = str(leg.distance).replace("NM", "").replace("min", "").strip()
-                    dist_nm = float(dist_str)
+                    if "MIN" in dist_upper:
+                        # Standard holding speed assumption: ~210 knots -> ~3.5 NM / min
+                        val = float(dist_upper.replace("MIN", "").strip())
+                        dist_nm = val * 3.5
+                    else:
+                        val = float(dist_upper.replace("NM", "").strip())
+                        dist_nm = val
                 except ValueError:
                     pass
 
@@ -911,6 +919,7 @@ def build_3d_paths(
                     turn_direction=turn_dir,
                     inbound_course=inbound_course,
                     leg_distance_nm=dist_nm,
+                    original_distance_str=dist_str_original,
                 )
             )
 

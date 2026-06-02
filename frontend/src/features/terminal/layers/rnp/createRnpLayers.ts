@@ -10,7 +10,13 @@
 
 import { TripsLayer } from '@deck.gl/geo-layers';
 import { ScatterplotLayer, TextLayer, PathLayer, IconLayer } from '@deck.gl/layers';
-import type { RnpPath3d, RnpApproachPath, RnpWaypointMarker, RnpLeg } from '../../../../types';
+import type {
+  RnpPath3d,
+  RnpApproachPath,
+  RnpWaypointMarker,
+  RnpLeg,
+  RnpHoldPattern,
+} from '../../../../types';
 import { RNP_ICON_ATLAS_URL, RNP_ICON_MAPPING } from './icons';
 
 /** Altitude exaggeration — makes the vertical offset visually prominent */
@@ -199,8 +205,9 @@ export function createRnpLayers({
             }
           }
           if (leg.distance) {
+            const isMin = leg.distance.toLowerCase().includes('min');
             if (!isNaN(distNum)) {
-              parts.push(`↔ ${distNum.toFixed(1)} NM`);
+              parts.push(`↔ ${distNum.toFixed(1)} ${isMin ? 'MIN' : 'NM'}`);
             } else {
               parts.push(`↔ ${leg.distance}`);
             }
@@ -218,8 +225,9 @@ export function createRnpLayers({
             }
           }
           if (leg.distance) {
+            const isMin = leg.distance.toLowerCase().includes('min');
             if (!isNaN(distNum)) {
-              text += `↔ ${distNum.toFixed(1)} NM\n`;
+              text += `↔ ${distNum.toFixed(1)} ${isMin ? 'MIN' : 'NM'}\n`;
             } else {
               text += `↔ ${leg.distance}\n`;
             }
@@ -464,6 +472,35 @@ export function createRnpLayers({
         }),
       );
     }
+  }
+
+  // ── 3.5 Hold patterns (Lime Green) ──────────────────────
+  const holdPatternsTripData = (pathData.hold_patterns || []).map((hp: RnpHoldPattern) => ({
+    waypoint_ident: hp.waypoint_ident,
+    path: hp.path.map((p: [number, number, number]) => [
+      p[0],
+      p[1],
+      minZ + (p[2] - minZ) * ALT_EXAGGERATION + 2.5,
+    ]),
+  }));
+
+  if (holdPatternsTripData.length > 0) {
+    layers.push(
+      new PathLayer({
+        id: 'rnp-hold-patterns-layer',
+        data: holdPatternsTripData,
+        getPath: (d: any) => d.path,
+        getColor: [50, 220, 80, 220], // Harmonies premium lime green
+        getWidth: 3,
+        widthMinPixels: 2,
+        billboard: true,
+        parameters: {
+          blend: true,
+        },
+        pickable: false,
+        opacity: opacity ?? 1,
+      }),
+    );
   }
 
   // ── 4. Waypoint markers ───────────────────────────────

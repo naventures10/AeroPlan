@@ -106,6 +106,15 @@ export interface RnpMissedApproachPath {
   legs: RnpLeg[];
 }
 
+export interface RnpHoldPattern {
+  waypoint_ident: string;
+  path: [number, number, number][];
+  turn_direction: string | null;
+  inbound_course: number | null;
+  leg_distance_nm: number;
+  original_distance_str: string | null;
+}
+
 export interface RnpPath3d {
   procedure_id: number;
   name: string;
@@ -115,6 +124,7 @@ export interface RnpPath3d {
   missed_approach_path: RnpMissedApproachPath | null;
   max_distance_nm: number;
   waypoints: RnpWaypointMarker[];
+  hold_patterns?: RnpHoldPattern[];
 }
 
 export interface AipSupplement {

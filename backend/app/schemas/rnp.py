@@ -49,6 +49,15 @@ class RnpMissedApproachPath(BaseModel):
     legs: list[RnpLeg] = Field(default_factory=list, description="ARINC 424 legs")
 
 
+class RnpHoldPattern(BaseModel):
+    waypoint_ident: str
+    path: list[list[float]] = Field(..., description="[lon, lat, alt_m][]")
+    turn_direction: str | None = None
+    inbound_course: float | None = None
+    leg_distance_nm: float
+    original_distance_str: str | None = None
+
+
 class RnpPath3dResponse(BaseModel):
     procedure_id: int
     name: str
@@ -58,3 +67,6 @@ class RnpPath3dResponse(BaseModel):
     missed_approach_path: RnpMissedApproachPath | None = None
     max_distance_nm: float = Field(..., description="Longest approach path (animation loop)")
     waypoints: list[RnpWaypointMarker]
+    hold_patterns: list[RnpHoldPattern] = Field(
+        default_factory=list, description="Procedural hold patterns"
+    )
