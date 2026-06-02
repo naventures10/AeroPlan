@@ -1490,3 +1490,53 @@ def test_missed_approach_start_altitude_offset():
 
     # The runway threshold altitude should be interpolated as climbing (higher than 617 ft)
     assert second_pt[2] > expected_alt_m
+
+
+def test_explicit_mapt_via_role():
+    import math
+
+    proc = DummyProc(id=1, name="TEST", type="STAR", airport_id="TEST", runway="09")
+
+    legs = [
+        DummyLeg(
+            source_serial="10",
+            path_descriptor="IF",
+            waypoint_ident="START",
+            lon=0,
+            lat=0,
+            role="IF",
+            altitude_numeric=1000.0,
+        ),
+        DummyLeg(
+            source_serial="20",
+            path_descriptor="TF",
+            waypoint_ident="RW09",
+            lon=1,
+            lat=0,
+            role="TF",
+            altitude_numeric=317.0,
+        ),
+        DummyLeg(
+            source_serial="10",
+            path_descriptor="IF",
+            waypoint_ident="RW09",
+            lon=1,
+            lat=0,
+            role="MAPT",
+            altitude_numeric=None,
+        ),
+        DummyLeg(
+            source_serial="20",
+            path_descriptor="TF",
+            waypoint_ident="W1",
+            lon=2,
+            lat=0,
+            role="TF",
+            altitude_numeric=2300.0,
+        ),
+    ]
+
+    res = build_3d_paths(proc, legs)
+    assert res.missed_approach_path is not None
+    first_pt = res.missed_approach_path.path[0]
+    assert math.isclose(first_pt[0], 1.0, rel_tol=1e-5)

@@ -568,12 +568,15 @@ def build_3d_paths(
         final_approach = final_group[: rw_index + 1]
         final_group_idx = groups.index(final_group)
 
-        # Check if the missed approach explicitly starts with an IF leg (Explicit MAPt)
+        # Check if the missed approach explicitly starts with an explicit MAPt (indicated by role)
         has_explicit_mapt = False
         if final_group_idx + 1 < len(groups):
             next_g = groups[final_group_idx + 1]
-            if next_g and next_g[0].path_descriptor == "IF":
-                has_explicit_mapt = True
+            if next_g and len(next_g) > 0:
+                first_leg = next_g[0]
+                role_str = str(first_leg.role).upper() if first_leg.role else ""
+                if "MAPT" in role_str or "MAHF" in role_str or "MATF" in role_str:
+                    has_explicit_mapt = True
 
         raw_missed_approach = [] if has_explicit_mapt else final_group[rw_index:]
 
@@ -696,8 +699,13 @@ def build_3d_paths(
 
     missed_approach_path = None
     if raw_missed_approach:
-        is_explicit_mapt = raw_missed_approach[0].path_descriptor == "IF"
-        thresh_alt = extract_altitude(raw_missed_approach[0])
+        is_explicit_mapt = False
+        first_leg = raw_missed_approach[0]
+        role_str = str(first_leg.role).upper() if first_leg.role else ""
+        if "MAPT" in role_str or "MAHF" in role_str or "MATF" in role_str:
+            is_explicit_mapt = True
+
+        thresh_alt = extract_altitude(first_leg)
 
         decision_point = None
         if not is_explicit_mapt and final_app_p3d and len(final_app_p3d) >= 2:
