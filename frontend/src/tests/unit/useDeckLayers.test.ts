@@ -96,4 +96,58 @@ describe('useDeckLayers', () => {
       expect.arrayContaining(['rnp2']),
     );
   });
+
+  it('delays unmounting of all toolbar layers by 300ms when toggled off', () => {
+    vi.useFakeTimers();
+    (aRoutes.createAtsRouteLayers as any).mockReturnValue([{ id: 'ats1' }]);
+    (aAirspaces.createAirspaceLayers as any).mockReturnValue([{ id: 'air1' }]);
+
+    const props = {
+      aerodromes: {},
+      onAerodromeClick: vi.fn(),
+      hoveredRnpApproachId: null,
+    };
+
+    const { result, rerender } = renderHook(() => useDeckLayers(props as any));
+
+    const layersToTest = [
+      { key: 'aerodromes', id: 'aero1' },
+      { key: 'waypoints', id: 'wp' },
+      { key: 'navaids', id: 'nav' },
+      { key: 'atsRoutes', id: 'ats1' },
+      { key: 'airspaces', id: 'air1' },
+    ];
+
+    layersToTest.forEach(({ key, id }) => {
+      // Initially layer should be present.
+      expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain(id);
+
+      // Toggle off the layer
+      useMapStore.setState((state: any) => ({
+        activeLayers: { ...state.activeLayers, [key]: false },
+      }));
+      rerender();
+
+      // Immediately after toggle, it should still be mounted
+      expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain(id);
+    });
+
+    // Advance time by 299ms
+    vi.advanceTimersByTime(299);
+    rerender();
+    layersToTest.forEach(({ id }) => {
+      expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain(id);
+    });
+
+    // Advance time to 300ms
+    vi.advanceTimersByTime(1);
+    rerender();
+
+    // Now all layers should be completely unmounted
+    layersToTest.forEach(({ id }) => {
+      expect(result.current.overlaidLayers.map((l: any) => l?.id)).not.toContain(id);
+    });
+
+    vi.useRealTimers();
+  });
 });

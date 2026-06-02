@@ -11,6 +11,7 @@ import { useRnpPath3d } from '../../terminal/layers/useRnpPath3d';
 import { useRnpAnimation } from '../../terminal/layers/useRnpAnimation';
 import { useWindLayer } from './useWindLayer';
 import { useCloudLayer } from './useCloudLayer';
+import { useDelayedUnmount } from '../../../hooks/useDelayedUnmount';
 import type { LayerContext } from './types';
 
 /**
@@ -87,6 +88,12 @@ export function useDeckLayers({
 
   const zoom = viewState.zoom;
 
+  const mountAirspaces = useDelayedUnmount(activeLayers.airspaces, 300);
+  const mountAerodromes = useDelayedUnmount(activeLayers.aerodromes, 300);
+  const mountWaypoints = useDelayedUnmount(activeLayers.waypoints, 300);
+  const mountNavaids = useDelayedUnmount(activeLayers.navaids, 300);
+  const mountAtsRoutes = useDelayedUnmount(activeLayers.atsRoutes, 300);
+
   // Build the shared context passed to every layer factory
   const ctx: LayerContext = {
     viewMode,
@@ -110,14 +117,23 @@ export function useDeckLayers({
     const overlaidLayers: any[] = [];
     const interleavedLayers: any[] = [];
 
-    overlaidLayers.push(...createAirspaceLayers(ctx));
+    if (mountAirspaces) {
+      overlaidLayers.push(...createAirspaceLayers(ctx));
+    }
 
-    overlaidLayers.push(...createAerodromeLayers(ctx, aerodromes, textData, onAerodromeClick));
+    if (mountAerodromes) {
+      overlaidLayers.push(...createAerodromeLayers(ctx, aerodromes, textData, onAerodromeClick));
+    }
 
-    overlaidLayers.push(...createWaypointLayer(ctx));
-    overlaidLayers.push(...createNavaidLayer(ctx));
+    if (mountWaypoints) {
+      overlaidLayers.push(...createWaypointLayer(ctx));
+    }
 
-    if (isAtsRendered) {
+    if (mountNavaids) {
+      overlaidLayers.push(...createNavaidLayer(ctx));
+    }
+
+    if (isAtsRendered && mountAtsRoutes) {
       overlaidLayers.push(...createAtsRouteLayers(ctx));
     }
 
@@ -176,6 +192,11 @@ export function useDeckLayers({
     isAtsGeometryLoaded,
     setAtsGeometryLoaded,
     atsRoutesToggleCounter,
+    mountAirspaces,
+    mountAerodromes,
+    mountWaypoints,
+    mountNavaids,
+    mountAtsRoutes,
   ]);
 
   return layers;
