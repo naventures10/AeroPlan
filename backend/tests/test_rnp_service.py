@@ -1478,8 +1478,9 @@ def test_missed_approach_start_altitude_offset():
     assert math.isclose(first_pt[0], expected_lon, rel_tol=1e-5)
     assert math.isclose(first_pt[1], 0.0, rel_tol=1e-5)
 
-    # First coordinate of missed approach path should have overridden altitude (317 + 300 = 617 ft)
-    expected_alt_m = 617.0 * FT_TO_M
+    # First coordinate of missed approach path should have interpolated altitude
+    expected_alt_ft = 317.0 + (1.0 / dist_nm) * (1000.0 - 317.0)
+    expected_alt_m = expected_alt_ft * FT_TO_M
     assert math.isclose(first_pt[2], expected_alt_m, rel_tol=1e-5)
 
     # Second coordinate should be close to the runway threshold (1, 0) due to Bezier smoothing

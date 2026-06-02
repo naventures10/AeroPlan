@@ -369,19 +369,23 @@ def _extract_turn_direction(leg: Any) -> str | None:
 
 
 def calculate_decision_point(
-    p_prev: list[float], p_rw: list[float], thresh_alt_ft: float, offset_nm: float = 1.0
-) -> list[float]:
-    """Calculates a point along the approach segment `offset_nm` before the runway threshold, at threshold + 300 ft."""
+    p_prev: list[float], p_rw: list[float], offset_nm: float = 1.0
+) -> list[Any]:
+    """Calculates a point along the approach segment `offset_nm` before the runway threshold, exactly on the 3D line."""
     dist_nm = haversine_nm(p_prev[0], p_prev[1], p_rw[0], p_rw[1])
     if dist_nm > 0:
         f = min(offset_nm / dist_nm, 0.5)
         lon_start = p_rw[0] + f * (p_prev[0] - p_rw[0])
         lat_start = p_rw[1] + f * (p_prev[1] - p_rw[1])
+        if len(p_rw) > 2 and len(p_prev) > 2 and p_rw[2] is not None and p_prev[2] is not None:
+            alt_start_m = p_rw[2] + f * (p_prev[2] - p_rw[2])
+        else:
+            alt_start_m = None
     else:
         lon_start = p_rw[0]
         lat_start = p_rw[1]
+        alt_start_m = p_rw[2] if len(p_rw) > 2 else None
 
-    alt_start_m = (thresh_alt_ft + 300.0) * FT_TO_M
     return [lon_start, lat_start, alt_start_m]
 
 
@@ -690,8 +694,13 @@ def build_3d_paths(
         decision_point = None
         if final_app_p3d and len(final_app_p3d) >= 2:
             decision_point = calculate_decision_point(
-                final_app_p3d[-2], final_app_p3d[-1], thresh_alt or 10000.0, offset_nm=1.0
+                final_app_p3d[-2], final_app_p3d[-1], offset_nm=1.0
             )
+
+        if decision_point and len(decision_point) > 2 and decision_point[2] is not None:
+            start_alt_ft = decision_point[2] / FT_TO_M
+        else:
+            start_alt_ft = (thresh_alt + 300.0) if thresh_alt is not None else 10300.0
 
         p3d, leg_alts, turn_dirs = _extract_path(
             raw_missed_approach,
