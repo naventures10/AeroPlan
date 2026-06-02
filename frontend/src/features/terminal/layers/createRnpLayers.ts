@@ -9,8 +9,9 @@
  */
 
 import { TripsLayer } from '@deck.gl/geo-layers';
-import { ScatterplotLayer, TextLayer, PathLayer } from '@deck.gl/layers';
-import type { RnpPath3d, RnpApproachPath, RnpWaypointMarker } from '../../../types';
+import { ScatterplotLayer, TextLayer, PathLayer, IconLayer } from '@deck.gl/layers';
+import type { RnpPath3d, RnpApproachPath, RnpWaypointMarker, RnpLeg } from '../../../types';
+import { RNP_ICON_ATLAS_URL, RNP_ICON_MAPPING } from './rnpIcons';
 
 /** Altitude exaggeration — makes the vertical offset visually prominent */
 const ALT_EXAGGERATION = 3;
@@ -148,6 +149,107 @@ export function createRnpLayers({
       if (p[2] < minZ) minZ = p[2];
     });
   });
+
+  // ── 0. Compute Leg Annotations ─────────────────────────────────────────
+  interface LegAnnotation {
+    position: [number, number, number];
+    text: string;
+    color: [number, number, number, number];
+  }
+  const legAnnotations: LegAnnotation[] = [];
+
+  const getWpt = (ident: string | null) =>
+    ident ? pathData.waypoints.find((w) => w.name === ident) : null;
+
+  const processLegs = (legs: RnpLeg[], color: [number, number, number, number]) => {
+    let prevWpt: RnpWaypointMarker | null = null;
+    for (const leg of legs) {
+      const curWpt = getWpt(leg.waypoint_ident);
+      if (prevWpt && curWpt && (leg.distance || leg.course)) {
+        // 1. Calculate segment distance if available
+        let distNum = NaN;
+        if (leg.distance) {
+          distNum = parseFloat(leg.distance);
+        }
+
+        // Hide entirely if less than 1.0 NM
+        if (!isNaN(distNum) && distNum < 1.0) {
+          prevWpt = curWpt || prevWpt;
+          continue;
+        }
+
+        const midLon = (prevWpt.position[0] + curWpt.position[0]) / 2;
+        const midLat = (prevWpt.position[1] + curWpt.position[1]) / 2;
+        const midAlt = (prevWpt.position[2] + curWpt.position[2]) / 2;
+
+        // 2. Construct text based on length threshold using standard ASCII/avionics characters
+        let text = '';
+        const isShort = !isNaN(distNum) && distNum < 2.2;
+
+        if (isShort) {
+          // Compact single-line formatting: "↑ 024° / ↔ 1.5 NM"
+          const parts: string[] = [];
+          if (leg.course) {
+            const match = leg.course.match(/^([\d.]+)/);
+            if (match && match[0]) {
+              const courseNum = Math.round(parseFloat(match[0]));
+              parts.push(`↑ ${courseNum.toString().padStart(3, '0')}°`);
+            } else {
+              parts.push(`↑ ${leg.course}`);
+            }
+          }
+          if (leg.distance) {
+            if (!isNaN(distNum)) {
+              parts.push(`↔ ${distNum.toFixed(1)} NM`);
+            } else {
+              parts.push(`↔ ${leg.distance}`);
+            }
+          }
+          text = parts.join(' / ');
+        } else {
+          // Full multi-line formatting
+          if (leg.course) {
+            const match = leg.course.match(/^([\d.]+)/);
+            if (match && match[0]) {
+              const courseNum = Math.round(parseFloat(match[0]));
+              text += `↑ ${courseNum.toString().padStart(3, '0')}°\n`;
+            } else {
+              text += `↑ ${leg.course}\n`;
+            }
+          }
+          if (leg.distance) {
+            if (!isNaN(distNum)) {
+              text += `↔ ${distNum.toFixed(1)} NM\n`;
+            } else {
+              text += `↔ ${leg.distance}\n`;
+            }
+          }
+          if (leg.path_descriptor) {
+            text += `[${leg.path_descriptor}]`;
+          }
+        }
+
+        legAnnotations.push({
+          position: [midLon, midLat, midAlt],
+          text: text.trim(),
+          color,
+        });
+      }
+      prevWpt = curWpt || prevWpt;
+    }
+  };
+
+  pathData.approach_paths.forEach((ap) => {
+    const isSelected = ap.entry_waypoint === selectedRnpApproachId;
+    const isHovered = ap.entry_waypoint === hoveredRnpApproachId;
+    if (isSelected || isHovered) {
+      processLegs(ap.legs || [], [255, 50, 255, 255]);
+    }
+  });
+  if (selectedRnpApproachId && pathData.missed_approach_path?.legs) {
+    processLegs(pathData.missed_approach_path.legs, [255, 100, 80, 255]);
+  }
+
   if (pathData.missed_approach_path) {
     pathData.missed_approach_path.path.forEach((p: [number, number, number]) => {
       if (p[2] < minZ) minZ = p[2];
@@ -218,6 +320,41 @@ export function createRnpLayers({
       const selectedTrip = approachTripData.find((t) => t.entry_waypoint === selectedRnpApproachId);
 
       if (selectedTrip) {
+        // 2a. Static Gradient Line for the Selected Route
+        const selectedSegments: any[] = [];
+        const pathPoints = selectedTrip.path;
+        for (let i = 0; i < pathPoints.length - 1; i++) {
+          const pStart = pathPoints[i];
+          const pEnd = pathPoints[i + 1];
+          selectedSegments.push({
+            path: [pStart, pEnd],
+            index: i,
+            total: Math.max(1, pathPoints.length - 1),
+          });
+        }
+
+        if (selectedSegments.length > 0) {
+          layers.push(
+            new PathLayer({
+              id: 'rnp-selected-approach-static-gradient-layer',
+              data: selectedSegments,
+              getPath: (d: any) => d.path,
+              getColor: (d: any) => {
+                const ratio = d.index / d.total;
+                const alpha = Math.round(40 + ratio * 160); // Fades from 40 (dim) to 200 (bright)
+                return [...RGB_APPROACH, alpha] as [number, number, number, number];
+              },
+              getWidth: 3, // slightly thicker than unselected paths (2)
+              widthMinPixels: 3,
+              billboard: true,
+              parameters: {
+                blend: true,
+              },
+              pickable: false,
+            }),
+          );
+        }
+
         // Clamp the approach head to approachDist so it freezes at the RW waypoint
         // once the missed approach phase begins (rnpCurrentTime > approachDist).
         const approachTime = Math.min(
@@ -284,48 +421,153 @@ export function createRnpLayers({
         }),
       );
     }
+
+    if (missedPath3d.length > 0) {
+      layers.push(
+        new IconLayer({
+          id: 'rnp-mapt-transition-marker-layer',
+          data: [missedPath3d[0]],
+          iconAtlas: RNP_ICON_ATLAS_URL,
+          iconMapping: RNP_ICON_MAPPING,
+          getPosition: (p: [number, number, number]) => [p[0], p[1], p[2] + 1.0],
+          getIcon: () => 'fly-over',
+          getSize: 18,
+          getColor: [255, 100, 80, 255], // Missed approach orange-red
+          pickable: false,
+          billboard: true,
+          opacity: opacity ?? 1,
+          parameters: { depthTest: true },
+        }),
+      );
+
+      layers.push(
+        new TextLayer({
+          id: 'rnp-mapt-transition-label-layer',
+          data: [missedPath3d[0]],
+          getPosition: (p: [number, number, number]) => [p[0], p[1], p[2] + 1.5],
+          getText: () => 'MPAt',
+          getSize: 10,
+          getColor: [255, 100, 80, 255], // Missed approach orange-red
+          opacity: opacity ?? 1,
+          getTextAnchor: 'middle',
+          getAlignmentBaseline: 'bottom',
+          getPixelOffset: [0, -14], // Float directly above the MAPt icon
+          parameters: { depthTest: true },
+          characterSet: 'auto',
+          fontFamily: 'Geist, sans-serif',
+          fontWeight: 600,
+          outlineWidth: 2,
+          outlineColor: [0, 0, 0, 200],
+          fontSettings: { sdf: true },
+          billboard: true,
+          pickable: false,
+        }),
+      );
+    }
   }
 
-  // ── 4. Waypoint markers (3D scatter) ───────────────────────────────
+  // ── 4. Waypoint markers ───────────────────────────────
   if (pathData.waypoints.length > 0) {
-    layers.push(
-      new ScatterplotLayer({
-        id: 'rnp-waypoint-markers-layer',
-        data: pathData.waypoints,
-        getPosition: (d: RnpWaypointMarker) => [
-          d.position[0],
-          d.position[1],
-          minZ + (d.position[2] - minZ) * ALT_EXAGGERATION + 2,
-        ],
-        getRadius: 80,
-        radiusUnits: 'meters',
-        getFillColor: (d: RnpWaypointMarker) => roleColor(d.role),
-        getLineColor: [255, 255, 255, 180],
-        lineWidthMinPixels: 1,
-        stroked: true,
-        filled: true,
-        pickable: pickable ?? true,
-        opacity: opacity ?? 1,
-      }),
+    const isMapt = (d: RnpWaypointMarker) => {
+      const role = d.role?.toUpperCase() || '';
+      return role.includes('MAPT');
+    };
+
+    const isRunway = (d: RnpWaypointMarker) => {
+      const role = d.role?.toUpperCase() || '';
+      const name = d.name?.toUpperCase() || '';
+      return !isMapt(d) && (role.includes('RWY') || role.includes('RW') || name.startsWith('RW'));
+    };
+
+    const excludeMapt = selectedRnpApproachId !== null;
+
+    const runwayWaypoints = pathData.waypoints.filter(isRunway);
+    const flybyWaypoints = pathData.waypoints.filter(
+      (d) => !isRunway(d) && !(excludeMapt && isMapt(d)),
+    );
+    const labelWaypoints = pathData.waypoints.filter(
+      (d) => !isRunway(d) && !(excludeMapt && isMapt(d)),
     );
 
-    // 4b. Waypoint name labels
+    // 4a. Runway markers (flat 3D scatter)
+    if (runwayWaypoints.length > 0) {
+      layers.push(
+        new ScatterplotLayer({
+          id: 'rnp-rwy-markers-layer',
+          data: runwayWaypoints,
+          getPosition: (d: RnpWaypointMarker) => [
+            d.position[0],
+            d.position[1],
+            minZ + (d.position[2] - minZ) * ALT_EXAGGERATION + 2.1,
+          ],
+          getRadius: 80,
+          radiusUnits: 'meters',
+          getFillColor: (d: RnpWaypointMarker) => roleColor(d.role),
+          getLineColor: [255, 255, 255, 180],
+          lineWidthMinPixels: 1,
+          stroked: true,
+          filled: true,
+          pickable: pickable ?? true,
+          opacity: opacity ?? 1,
+        }),
+      );
+    }
+
+    // 4b. Fly-by markers (billboarded SDF Icons)
+    if (flybyWaypoints.length > 0) {
+      layers.push(
+        new IconLayer({
+          id: 'rnp-flyby-markers-layer',
+          data: flybyWaypoints,
+          iconAtlas: RNP_ICON_ATLAS_URL,
+          iconMapping: RNP_ICON_MAPPING,
+          getPosition: (d: RnpWaypointMarker) => [
+            d.position[0],
+            d.position[1],
+            minZ + (d.position[2] - minZ) * ALT_EXAGGERATION + 3,
+          ],
+          getIcon: () => 'fly-by',
+          getSize: 16, // Base pixel size
+          getColor: (d: RnpWaypointMarker) => roleColor(d.role),
+          pickable: pickable ?? true,
+          opacity: opacity ?? 1,
+          billboard: true,
+          parameters: { depthTest: true },
+        }),
+      );
+    }
+
+    // 4c. Waypoint name labels
     layers.push(
       new TextLayer({
         id: 'rnp-waypoint-labels-layer',
-        data: pathData.waypoints,
+        data: labelWaypoints,
         getPosition: (d: RnpWaypointMarker) => [
           d.position[0],
           d.position[1],
-          minZ + (d.position[2] - minZ) * ALT_EXAGGERATION + 2,
+          minZ + (d.position[2] - minZ) * ALT_EXAGGERATION + 3.5,
         ],
-        getText: (d: RnpWaypointMarker) => d.name,
-        getSize: 13,
+        getText: (d: RnpWaypointMarker) => {
+          let text = d.name;
+          if (d.role) {
+            const roleUpper = d.role.toUpperCase();
+            const invalidRoles = ['TF', 'DF', 'CF', 'RF', 'IF_LEG', 'NONE'];
+            if (!invalidRoles.includes(roleUpper) && !roleUpper.includes('NONE')) {
+              text += `\n(${d.role})`;
+            }
+          }
+          const altFt = Math.round(d.position[2] * 3.28084);
+          if (altFt > 0) text += `\n${altFt} ft`;
+          return text;
+        },
+        getSize: 10,
         getColor: [255, 255, 255, 220],
         opacity: opacity ?? 1,
-        getTextAnchor: 'start',
-        getAlignmentBaseline: 'center',
-        getPixelOffset: [12, 0],
+        getTextAnchor: 'middle',
+        getAlignmentBaseline: 'bottom',
+        getPixelOffset: [0, -20],
+        parameters: { depthTest: true },
+        characterSet: 'auto',
         fontFamily: 'Geist, sans-serif',
         fontWeight: 600,
         outlineWidth: 2,
@@ -335,6 +577,37 @@ export function createRnpLayers({
         pickable: false,
       }),
     );
+
+    // 4d. Leg annotations (distance, course, descriptor)
+    if (legAnnotations.length > 0) {
+      layers.push(
+        new TextLayer({
+          id: 'rnp-leg-annotations-layer',
+          data: legAnnotations,
+          getPosition: (d: LegAnnotation) => [
+            d.position[0],
+            d.position[1],
+            minZ + (d.position[2] - minZ) * ALT_EXAGGERATION + 3.5,
+          ],
+          getText: (d: LegAnnotation) => d.text,
+          getSize: 9,
+          getColor: (d: LegAnnotation) => d.color,
+          opacity: opacity ?? 1,
+          getTextAnchor: 'middle',
+          getAlignmentBaseline: 'center',
+          getPixelOffset: [0, -22],
+          parameters: { depthTest: true },
+          characterSet: 'auto',
+          fontFamily: 'Geist, sans-serif',
+          fontWeight: 600,
+          outlineWidth: 3,
+          outlineColor: [0, 0, 0, 255],
+          fontSettings: { sdf: true },
+          billboard: true,
+          pickable: false,
+        }),
+      );
+    }
   }
 
   return layers;

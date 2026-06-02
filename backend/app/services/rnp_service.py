@@ -5,6 +5,7 @@ from typing import Any
 
 from app.schemas.rnp import (
     RnpApproachPath,
+    RnpLeg,
     RnpMissedApproachPath,
     RnpPath3dResponse,
     RnpWaypointMarker,
@@ -540,6 +541,24 @@ def _collect_waypoint_alts(
             dest[leg.waypoint_ident] = alt
 
 
+def _map_legs(legs_list: list) -> list[RnpLeg]:
+    mapped = []
+    for leg in legs_list:
+        mapped.append(
+            RnpLeg(
+                path_descriptor=leg.path_descriptor,
+                waypoint_ident=leg.waypoint_ident,
+                altitude_constraint=getattr(leg, "altitude_constraint", None),
+                speed_limit=getattr(leg, "speed_limit", None),
+                course=getattr(leg, "course", None),
+                distance=getattr(leg, "distance", None),
+                role=getattr(leg, "role", None),
+                turn_direction=_extract_turn_direction(leg),
+            )
+        )
+    return mapped
+
+
 def build_3d_paths(
     proc_row: Any, legs_rows: Sequence[Any], runway_threshold: list[float] | None = None
 ) -> RnpPath3dResponse:
@@ -654,6 +673,7 @@ def build_3d_paths(
                     timestamps=ts,
                     total_distance_nm=dist,
                     segment_type="approach",
+                    legs=_map_legs(final_approach),
                 )
             )
     else:
@@ -703,6 +723,7 @@ def build_3d_paths(
                         timestamps=ts,
                         total_distance_nm=dist,
                         segment_type="approach",
+                        legs=_map_legs(full_legs),
                     )
                 )
 
@@ -746,7 +767,10 @@ def build_3d_paths(
         smooth_p, ts, dist = _process_path(p3d, turn_dirs=turn_dirs)
         if smooth_p:
             missed_approach_path = RnpMissedApproachPath(
-                path=smooth_p, timestamps=ts, total_distance_nm=dist
+                path=smooth_p,
+                timestamps=ts,
+                total_distance_nm=dist,
+                legs=_map_legs(raw_missed_approach),
             )
 
     max_dist = max([ap.total_distance_nm for ap in approach_paths], default=0.0)
