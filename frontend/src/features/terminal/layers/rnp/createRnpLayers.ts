@@ -583,8 +583,9 @@ export function createRnpLayers({
     // Path structure (steps=16): [0..16]=outbound arc, [17]=outbound end,
     // [18..34]=inbound arc, [35]=fix. Straight legs are [16]→[17] and [34]→[35].
     //
-    // deck.gl getAngle is CCW from east (+x axis), so:
-    //   angle = (90 - bearing + 360) % 360
+    // deck.gl getAngle rotates clockwise.
+    // Since '▶' points East (bearing 90) at angle 0:
+    // angle = (bearing - 90 + 360) % 360
     const STEPS = 16;
     const holdChevrons: Array<{
       position: [number, number, number];
@@ -607,7 +608,7 @@ export function createRnpLayers({
       ];
       holdChevrons.push({
         position: outMid,
-        angle: (90 - outboundBearing + 360) % 360,
+        angle: (outboundBearing - 90 + 360) % 360,
         label: `${Math.round(outboundBearing).toString().padStart(3, '0')}°`,
       });
 
@@ -621,7 +622,7 @@ export function createRnpLayers({
       ];
       holdChevrons.push({
         position: inMid,
-        angle: (90 - inboundBearing + 360) % 360,
+        angle: (inboundBearing - 90 + 360) % 360,
         label: `${Math.round(inboundBearing).toString().padStart(3, '0')}°`,
       });
     });
