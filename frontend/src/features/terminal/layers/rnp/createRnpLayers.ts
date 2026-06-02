@@ -540,11 +540,37 @@ export function createRnpLayers({
         lines.push(`MAX ${Math.round(hp.speed_limit_kt)} KT`);
       }
 
-      // Position somewhere along the pattern (halfway through the path array)
-      const ptIndex = Math.floor((hp.path.length || 1) / 2);
-      const posPt = hp.path[ptIndex] ?? [0, 0, 0];
+      // Position right at the center of the racetrack pattern
+      let centerLon = 0;
+      let centerLat = 0;
+      let centerAlt = 0;
+
+      const steps = 16;
+      const outMidIdx = Math.floor(steps / 2); // 8
+      const inMidIdx = Math.floor(steps + 2 + steps / 2); // 26
+
+      if (hp.path && hp.path.length >= inMidIdx + 1) {
+        const p1 = hp.path[outMidIdx] ?? [0, 0, 0];
+        const p2 = hp.path[inMidIdx] ?? [0, 0, 0];
+        centerLon = (p1[0] + p2[0]) / 2;
+        centerLat = (p1[1] + p2[1]) / 2;
+        centerAlt = (p1[2] + p2[2]) / 2;
+      } else if (hp.path && hp.path.length > 0) {
+        let sumLon = 0,
+          sumLat = 0,
+          sumAlt = 0;
+        hp.path.forEach((pt) => {
+          sumLon += pt[0] ?? 0;
+          sumLat += pt[1] ?? 0;
+          sumAlt += pt[2] ?? 0;
+        });
+        centerLon = sumLon / hp.path.length;
+        centerLat = sumLat / hp.path.length;
+        centerAlt = sumAlt / hp.path.length;
+      }
+
       return {
-        position: [posPt[0], posPt[1], minZ + (posPt[2] - minZ) * ALT_EXAGGERATION + 4] as [
+        position: [centerLon, centerLat, minZ + (centerAlt - minZ) * ALT_EXAGGERATION + 4] as [
           number,
           number,
           number,
@@ -614,7 +640,7 @@ export function createRnpLayers({
 
       holdChevrons.push({
         position: outMid,
-        angle: (outVisualBearing - 90 + 360) % 360,
+        angle: (90 - outVisualBearing + 360) % 360,
         label: `${Math.round(outboundBearing).toString().padStart(3, '0')}°`,
       });
 
@@ -634,7 +660,7 @@ export function createRnpLayers({
 
       holdChevrons.push({
         position: inMid,
-        angle: (inVisualBearing - 90 + 360) % 360,
+        angle: (90 - inVisualBearing + 360) % 360,
         label: `${Math.round(inboundBearing).toString().padStart(3, '0')}°`,
       });
     });

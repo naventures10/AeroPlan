@@ -206,21 +206,27 @@ describe('createRnpLayers', () => {
   });
 
   it('creates hold patterns layer when present', () => {
+    // We need 36 points in path to trigger chevron generation
+    const mockHoldPath = Array.from({ length: 36 }, () => [0, 0, 100]);
+    // Outbound leg: segment from index 16 [0, 0] to index 17 [0.1, 0.1]
+    mockHoldPath[16] = [0, 0, 100];
+    mockHoldPath[17] = [0.1, 0.1, 100];
+    // Inbound leg: segment from index 34 [1, 0] to index 35 [0.9, -0.1]
+    mockHoldPath[34] = [1, 0, 100];
+    mockHoldPath[35] = [0.9, -0.1, 100];
+
     const pathDataWithHolds = {
       ...mockPathData,
       hold_patterns: [
         {
           waypoint_ident: 'HOLD1',
-          path: [
-            [0, 0, 100],
-            [1, 1, 200],
-          ],
+          path: mockHoldPath,
           turn_direction: 'R',
           inbound_course: 90,
           leg_distance_nm: 4,
           original_distance_str: '4NM',
           altitude_ft: 2000,
-          speed_limit_kt: null,
+          speed_limit_kt: 230,
         },
       ],
     };
@@ -235,8 +241,8 @@ describe('createRnpLayers', () => {
     };
 
     const layers = createRnpLayers(ctx as any);
-    // Linestrings, Hold patterns, Hold annotations, Waypoints scatter, Waypoints labels
-    expect(layers.length).toBe(5);
+    // Linestrings, Hold patterns, Hold annotations, Hold chevrons, Hold chevron labels, Waypoints scatter, Waypoints labels
+    expect(layers.length).toBe(7);
 
     const holdLayer = layers[1];
     expect(holdLayer.id).toBe('rnp-hold-patterns-layer');
@@ -245,6 +251,31 @@ describe('createRnpLayers', () => {
 
     const annotationLayer = layers[2];
     expect(annotationLayer.id).toBe('rnp-hold-annotations-layer');
-    expect(annotationLayer.props.getColor).toEqual([50, 220, 80, 255]); // Green (matches hold line)
+    expect(annotationLayer.props.getColor).toEqual([50, 220, 80, 255]); // Green
+    expect(annotationLayer.props.data.length).toBe(1);
+    expect(annotationLayer.props.data[0].position).toEqual([0, 0, 104]);
+
+    const chevronLayer = layers[3];
+    expect(chevronLayer.id).toBe('rnp-hold-chevrons-layer');
+    expect(chevronLayer.props.billboard).toBe(false); // Lay flat
+
+    const chevronLabelsLayer = layers[4];
+    expect(chevronLabelsLayer.id).toBe('rnp-hold-chevron-labels-layer');
+
+    // Retrieve the data passed to the chevrons layer
+    const chevronData = chevronLayer.props.data;
+    expect(chevronData.length).toBe(2);
+
+    // Outbound chevron (index 0)
+    // visual bearing: atan2(0.1, 0.1) * 180 / PI = 45 degrees
+    // angle: (90 - 45 + 360) % 360 = 45 degrees
+    expect(chevronData[0].angle).toBeCloseTo(45);
+    expect(chevronData[0].label).toBe('270°'); // outbound course (inbound + 180) % 360
+
+    // Inbound chevron (index 1)
+    // visual bearing: atan2(-0.1, -0.1) * 180 / PI = 225 degrees
+    // angle: (90 - 225 + 360) % 360 = 225 degrees
+    expect(chevronData[1].angle).toBeCloseTo(225);
+    expect(chevronData[1].label).toBe('090°'); // inbound course
   });
 });
