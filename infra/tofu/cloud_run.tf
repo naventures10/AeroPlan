@@ -56,6 +56,11 @@ resource "google_cloud_run_v2_service" "backend" {
       }
 
       env {
+        name  = "MINIO_BUCKET"
+        value = google_storage_bucket.staging_data.name
+      }
+
+      env {
         name = "DATABASE_URL"
         value_source {
           secret_key_ref {
