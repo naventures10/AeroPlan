@@ -36,6 +36,7 @@ router = APIRouter(prefix="", tags=["Weather"])
 
 _storage_client = None
 
+
 def get_storage_client() -> UnifiedStorageClient:
     global _storage_client
     if _storage_client is None:
@@ -223,7 +224,9 @@ async def get_weather_manifest() -> JSONResponse:
                             filename = file_url.split("/")[-1]
                             file_s3_key = f"{WEATHER_S3_PREFIX}/{filename}"
                             try:
-                                signed_url = get_storage_client().generate_presigned_url(file_s3_key)
+                                signed_url = get_storage_client().generate_presigned_url(
+                                    file_s3_key
+                                )
                                 forecast["files"][level_name] = signed_url
                             except Exception as e:
                                 logger.error(
