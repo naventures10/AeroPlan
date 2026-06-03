@@ -18,8 +18,9 @@ COPY pyproject.toml uv.lock ./
 # Install production dependencies only
 RUN uv sync --frozen --no-dev
 
-# Copy only the jobs module (no app/ needed)
+# Copy jobs and app modules
 COPY jobs/ ./jobs/
+COPY app/ ./app/
 
 # Create logs directory
 RUN mkdir -p /app/logs
