@@ -132,10 +132,12 @@ jobs:
         run: uv sync --dev
         working-directory: backend
 
-      - name: Run database migrations
+      - name: Run database migrations and generate schema
         env:
           DATABASE_URL: postgresql+asyncpg://postgres:password@localhost:5432/test_aeronautical_information_system
-        run: uv run alembic upgrade head
+        run: |
+          uv run alembic upgrade head
+          uv run python -c "import asyncio; from app.core.database import engine, Base; import app.models; async def init_db(): async with engine.begin() as conn: await conn.run_sync(Base.metadata.create_all); asyncio.run(init_db())"
         working-directory: backend
 
       - name: Start Backend server
