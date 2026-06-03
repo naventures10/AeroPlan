@@ -134,9 +134,9 @@ jobs:
       - name: Rollback Frontend on Failure
         if: failure()
         run: |
-          if [ -n "${{ env.PREV_REV }}" ]; then
-            echo "Rolling back to revision: ${{ env.PREV_REV }}"
-            gcloud run services update-traffic eaip-frontend --region ${{ env.REGION }} --to-revisions=${{ env.PREV_REV }}=100
+          if [ -n "$PREV_REV" ]; then
+            echo "Rolling back to revision: $PREV_REV"
+            gcloud run services update-traffic eaip-frontend --region ${{ env.REGION }} --to-revisions=$PREV_REV=100
           else
             echo "No previous revision found to rollback to."
           fi
