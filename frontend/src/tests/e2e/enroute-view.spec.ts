@@ -222,12 +222,9 @@ test.describe('Enroute View Workflows', () => {
     // 4. Wait for the map and heavy GeoJSON to settle
     await page.waitForTimeout(3000);
 
-    // 5. Manual Hover
+    // 5. Manual Click on map center (where the airspace label should be)
+    // Note: Airspace layers don't have a hover tooltip (only click → info card)
     const { width, height } = page.viewportSize()!;
-    await page.mouse.move(width / 2, height / 2);
-    await expect(page.locator('body')).toContainText(/DELHI/i, { timeout: 15000 });
-
-    // 6. Manual Click
     await page.mouse.click(width / 2, height / 2);
     await expect(page.getByTestId('feature-info-card')).toBeVisible();
     await expect(page.locator('[data-testid="feature-info-card"]')).toContainText('Delhi');

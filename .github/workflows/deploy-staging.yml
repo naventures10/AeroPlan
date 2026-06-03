@@ -125,11 +125,38 @@ jobs:
         working-directory: frontend
         run: npx playwright install --with-deps
 
+      - name: Fetch Deployed Frontend URL
+        id: frontend_url
+        run: |
+          FRONTEND_URL=$(gcloud run services describe eaip-frontend --region ${{ env.REGION }} --format 'value(status.url)')
+          echo "FRONTEND_URL=$FRONTEND_URL" >> $GITHUB_OUTPUT
+          echo "Frontend URL: $FRONTEND_URL"
+
+      - name: Warm Up Cloud Run Services
+        run: |
+          FRONTEND_URL="${{ steps.frontend_url.outputs.FRONTEND_URL }}"
+
+          echo "Warming up backend via frontend proxy..."
+          for i in 1 2 3; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$FRONTEND_URL/api/v1/health" || echo "000")
+            echo "  Attempt $i: HTTP $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "Backend is warm."
+              break
+            fi
+            sleep 5
+          done
+
+          echo "Warming up search endpoint..."
+          curl -s --max-time 30 "$FRONTEND_URL/api/v1/search?q=Delhi" > /dev/null || true
+
+          echo "Warm-up complete."
+
       - name: Run E2E Smoke Tests
         working-directory: frontend
         run: npx playwright test src/tests/e2e/auth.spec.ts src/tests/e2e/enroute-view.spec.ts --project=chromium
         env:
-          BASE_URL: https://eaip-frontend-filscyl4bq-uc.a.run.app
+          BASE_URL: ${{ steps.frontend_url.outputs.FRONTEND_URL }}
 
       - name: Rollback Frontend on Failure
         if: failure()
