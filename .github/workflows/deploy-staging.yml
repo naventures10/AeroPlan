@@ -88,6 +88,12 @@ jobs:
 
       # ── Frontend ───────────────────────────────────────────────────────────
 
+      - name: Save Previous Frontend Revision
+        id: prev_revision
+        run: |
+          REV=$(gcloud run services describe eaip-frontend --region ${{ env.REGION }} --format 'value(status.latestReadyRevisionName)' || echo "")
+          echo "PREV_REV=$REV" >> $GITHUB_ENV
+
       - name: Build, Push, and Deploy Frontend Image
         run: |-
           # Fetch backend and martin URLs to inject into the frontend at build time
@@ -103,3 +109,34 @@ jobs:
           docker push $IMAGE
 
           gcloud run deploy eaip-frontend --image $IMAGE --region ${{ env.REGION }}
+
+      - name: Setup Node.js for E2E
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './frontend/package-lock.json'
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps
+
+      - name: Run E2E Smoke Tests
+        working-directory: frontend
+        run: npm run test:e2e
+        env:
+          BASE_URL: https://eaip-frontend-filscyl4bq-uc.a.run.app/app
+
+      - name: Rollback Frontend on Failure
+        if: failure()
+        run: |
+          if [ -n "$PREV_REV" ]; then
+            echo "Rolling back to revision: $PREV_REV"
+            gcloud run services update-traffic eaip-frontend --region ${{ env.REGION }} --to-revisions=$PREV_REV=100
+          else
+            echo "No previous revision found to rollback to."
+          fi
