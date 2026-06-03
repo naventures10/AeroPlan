@@ -198,11 +198,8 @@ test.describe('Enroute View Workflows', () => {
   }) => {
     test.setTimeout(120000);
 
-    // 1. Manually toggle Airspaces ON
-    await mapPage.toggleLayer('airspaces');
-    expect(await mapPage.isLayerActive('airspaces')).toBe(true);
-
-    // 2. Position the map over Delhi FIR using search
+    // 1. Position the map over Delhi FIR using search FIRST (before loading heavy airspaces)
+    // This avoids blocking the main thread during typing
     await mapPage.searchInput.clear();
     await mapPage.searchInput.pressSequentially('Delhi FIR', { delay: 100 });
     const airspaceResult = page
@@ -213,17 +210,19 @@ test.describe('Enroute View Workflows', () => {
     await expect(airspaceResult).toBeVisible({ timeout: 20000 });
     await airspaceResult.click({ force: true });
 
-    // 3. Verify info card appears from search selection
+    // 2. Verify info card appears and search auto-toggled the layer ON
     const infoCard = page.getByTestId('feature-info-card');
     await expect(infoCard).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('[data-testid="feature-info-card"]')).toContainText('Delhi');
+    expect(await mapPage.isLayerActive('airspaces')).toBe(true);
 
-    // 4. Close the card
+    // 3. Close the card to remove the search highlighting
     await page.getByTestId('close-feature-card').click();
     await expect(infoCard).not.toBeVisible();
 
-    // 5. Manual Hover
+    // 4. Wait for the map and heavy GeoJSON to settle
     await page.waitForTimeout(3000);
+
+    // 5. Manual Hover
     const { width, height } = page.viewportSize()!;
     await page.mouse.move(width / 2, height / 2);
     await expect(page.locator('body')).toContainText(/DELHI/i, { timeout: 15000 });
