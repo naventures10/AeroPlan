@@ -43,7 +43,8 @@ test.describe('Enroute View Workflows', () => {
     expect(await mapPage.isLayerActive('waypoints')).toBe(false);
 
     // 2. Search for a specific waypoint (e.g., VATLA)
-    await mapPage.searchInput.fill('VATLA');
+    await mapPage.searchInput.clear();
+    await mapPage.searchInput.pressSequentially('VATLA', { delay: 100 });
     const result = page
       .locator('[data-testid="search-result-item"]')
       .filter({ hasText: 'VATLA' })
@@ -83,7 +84,8 @@ test.describe('Enroute View Workflows', () => {
     expect(await mapPage.isLayerActive('waypoints')).toBe(true);
 
     // 2. Position the map over a known waypoint (VATLA)
-    await mapPage.searchInput.fill('VATLA');
+    await mapPage.searchInput.clear();
+    await mapPage.searchInput.pressSequentially('VATLA', { delay: 100 });
     const vatlaResult = page
       .locator('[data-testid="search-result-item"]')
       .filter({ hasText: 'VATLA' })
@@ -116,7 +118,8 @@ test.describe('Enroute View Workflows', () => {
     expect(await mapPage.isLayerActive('navaids')).toBe(false);
 
     // 2. Search for a specific NavAid (e.g., MMV)
-    await mapPage.searchInput.fill('MMV');
+    await mapPage.searchInput.clear();
+    await mapPage.searchInput.pressSequentially('MMV', { delay: 100 });
     const mmvResult = page
       .locator('[data-testid="search-result-item"]')
       .filter({ hasText: 'MMV' })
@@ -157,7 +160,8 @@ test.describe('Enroute View Workflows', () => {
     expect(await mapPage.isLayerActive('airspaces')).toBe(false);
 
     // 2. Search for a specific Airspace (e.g., Delhi FIR)
-    await mapPage.searchInput.fill('Delhi FIR');
+    await mapPage.searchInput.clear();
+    await mapPage.searchInput.pressSequentially('Delhi FIR', { delay: 100 });
 
     // Select the AIRSPACE result
     const airspaceResult = page
@@ -199,8 +203,8 @@ test.describe('Enroute View Workflows', () => {
     expect(await mapPage.isLayerActive('airspaces')).toBe(true);
 
     // 2. Position the map over Delhi FIR using search
-    await mapPage.searchInput.focus();
-    await mapPage.searchInput.fill('Delhi FIR');
+    await mapPage.searchInput.clear();
+    await mapPage.searchInput.pressSequentially('Delhi FIR', { delay: 100 });
     const airspaceResult = page
       .locator('[data-testid="search-result-item"]')
       .filter({ hasText: 'Delhi' })
@@ -217,5 +221,16 @@ test.describe('Enroute View Workflows', () => {
     // 4. Close the card
     await page.getByTestId('close-feature-card').click();
     await expect(infoCard).not.toBeVisible();
+
+    // 5. Manual Hover
+    await page.waitForTimeout(3000);
+    const { width, height } = page.viewportSize()!;
+    await page.mouse.move(width / 2, height / 2);
+    await expect(page.locator('body')).toContainText(/DELHI/i, { timeout: 15000 });
+
+    // 6. Manual Click
+    await page.mouse.click(width / 2, height / 2);
+    await expect(page.getByTestId('feature-info-card')).toBeVisible();
+    await expect(page.locator('[data-testid="feature-info-card"]')).toContainText('Delhi');
   });
 });
