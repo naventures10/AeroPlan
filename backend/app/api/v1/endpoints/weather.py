@@ -16,7 +16,6 @@ Weather Forecast Data:
 """
 
 import asyncio
-import json
 import re
 import time
 from datetime import UTC, datetime
@@ -28,11 +27,14 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
 from app.core.storage import get_storage_path
+from app.core.storage_client import UnifiedStorageClient
 from app.schemas.weather import WeatherResponse
 
 logger = structlog.get_logger()
 
 router = APIRouter(prefix="", tags=["Weather"])
+
+storage_client = UnifiedStorageClient()
 
 # ── Configuration ────────────────────────────────────────────────────────────
 SOURCES = {
@@ -195,18 +197,33 @@ async def _fetch_weather(icao: str) -> dict:
 @router.get("/weather/weather_manifest.json")
 async def get_weather_manifest() -> JSONResponse:
     """
-    Fetch the weather manifest from MinIO and rewrite file URLs to point
-    through the API proxy.
+    Fetch the weather manifest from MinIO/GCS and rewrite file URLs to point
+    directly to pre-signed MinIO/GCS storage objects.
     """
     s3_key = f"{WEATHER_S3_PREFIX}/weather_manifest.json"
-    filepath = get_storage_path(s3_key)
 
     try:
-        if not filepath.exists():
+        manifest = storage_client.read_json(s3_key)
+        if manifest is None:
             raise HTTPException(status_code=404, detail="Weather manifest not found")
 
-        with open(filepath, encoding="utf-8") as f:
-            manifest = json.load(f)
+        # Dynamically generate signed URLs for each forecast file
+        if isinstance(manifest, dict) and "forecasts" in manifest:
+            for forecast in manifest["forecasts"]:
+                if "files" in forecast:
+                    for level_name, file_url in list(forecast["files"].items()):
+                        if file_url:
+                            filename = file_url.split("/")[-1]
+                            file_s3_key = f"{WEATHER_S3_PREFIX}/{filename}"
+                            try:
+                                signed_url = storage_client.generate_presigned_url(file_s3_key)
+                                forecast["files"][level_name] = signed_url
+                            except Exception as e:
+                                logger.error(
+                                    "failed_to_generate_presigned_url_for_manifest",
+                                    s3_key=file_s3_key,
+                                    error=str(e),
+                                )
     except HTTPException:
         raise
     except Exception as e:

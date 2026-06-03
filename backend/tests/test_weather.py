@@ -349,15 +349,8 @@ async def test_extract_metar_time_branches() -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_weather_manifest_success(api_client: AsyncClient, monkeypatch, tmp_path) -> None:
-    from app.core.config import settings
-
-    monkeypatch.setattr(settings, "STORAGE_PATH", str(tmp_path))
-
-    # Create weather directory and write manifest file
-    weather_dir = tmp_path / "weather"
-    weather_dir.mkdir(parents=True, exist_ok=True)
-    manifest_file = weather_dir / "weather_manifest.json"
+async def test_get_weather_manifest_success(api_client: AsyncClient, monkeypatch) -> None:
+    from app.api.v1.endpoints.weather import storage_client
 
     mock_manifest = {
         "metadata": {"generated_at": "2026-05-31T09:20:27Z"},
@@ -367,9 +360,7 @@ async def test_get_weather_manifest_success(api_client: AsyncClient, monkeypatch
         },
     }
 
-    import json
-
-    manifest_file.write_text(json.dumps(mock_manifest), encoding="utf-8")
+    monkeypatch.setattr(storage_client, "read_json", lambda key: mock_manifest)
 
     response = await api_client.get("/api/v1/weather/weather_manifest.json")
     assert response.status_code == 200
@@ -377,12 +368,10 @@ async def test_get_weather_manifest_success(api_client: AsyncClient, monkeypatch
 
 
 @pytest.mark.asyncio
-async def test_get_weather_manifest_not_found(
-    api_client: AsyncClient, monkeypatch, tmp_path
-) -> None:
-    from app.core.config import settings
+async def test_get_weather_manifest_not_found(api_client: AsyncClient, monkeypatch) -> None:
+    from app.api.v1.endpoints.weather import storage_client
 
-    monkeypatch.setattr(settings, "STORAGE_PATH", str(tmp_path))
+    monkeypatch.setattr(storage_client, "read_json", lambda key: None)
 
     response = await api_client.get("/api/v1/weather/weather_manifest.json")
     assert response.status_code == 404
@@ -496,3 +485,41 @@ async def test_get_weather_file_invalid_name(
 
     response = await api_client.get("/api/v1/weather/files/foo..bar")
     assert response.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_get_weather_manifest_with_forecasts(api_client: AsyncClient, monkeypatch) -> None:
+    from app.api.v1.endpoints.weather import storage_client
+
+    mock_manifest = {
+        "forecasts": [
+            {
+                "valid_time": "2026-06-03T12:00:00Z",
+                "files": {
+                    "surface": "/api/v1/weather/files/weather_surface_step000.tif",
+                    "050": "/api/v1/weather/files/weather_050_step000.tif",
+                },
+            }
+        ]
+    }
+
+    monkeypatch.setattr(storage_client, "read_json", lambda key: mock_manifest)
+
+    # Mock storage_client.generate_presigned_url
+    def mock_generate_presigned_url(s3_key: str, expiration: int = 7200) -> str:
+        return f"https://mocked-signed-url/{s3_key}"
+
+    monkeypatch.setattr(storage_client, "generate_presigned_url", mock_generate_presigned_url)
+
+    response = await api_client.get("/api/v1/weather/weather_manifest.json")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert (
+        data["forecasts"][0]["files"]["surface"]
+        == "https://mocked-signed-url/weather/weather_surface_step000.tif"
+    )
+    assert (
+        data["forecasts"][0]["files"]["050"]
+        == "https://mocked-signed-url/weather/weather_050_step000.tif"
+    )
