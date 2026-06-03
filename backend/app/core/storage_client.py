@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -48,9 +49,108 @@ class UnifiedStorageClient:
                 aws_secret_access_key=minio_secret_key,
                 region_name="us-east-1",
             )
-            print(
-                f"[*] UnifiedStorageClient initialized in DEVELOPMENT S3/MinIO mode (endpoint: {minio_endpoint})."
+
+            # Setup a dedicated client for generating pre-signed URLs using the external endpoint
+            minio_external = os.getenv("MINIO_EXTERNAL_ENDPOINT")
+            if not minio_external:
+                if "minio:9000" in minio_endpoint:
+                    minio_external = "http://localhost:9000"
+                else:
+                    minio_external = minio_endpoint
+
+            self.s3_signing_client = boto3.client(
+                "s3",
+                endpoint_url=minio_external,
+                aws_access_key_id=minio_access_key,
+                aws_secret_access_key=minio_secret_key,
+                region_name="us-east-1",
             )
+            print(
+                f"[*] UnifiedStorageClient initialized in DEVELOPMENT S3/MinIO mode (endpoint: {minio_endpoint}, signing: {minio_external})."
+            )
+
+    def generate_presigned_url(self, s3_key: str, expiration: int = 7200) -> str:
+        """
+        Generate a direct, pre-signed URL for an object.
+        For GCS (keyless with Service Account Token Creator role), it uses generate_signed_url.
+        For local MinIO, it uses boto3's generate_presigned_url.
+        """
+        if self.is_gcs:
+            bucket = self.gcs_client.bucket(self.bucket_name)
+            blob = bucket.blob(s3_key)
+
+            # Try standard keyless signing
+            try:
+                return blob.generate_signed_url(
+                    version="v4",
+                    expiration=datetime.timedelta(seconds=expiration),
+                    method="GET",
+                )
+            except Exception as e:
+                logger.warning(
+                    "Standard GCS signing failed, attempting with resolved service account email: %s",
+                    str(e),
+                )
+
+            # Resolve service account email dynamically
+            service_account_email = None
+            try:
+                import urllib.request
+
+                import google.auth
+                import google.auth.transport.requests
+
+                credentials, _ = google.auth.default()
+                if (
+                    hasattr(credentials, "service_account_email")
+                    and credentials.service_account_email
+                ):
+                    service_account_email = credentials.service_account_email
+                else:
+                    # Query Compute Engine metadata server
+                    req = urllib.request.Request(
+                        "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email",
+                        headers={"Metadata-Flavor": "Google"},
+                    )
+                    with urllib.request.urlopen(req, timeout=2) as response:
+                        service_account_email = response.read().decode("utf-8").strip()
+            except Exception as meta_err:
+                logger.warning(
+                    "Could not resolve service account email from metadata or credentials: %s",
+                    str(meta_err),
+                )
+
+            if service_account_email:
+                try:
+                    return blob.generate_signed_url(
+                        version="v4",
+                        expiration=datetime.timedelta(seconds=expiration),
+                        method="GET",
+                        service_account_email=service_account_email,
+                    )
+                except Exception as sign_err:
+                    logger.error(
+                        "Failed to sign GCS URL using resolved service account: %s",
+                        str(sign_err),
+                    )
+
+            # If signing completely fails, raise an exception rather than returning
+            # a potentially broken public URL
+            logger.error(
+                "All GCS signing attempts failed for key %s. "
+                "Ensure the service account has 'iam.serviceAccounts.signBlob' permission "
+                "or 'roles/iam.serviceAccountTokenCreator' role.",
+                s3_key,
+            )
+            raise RuntimeError(f"Failed to generate signed URL for {s3_key}")
+        else:
+            # Use the dedicated S3 signing client configured with the external endpoint
+            url = self.s3_signing_client.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": self.bucket_name, "Key": s3_key},
+                ExpiresIn=expiration,
+            )
+            return url
 
     def upload_file(self, local_path: str, s3_key: str) -> None:
         """Upload a local file to the storage provider."""

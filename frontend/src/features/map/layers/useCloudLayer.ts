@@ -215,11 +215,12 @@ export function useCloudLayer() {
   // 1. Weather data pre-loading is driven by shared forecastTimestamps from the store.
   // ---------------------------------------------------------------------------
 
-  // ---------------------------------------------------------------------------
   // 2. Pre-load weather data → per-pixel opacity maps
   // ---------------------------------------------------------------------------
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
+    const signal = controller.signal;
 
     async function loadAll() {
       if (!isCloudActive || forecastTimestamps.length === 0) return;
@@ -229,51 +230,79 @@ export function useCloudLayer() {
 
       const isSurface = windAltitude === 0;
       const levelKey = isSurface ? 'surface' : String(windAltitude).padStart(3, '0');
+      const totalFrames = forecastTimestamps.length;
 
-      const loadPromises = forecastTimestamps.map(async (t) => {
+      // Determine active indices at the time loading starts
+      const currentAnimTime = useMapStore.getState().windAnimationTime;
+      const maxIdx = totalFrames - 1;
+      const startIndex1 = Math.min(Math.floor(Math.max(0, currentAnimTime)), maxIdx);
+      const startIndex2 = Math.min(startIndex1 + 1, maxIdx);
+
+      const prioritizedIndices = Array.from(new Set([startIndex1, startIndex2]));
+      const remainingIndices = Array.from({ length: totalFrames }, (_, i) => i).filter(
+        (i) => !prioritizedIndices.includes(i),
+      );
+
+      // Helper to fetch, parse, and process a single frame
+      async function loadFrame(index: number) {
+        const t = forecastTimestamps[index];
+        if (!t) throw new Error(`Missing timestamp for index ${index}`);
         const url = t.files[levelKey];
         if (!url) throw new Error(`Missing URL for level ${levelKey}`);
 
-        // Pre-flight check to prevent HTML parsing errors
-        const headRes = await fetch(url, { method: 'HEAD' });
-        const contentType = headRes.headers.get('content-type');
-        if (contentType && contentType.includes('text/html')) {
-          throw new Error(`File no longer exists (received HTML fallback) for ${url}`);
-        }
-
-        return WeatherLayers.loadTextureData(url);
-      });
-
-      try {
-        const results = await Promise.all(loadPromises);
-        if (!active) return;
+        const img = await WeatherLayers.loadTextureData(url, { signal });
 
         const targetBand = isSurface ? 6 : 3;
-        const dataMap: Record<number, CloudFrameData> = {};
+        const components = img.data.length / (img.width * img.height);
+        const numPixels = img.width * img.height;
+        const opacityMap = new Uint8Array(numPixels);
 
-        results.forEach((img, i) => {
-          const components = img.data.length / (img.width * img.height);
-          const numPixels = img.width * img.height;
-          const opacityMap = new Uint8Array(numPixels);
+        for (let p = 0; p < numPixels; p++) {
+          const val = img.data[p * components + targetBand] ?? 0;
 
-          for (let p = 0; p < numPixels; p++) {
-            const val = img.data[p * components + targetBand] ?? 0;
-
-            if (isSurface && val > 0.1) {
-              opacityMap[p] = Math.max(1, Math.min(255, Math.floor((val / 1.0) * 255)));
-            } else if (!isSurface && val > 80) {
-              opacityMap[p] = Math.max(1, Math.min(255, Math.floor(((val - 80) / 20) * 255)));
-            }
-            // else stays 0 (invisible)
+          if (isSurface && val > 0.1) {
+            opacityMap[p] = Math.max(1, Math.min(255, Math.floor((val / 1.0) * 255)));
+          } else if (!isSurface && val > 80) {
+            opacityMap[p] = Math.max(1, Math.min(255, Math.floor(((val - 80) / 20) * 255)));
           }
+        }
 
-          dataMap[i] = { opacityMap, width: img.width, height: img.height };
+        return {
+          index,
+          frameData: { opacityMap, width: img.width, height: img.height },
+        };
+      }
+
+      try {
+        // Step A: Load active/prioritized frames first in parallel
+        const prioritizedResults = await Promise.all(
+          prioritizedIndices.map((idx) => loadFrame(idx)),
+        );
+        if (!active) return;
+
+        // Apply prioritized frames immediately
+        const dataMap: Record<number, CloudFrameData> = {};
+        prioritizedResults.forEach((r) => {
+          dataMap[r.index] = r.frameData;
         });
 
-        setFrameData(dataMap);
-        setCloudLoadingStatus({ state: 'ready', message: 'All cloud frames ready' });
+        setFrameData((prev) => ({ ...prev, ...dataMap }));
+        setCloudLoadingStatus({ state: 'ready', message: 'Active cloud frames ready' });
+
+        // Step B: Load remaining frames sequentially in the background
+        for (const idx of remainingIndices) {
+          if (!active) return;
+          try {
+            const r = await loadFrame(idx);
+            if (!active) return;
+            setFrameData((prev) => ({ ...prev, [r.index]: r.frameData }));
+          } catch (err: any) {
+            if (err.name === 'AbortError' || !active) return;
+            console.error(`[useCloudLayer] Background load error for frame ${idx}:`, err);
+          }
+        }
       } catch (err: any) {
-        if (!active) return;
+        if (err.name === 'AbortError' || !active) return;
         console.error('[useCloudLayer] Load error:', err);
 
         if (err.message?.includes('File no longer exists')) {
@@ -299,8 +328,15 @@ export function useCloudLayer() {
     loadAll();
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [isCloudActive, windAltitude, forecastTimestamps, setCloudLoadingStatus]);
+  }, [
+    isCloudActive,
+    windAltitude,
+    forecastTimestamps,
+    setCloudLoadingStatus,
+    fetchWeatherManifest,
+  ]);
 
   // ---------------------------------------------------------------------------
   // 3. Build a dynamic volumetric IconLayer with viewport culling

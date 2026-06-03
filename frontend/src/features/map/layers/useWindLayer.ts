@@ -45,6 +45,8 @@ export function useWindLayer() {
   // 1. Pre-load weather data for current altitude
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
+    const signal = controller.signal;
 
     async function loadAll() {
       if (!isWindActive || forecastTimestamps.length === 0) return;
@@ -54,51 +56,79 @@ export function useWindLayer() {
       setRenderImages({});
 
       const levelKey = windAltitude === 0 ? 'surface' : String(windAltitude).padStart(3, '0');
+      const totalFrames = forecastTimestamps.length;
 
-      const loadPromises = forecastTimestamps.map(async (t) => {
+      // Determine active indices at the time loading starts
+      const currentAnimTime = useMapStore.getState().windAnimationTime;
+      const maxIdx = totalFrames - 1;
+      const startIndex1 = Math.min(Math.floor(Math.max(0, currentAnimTime)), maxIdx);
+      const startIndex2 = Math.min(startIndex1 + 1, maxIdx);
+
+      const prioritizedIndices = Array.from(new Set([startIndex1, startIndex2]));
+      const remainingIndices = Array.from({ length: totalFrames }, (_, i) => i).filter(
+        (i) => !prioritizedIndices.includes(i),
+      );
+
+      // Helper to fetch, parse, and return a single frame
+      async function loadFrame(index: number) {
+        const t = forecastTimestamps[index];
+        if (!t) throw new Error(`Missing timestamp for index ${index}`);
         const url = t.files[levelKey];
         if (!url) throw new Error(`Missing URL for level ${levelKey}`);
 
-        // Pre-flight check to prevent HTML parsing errors
-        const headRes = await fetch(url, { method: 'HEAD' });
-        const contentType = headRes.headers.get('content-type');
-        if (contentType && contentType.includes('text/html')) {
-          throw new Error(`File no longer exists (received HTML fallback) for ${url}`);
+        const img = await WeatherLayers.loadTextureData(url, { signal });
+
+        let renderData: WeatherLayers.TextureData;
+        const components = img.data.length / (img.width * img.height);
+        if (components >= 2) {
+          const numPixels = img.width * img.height;
+          const rData = new Float32Array(numPixels * 2);
+          for (let p = 0; p < numPixels; p++) {
+            rData[p * 2] = img.data[p * components] ?? 0;
+            rData[p * 2 + 1] = img.data[p * components + 1] ?? 0;
+          }
+          renderData = { width: img.width, height: img.height, data: rData };
+        } else {
+          renderData = img;
         }
 
-        return WeatherLayers.loadTextureData(url);
-      });
+        return { index, img, renderData };
+      }
 
       try {
-        const results = await Promise.all(loadPromises);
+        // Step A: Load active/prioritized frames first in parallel
+        const prioritizedResults = await Promise.all(
+          prioritizedIndices.map((idx) => loadFrame(idx)),
+        );
         if (!active) return;
 
+        // Apply prioritized frames immediately
         const imageMap: Record<number, WeatherLayers.TextureData> = {};
         const renderMap: Record<number, WeatherLayers.TextureData> = {};
-
-        results.forEach((img, i) => {
-          imageMap[i] = img;
-
-          const components = img.data.length / (img.width * img.height);
-          if (components >= 2) {
-            // WebGL ParticleLayer expects exactly 2 channels for U and V.
-            const numPixels = img.width * img.height;
-            const renderData = new Float32Array(numPixels * 2);
-            for (let p = 0; p < numPixels; p++) {
-              renderData[p * 2] = img.data[p * components] ?? 0;
-              renderData[p * 2 + 1] = img.data[p * components + 1] ?? 0;
-            }
-            renderMap[i] = { width: img.width, height: img.height, data: renderData };
-          } else {
-            renderMap[i] = img;
-          }
+        prioritizedResults.forEach((r) => {
+          imageMap[r.index] = r.img;
+          renderMap[r.index] = r.renderData;
         });
 
-        setLoadedImages(imageMap);
-        setRenderImages(renderMap);
-        setStatus({ state: 'ready', message: 'All frames ready' });
+        setLoadedImages((prev) => ({ ...prev, ...imageMap }));
+        setRenderImages((prev) => ({ ...prev, ...renderMap }));
+        setStatus({ state: 'ready', message: 'Active frames ready' });
+
+        // Step B: Load remaining frames sequentially in the background
+        for (const idx of remainingIndices) {
+          if (!active) return;
+          try {
+            const r = await loadFrame(idx);
+            if (!active) return;
+            setLoadedImages((prev) => ({ ...prev, [r.index]: r.img }));
+            setRenderImages((prev) => ({ ...prev, [r.index]: r.renderData }));
+          } catch (err: any) {
+            if (err.name === 'AbortError' || !active) return;
+            console.error(`[useWindLayer] Background load error for frame ${idx}:`, err);
+          }
+        }
       } catch (err: any) {
-        if (!active) return;
+        if (err.name === 'AbortError' || !active) return;
         console.error('[useWindLayer] Load error:', err);
 
         if (err.message?.includes('File no longer exists')) {
@@ -124,8 +154,9 @@ export function useWindLayer() {
     loadAll();
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [isWindActive, windAltitude, forecastTimestamps]);
+  }, [isWindActive, windAltitude, forecastTimestamps, fetchWeatherManifest]);
 
   // 4. Calculate Layer
   const maxIndex = Math.max(0, forecastTimestamps.length - 1);

@@ -122,7 +122,7 @@ describe('useWindLayer', () => {
       { timeout: 3000 },
     );
 
-    expect(WeatherLayers.loadTextureData).toHaveBeenCalledWith('url-sfc-12');
+    expect(WeatherLayers.loadTextureData).toHaveBeenCalledWith('url-sfc-12', expect.any(Object));
 
     act(() => {
       useMapStore.setState({ windAltitude: 50 });
@@ -132,7 +132,10 @@ describe('useWindLayer', () => {
 
     await waitFor(
       () => {
-        expect(WeatherLayers.loadTextureData).toHaveBeenCalledWith('url-050-12');
+        expect(WeatherLayers.loadTextureData).toHaveBeenCalledWith(
+          'url-050-12',
+          expect.any(Object),
+        );
       },
       { timeout: 3000 },
     );
