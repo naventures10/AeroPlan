@@ -10,6 +10,12 @@ test.describe('Enroute View Workflows', () => {
     await mapPage.waitForReady();
   });
 
+  test.afterEach(async ({ page }) => {
+    // Navigate away to explicitly destroy the map instance and free the WebGL context
+    // This prevents WebGL context exhaustion crashes on the CI runner
+    await page.goto('about:blank');
+  });
+
   test('User Story 1: Initial state should only have Airports active', async () => {
     // 1. Verify Search Bar is present
     await expect(mapPage.searchInput).toBeVisible();
