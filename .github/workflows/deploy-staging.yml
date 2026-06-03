@@ -129,7 +129,7 @@ jobs:
         working-directory: frontend
         run: npm run test:e2e
         env:
-          BASE_URL: https://eaip-frontend-filscyl4bq-uc.a.run.app/app
+          BASE_URL: https://eaip-frontend-filscyl4bq-uc.a.run.app
 
       - name: Rollback Frontend on Failure
         if: failure()
