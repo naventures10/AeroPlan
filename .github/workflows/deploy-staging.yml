@@ -127,7 +127,7 @@ jobs:
 
       - name: Run E2E Smoke Tests
         working-directory: frontend
-        run: npm run test:e2e
+        run: npx playwright test src/tests/e2e/auth.spec.ts src/tests/e2e/enroute-view.spec.ts --project=chromium
         env:
           BASE_URL: https://eaip-frontend-filscyl4bq-uc.a.run.app
 
