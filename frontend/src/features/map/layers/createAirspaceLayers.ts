@@ -129,6 +129,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
   const isLayerActive = ctx.activeLayers.airspaces;
   const colors = getAirspaceColors(ctx.isDarkMode);
   const defStroke = getDefaultStroke(ctx.isDarkMode);
+  const { isAirspaceLoaded, setAirspaceLoaded } = ctx;
 
   return [
     new MVTLayer({
@@ -138,7 +139,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       pickable: false,
       autoHighlight: false,
       getFillColor: (f: any) => {
-        if (!isLayerActive) return [0, 0, 0, 0];
+        if (!isLayerActive || !isAirspaceLoaded) return [0, 0, 0, 0];
         const props = f.properties || {};
         const type = (props.airspace_type || '').toString().toUpperCase();
 
@@ -148,7 +149,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
         return [0, 0, 0, 0];
       },
       getLineColor: (f: any) => {
-        if (!isLayerActive) return [0, 0, 0, 0];
+        if (!isLayerActive || !isAirspaceLoaded) return [0, 0, 0, 0];
         const type = inferAirspaceType(f);
         const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = ctx.activeLayers;
         const h = getHierarchy(type);
@@ -168,6 +169,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
         return colors[type]?.stroke ?? defStroke;
       },
       getLineWidth: 2,
+      onViewportLoad: () => setAirspaceLoaded(true),
       lineWidthUnits: 'pixels',
       lineWidthMinPixels: 1,
       minZoom: 2,
@@ -178,6 +180,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
           effectiveZoom,
           isLayerActive,
           ctx.isDarkMode,
+          isAirspaceLoaded,
         ],
         getLineColor: [
           ctx.viewMode,
@@ -185,6 +188,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
           effectiveZoom,
           isLayerActive,
           ctx.isDarkMode,
+          isAirspaceLoaded,
         ],
         getLineWidth: [],
       },
@@ -218,7 +222,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
         return 12;
       },
       getTextColor: (f: any) => {
-        if (!isLayerActive) return [0, 0, 0, 0];
+        if (!isLayerActive || !isAirspaceLoaded) return [0, 0, 0, 0];
         const type = inferAirspaceType(f);
         const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = ctx.activeLayers;
         if (type === 'FIR' && !airspaceFIR) return [0, 0, 0, 0];
@@ -240,7 +244,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       getBackgroundColor: [0, 0, 0, 0],
       getBorderWidth: 2,
       getBorderColor: (f: any) => {
-        if (!isLayerActive) return [0, 0, 0, 0];
+        if (!isLayerActive || !isAirspaceLoaded) return [0, 0, 0, 0];
         const type = inferAirspaceType(f);
         const { airspaceFIR, airspaceRegulated, airspaceControl, airspaceUpr } = ctx.activeLayers;
         if (type === 'FIR' && !airspaceFIR) return [0, 0, 0, 0];
@@ -271,9 +275,27 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       updateTriggers: {
         getText: [ctx.activeLayers, effectiveZoom],
         getTextSize: [ctx.activeLayers, effectiveZoom],
-        getTextColor: [effectiveZoom, ctx.activeLayers, isLayerActive, ctx.isDarkMode],
-        getBackgroundColor: [effectiveZoom, ctx.activeLayers, isLayerActive, ctx.isDarkMode],
-        getBorderColor: [effectiveZoom, ctx.activeLayers, isLayerActive, ctx.isDarkMode],
+        getTextColor: [
+          effectiveZoom,
+          ctx.activeLayers,
+          isLayerActive,
+          ctx.isDarkMode,
+          isAirspaceLoaded,
+        ],
+        getBackgroundColor: [
+          effectiveZoom,
+          ctx.activeLayers,
+          isLayerActive,
+          ctx.isDarkMode,
+          isAirspaceLoaded,
+        ],
+        getBorderColor: [
+          effectiveZoom,
+          ctx.activeLayers,
+          isLayerActive,
+          ctx.isDarkMode,
+          isAirspaceLoaded,
+        ],
       },
       binary: false,
       transitions: {
