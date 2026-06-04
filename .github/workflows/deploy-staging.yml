@@ -110,6 +110,7 @@ jobs:
           docker push $IMAGE
 
           gcloud run deploy eaip-frontend --image $IMAGE --region ${{ env.REGION }}
+          gcloud run services update-traffic eaip-frontend --region ${{ env.REGION }} --to-latest
 
       - name: Setup Node.js for E2E
         uses: actions/setup-node@v4
