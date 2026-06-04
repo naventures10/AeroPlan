@@ -179,7 +179,11 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
       },
       binary: true,
       transitions: {
-        getLineColor: 300,
+        getLineColor: {
+          type: 'interpolation',
+          duration: 300,
+          enter: (value: number[]) => [value[0], value[1], value[2], 0],
+        },
         getLineWidth: 300,
       },
     }),
@@ -248,7 +252,10 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
           blendFunc: [0, 771], // [GL.ZERO, GL.ONE_MINUS_SRC_ALPHA]
         },
         transitions: {
-          getColor: 300,
+          getColor: {
+            duration: 300,
+            enter: (value: number[]) => [value[0], value[1], value[2], 0],
+          },
         },
       }),
     );
@@ -295,7 +302,10 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         },
         parameters: { depthTest: false },
         transitions: {
-          getColor: 300,
+          getColor: {
+            duration: 300,
+            enter: (value: number[]) => [value[0], value[1], value[2], 0],
+          },
         },
       }),
     );
@@ -340,7 +350,10 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         },
         parameters: { depthTest: false },
         transitions: {
-          getColor: 300,
+          getColor: {
+            duration: 300,
+            enter: (value: number[]) => [value[0], value[1], value[2], 0],
+          },
         },
       }),
     );
@@ -438,9 +451,17 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
       },
       binary: false,
       transitions: {
-        getIconColor: 300,
+        getIconColor: {
+          type: 'interpolation',
+          duration: 300,
+          enter: (value: number[]) => [value[0], value[1], value[2], 0],
+        },
         getIconSize: 300,
-        getTextColor: 300,
+        getTextColor: {
+          type: 'interpolation',
+          duration: 300,
+          enter: (value: number[]) => [value[0], value[1], value[2], 0],
+        },
       },
     }),
   );

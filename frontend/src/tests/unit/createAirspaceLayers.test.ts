@@ -7,6 +7,8 @@ describe('createAirspaceLayers', () => {
       isDarkMode: true,
       viewMode: 'ENROUTE',
       zoom: 8,
+      isAirspaceLoaded: true,
+      setAirspaceLoaded: () => {},
       activeLayers: {
         airspaces: true,
         airspaceFIR: true,
@@ -96,6 +98,8 @@ describe('createAirspaceLayers', () => {
       isDarkMode: true,
       viewMode: 'ENROUTE',
       zoom: 8,
+      isAirspaceLoaded: true,
+      setAirspaceLoaded: () => {},
       activeLayers: {
         airspaces: true,
         airspaceFIR: false,
@@ -122,5 +126,29 @@ describe('createAirspaceLayers', () => {
 
     const unknownFeature = { properties: { airspace_type: 'XYZ', name: 'X' } };
     expect(layers[0].props.getLineColor(unknownFeature)).toEqual([128, 128, 128, 60]); // defaults
+  });
+
+  it('has static transitions', () => {
+    const ctx = {
+      isDarkMode: true,
+      viewMode: 'ENROUTE',
+      zoom: 8,
+      isAirspaceLoaded: true,
+      setAirspaceLoaded: () => {},
+      activeLayers: {
+        airspaces: true,
+        airspaceFIR: true,
+        airspaceRegulated: true,
+        airspaceControl: true,
+        airspaceUpr: true,
+      },
+    };
+
+    const layers = createAirspaceLayers(ctx as any);
+    expect(layers[0].props.transitions.getFillColor).toBe(300);
+    expect(layers[0].props.transitions.getLineColor).toBe(300);
+    expect(layers[1].props.transitions.getTextColor).toBe(300);
+    expect(layers[1].props.transitions.getBackgroundColor).toBe(300);
+    expect(layers[1].props.transitions.getBorderColor).toBe(300);
   });
 });

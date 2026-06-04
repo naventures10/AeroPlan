@@ -94,6 +94,7 @@ vi.mock('framer-motion', async () => {
 
 // Mock weatherlayers-gl
 vi.mock('weatherlayers-gl', () => ({
+  setLibrary: vi.fn(),
   ParticleLayer: vi.fn(),
 }));
 

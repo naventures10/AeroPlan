@@ -5,6 +5,7 @@ import { useMapStore } from '../../store/useMapStore';
 import * as WeatherLayers from 'weatherlayers-gl';
 
 vi.mock('weatherlayers-gl', () => ({
+  setLibrary: vi.fn(),
   loadTextureData: vi.fn(),
 }));
 

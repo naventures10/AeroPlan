@@ -32,6 +32,7 @@
     "@oddbird/popover-polyfill": "^0.6.1",
     "dompurify": "^3.3.3",
     "framer-motion": "^12.38.0",
+    "geotiff": "^3.0.5",
     "interestfor": "^1.0.8",
     "lucide-react": "^0.577.0",
     "maplibre-gl": "^5.19.0",

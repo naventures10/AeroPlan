@@ -78,9 +78,17 @@ export function createNavaidLayer(ctx: LayerContext): any[] {
       },
       binary: false,
       transitions: {
-        getIconColor: 300,
+        getIconColor: {
+          type: 'interpolation',
+          duration: 300,
+          enter: (value: number[]) => [value[0], value[1], value[2], 0],
+        },
         getIconSize: 300,
-        getTextColor: 300,
+        getTextColor: {
+          type: 'interpolation',
+          duration: 300,
+          enter: (value: number[]) => [value[0], value[1], value[2], 0],
+        },
       },
     }),
   ];

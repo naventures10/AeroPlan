@@ -44,7 +44,10 @@ export function createAerodromeLayers(
         getIconColor: [isLayerActive, ctx.isDarkMode],
       },
       transitions: {
-        getIconColor: 300,
+        getIconColor: {
+          duration: 300,
+          enter: (value: number[]) => [value[0], value[1], value[2], 0],
+        },
       },
     }),
     new GeoJsonLayer({
@@ -71,7 +74,10 @@ export function createAerodromeLayers(
         getIconColor: [isLayerActive, ctx.isDarkMode],
       },
       transitions: {
-        getIconColor: 300,
+        getIconColor: {
+          duration: 300,
+          enter: (value: number[]) => [value[0], value[1], value[2], 0],
+        },
       },
     }),
     new TextLayer({
@@ -103,8 +109,14 @@ export function createAerodromeLayers(
         outlineColor: [isLayerActive, ctx.isDarkMode],
       },
       transitions: {
-        getColor: 300,
-        outlineColor: 300,
+        getColor: {
+          duration: 300,
+          enter: (value: number[]) => [value[0], value[1], value[2], 0],
+        },
+        outlineColor: {
+          duration: 300,
+          enter: (value: number[]) => [value[0], value[1], value[2], 0],
+        },
       },
     }),
   ];

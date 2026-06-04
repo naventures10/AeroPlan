@@ -283,7 +283,12 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
       // 2. If nothing overlaid was hit, pass the click down to the MapboxOverlay
       if (overlayRef.current) {
         // DeckGL info.x and info.y are CSS pixels, same as what pickObject expects
-        const picked = overlayRef.current.pickObject({ x: info.x, y: info.y, radius: 5 });
+        let picked;
+        try {
+          picked = overlayRef.current.pickObject({ x: info.x, y: info.y, radius: 5 });
+        } catch {
+          // Overlay may be in a stale state after a MapLibre style rebuild — skip this frame
+        }
         if (picked && picked.layer && picked.layer.props.onClick) {
           // Manually invoke the layer's onClick handler
           picked.layer.props.onClick(picked, event);
@@ -306,7 +311,13 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
       // 2. RNP Hover Logic
       if (!overlayRef.current) return;
 
-      const picked = overlayRef.current.pickObject({ x: info.x, y: info.y, radius: 5 });
+      let picked;
+      try {
+        picked = overlayRef.current.pickObject({ x: info.x, y: info.y, radius: 5 });
+      } catch {
+        // Overlay may be in a stale state after a MapLibre style rebuild — skip this frame
+        return;
+      }
       const pickedId = picked?.object?.entry_waypoint ?? null;
 
       if (hoveredRnpApproachIdRef.current === pickedId) return;

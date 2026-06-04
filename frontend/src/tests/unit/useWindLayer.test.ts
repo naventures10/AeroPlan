@@ -6,6 +6,7 @@ import * as WeatherLayers from 'weatherlayers-gl';
 
 // Mock weatherlayers-gl functions
 vi.mock('weatherlayers-gl', () => ({
+  setLibrary: vi.fn(),
   loadTextureData: vi.fn(),
   ParticleLayer: vi.fn().mockImplementation(function () {
     return { id: 'mock-layer' };

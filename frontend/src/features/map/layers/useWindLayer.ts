@@ -1,8 +1,12 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import * as WeatherLayers from 'weatherlayers-gl';
+import * as geotiff from 'geotiff';
 import { ClipExtension } from '@deck.gl/extensions';
 import { useMapStore } from '../../../store/useMapStore';
 import { WIND_BOUNDS, CLIP_BOUNDS, WIND_PALETTE } from '../utils/windUtils';
+
+// Provide geotiff library to weatherlayers-gl to fix Vite's dynamic import resolution
+WeatherLayers.setLibrary('geotiff', geotiff);
 
 export interface WindStatus {
   state: 'idle' | 'loading' | 'ready' | 'error';

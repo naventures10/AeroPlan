@@ -62,4 +62,8 @@ export interface LayerContext {
   isAtsGeometryLoaded: boolean;
   setAtsGeometryLoaded: (loaded: boolean) => void;
   atsRoutesToggleCounter: number;
+
+  /** Tracks if MVT tiles for airspace geometry have loaded in the current viewport */
+  isAirspaceLoaded: boolean;
+  setAirspaceLoaded: (loaded: boolean) => void;
 }
