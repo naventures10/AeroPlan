@@ -151,6 +151,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     setSelectedFeature,
     setSelectedRouteIds,
     mapStyle,
+    isWeatherMode,
   } = useMapStore();
 
   const mapRef = useRef<MapRef>(null);
@@ -169,6 +170,9 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
 
   const onViewStateChange = useCallback(
     ({ viewState: vs, interactionState }: { viewState: any; interactionState?: any }) => {
+      // Clear wind tooltip during interaction/transitions
+      handleWindHover({ coordinate: null });
+
       let nextVs = vs;
 
       // 1. Zoom-out logic to exit terminal
@@ -187,7 +191,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
       setViewState(nextVs);
       return nextVs;
     },
-    [activeAirport, viewMode, setActiveAirport, setViewMode, setViewState],
+    [activeAirport, viewMode, setActiveAirport, setViewMode, setViewState, handleWindHover],
   );
 
   // 2. Logic to map transitionType (string) to Actual DeckGL Interpolator objects
@@ -339,10 +343,14 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
         controller={DECK_CONTROLLER}
         layers={overlaidLayers}
         onViewStateChange={onViewStateChange}
+        onDragStart={() => handleWindHover({ coordinate: null })}
         getTooltip={getTooltip}
-        getCursor={({ isHovering, isDragging }) =>
-          isHovering ? 'pointer' : isDragging ? 'grabbing' : 'grab'
-        }
+        getCursor={({ isHovering, isDragging }) => {
+          if (isWeatherMode) {
+            return isDragging ? 'grabbing' : 'crosshair';
+          }
+          return isHovering ? 'pointer' : isDragging ? 'grabbing' : 'grab';
+        }}
         pickingRadius={15}
         useDevicePixels={Math.min(window.devicePixelRatio, 1.5)}
         onClick={handleDeckClick}
