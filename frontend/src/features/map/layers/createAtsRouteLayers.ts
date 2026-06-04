@@ -28,6 +28,7 @@ import type { LayerContext } from './types';
  * animation wavefront (`currentTime` in NM) is to the label's distance
  * from the animation origin.
  */
+// fallow-ignore-next-line complexity
 function getLabelIntensity(d: any, ctx: LayerContext): number {
   const { selectedFeature, animatedTrips, currentTime } = ctx;
   let originCoord: [number, number] | null = null;

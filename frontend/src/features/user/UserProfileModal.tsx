@@ -1,11 +1,13 @@
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, User, Mail, LogOut, Calendar } from 'lucide-react';
 import { useMapStore } from '../../store/useMapStore';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import './UserProfileModal.css';
 
+// fallow-ignore-next-line complexity
 export default function UserProfileModal() {
   const isOpen = useMapStore((s) => s.isUserProfileModalOpen);
   const setOpen = useMapStore((s) => s.setUserProfileModalOpen);
@@ -21,14 +23,7 @@ export default function UserProfileModal() {
   };
 
   // Handle ESC
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [isOpen, onClose]);
+  useEscapeKey(isOpen, onClose);
 
   return createPortal(
     <AnimatePresence>

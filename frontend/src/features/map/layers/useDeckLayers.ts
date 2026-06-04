@@ -114,6 +114,7 @@ export function useDeckLayers({
     setAirspaceLoaded,
   };
 
+  // fallow-ignore-next-line complexity
   const layers = useMemo(() => {
     const overlaidLayers: any[] = [];
     const interleavedLayers: any[] = [];

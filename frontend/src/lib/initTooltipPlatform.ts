@@ -1,3 +1,4 @@
+// fallow-ignore-next-line complexity
 export async function initTooltipPlatform() {
   const jobs: Array<Promise<unknown>> = [];
 

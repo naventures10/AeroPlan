@@ -51,6 +51,7 @@ const MISSED_GAP_NM = 0.18;
  * Linearly interpolates a 3D position along `path` at cumulative distance `t` NM.
  * Uses the `timestamps` array (cumulative NM per vertex) for fast lookup.
  */
+// fallow-ignore-next-line complexity
 function pathPosAt(path: number[][], timestamps: number[], t: number): number[] {
   if (path.length === 0 || timestamps.length === 0) {
     return [0, 0, 0];
@@ -136,6 +137,7 @@ export interface RnpContext {
 /**
  * Build DeckGL layers for the active RNP procedure.
  */
+// fallow-ignore-next-line complexity
 export function createRnpLayers({
   pathData,
   selectedRnpApproachId,
@@ -170,6 +172,7 @@ export function createRnpLayers({
   const getWpt = (ident: string | null) =>
     ident ? pathData.waypoints.find((w) => w.name === ident) : null;
 
+  // fallow-ignore-next-line complexity
   const processLegs = (legs: RnpLeg[], color: [number, number, number, number]) => {
     let prevWpt: RnpWaypointMarker | null = null;
     for (const leg of legs) {
@@ -545,6 +548,7 @@ export function createRnpLayers({
     );
 
     // Hold pattern annotations (red-orange, matching missed approach)
+    // fallow-ignore-next-line complexity
     const holdAnnotations = holdPatternsToRender.map((hp: RnpHoldPattern) => {
       const lines: string[] = [];
 

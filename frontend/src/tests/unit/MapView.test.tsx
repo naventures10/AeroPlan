@@ -64,9 +64,6 @@ vi.mock('react-map-gl/maplibre', () => ({
 }));
 
 // Mock sub-components
-vi.mock('../../features/map/HoveredDeckGL', () => ({
-  HoveredDeckGL: () => <div data-testid="mock-hovered-deckgl" />,
-}));
 
 vi.mock('../../features/map/InterleavedDeckGL', () => ({
   InterleavedDeckGL: ({ onOverlayCreated }: any) => (

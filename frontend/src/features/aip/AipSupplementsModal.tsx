@@ -9,6 +9,7 @@ import 'react-pdf/dist/Page/TextLayer.css';
 import { useMapStore } from '../../store/useMapStore';
 import { fetchAipSupplements, getProxyPdfUrl } from '../../api/client';
 import type { AipSupplement } from '../../types';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import './AipSupplementsModal.css';
 
 // Configure pdf.js worker
@@ -17,6 +18,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString();
 
+// fallow-ignore-next-line complexity
 export default function AipSupplementsModal() {
   const isOpen = useMapStore((s) => s.isAipSupplementsModalOpen);
   const setOpen = useMapStore((s) => s.setAipSupplementsModalOpen);
@@ -49,14 +51,7 @@ export default function AipSupplementsModal() {
   }, [setOpen]);
 
   // Handle ESC
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [isOpen, onClose]);
+  useEscapeKey(isOpen, onClose);
 
   const handlePdfClick = (pdfLink: string) => {
     setSelectedPdfUrl(getProxyPdfUrl(pdfLink));

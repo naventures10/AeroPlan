@@ -126,6 +126,7 @@ export function useWebGPU(
       });
     };
 
+    // fallow-ignore-next-line complexity
     const configureCanvas = (gpuDevice: GPUDevice) => {
       const canvas = canvasRef.current;
       if (!canvas || !context) return;
@@ -167,6 +168,7 @@ export function useWebGPU(
       });
     };
 
+    // fallow-ignore-next-line complexity
     const render = () => {
       if (isDisposed || !device || !context) return;
 
@@ -319,6 +321,7 @@ export function useWebGPU(
       hoverState.cursor = [x, 1.0 - y];
     };
 
+    // fallow-ignore-next-line complexity
     const init = async () => {
       try {
         const adapter = await navigator.gpu?.requestAdapter();

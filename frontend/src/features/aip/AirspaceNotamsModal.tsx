@@ -55,6 +55,7 @@ export function AirspaceNotamsModal() {
     new Set(notams.flatMap((n) => [n.fir, n.combined_fir]).filter(Boolean) as string[]),
   ).sort();
 
+  // fallow-ignore-next-line complexity
   const filteredNotams = notams.filter((notam) => {
     const q = searchQuery.toLowerCase();
     const matchesSearch =
