@@ -17,6 +17,8 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
     ({ object, layer, x, y }: any) => {
       const { activeAerodromeMetadata, activeLayers, selectedRouteIds } = useMapStore.getState();
 
+      if (activeLayers.weather) return null;
+
       if (object && layer?.id === 'aerodromes-layer') {
         const p = object.properties ?? {};
         let enrouteElev = p.elevation;

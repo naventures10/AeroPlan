@@ -119,7 +119,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
       id: `atsRoutes-geom-layer-${ctx.atsRoutesToggleCounter}`,
       data: `${window.location.origin}/tiles/ats_route_segments/{z}/{x}/{y}`,
       visible: viewMode === 'ENROUTE',
-      pickable: isLayerActive || selectedRouteIds.length > 0,
+      pickable: (isLayerActive || selectedRouteIds.length > 0) && !activeLayers.weather,
       autoHighlight: true,
       highlightColor: isLayerActive
         ? ctx.isDarkMode
@@ -366,7 +366,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
       id: `atsRoutes-waypoints-layer-${ctx.atsRoutesToggleCounter}`,
       data: `${window.location.origin}/tiles/ats_route_waypoints/{z}/{x}/{y}`,
       visible: viewMode === 'ENROUTE',
-      pickable: isLayerActive || selectedRouteIds.length > 0,
+      pickable: (isLayerActive || selectedRouteIds.length > 0) && !activeLayers.weather,
       autoHighlight: true,
       highlightColor: ctx.isDarkMode ? [255, 255, 255, 60] : [0, 0, 0, 40],
       pointType: 'icon+text',

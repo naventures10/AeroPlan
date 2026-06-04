@@ -15,6 +15,7 @@ export interface ActiveLayers {
   airspaceRegulated: boolean;
   airspaceControl: boolean;
   airspaceUpr: boolean;
+  weather?: boolean;
 }
 
 export interface SelectedFeature {

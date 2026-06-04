@@ -21,7 +21,7 @@ export function createWaypointLayer(ctx: LayerContext): any[] {
       data: `${window.location.origin}/tiles/significant_points/{z}/{x}/{y}`,
       visible: viewMode === 'ENROUTE',
       // Disable picking when ATS routes are active to avoid selecting waypoints while viewing routes
-      pickable: !activeLayers.atsRoutes && isLayerActive,
+      pickable: !activeLayers.atsRoutes && isLayerActive && !activeLayers.weather,
       autoHighlight: true,
       highlightColor: [255, 255, 255, 60],
       pointType: 'icon+text',

@@ -203,7 +203,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       id: 'airspace-metadata-layer',
       data: `${window.location.origin}/tiles/airspaces_metadata/{z}/{x}/{y}`,
       visible: ctx.viewMode === 'ENROUTE',
-      pickable: isLayerActive,
+      pickable: isLayerActive && !ctx.activeLayers.weather,
       autoHighlight: false,
       pointType: 'text',
       // extensions: EXTENSIONS,

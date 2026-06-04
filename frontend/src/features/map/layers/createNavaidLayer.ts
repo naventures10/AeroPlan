@@ -20,7 +20,7 @@ export function createNavaidLayer(ctx: LayerContext): any[] {
       id: 'navaids-layer',
       data: `${window.location.origin}/tiles/radio_nav_aids/{z}/{x}/{y}`,
       visible: viewMode === 'ENROUTE',
-      pickable: isLayerActive,
+      pickable: isLayerActive && !activeLayers.weather,
       autoHighlight: true,
       highlightColor: [255, 255, 255, 60],
       pointType: 'icon+text',
