@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, BookOpen } from 'lucide-react';
 
 // Mirrors backend SECTION_MAP ordering (AD 2.2 → AD 2.24)
-export const AIP_SECTIONS = [
+const AIP_SECTIONS = [
   { id: 'AD_2_2', code: 'AD 2.2', title: 'Geographical & Administrative Data' },
   { id: 'AD_2_3', code: 'AD 2.3', title: 'Operational Hours' },
   { id: 'AD_2_4', code: 'AD 2.4', title: 'Handling Services & Facilities' },

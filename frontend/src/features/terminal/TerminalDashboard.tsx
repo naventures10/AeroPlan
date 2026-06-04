@@ -11,6 +11,7 @@ import { MetarWidget } from './components/MetarWidget';
 import { TafWidget } from './components/TafWidget';
 import { NotamWidget } from './components/NotamWidget';
 
+// fallow-ignore-next-line complexity
 export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
   const [activeTab, setActiveTab] = useState<'CONDITIONS' | 'METAR' | 'TAF' | 'NOTAM'>(
     'CONDITIONS',

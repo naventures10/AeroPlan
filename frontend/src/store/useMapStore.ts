@@ -247,6 +247,7 @@ export const useMapStore = create<MapState>()(
       },
 
       toggleLayer: (layer) =>
+        // fallow-ignore-next-line complexity
         set((state) => {
           const newActiveLayers = { ...state.activeLayers };
 
@@ -447,6 +448,7 @@ export const useMapStore = create<MapState>()(
       forecastTimestamps: [],
       weatherStatus: { state: 'idle' },
 
+      // fallow-ignore-next-line complexity
       fetchWeatherManifest: async (force = false) => {
         const { forecastTimestamps, weatherStatus } = get();
         // Only fetch if not already loaded or in error state to prevent duplicate parallel fetches

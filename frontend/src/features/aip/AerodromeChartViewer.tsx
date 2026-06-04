@@ -40,6 +40,7 @@ function findRnpForChart(
   return null;
 }
 
+// fallow-ignore-next-line complexity
 export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerProps) {
   const [charts, setCharts] = useState<ChartItem[]>([]);
   const [rnpProcedures, setRnpProcedures] = useState<RnpProcedureApi[]>([]);
@@ -140,6 +141,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
     setCurrentPage(1);
   }, [onClose]);
 
+  // fallow-ignore-next-line complexity
   const handleViewIn3D = useCallback(() => {
     if (!selectedChart || !matchedRnpForModal) return;
     const p = matchedRnpForModal;

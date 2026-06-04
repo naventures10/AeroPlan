@@ -11,7 +11,7 @@ import {
 import { TERMINAL_ICONS } from './icons';
 import { useRunwayPolygons } from './useRunwayPolygons';
 
-export const SPATIAL_TILES = [`${window.location.origin}/tiles/spatial_features/{z}/{x}/{y}`];
+const SPATIAL_TILES = [`${window.location.origin}/tiles/spatial_features/{z}/{x}/{y}`];
 /**
  * Expression to get a normalized search string for filtering.
  * Similar to GET_SEARCH_STRING but usable in FilterSpecification.
@@ -25,12 +25,6 @@ const SEARCH_EXPR = [
     ['coalesce', ['get', 'category'], ['get', 'feature_category'], ''],
   ],
 ];
-
-export const SPATIAL_POLYGON_FILTER: FilterSpecification = [
-  'all',
-  ['==', ['geometry-type'], 'Polygon'],
-  ['!', ['>=', ['index-of', 'RUNWAY', SEARCH_EXPR], 0]],
-] as any;
 
 export const TERMINAL_INTERACTIVE_LAYERS = ['mvt-points', 'mvt-polygons'];
 

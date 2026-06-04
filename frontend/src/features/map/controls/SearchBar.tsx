@@ -22,6 +22,7 @@ interface SearchBarProps {
  * The global search bar with autocomplete dropdown.
  * Redesigned according to Obsidian Slate system.
  */
+// fallow-ignore-next-line complexity
 export default function SearchBar({
   searchInput,
   setSearchInput,

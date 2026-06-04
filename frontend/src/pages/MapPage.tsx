@@ -29,6 +29,7 @@ const AirspaceNotamsModal = lazy(() =>
 );
 const UserProfileModal = lazy(() => import('../features/user/UserProfileModal'));
 
+// fallow-ignore-next-line complexity
 export default function MapPage() {
   const { viewMode, activeAirport, viewState, isWeatherMode } = useMapStore();
   const search = useSearch();

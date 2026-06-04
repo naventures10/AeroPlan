@@ -27,3 +27,4 @@ dist-ssr
 src/tests/e2e/artifacts/
 
 lighthouse-reports/
+.fallow/

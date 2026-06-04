@@ -18,6 +18,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString();
 
+// fallow-ignore-next-line complexity
 export default function AipSupplementsModal() {
   const isOpen = useMapStore((s) => s.isAipSupplementsModalOpen);
   const setOpen = useMapStore((s) => s.setAipSupplementsModalOpen);

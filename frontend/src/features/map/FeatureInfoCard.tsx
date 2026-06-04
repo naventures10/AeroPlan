@@ -12,6 +12,7 @@ import { NavaidDetailsPanel } from './components/NavaidDetailsPanel';
 import { WaypointDetailsPanel } from './components/WaypointDetailsPanel';
 import { AirspaceDetailsPanel } from './components/AirspaceDetailsPanel';
 
+// fallow-ignore-next-line complexity
 export function FeatureInfoCard() {
   const { selectedFeature, setSelectedFeature, viewMode, setSelectedRouteIds } = useMapStore();
 

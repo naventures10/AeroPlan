@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "entry": ["src/index.{ts,tsx,js,jsx}", "src/main.{ts,tsx,js,jsx}", "src/tests/**/*.{ts,tsx}"],
+  "ignorePatterns": ["src/types/api.generated.ts"],
+  "duplicates": {
+    "minOccurrences": 3,
+    "ignore": ["src/tests/**"]
+  },
+  "rules": {
+    "unused-dependencies": "warn",
+    "health": "warn",
+    "duplicates": "warn",
+    "dead-code": "warn"
+  }
+}

@@ -13,7 +13,6 @@ import type { components } from './api.generated';
 
 /** GeoJSON Feature Collection returned by spatial endpoints */
 export type GeoJsonFeatureCollection = components['schemas']['GeoJsonFeatureCollection'];
-export type GeoJsonFeature = components['schemas']['GeoJsonFeature'];
 
 /** Search result from /api/search */
 export type SearchResult = components['schemas']['SearchResultResponse'];
@@ -31,21 +30,11 @@ export type NotamData = components['schemas']['NotamResponse'];
 export type DaylightRecord = components['schemas']['DaylightRecord'];
 
 /** Full daylight response envelope */
-export type DaylightResponse = components['schemas']['DaylightResponse'];
 
 /** Aerodrome section response from /api/aerodromes/{icao}/section/{id} */
 export type AerodromeSectionResponse = components['schemas']['AerodromeSectionResponse'];
 
 // ── Frontend-Only Types (not in the API contract) ───────────────────────
-
-export type ViewMode = 'ENROUTE' | 'TERMINAL';
-
-export interface ActiveLayers {
-  aerodromes: boolean;
-  waypoints: boolean;
-  navaids: boolean;
-  atsRoutes: boolean;
-}
 
 export interface ParsedMetar {
   windDir: string | null;

@@ -7,6 +7,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import './UserProfileModal.css';
 
+// fallow-ignore-next-line complexity
 export default function UserProfileModal() {
   const isOpen = useMapStore((s) => s.isUserProfileModalOpen);
   const setOpen = useMapStore((s) => s.setUserProfileModalOpen);

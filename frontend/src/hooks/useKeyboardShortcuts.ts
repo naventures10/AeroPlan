@@ -20,6 +20,7 @@ export function useKeyboardShortcuts({
     useMapStore();
 
   useEffect(() => {
+    // fallow-ignore-next-line complexity
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       const activeElement = document.activeElement;
       if (

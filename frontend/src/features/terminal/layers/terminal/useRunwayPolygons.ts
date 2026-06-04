@@ -133,6 +133,7 @@ export function useRunwayPolygons(): RunwaySpatialData | null {
 
     let cancelled = false;
 
+    // fallow-ignore-next-line complexity
     async function fetchAndBuild() {
       try {
         const res = await fetch(`/api/v1/aerodromes/${activeAirport}/section/AD_2_12`);

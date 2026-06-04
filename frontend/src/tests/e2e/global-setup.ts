@@ -3,6 +3,7 @@ import type { FullConfig } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
 
+// fallow-ignore-next-line complexity
 async function globalSetup(config: FullConfig) {
   const baseURL = config.projects?.[0]?.use?.baseURL || 'http://localhost:5173';
   const requestContext = await request.newContext({ baseURL });

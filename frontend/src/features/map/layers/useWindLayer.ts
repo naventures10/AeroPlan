@@ -135,6 +135,7 @@ export function useWindLayer() {
 
   // Tooltip helper
   const getWindAtLngLat = useCallback(
+    // fallow-ignore-next-line complexity
     (lng: number, lat: number) => {
       const img1 = loadedImages[index1];
       const img2 = loadedImages[index2];

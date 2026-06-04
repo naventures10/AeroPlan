@@ -29,6 +29,7 @@ function getHierarchy(type: string) {
 // Small cache for identification-based type inference to avoid regex overhead on every feature
 const TYPE_CACHE = new Map<string, string>();
 
+// fallow-ignore-next-line complexity
 function inferAirspaceType(feature: any): string {
   const props = feature.properties;
   if (!props) return '';
@@ -71,6 +72,7 @@ function inferAirspaceType(feature: any): string {
 // Fast string cache for labels
 const LABEL_CACHE = new Map<string, string>();
 
+// fallow-ignore-next-line complexity
 function getTextForFeature(f: any, zoom: number, layers: any): string {
   const props = f.properties;
   if (!props) return '';
@@ -148,6 +150,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
 
         return [0, 0, 0, 0];
       },
+      // fallow-ignore-next-line complexity
       getLineColor: (f: any) => {
         if (!isLayerActive || !isAirspaceLoaded) return [0, 0, 0, 0];
         const type = inferAirspaceType(f);
@@ -221,6 +224,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
         if (!(props.name || props.identification)) return 0;
         return 12;
       },
+      // fallow-ignore-next-line complexity
       getTextColor: (f: any) => {
         if (!isLayerActive || !isAirspaceLoaded) return [0, 0, 0, 0];
         const type = inferAirspaceType(f);
@@ -243,6 +247,7 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       background: true,
       getBackgroundColor: [0, 0, 0, 0],
       getBorderWidth: 2,
+      // fallow-ignore-next-line complexity
       getBorderColor: (f: any) => {
         if (!isLayerActive || !isAirspaceLoaded) return [0, 0, 0, 0];
         const type = inferAirspaceType(f);

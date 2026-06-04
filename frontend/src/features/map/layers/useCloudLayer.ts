@@ -11,11 +11,6 @@ import type { ForecastTimestamp } from '../utils/windUtils';
 // Provide geotiff library to weatherlayers-gl to fix Vite's dynamic import resolution
 WeatherLayers.setLibrary('geotiff', geotiff);
 
-export interface CloudStatus {
-  state: 'idle' | 'loading' | 'ready' | 'error';
-  message?: string;
-}
-
 /**
  * Per-frame data: a flat opacity map indexed by pixel position.
  * Storing opacity per pixel (rather than packed GPU arrays) lets us
@@ -298,6 +293,7 @@ export function useCloudLayer() {
 
   // 3. Helper to generate cloud particle geometry for a single frame
   const generateCloudGeometry = useCallback(
+    // fallow-ignore-next-line complexity
     (frame: CloudFrameData | undefined) => {
       if (!isCloudActive || !frame) return null;
 

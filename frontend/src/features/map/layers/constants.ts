@@ -9,19 +9,6 @@ import { CollisionFilterExtension } from '@deck.gl/extensions';
 
 // ── Color Palette (RGBA tuples) ──────────────────────────────────────
 
-export const COLOR_WHITE: [number, number, number, number] = [255, 255, 255, 255];
-export const COLOR_NEON_CYAN: [number, number, number, number] = [93, 248, 216, 255];
-export const COLOR_EMERALD: [number, number, number, number] = [52, 211, 153, 255];
-export const COLOR_NEON_PURPLE: [number, number, number, number] = [192, 132, 252, 255];
-export const COLOR_RNAV_GREEN: [number, number, number, number] = [115, 236, 139, 255];
-export const COLOR_ATS_BLUE: [number, number, number, number] = [68, 172, 255, 255];
-
-// RGB-only variants (for colour math in label glow calculations)
-export const RGB_NEON_PURPLE: [number, number, number] = [192, 132, 252];
-export const RGB_RNAV_GREEN: [number, number, number] = [115, 236, 139];
-export const RGB_ATS_BLUE: [number, number, number] = [68, 172, 255];
-export const RGB_WHITE: [number, number, number] = [255, 255, 255];
-
 // ── Theme-aware Palettes ─────────────────────────────────────────────
 
 export interface LayerPalette {
@@ -37,7 +24,7 @@ export interface LayerPalette {
   rgbWhite: [number, number, number];
 }
 
-export const DARK_PALETTE: LayerPalette = {
+const DARK_PALETTE: LayerPalette = {
   white: [255, 255, 255, 255],
   cyan: [93, 248, 216, 255],
   emerald: [52, 211, 153, 255],
@@ -50,7 +37,7 @@ export const DARK_PALETTE: LayerPalette = {
   rgbWhite: [255, 255, 255],
 };
 
-export const LIGHT_PALETTE: LayerPalette = {
+const LIGHT_PALETTE: LayerPalette = {
   white: [92, 107, 138, 255], // slate blue — soft, mid-tone for waypoints/text
   cyan: [72, 139, 143, 255], // #488B8F accent — steel teal
   emerald: [33, 155, 157, 255], // #219B9D — custom teal-green
@@ -107,7 +94,7 @@ export function parseRouteIds(raw: any): string[] {
 
 // ── Airspace Colors ──────────────────────────────────────────────────
 
-export const AIRSPACE_COLORS: Record<
+const AIRSPACE_COLORS: Record<
   string,
   {
     fill: [number, number, number, number];
@@ -127,7 +114,7 @@ export const AIRSPACE_COLORS: Record<
   UPR_ZONE: { fill: [190, 200, 255, 15], stroke: [190, 200, 255, 120] },
 };
 
-export const AIRSPACE_COLORS_LIGHT: Record<
+const AIRSPACE_COLORS_LIGHT: Record<
   string,
   {
     fill: [number, number, number, number];
@@ -151,8 +138,8 @@ export function getAirspaceColors(isDarkMode: boolean) {
   return isDarkMode ? AIRSPACE_COLORS : AIRSPACE_COLORS_LIGHT;
 }
 
-export const DEFAULT_STROKE: [number, number, number, number] = [128, 128, 128, 60];
-export const DEFAULT_STROKE_LIGHT: [number, number, number, number] = [100, 116, 139, 120];
+const DEFAULT_STROKE: [number, number, number, number] = [128, 128, 128, 60];
+const DEFAULT_STROKE_LIGHT: [number, number, number, number] = [100, 116, 139, 120];
 
 export function getDefaultStroke(isDarkMode: boolean) {
   return isDarkMode ? DEFAULT_STROKE : DEFAULT_STROKE_LIGHT;

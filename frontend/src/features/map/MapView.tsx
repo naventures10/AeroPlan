@@ -76,6 +76,7 @@ class CustomMapController extends MapController {
   /**
    * Override rotation detection to swap Right-Click for Middle-Click.
    */
+  // fallow-ignore-next-line complexity
   _isRotationEvent(event: any) {
     const { srcEvent } = event;
     const isMiddle =
@@ -92,6 +93,7 @@ class CustomMapController extends MapController {
     return super._isRotationEvent(event);
   }
 
+  // fallow-ignore-next-line complexity
   handleEvent(event: any) {
     const { srcEvent } = event;
     const isMiddle =
@@ -272,6 +274,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
   }, []);
 
   const handleDeckClick = useCallback(
+    // fallow-ignore-next-line complexity
     (info: any, event: any) => {
       if (info.layer?.props?.onClick) {
         info.layer.props.onClick(info, event);

@@ -15,6 +15,7 @@ interface SectionRendererProps {
  * based on the backend's `data_type` field, passing section-specific
  * column config for official AIP header/label rendering.
  */
+// fallow-ignore-next-line complexity
 export default function SectionRenderer({ data, dataType, sectionId }: SectionRendererProps) {
   const config = SECTION_COLUMNS[sectionId];
 

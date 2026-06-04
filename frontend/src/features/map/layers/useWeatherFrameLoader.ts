@@ -22,7 +22,7 @@ export function getFrameIndices(timestamps: ForecastTimestamp[], animationTime: 
  * Computes prioritised and remaining frame indices for progressive loading.
  * The two frames closest to the current animation time are loaded first.
  */
-export function getPrioritisedIndices(totalFrames: number, currentAnimTime: number) {
+function getPrioritisedIndices(totalFrames: number, currentAnimTime: number) {
   const maxIdx = totalFrames - 1;
   const startIndex1 = Math.min(Math.floor(Math.max(0, currentAnimTime)), maxIdx);
   const startIndex2 = Math.min(startIndex1 + 1, maxIdx);
@@ -102,6 +102,7 @@ export function useWeatherFrameLoader<TFrame>({
     const controller = new AbortController();
     const signal = controller.signal;
 
+    // fallow-ignore-next-line complexity
     async function loadAll() {
       if (!isActive || forecastTimestamps.length === 0) return;
 

@@ -1,3 +1,4 @@
+// fallow-ignore-file complexity
 import TableRenderer from './TableRenderer';
 import ObjectRenderer from './ObjectRenderer';
 import { sanitizeHtml } from '../../../utils/sanitize';
@@ -83,6 +84,7 @@ function RawTableRenderer({ rows }: { rows: any[][] }) {
  * 3. Plain array of objects → TableRenderer
  * 4. Object with mixed values → sub-renderers per key
  */
+// fallow-ignore-next-line complexity
 export default function HybridRenderer({ data }: HybridRendererProps) {
   // Null / undefined / empty
   if (data === null || data === undefined) {

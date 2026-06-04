@@ -110,6 +110,7 @@ export function useSearch() {
   }, []);
 
   const handleGlobalSearchSelect = useCallback(
+    // fallow-ignore-next-line complexity
     (item: SearchResult) => {
       // Clear any pending deferred selection
       if (selectionTimerRef.current) clearTimeout(selectionTimerRef.current);
@@ -147,6 +148,7 @@ export function useSearch() {
       setTimeout(resetSearchState, 50);
 
       // 2. Defer the visual highlight injection until after the flyTo animation (1200ms)
+      // fallow-ignore-next-line complexity
       selectionTimerRef.current = setTimeout(() => {
         // Activate layer if needed (do it just before showing highlight)
         switch (item.type) {
@@ -186,6 +188,7 @@ export function useSearch() {
   );
 
   const handleSearchKeyDown = useCallback(
+    // fallow-ignore-next-line complexity
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
