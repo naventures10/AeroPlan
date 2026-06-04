@@ -92,7 +92,6 @@ export function useDeckLayers({
   const mountAerodromes = useDelayedUnmount(activeLayers.aerodromes, 300);
   const mountWaypoints = useDelayedUnmount(activeLayers.waypoints, 300);
   const mountNavaids = useDelayedUnmount(activeLayers.navaids, 300);
-  const mountAtsRoutes = useDelayedUnmount(activeLayers.atsRoutes, 300);
 
   // Build the shared context passed to every layer factory
   const ctx: LayerContext = {
@@ -135,7 +134,7 @@ export function useDeckLayers({
       overlaidLayers.push(...createNavaidLayer(ctx));
     }
 
-    if (isAtsRendered && mountAtsRoutes) {
+    if (isAtsRendered) {
       overlaidLayers.push(...createAtsRouteLayers(ctx));
     }
 
@@ -197,7 +196,7 @@ export function useDeckLayers({
     mountAerodromes,
     mountWaypoints,
     mountNavaids,
-    mountAtsRoutes,
+
     isAirspaceLoaded,
     setAirspaceLoaded,
   ]);

@@ -34,9 +34,30 @@ vi.mock('../../features/terminal/layers/rnp/createRnpLayers', () => ({
   createRnpLayers: vi.fn(() => [{ id: 'rnp1' }]),
 }));
 
-vi.mock('../../features/map/layers/useRouteAnimation', () => ({
-  useRouteAnimation: () => ({ isAtsRendered: true, currentTime: 10 }),
-}));
+vi.mock('../../features/map/layers/useRouteAnimation', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { useState, useEffect } = require('react');
+  return {
+    useRouteAnimation: () => {
+      const active = useMapStore((state: any) => state.activeLayers.atsRoutes);
+      const selected = useMapStore((state: any) => state.selectedRouteIds.length > 0);
+      const [isAtsRendered, setIsAtsRendered] = useState(active || selected);
+
+      useEffect(() => {
+        if (active || selected) {
+          setIsAtsRendered(true);
+        } else {
+          const timer = setTimeout(() => {
+            setIsAtsRendered(false);
+          }, 300);
+          return () => clearTimeout(timer);
+        }
+      }, [active, selected]);
+
+      return { isAtsRendered, currentTime: 10 };
+    },
+  };
+});
 
 vi.mock('../../features/terminal/layers/rnp/useRnpPath3d', () => ({
   useRnpPath3d: vi.fn(() => ({ path: [1, 2], timestamps: [1, 2], waypoints: [] })),
