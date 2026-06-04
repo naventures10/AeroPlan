@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import './SectionModal.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
@@ -28,16 +28,7 @@ export default function SectionModal({
   isLoading,
 }: SectionModalProps) {
   // ESC key handler
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => {
-      window.removeEventListener('keydown', handleKey);
-    };
-  }, [isOpen, onClose]);
+  useEscapeKey(isOpen, onClose);
 
   return (
     <AnimatePresence>

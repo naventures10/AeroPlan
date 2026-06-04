@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import ObjectRenderer from '../../features/aip/renderers/ObjectRenderer';
 
-vi.mock('../../../utils/sanitize', () => ({
+vi.mock('../../utils/sanitize', () => ({
   sanitizeHtml: (val: string) => val, // return as is for test
 }));
 

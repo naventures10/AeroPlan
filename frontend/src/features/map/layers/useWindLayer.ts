@@ -1,17 +1,59 @@
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import * as WeatherLayers from 'weatherlayers-gl';
 import * as geotiff from 'geotiff';
 import { ClipExtension } from '@deck.gl/extensions';
 import { useMapStore } from '../../../store/useMapStore';
 import { WIND_BOUNDS, CLIP_BOUNDS, WIND_PALETTE } from '../utils/windUtils';
+import {
+  useWeatherFrameLoader,
+  getFrameIndices,
+  type FrameLoaderStatus,
+} from './useWeatherFrameLoader';
+import type { ForecastTimestamp } from '../utils/windUtils';
 
 // Provide geotiff library to weatherlayers-gl to fix Vite's dynamic import resolution
 WeatherLayers.setLibrary('geotiff', geotiff);
 
-export interface WindStatus {
-  state: 'idle' | 'loading' | 'ready' | 'error';
-  message?: string;
-  validTime?: string;
+export type WindStatus = FrameLoaderStatus;
+
+/** A single loaded wind frame: the raw multi-band image + a 2-band render slice. */
+interface WindFrameData {
+  img: WeatherLayers.TextureData;
+  renderData: WeatherLayers.TextureData;
+}
+
+/**
+ * Fetch a single TIFF frame and extract the first two bands (U, V)
+ * into a compact Float32Array suitable for the particle renderer.
+ */
+async function loadWindFrame(
+  index: number,
+  levelKey: string,
+  signal: AbortSignal,
+  forecastTimestamps: ForecastTimestamp[],
+): Promise<{ index: number; data: WindFrameData }> {
+  const t = forecastTimestamps[index];
+  if (!t) throw new Error(`Missing timestamp for index ${index}`);
+  const url = t.files[levelKey];
+  if (!url) throw new Error(`Missing URL for level ${levelKey}`);
+
+  const img = await WeatherLayers.loadTextureData(url, { signal });
+
+  let renderData: WeatherLayers.TextureData;
+  const components = img.data.length / (img.width * img.height);
+  if (components >= 2) {
+    const numPixels = img.width * img.height;
+    const rData = new Float32Array(numPixels * 2);
+    for (let p = 0; p < numPixels; p++) {
+      rData[p * 2] = img.data[p * components] ?? 0;
+      rData[p * 2 + 1] = img.data[p * components + 1] ?? 0;
+    }
+    renderData = { width: img.width, height: img.height, data: rData };
+  } else {
+    renderData = img;
+  }
+
+  return { index, data: { img, renderData } };
 }
 
 export function useWindLayer() {
@@ -26,10 +68,37 @@ export function useWindLayer() {
     weatherStatus,
   } = useMapStore();
 
-  const [loadedImages, setLoadedImages] = useState<Record<number, WeatherLayers.TextureData>>({});
-  const [renderImages, setRenderImages] = useState<Record<number, WeatherLayers.TextureData>>({});
-  const [status, setStatus] = useState<WindStatus>({ state: 'idle' });
-  const staleManifestAttemptedRef = useRef<Record<string, boolean>>({});
+  const isWindActive = isWeatherMode && isWindMode && viewMode === 'ENROUTE';
+
+  // Stable reference for the frame loader callback
+  const [loadFrame] = useState(() => loadWindFrame);
+
+  // Shared progressive loading with stale-manifest recovery
+  const { frames, status } = useWeatherFrameLoader<WindFrameData>({
+    isActive: isWindActive,
+    altitude: windAltitude,
+    forecastTimestamps,
+    fetchWeatherManifest,
+    loadFrame,
+    logPrefix: 'useWindLayer',
+  });
+
+  // Derive render-ready images and raw images from frame data
+  const renderImages = useMemo(() => {
+    const map: Record<number, WeatherLayers.TextureData> = {};
+    for (const [k, v] of Object.entries(frames)) {
+      map[Number(k)] = v.renderData;
+    }
+    return map;
+  }, [frames]);
+
+  const loadedImages = useMemo(() => {
+    const map: Record<number, WeatherLayers.TextureData> = {};
+    for (const [k, v] of Object.entries(frames)) {
+      map[Number(k)] = v.img;
+    }
+    return map;
+  }, [frames]);
 
   const windStatus: WindStatus = useMemo(() => {
     if (weatherStatus.state === 'loading') return weatherStatus;
@@ -37,137 +106,14 @@ export function useWindLayer() {
     return status;
   }, [weatherStatus, status]);
 
-  const isWindActive = isWeatherMode && isWindMode && viewMode === 'ENROUTE';
+  // Frame indices
+  const {
+    index1,
+    index2,
+    weight: interpolationWeight,
+  } = getFrameIndices(forecastTimestamps, windAnimationTime);
 
-  // Trigger manifest load if active and timestamps aren't loaded yet
-  useEffect(() => {
-    if (isWindActive && forecastTimestamps.length === 0) {
-      fetchWeatherManifest();
-    }
-  }, [isWindActive, forecastTimestamps.length, fetchWeatherManifest]);
-
-  // 1. Pre-load weather data for current altitude
-  useEffect(() => {
-    let active = true;
-    const controller = new AbortController();
-    const signal = controller.signal;
-
-    async function loadAll() {
-      if (!isWindActive || forecastTimestamps.length === 0) return;
-
-      setStatus({ state: 'loading', message: 'Pre-loading forecast frames…' });
-      setLoadedImages({});
-      setRenderImages({});
-
-      const levelKey = windAltitude === 0 ? 'surface' : String(windAltitude).padStart(3, '0');
-      const totalFrames = forecastTimestamps.length;
-
-      // Determine active indices at the time loading starts
-      const currentAnimTime = useMapStore.getState().windAnimationTime;
-      const maxIdx = totalFrames - 1;
-      const startIndex1 = Math.min(Math.floor(Math.max(0, currentAnimTime)), maxIdx);
-      const startIndex2 = Math.min(startIndex1 + 1, maxIdx);
-
-      const prioritizedIndices = Array.from(new Set([startIndex1, startIndex2]));
-      const remainingIndices = Array.from({ length: totalFrames }, (_, i) => i).filter(
-        (i) => !prioritizedIndices.includes(i),
-      );
-
-      // Helper to fetch, parse, and return a single frame
-      async function loadFrame(index: number) {
-        const t = forecastTimestamps[index];
-        if (!t) throw new Error(`Missing timestamp for index ${index}`);
-        const url = t.files[levelKey];
-        if (!url) throw new Error(`Missing URL for level ${levelKey}`);
-
-        const img = await WeatherLayers.loadTextureData(url, { signal });
-
-        let renderData: WeatherLayers.TextureData;
-        const components = img.data.length / (img.width * img.height);
-        if (components >= 2) {
-          const numPixels = img.width * img.height;
-          const rData = new Float32Array(numPixels * 2);
-          for (let p = 0; p < numPixels; p++) {
-            rData[p * 2] = img.data[p * components] ?? 0;
-            rData[p * 2 + 1] = img.data[p * components + 1] ?? 0;
-          }
-          renderData = { width: img.width, height: img.height, data: rData };
-        } else {
-          renderData = img;
-        }
-
-        return { index, img, renderData };
-      }
-
-      try {
-        // Step A: Load active/prioritized frames first in parallel
-        const prioritizedResults = await Promise.all(
-          prioritizedIndices.map((idx) => loadFrame(idx)),
-        );
-        if (!active) return;
-
-        // Apply prioritized frames immediately
-        const imageMap: Record<number, WeatherLayers.TextureData> = {};
-        const renderMap: Record<number, WeatherLayers.TextureData> = {};
-        prioritizedResults.forEach((r) => {
-          imageMap[r.index] = r.img;
-          renderMap[r.index] = r.renderData;
-        });
-
-        setLoadedImages((prev) => ({ ...prev, ...imageMap }));
-        setRenderImages((prev) => ({ ...prev, ...renderMap }));
-        setStatus({ state: 'ready', message: 'Active frames ready' });
-
-        // Step B: Load remaining frames sequentially in the background
-        for (const idx of remainingIndices) {
-          if (!active) return;
-          try {
-            const r = await loadFrame(idx);
-            if (!active) return;
-            setLoadedImages((prev) => ({ ...prev, [r.index]: r.img }));
-            setRenderImages((prev) => ({ ...prev, [r.index]: r.renderData }));
-          } catch (err: any) {
-            if (err.name === 'AbortError' || !active) return;
-            console.error(`[useWindLayer] Background load error for frame ${idx}:`, err);
-          }
-        }
-      } catch (err: any) {
-        if (err.name === 'AbortError' || !active) return;
-        console.error('[useWindLayer] Load error:', err);
-
-        if (err.message?.includes('File no longer exists')) {
-          const forecastKey = `${forecastTimestamps.map((t) => t.validTime).join(',')}_${windAltitude}`;
-          if (!staleManifestAttemptedRef.current[forecastKey]) {
-            staleManifestAttemptedRef.current[forecastKey] = true;
-            console.warn(
-              '[useWindLayer] Stale manifest detected. Auto-healing by fetching fresh manifest...',
-            );
-            fetchWeatherManifest(true);
-            return;
-          } else {
-            console.error(
-              '[useWindLayer] Stale manifest detected, but auto-heal was already attempted for this timestamp/altitude key.',
-            );
-          }
-        }
-
-        setStatus({ state: 'error', message: 'Failed to pre-load some frames' });
-      }
-    }
-
-    loadAll();
-    return () => {
-      active = false;
-      controller.abort();
-    };
-  }, [isWindActive, windAltitude, forecastTimestamps, fetchWeatherManifest]);
-
-  // 4. Calculate Layer
-  const maxIndex = Math.max(0, forecastTimestamps.length - 1);
-  const index1 = Math.min(Math.floor(Math.max(0, windAnimationTime)), maxIndex);
-  const index2 = Math.min(index1 + 1, maxIndex);
-  const interpolationWeight = windAnimationTime - index1;
-
+  // Build particle layer
   const windLayer = useMemo(() => {
     if (!isWindActive || !renderImages[index1]) return null;
 
@@ -187,7 +133,7 @@ export function useWindLayer() {
     });
   }, [isWindActive, renderImages, index1, index2, interpolationWeight]);
 
-  // 5. Tooltip Helper
+  // Tooltip helper
   const getWindAtLngLat = useCallback(
     (lng: number, lat: number) => {
       const img1 = loadedImages[index1];
