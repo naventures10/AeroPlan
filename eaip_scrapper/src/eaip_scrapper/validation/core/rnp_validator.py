@@ -72,6 +72,25 @@ class RNPValidator:
             if path and path not in self.path_values:
                 issues.append(f"Row {i}: Invalid path descriptor '{path}'")
 
+            # Course Format Check
+            course = leg.get("course_angle", "")
+            if course:
+                course_str = str(course)
+                if course_str.count("°") > 1 or "(" in course_str or ")" in course_str:
+                    issues.append(
+                        f"Row {i}: Malformed course_angle '{course_str}' (possible merged True/Mag track)"
+                    )
+
+            # Mandatory Distance Check
+            if path in ("TF", "CF") and not leg.get("distance"):
+                issues.append(f"Row {i}: Missing mandatory distance for {path} leg")
+
+            # Bundled Transitions Warning (IF not at start)
+            if path == "IF" and i > 1:
+                issues.append(
+                    f"Row {i}: IF leg found in the middle of procedure (possible bundled transitions)"
+                )
+
         # ── 3. Spatial Sanity: coordinates within India bbox ──────────────────
         for wp in proc_data.get("waypoints", []):
             lat = wp.get("lat_dd")
@@ -117,11 +136,17 @@ class RNPValidator:
         # ── Determine Status ──────────────────────────────────────────────────
         if not issues:
             status = "SUCCESS"
-        elif all("Waypoints missing coordinates" in i for i in issues):
-            # Missing coordinates is recoverable — mark as WARNING
-            status = "WARNING"
         else:
-            status = "FAILED"
+            only_warnings = True
+            for issue in issues:
+                if (
+                    "Waypoints missing coordinates" not in issue
+                    and "possible bundled transitions" not in issue
+                ):
+                    only_warnings = False
+                    break
+
+            status = "WARNING" if only_warnings else "FAILED"
 
         return {
             "success": len(issues) == 0,
