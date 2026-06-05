@@ -134,19 +134,7 @@ class RNPValidator:
             issues.append("No waypoints extracted")
 
         # ── Determine Status ──────────────────────────────────────────────────
-        if not issues:
-            status = "SUCCESS"
-        else:
-            only_warnings = True
-            for issue in issues:
-                if (
-                    "Waypoints missing coordinates" not in issue
-                    and "possible bundled transitions" not in issue
-                ):
-                    only_warnings = False
-                    break
-
-            status = "WARNING" if only_warnings else "FAILED"
+        status = "SUCCESS" if not issues else "FAILED"
 
         return {
             "success": len(issues) == 0,
