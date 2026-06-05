@@ -73,12 +73,12 @@ class RNPValidator:
                 issues.append(f"Row {i}: Invalid path descriptor '{path}'")
 
             # Course Format Check
-            course = leg.get("course_angle", "")
+            course = leg.get("course", "")
             if course:
                 course_str = str(course)
                 if course_str.count("°") > 1 or "(" in course_str or ")" in course_str:
                     issues.append(
-                        f"Row {i}: Malformed course_angle '{course_str}' (possible merged True/Mag track)"
+                        f"Row {i}: Malformed course '{course_str}' (possible merged True/Mag track)"
                     )
 
             # Mandatory Distance Check

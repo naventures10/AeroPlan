@@ -219,13 +219,13 @@ def sanitize_header(raw_header: str) -> str:
     h = re.sub(r"\([^)]*\)", "", h)
     h = re.sub(r"[°\'\"*`]", "", h).strip()
 
-    if "serial" in h or "seq" in h:
+    if "serial" in h or "seq" in h or "sl" in h:
         h = "serial_number"
-    elif "waypoint" in h or "fix ident" in h:
+    elif "waypoint" in h or "fix ident" in h or "ident" in h or "identifier" in h:
         h = "waypoint_identifier"
-    elif "path" in h or "terminator" in h:
+    elif "path" in h or "terminator" in h or "descriptor" in h or "designator" in h:
         h = "path_descriptor"
-    elif "fly" in h and "over" in h:
+    elif "fly" in h:
         h = "fly_over"
     elif "course" in h:
         h = "course"
@@ -235,13 +235,13 @@ def sanitize_header(raw_header: str) -> str:
         h = "altitude"
     elif "speed" in h:
         h = "speed_limit"
-    elif "dist" in h:
+    elif "dist" in h or "dst" in h:
         h = "distance"
-    elif "vpa" in h or "va/" in h or "tch" in h:
+    elif "vpa" in h or "va/" in h or "tch" in h or "vertical" in h:
         h = "vpa_tch"
-    elif "role" in h:
+    elif "role" in h or "function" in h:
         h = "role"
-    elif "nav" in h and "spec" in h:
+    elif "nav" in h or "navigation" in h or "spec" in h:
         h = "nav_spec"
 
     h = re.sub(r"[^a-z0-9]+", "_", h).strip("_")

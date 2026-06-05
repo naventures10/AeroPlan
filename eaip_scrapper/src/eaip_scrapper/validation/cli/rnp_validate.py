@@ -10,7 +10,7 @@ sys.path.append(str(BASE_DIR / "src"))
 import os
 
 from eaip_scrapper.rnp_processor.transformer import RNPTransformer
-from eaip_scrapper.rnp_processor.utils import MERGED_DIR, setup_logging
+from eaip_scrapper.rnp_processor.utils import setup_logging
 from eaip_scrapper.validation.core.rnp_validator import RNPValidator
 
 DB_CONFIG = {
@@ -24,29 +24,37 @@ DB_CONFIG = {
 
 def validate_markdown(logger):
     """Audit merged markdown files for data consistency."""
+    from eaip_scrapper.rnp_processor.utils import get_s3_client
+
     transformer = RNPTransformer()
     validator = RNPValidator()
 
-    files = sorted(MERGED_DIR.glob("*.md"))
-    logger.info(f"Auditing {len(files)} markdown files...")
+    s3_client = get_s3_client()
+    bucket = os.getenv("MINIO_BUCKET", "ais")
+    response = s3_client.list_objects_v2(Bucket=bucket, Prefix="output/rnp/merged_data/")
+    merged_keys = [obj["Key"] for obj in response.get("Contents", []) if obj["Key"].endswith(".md")]
+    merged_keys.sort()
+
+    logger.info(f"Auditing {len(merged_keys)} markdown files from MinIO...")
     passed = 0
     warned = 0
     failed = 0
-    for f in files:
-        proc_data = transformer.parse_file(f)
+    for key in merged_keys:
+        proc_data = transformer.parse_file(key)
+        filename = os.path.basename(key)
         res = validator.validate_procedure_data(proc_data)
         if res["status"] == "SUCCESS":
             passed += 1
         elif res["status"] == "WARNING":
             warned += 1
-            logger.warning(f"  WARNING: {f.name} — {res['issues']}")
+            logger.warning(f"  WARNING: {filename} — {res['issues']}")
         else:
             failed += 1
-            logger.error(f"  FAILED: {f.name} — {res['issues']}")
+            logger.error(f"  FAILED: {filename} — {res['issues']}")
 
     logger.info(
         f"Audit Complete: {passed} passed, {warned} warned, {failed} failed "
-        f"(out of {len(files)} total)"
+        f"(out of {len(merged_keys)} total)"
     )
 
 
