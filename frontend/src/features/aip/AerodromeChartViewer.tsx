@@ -29,10 +29,30 @@ function candidateChartKeys(chart: ChartItem): string[] {
   return [...new Set(keys)];
 }
 
+function isNonRnpChart(chart: ChartItem): boolean {
+  const fields = [chart.chart_url, chart.chart_title, chart.chart_index].map((s) =>
+    (s ?? '').toLowerCase(),
+  );
+
+  const keywords = [
+    'coding',
+    'table',
+    'tabel',
+    'fas',
+    'profile',
+    'cat-a-b-c-d',
+    'cat-a-b-c',
+    'cat-a-b',
+  ];
+
+  return fields.some((field) => keywords.some((keyword) => field.includes(keyword)));
+}
+
 function findRnpForChart(
   chart: ChartItem,
   byChartKey: Map<string, RnpProcedureApi>,
 ): RnpProcedureApi | null {
+  if (isNonRnpChart(chart)) return null;
   for (const k of candidateChartKeys(chart)) {
     const hit = byChartKey.get(k);
     if (hit) return hit;
@@ -99,7 +119,29 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
     setIsLoading(true);
     fetchCharts(icaoCode)
       .then((data) => {
-        setCharts(data);
+        const sorted = [...data].sort((a, b) => {
+          const indexA = a.chart_index ?? '';
+          const indexB = b.chart_index ?? '';
+          const indexCompare = indexA.localeCompare(indexB, undefined, {
+            numeric: true,
+            sensitivity: 'base',
+          });
+          if (indexCompare !== 0) return indexCompare;
+
+          const isNonRnpA = isNonRnpChart(a);
+          const isNonRnpB = isNonRnpChart(b);
+          if (isNonRnpA !== isNonRnpB) {
+            return isNonRnpA ? 1 : -1;
+          }
+
+          const titleA = a.chart_title ?? '';
+          const titleB = b.chart_title ?? '';
+          return titleA.localeCompare(titleB, undefined, {
+            numeric: true,
+            sensitivity: 'base',
+          });
+        });
+        setCharts(sorted);
       })
       .catch((err) => {
         console.error('Failed to fetch aerodrome charts:', err);

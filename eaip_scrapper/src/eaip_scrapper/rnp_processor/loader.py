@@ -87,42 +87,10 @@ class RNPLoader:
                 logger.error("Missing procedure_name in proc_data")
                 return False
 
-            points_3d = []
-            last_alt = 10000  # Default initial altitude (feet)
-            prev_point = None
+            from eaip_scrapper.rnp_processor.geometry import reconstruct_path_3d
 
-            for leg in proc_data.get("tabular_description", []):
-                ident = leg.get("waypoint_identifier")
-                if not ident:
-                    continue
-                wp = next(
-                    (
-                        w
-                        for w in proc_data.get("waypoints", [])
-                        if w.get("waypoint_id") == ident.upper()
-                    ),
-                    None,
-                )
-                if not wp:
-                    continue
-                lat = wp.get("lat_dd")
-                lon = wp.get("lon_dd")
-                if not is_valid_coord(lat, lon):
-                    continue
-
-                alt_raw = leg.get("altitude") or leg.get("altitude_lower")
-                alt = parse_altitude(alt_raw)
-                if alt is None:
-                    alt = last_alt
-                else:
-                    last_alt = alt
-
-                point_key = (round(lon, 6), round(lat, 6), round(alt, 1))
-                if point_key == prev_point:
-                    # Skip duplicate consecutive vertex
-                    continue
-                prev_point = point_key
-                points_3d.append(f"{lon} {lat} {alt}")
+            path_points = reconstruct_path_3d(proc_data)
+            points_3d = [f"{lon} {lat} {alt}" for lon, lat, alt in path_points]
 
             geom_3d_wkt = None
             if len(points_3d) >= 2:

@@ -5,10 +5,18 @@ from collections import defaultdict
 
 from bs4 import BeautifulSoup
 
+from .geometry import haversine_nm
 from .utils import (
     clean_text,
     get_s3_client,
     is_valid_coord,
+    normalize_altitude,
+    normalize_course,
+    normalize_distance,
+    normalize_nav_spec,
+    normalize_speed,
+    normalize_turn,
+    normalize_vpa_tch,
     parse_coordinate,
     sanitize_header,
 )
@@ -86,8 +94,9 @@ class RNPTransformer:
         name = filename.replace(".PDF.md", "").replace(".md", "")
         # Remove any CODING, TABLE, WAYPOINT and trailing numbers/spaces
         name = re.sub(r"(?i)[-\s]*(CODING|TABLES|TABLE|WAYPOINTS|WAYPOINT)[\s\d]*$", "", name)
-        # Also remove trailing -1 or -2 if any remains
-        name = re.sub(r"-\d+$", "", name)
+        # Only remove trailing part numbers (like -1, -2) which are single digits
+        # Runways are 2 digits (e.g. -09, -27), so they will NOT be removed.
+        name = re.sub(r"-[1-9]$", "", name)
         return name.strip()
 
     def extract_metadata(self, filename):
@@ -109,8 +118,13 @@ class RNPTransformer:
         runway_match = re.search(r"RWY[-\s]*([0-9]{2}[LRC]?)", stem, re.IGNORECASE)
         runway = runway_match.group(1).upper() if runway_match else ""
 
-        proc_type_match = re.search(r"RNP[-\s]*([XYZ])\b", stem, re.IGNORECASE)
-        proc_type = "RNP-" + proc_type_match.group(1).upper() if proc_type_match else "RNP"
+        if "SID" in stem.upper() or "DEPARTURE" in stem.upper() or "DEP" in stem.upper():
+            proc_type = "SID"
+        elif "STAR" in stem.upper() or "ARRIVAL" in stem.upper() or "ARR" in stem.upper():
+            proc_type = "STAR"
+        else:
+            proc_type_match = re.search(r"RNP[-\s]*([XYZ])\b", stem, re.IGNORECASE)
+            proc_type = "RNP-" + proc_type_match.group(1).upper() if proc_type_match else "RNP"
 
         return airport_id, runway, proc_type
 
@@ -200,6 +214,36 @@ class RNPTransformer:
             ):
                 row_dict[role_key] = row_dict[vpa_key]
                 row_dict[vpa_key] = None
+
+            # Consolidate multiple altitude columns (e.g. Upper Limit and Lower Limit) if present
+            alt_keys = [k for k in row_dict if "altitude" in k]
+            if alt_keys:
+                alt_vals = [
+                    str(row_dict[k]).strip()
+                    for k in alt_keys
+                    if row_dict[k] and str(row_dict[k]).strip() not in ("-", "", "N/A")
+                ]
+                if alt_vals:
+                    row_dict["altitude"] = normalize_altitude(" / ".join(alt_vals))
+                    for k in alt_keys:
+                        if k != "altitude":
+                            row_dict[k] = None
+                else:
+                    row_dict["altitude"] = None
+
+            # Normalize field values
+            if "course" in row_dict:
+                row_dict["course"] = normalize_course(row_dict["course"])
+            if "speed_limit" in row_dict:
+                row_dict["speed_limit"] = normalize_speed(row_dict["speed_limit"])
+            if "distance" in row_dict:
+                row_dict["distance"] = normalize_distance(row_dict["distance"])
+            if "vpa_tch" in row_dict:
+                row_dict["vpa_tch"] = normalize_vpa_tch(row_dict["vpa_tch"])
+            if "nav_spec" in row_dict:
+                row_dict["nav_spec"] = normalize_nav_spec(row_dict["nav_spec"])
+            if "turn_direction" in row_dict:
+                row_dict["turn_direction"] = normalize_turn(row_dict["turn_direction"])
 
             data.append(row_dict)
         return data
@@ -410,6 +454,76 @@ class RNPTransformer:
                 )
         return wpts
 
+    def calculate_missing_distances(self, proc_data):
+        """Calculate missing distances for TF/CF legs programmatically using waypoint coordinates."""
+        # Build waypoint coordinates lookup
+        wpt_coords = {}
+        for wp in proc_data.get("waypoints", []):
+            wid = str(wp.get("waypoint_id") or "").strip().upper()
+            lat = wp.get("lat_dd")
+            lon = wp.get("lon_dd")
+            if wid and lat is not None and lon is not None:
+                wpt_coords[wid] = (lat, lon)
+
+        # Iterate through legs
+        last_valid_wp_id = None
+        last_valid_wp_coords = None
+
+        for leg in proc_data.get("tabular_description", []):
+            path = str(leg.get("path_descriptor") or "").upper()
+            ident = str(leg.get("waypoint_identifier") or "").strip().upper()
+
+            # If the current leg has coordinates, and distance is missing, and it's a TF/CF leg,
+            # and we have a previous valid waypoint with coordinates, calculate the distance.
+            if path in ("TF", "CF") and not leg.get("distance"):
+                curr_coords = wpt_coords.get(ident)
+                if curr_coords and last_valid_wp_coords:
+                    dist = haversine_nm(
+                        last_valid_wp_coords[1],
+                        last_valid_wp_coords[0],
+                        curr_coords[1],
+                        curr_coords[0],
+                    )
+                    leg["distance"] = normalize_distance(str(dist))
+                    logger.info(
+                        f"Calculated missing distance for {path} leg to {ident}: {leg['distance']} NM "
+                        f"(from {last_valid_wp_id})"
+                    )
+
+            # Update previous waypoint tracking
+            if ident and ident in wpt_coords:
+                last_valid_wp_id = ident
+                last_valid_wp_coords = wpt_coords[ident]
+
+    def resolve_missing_holding_altitudes(self, proc_data):
+        """If a holding leg (HM, HA, HF) lacks an altitude constraint, copy it from another leg
+        with the same waypoint identifier in the same procedure."""
+        wp_altitudes = {}
+        for leg in proc_data.get("tabular_description", []):
+            ident = str(leg.get("waypoint_identifier") or "").strip().upper()
+            path = str(leg.get("path_descriptor") or "").upper()
+            alt = leg.get("altitude")
+            if ident and alt and path not in ("HM", "HA", "HF"):
+                wp_altitudes[ident] = alt
+
+        # Fallback to checking any leg if no non-holding leg altitude is defined
+        for leg in proc_data.get("tabular_description", []):
+            ident = str(leg.get("waypoint_identifier") or "").strip().upper()
+            alt = leg.get("altitude")
+            if ident and alt and ident not in wp_altitudes:
+                wp_altitudes[ident] = alt
+
+        for leg in proc_data.get("tabular_description", []):
+            path = str(leg.get("path_descriptor") or "").upper()
+            ident = str(leg.get("waypoint_identifier") or "").strip().upper()
+            if path in ("HM", "HA", "HF") and not leg.get("altitude"):
+                fallback_alt = wp_altitudes.get(ident)
+                if fallback_alt:
+                    leg["altitude"] = fallback_alt
+                    logger.info(
+                        f"Resolved missing holding leg altitude for {path} leg at {ident} to {fallback_alt}"
+                    )
+
     def parse_file(self, s3_key):
         filename = os.path.basename(s3_key)
         stem = os.path.splitext(filename)[0]
@@ -495,4 +609,6 @@ class RNPTransformer:
                         proc_data["waypoints"].append(w)
                         existing_ids.add(w["waypoint_id"])
 
+        self.calculate_missing_distances(proc_data)
+        self.resolve_missing_holding_altitudes(proc_data)
         return proc_data
