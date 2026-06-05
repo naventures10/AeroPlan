@@ -84,4 +84,4 @@ paths = ["."]
 ignore_names = ["exc_tb", "exc_type", "exc_val", "method_name", "mock_run"]
 
 [tool.deptry.per_rule_ignores]
-DEP002 = ["uvicorn", "alembic", "psycopg-binary", "psycopg2-binary", "greenlet", "python-dotenv", "pydantic-settings", "passlib", "asyncpg", "psycopg", "email-validator", "bcrypt"]
+DEP002 = ["uvicorn", "alembic", "psycopg-binary", "psycopg2-binary", "greenlet", "python-dotenv", "pydantic-settings", "passlib", "asyncpg", "psycopg", "email-validator", "bcrypt", "scipy"]
