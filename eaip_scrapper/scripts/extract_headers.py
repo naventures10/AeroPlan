@@ -254,7 +254,9 @@ def main():
             f.write("|---|---|---|\n")
             for h in unknown_headers:
                 sample_list = h["sample_files"]
-                samples = ", ".join(str(s) for s in sample_list) if isinstance(sample_list, list) else ""
+                samples = (
+                    ", ".join(str(s) for s in sample_list) if isinstance(sample_list, list) else ""
+                )
                 f.write(f"| `{h['raw_header']}` | {h['count']} | {samples} |\n")
         else:
             f.write("*None found! All headers matched standard rules.*\n")
@@ -267,8 +269,12 @@ def main():
         f.write("|---|---|---|---|\n")
         for h in headers_summary:
             sample_list = h["sample_files"]
-            samples = ", ".join(str(s) for s in sample_list) if isinstance(sample_list, list) else ""
-            f.write(f"| `{h['raw_header']}` | {h['count']} | `{h['sanitized_name']}` | {samples} |\n")
+            samples = (
+                ", ".join(str(s) for s in sample_list) if isinstance(sample_list, list) else ""
+            )
+            f.write(
+                f"| `{h['raw_header']}` | {h['count']} | `{h['sanitized_name']}` | {samples} |\n"
+            )
 
     logger.info(f"Saved Markdown report to {md_path}")
     logger.info("Done extracting headers!")

@@ -219,15 +219,17 @@ def sanitize_header(raw_header: str) -> str:
     h = re.sub(r"\([^)]*\)", "", h)
     h = re.sub(r"[°\'\"*`]", "", h).strip()
 
-    if "serial" in h or "seq" in h or "sl" in h:
+    if "transition" in h:
+        h = "transition"
+    elif "serial" in h or "seq" in h or "sl" in h:
         h = "serial_number"
-    elif "waypoint" in h or "fix ident" in h or "ident" in h or "identifier" in h:
+    elif "waypoint" in h or "fix" in h or "ident" in h or "identifier" in h or h == "wpt":
         h = "waypoint_identifier"
     elif "path" in h or "terminator" in h or "descriptor" in h or "designator" in h:
         h = "path_descriptor"
     elif "fly" in h:
         h = "fly_over"
-    elif "course" in h:
+    elif "course" in h or "track" in h:
         h = "course"
     elif "turn" in h:
         h = "turn_direction"
@@ -235,7 +237,7 @@ def sanitize_header(raw_header: str) -> str:
         h = "altitude"
     elif "speed" in h:
         h = "speed_limit"
-    elif "dist" in h or "dst" in h:
+    elif "dist" in h or "dst" in h or "time" in h:
         h = "distance"
     elif "vpa" in h or "va/" in h or "tch" in h or "vertical" in h:
         h = "vpa_tch"
@@ -264,3 +266,160 @@ def clean_text(text):
     if val in ("-", "", "N/A"):
         return None
     return val
+
+
+def normalize_course(course_str):
+    """Normalize course values to [Mag]° M / [True]° T format."""
+    if not course_str:
+        return None
+    val_clean = str(course_str).strip()
+    if val_clean in ("-", "", "N/A"):
+        return None
+    matches = re.findall(r"(\d+(?:\.\d+)?)", val_clean)
+    if len(matches) >= 2:
+        return f"{matches[0]}° M / {matches[1]}° T"
+    elif len(matches) == 1:
+        return f"{matches[0]}° M / {matches[0]}° T"
+    return None
+
+
+def normalize_altitude(alt_str):
+    """Normalize altitude constraint strings (e.g. +2000, -3000, @2000, +2600 / -5000)."""
+    if not alt_str:
+        return None
+    val_clean = str(alt_str).strip()
+    if val_clean in ("-", "", "N/A"):
+        return None
+
+    # Parse constraints using regex
+    matches = re.findall(r"([\-+@]?)\s*(?:FL\s*)?(\d+(?:\.\d+)?)", val_clean, re.IGNORECASE)
+    if not matches:
+        return None
+
+    parsed_constraints = []
+    for prefix, value in matches:
+        is_fl = "FL" in val_clean.upper() and bool(
+            re.search(rf"FL\s*{value.split('.')[0]}", val_clean, re.I)
+        )
+        numeric_val = float(value)
+        if is_fl:
+            numeric_val *= 100
+        int_val = int(numeric_val)
+
+        # If no prefix is present, default to mandatory "@"
+        if not prefix:
+            prefix = "@"
+        parsed_constraints.append((prefix, int_val))
+
+    # Look for min (+) and max (-) constraints to form a window
+    min_alt = next((val for pre, val in parsed_constraints if pre == "+"), None)
+    max_alt = next((val for pre, val in parsed_constraints if pre == "-"), None)
+
+    if min_alt is not None and max_alt is not None:
+        return f"+{min_alt} / -{max_alt}"
+    elif min_alt is not None:
+        return f"+{min_alt}"
+    elif max_alt is not None:
+        return f"-{max_alt}"
+    else:
+        # Fallback to the first parsed constraint
+        prefix, val = parsed_constraints[0]
+        return f"{prefix}{val}"
+
+
+def normalize_speed(speed_str):
+    """Normalize speed constraint strings (e.g. -185, @230)."""
+    if not speed_str:
+        return None
+    val_clean = str(speed_str).strip()
+    if val_clean in ("-", "", "N/A"):
+        return None
+
+    match = re.search(r"([\-+@]?)\s*(\d+(?:\.\d+)?)", val_clean)
+    if not match:
+        return None
+
+    prefix = match.group(1)
+    if not prefix:
+        prefix = "@"
+    val = int(float(match.group(2)))
+    return f"{prefix}{val}"
+
+
+def normalize_distance(dist_str):
+    """Normalize distance values (float string or time based e.g. 1 MIN)."""
+    if not dist_str:
+        return None
+    val_clean = str(dist_str).strip()
+    if val_clean in ("-", "", "N/A"):
+        return None
+
+    if "min" in val_clean.lower() or "minute" in val_clean.lower():
+        match = re.search(r"(\d+)", val_clean)
+        if match:
+            return f"{match.group(1)} MIN"
+        return None
+
+    match = re.search(r"(\d+(?:\.\d+)?)", val_clean)
+    if not match:
+        return None
+
+    val = float(match.group(1))
+    if val.is_integer():
+        return str(int(val))
+    return f"{val:.2f}".rstrip("0").rstrip(".")
+
+
+def normalize_vpa_tch(vt_str):
+    """Normalize VPA/TCH values to -[Angle] / [TCH] format (e.g. -3.00 / 50)."""
+    if not vt_str:
+        return None
+    val_clean = str(vt_str).strip()
+    if val_clean in ("-", "", "N/A"):
+        return None
+
+    matches = re.findall(r"(-?\d+(?:\.\d+)?)", val_clean)
+    if len(matches) >= 2:
+        vpa = float(matches[0])
+        tch = int(float(matches[1]))
+        return f"-{abs(vpa):.2f} / {tch}"
+    elif len(matches) == 1:
+        vpa = float(matches[0])
+        return f"-{abs(vpa):.2f}"
+    return None
+
+
+def normalize_nav_spec(ns_str):
+    """Normalize navigation specifications (e.g. RNP APCH)."""
+    if not ns_str:
+        return None
+    val_clean = str(ns_str).strip()
+    if val_clean in ("-", "", "N/A"):
+        return None
+
+    ns_upper = val_clean.upper().replace(" ", "").replace("-", "")
+    if "RNPAPCH" in ns_upper:
+        return "RNP APCH"
+    if "RNP1" in ns_upper:
+        return "RNP 1"
+    if "RNAV1" in ns_upper:
+        return "RNAV 1"
+    if "RNAV2" in ns_upper:
+        return "RNAV 2"
+    if "RNAV5" in ns_upper:
+        return "RNAV 5"
+    if "BAROVNAV" in ns_upper:
+        return "BARO VNAV"
+    return val_clean
+
+
+def normalize_turn(turn_str):
+    """Normalize turn directions to L or R."""
+    if not turn_str:
+        return None
+    val_clean = str(turn_str).strip().upper()
+    if "L" in val_clean:
+        return "L"
+    if "R" in val_clean:
+        return "R"
+    return None

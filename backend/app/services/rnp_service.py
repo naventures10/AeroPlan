@@ -540,7 +540,7 @@ def _collect_waypoint_alts(
     legs: list, leg_alts: list[float | None], dest: dict[str, float]
 ) -> None:
     for leg, alt in zip(legs, leg_alts, strict=True):
-        if leg.waypoint_ident and alt is not None:
+        if leg.waypoint_ident and alt is not None and leg.waypoint_ident not in dest:
             dest[leg.waypoint_ident] = alt
 
 
@@ -744,8 +744,15 @@ def build_3d_paths(
         for ig in initial_groups:
             full_legs = ig.copy()
             if final_approach:
-                if full_legs[-1].waypoint_ident == final_approach[0].waypoint_ident:
-                    full_legs.extend(final_approach[1:])
+                # Find the merge point in final_approach where the transition connects
+                merge_idx = -1
+                for idx, leg in enumerate(final_approach):
+                    if leg.waypoint_ident == full_legs[-1].waypoint_ident:
+                        merge_idx = idx
+                        break
+
+                if merge_idx != -1:
+                    full_legs.extend(final_approach[merge_idx + 1 :])
                 else:
                     full_legs.extend(final_approach)
 
@@ -789,6 +796,36 @@ def build_3d_paths(
                         legs=_map_legs(full_legs),
                     )
                 )
+
+        # Check if final_approach itself starts with a unique transition entry point
+        if final_approach:
+            start_ident = final_approach[0].waypoint_ident
+            initial_ends = {
+                ig[-1].waypoint_ident for ig in initial_groups if ig and ig[-1].waypoint_ident
+            }
+            if start_ident and start_ident not in initial_ends:
+                p3d, leg_alts, turn_dirs = _extract_path(final_approach, initial_pos=initial_pos)
+                if p3d:
+                    final_app_p3d = p3d
+                    _collect_waypoint_alts(final_approach, leg_alts, waypoint_altitudes)
+                    smooth_p, ts, dist = _process_path(p3d, turn_dirs=turn_dirs)
+                    if smooth_p:
+                        ident_counts[start_ident] = ident_counts.get(start_ident, 0) + 1
+                        unique_ident = start_ident
+                        if ident_counts[start_ident] > 1:
+                            unique_ident = f"{start_ident}-{ident_counts[start_ident]}"
+
+                        approach_paths.append(
+                            RnpApproachPath(
+                                label=f"via {unique_ident}",
+                                entry_waypoint=unique_ident,
+                                path=smooth_p,
+                                timestamps=ts,
+                                total_distance_nm=dist,
+                                segment_type="approach",
+                                legs=_map_legs(final_approach),
+                            )
+                        )
 
     missed_approach_path = None
     if raw_missed_approach:
@@ -903,11 +940,7 @@ def build_3d_paths(
                     pass
 
             alt_ft = extract_altitude(leg)
-            alt_m = (
-                alt_ft * FT_TO_M
-                if alt_ft is not None
-                else waypoint_altitudes.get(leg.waypoint_ident, 0.0)
-            )
+            alt_m = alt_ft * FT_TO_M if alt_ft is not None else 0.0
 
             turn_dir = _extract_turn_direction(leg)
 
