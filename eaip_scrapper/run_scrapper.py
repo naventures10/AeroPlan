@@ -70,7 +70,6 @@ if __name__ == "__main__":
         questionary.Choice("[LOAD]   Daylight ETL", value="load_daylight", checked=True),
         questionary.Choice("[SCRAPE] NOTAMs", value="scrape_notam", checked=True),
         questionary.Choice("[LOAD]   NOTAMs ETL", value="load_notam", checked=True),
-        questionary.Choice("[SCRAPE] AIP Supplements", value="scrape_supplements", checked=True),
         questionary.Choice(
             "[ALL]    RNP Pipeline (Extract -> Merge -> Parse -> Load)",
             value="all_rnp",
@@ -92,7 +91,6 @@ if __name__ == "__main__":
     run_load_daylight = "load_daylight" in selected
     run_scrape_notam = "scrape_notam" in selected
     run_load_notam = "load_notam" in selected
-    run_scrape_supplements = "scrape_supplements" in selected
     run_all_rnp = "all_rnp" in selected
 
     HOME_URL = "https://aim-india.aai.aero/"
