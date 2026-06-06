@@ -10,6 +10,7 @@ from opentelemetry import metrics, trace
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
@@ -18,7 +19,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from sqlalchemy import text
 
 from app.api.v1.api import api_router
-from app.core.database import AsyncSessionLocal
+from app.core.database import AsyncSessionLocal, engine
 from app.core.logging_config import setup_logging
 from app.schemas.geojson import HealthResponse
 
@@ -30,18 +31,14 @@ logger = structlog.get_logger()
 # ── OpenTelemetry Instrumentation ────────────────────────────────────────────
 resource = Resource.create({"service.name": "eaip-backend"})
 
-# Traces
+# Traces — endpoint + auth read from OTEL_EXPORTER_OTLP_TRACES_ENDPOINT / OTEL_EXPORTER_OTLP_HEADERS env vars
 provider = TracerProvider(resource=resource)
-trace_endpoint = os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "http://localhost:4318/v1/traces")
-processor = BatchSpanProcessor(OTLPSpanExporter(endpoint=trace_endpoint))
+processor = BatchSpanProcessor(OTLPSpanExporter())
 provider.add_span_processor(processor)
 trace.set_tracer_provider(provider)
 
-# Metrics
-metric_endpoint = os.getenv(
-    "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "http://localhost:4318/v1/metrics"
-)
-metric_reader = PeriodicExportingMetricReader(OTLPMetricExporter(endpoint=metric_endpoint))
+# Metrics — endpoint + auth read from OTEL_EXPORTER_OTLP_METRICS_ENDPOINT / OTEL_EXPORTER_OTLP_HEADERS env vars
+metric_reader = PeriodicExportingMetricReader(OTLPMetricExporter())
 meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
 metrics.set_meter_provider(meter_provider)
 
@@ -49,6 +46,10 @@ metrics.set_meter_provider(meter_provider)
 app = FastAPI(title="Aero Plan API", version="0.1.0")
 
 FastAPIInstrumentor.instrument_app(app)
+
+# Instrument SQLAlchemy — exposes DB query spans as children inside request traces
+# Uses engine.sync_engine because SQLAlchemyInstrumentor hooks into sync event system
+SQLAlchemyInstrumentor().instrument(engine=engine.sync_engine)
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",

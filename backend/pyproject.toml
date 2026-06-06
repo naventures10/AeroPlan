@@ -31,6 +31,7 @@ dependencies = [
     "opentelemetry-sdk>=1.42.1",
     "opentelemetry-instrumentation-fastapi>=0.63b1",
     "opentelemetry-instrumentation-logging>=0.63b1",
+    "opentelemetry-instrumentation-sqlalchemy>=0.63b1",
     "opentelemetry-exporter-otlp-proto-http>=1.42.1",
     "cfgrib>=0.9.15.1",
     "ecmwf-opendata>=0.3.29",

@@ -58,6 +58,14 @@ jobs:
           IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-backend:${{ github.sha }}"
           gcloud run deploy eaip-backend --image $IMAGE --region ${{ env.REGION }}
 
+      - name: Configure Backend OTLP Telemetry
+        run: |-
+          gcloud run services update eaip-backend \
+            --region ${{ env.REGION }} \
+            --update-env-vars OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}/v1/traces \
+            --update-env-vars OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}/v1/metrics \
+            --update-env-vars OTEL_EXPORTER_OTLP_HEADERS="${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}"
+
       # ── Weather Pipeline (Cloud Run Job) ────────────────────────────────────
 
       - name: Build and Push Weather Pipeline Image
@@ -106,6 +114,7 @@ jobs:
             --build-arg VITE_MARTIN_URL=$MARTIN_URL \
             --build-arg VITE_MAPTILER_KEY=${{ secrets.VITE_MAPTILER_KEY }} \
             --build-arg VITE_E2E_TEST=true \
+            --build-arg VITE_FARO_URL=${{ secrets.VITE_FARO_URL }} \
             -t $IMAGE ./frontend
           docker push $IMAGE
 
