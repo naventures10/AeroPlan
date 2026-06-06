@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { AlertTriangle } from 'lucide-react';
 import type { NotamData } from '../../../types';
+import { sanitizeNotamDescription } from '../../../utils/sanitize';
 
 interface NotamWidgetProps {
   notams: NotamData[];
@@ -47,7 +48,7 @@ export function NotamWidget({ notams }: NotamWidgetProps) {
                 </div>
               </div>
               <p className="text-on-surface-variant text-sm whitespace-pre-wrap leading-relaxed">
-                {n.description}
+                {sanitizeNotamDescription(n.description)}
               </p>
               <div className="mt-4 pt-3 border-t border-outline-variant flex justify-between text-[10px] text-on-surface-variant font-mono tracking-widest">
                 <span>

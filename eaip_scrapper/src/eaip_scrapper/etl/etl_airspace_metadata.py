@@ -175,16 +175,50 @@ class AirspaceMetadataETL:
         else:
             print(f"  [!] Unknown JSON structure in {file_key}")
 
+    def _classify_control_area(self, name: str, vertical_limits: str) -> str:
+        name_upper = name.upper()
+        limits_upper = vertical_limits.upper()
+
+        # Classify as CTA_UPPER if:
+        # 1. Name contains upper indicators
+        if "UPPER" in name_upper or "UDP" in name_upper or "OCEANIC" in name_upper:
+            return "CTA_UPPER"
+        if re.search(r"\bU\d[A-Z]?\b", name_upper):  # e.g. U1, U2, U5N, etc.
+            return "CTA_UPPER"
+
+        # 2. Lower boundary of vertical limits is FL250 or higher
+        if "/" in limits_upper:
+            parts = limits_upper.split("/")
+            if len(parts) >= 2:
+                lower_part = parts[1].strip()
+                fl_match = re.search(r"FL\s*(\d+)", lower_part)
+                if fl_match:
+                    fl_val = int(fl_match.group(1))
+                    if fl_val >= 250:
+                        return "CTA_UPPER"
+
+                # 3. Upper limit is FL460/UNL and name does not suggest lower altitude
+                upper_part = parts[0].strip()
+                if (
+                    ("FL 460" in upper_part or "FL460" in upper_part or "UNL" in upper_part)
+                    and "LOWER" not in name_upper
+                    and "LDP" not in name_upper
+                ):
+                    return "CTA_UPPER"
+
+        return "CTA_LOWER"
+
     def _process_enr_2_1(self, data: dict, source_file: str):
         sections = [
             ("flight_information_regions", "FIR"),
             ("terminal_control_areas", "CTA_UPPER"),
             ("military_control_zones", "CTR"),
+            ("control_areas", None),
         ]
 
         for key, airspace_type in sections:
             if key in data:
-                print(f"  [*] Processing {key} ({airspace_type})")
+                print(f"  [*] Processing {key} ({airspace_type or 'Dynamic'})")
                 for entry in data[key]:
                     name_and_limits = entry.get("name_and_limits", "")
                     lines = name_and_limits.split("\n")
@@ -192,9 +226,19 @@ class AirspaceMetadataETL:
 
                     vertical_limits = ""
                     for line in lines:
-                        if "/" in line and ("GND" in line or "FL" in line or "UNL" in line):
+                        if "/" in line and (
+                            "GND" in line
+                            or "FL" in line
+                            or "UNL" in line
+                            or "FT" in line
+                            or "AMSL" in line
+                        ):
                             vertical_limits = line
                             break
+
+                    resolved_type = airspace_type
+                    if resolved_type is None:
+                        resolved_type = self._classify_control_area(name, vertical_limits)
 
                     metadata = {
                         "name": name,
@@ -202,7 +246,7 @@ class AirspaceMetadataETL:
                         "vertical_limits": vertical_limits,
                         "services": entry.get("services", []),
                         "source_file": source_file,
-                        "airspace_type": airspace_type,
+                        "airspace_type": resolved_type,
                     }
                     self._insert_metadata(metadata)
 

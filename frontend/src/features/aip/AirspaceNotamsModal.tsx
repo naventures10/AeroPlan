@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useMapStore } from '../../store/useMapStore';
 import { fetchAirspaceNotams } from '../../api/client';
 import type { NotamData } from '../../types';
+import { sanitizeNotamDescription } from '../../utils/sanitize';
 import './AirspaceNotamsModal.css';
 
 export function AirspaceNotamsModal() {
@@ -153,7 +154,9 @@ export function AirspaceNotamsModal() {
                     <span>{notam.is_permanent ? 'PERM' : formatDate(notam.valid_to)}</span>
                   </div>
 
-                  <div className="airspace-notam-desc">{notam.description}</div>
+                  <div className="airspace-notam-desc">
+                    {sanitizeNotamDescription(notam.description)}
+                  </div>
                 </div>
               ))}
             </div>

@@ -163,7 +163,21 @@ class ENRAirspaceExtractor(BaseENRExtractor):
                 "remarks": clean(remarks),
             }
 
-            if cleaned_name in grouped:
+            # Check if this row is a continuation of the previous airspace record
+            cleaned_name_lower = cleaned_name.lower()
+            is_continuation = len(grouped) > 0 and (
+                cleaned_name_lower.startswith("area bounded by")
+                or cleaned_name_lower.startswith("airspace bound")
+            )
+
+            if is_continuation:
+                # Merge into the last parsed airspace record
+                last_key = next(reversed(grouped))
+                last_entry = grouped[last_key]
+                last_entry["services"].append(service)
+                if cleaned_name not in last_entry["name_and_limits"]:
+                    last_entry["name_and_limits"] += "\n" + cleaned_name
+            elif cleaned_name in grouped:
                 # Append service to existing airspace entry
                 grouped[cleaned_name]["services"].append(service)
             else:
