@@ -92,9 +92,16 @@ class NOTAMETL:
             for r in recs:
                 notam_id = r.get("notam_id")
                 desc = r.get("description", "").strip()
-                # Stripping asterisks and whitespace to ensure it's truly a description
+
+                # Clean HTML comments and tags from the description
                 import re as core_re
 
+                desc = core_re.sub(r"<!--.*?(?:-->|$)", "", desc, flags=core_re.DOTALL)
+                desc = core_re.sub(r"<[^>]+>", "", desc)
+                desc = desc.strip()
+                r["description"] = desc
+
+                # Stripping asterisks and whitespace to ensure it's truly a description
                 clean_desc = core_re.sub(r"[\*\s\|]+", "", desc).upper()
                 if clean_desc and clean_desc not in ("EST", "PERM"):
                     description_cache[notam_id] = desc

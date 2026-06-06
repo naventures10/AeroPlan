@@ -53,13 +53,31 @@ class ENRMilitaryExerciseAreasExtractor(BaseENRExtractor):
                     if not any(row_data) or row_data[0] == row_data[1]:
                         continue
 
-                    military_exercise_areas.append(
-                        {
-                            "name_and_lateral_limits": row_data[0],
-                            "upper_lower_limits_and_system": row_data[1],
-                            "remarks_and_time_of_act": row_data[2],
-                        }
+                    name_col = row_data[0].strip()
+                    name_col_lower = name_col.lower()
+
+                    is_continuation = len(military_exercise_areas) > 0 and (
+                        name_col_lower.startswith("area bounded by")
+                        or name_col_lower.startswith("airspace bound")
                     )
+
+                    if is_continuation:
+                        # Merge into the last parsed airspace record
+                        last_entry = military_exercise_areas[-1]
+                        if name_col not in last_entry["name_and_lateral_limits"]:
+                            last_entry["name_and_lateral_limits"] += "\n" + name_col
+                        # optionally append remarks if there's new info, but usually remarks are duplicate or empty
+                        remarks_col = row_data[2].strip()
+                        if remarks_col and remarks_col not in last_entry["remarks_and_time_of_act"]:
+                            last_entry["remarks_and_time_of_act"] += "\n" + remarks_col
+                    else:
+                        military_exercise_areas.append(
+                            {
+                                "name_and_lateral_limits": row_data[0],
+                                "upper_lower_limits_and_system": row_data[1],
+                                "remarks_and_time_of_act": row_data[2],
+                            }
+                        )
 
             # --- Type 2: ADIZ Zones ---
             # Even if columns are merged, they usually contain 'name' and 'lateral'
