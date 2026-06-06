@@ -8,11 +8,14 @@ import boto3
 import geopandas as gpd
 import numpy as np
 import requests
+from dotenv import load_dotenv
 from joblib import Parallel, delayed
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import connected_components
 from shapely import STRtree, line_merge, snap, unary_union
 from sqlalchemy import create_engine, text
+
+load_dotenv()
 
 # Suppress specific Shapely deprecation/geometry warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="shapely")
@@ -32,11 +35,14 @@ MINIO_METADATA_KEY = "output/enr_6_en_route_charts.json"
 
 TARGET_CHART_NAME = "En route Chart- INDIA.pdf"
 
-DB_HOST = "localhost"
-DB_PORT = "5432"
-DB_NAME = "aeronautical_information_system"
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
+DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
-DB_PASS = os.getenv("DB_PASS")
+DB_PASS = os.getenv("DB_PASSWORD")
+
+if not all([DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS]):
+    raise ValueError("Missing database credentials in environment variables.")
 
 TARGET_TABLE = "airspaces_geometry"
 

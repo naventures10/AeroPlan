@@ -8,7 +8,7 @@ from app.schemas.aip_supplements import AipSupplement
 logger = structlog.get_logger()
 router = APIRouter(prefix="/aip-supplements", tags=["AIP Supplements"])
 
-FILE_KEY = "output/aip_supplements.json"
+FILE_KEY = "aip_supplements.json"
 
 storage_client = UnifiedStorageClient()
 

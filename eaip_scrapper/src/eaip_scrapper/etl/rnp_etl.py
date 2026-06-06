@@ -62,23 +62,36 @@ Skip flags:
 
     import os
 
+    from dotenv import load_dotenv
+
+    load_dotenv()
+
     # ── DB Config ──────────────────────────────────────────────────────────────
-    postgres_password = os.getenv("POSTGRES_PASSWORD")
+    postgres_password = os.getenv("DB_PASSWORD")
     if not postgres_password:
-        raise ValueError("POSTGRES_PASSWORD must be set in environment variables.")
+        raise ValueError("DB_PASSWORD must be set in environment variables.")
 
-    postgres_user = os.getenv("POSTGRES_USER", "postgres")
+    postgres_user = os.getenv("DB_USER")
+    if not postgres_user:
+        raise ValueError("DB_USER must be set in environment variables.")
 
-    postgres_port_str = os.getenv("POSTGRES_PORT", "5432")
+    postgres_port_str = os.getenv("DB_PORT")
+    if not postgres_port_str:
+        raise ValueError("DB_PORT must be set in environment variables.")
     try:
         postgres_port = int(postgres_port_str)
     except ValueError:
-        raise ValueError(f"Invalid POSTGRES_PORT: {postgres_port_str}. Must be numeric.") from None
+        raise ValueError(f"Invalid DB_PORT: {postgres_port_str}. Must be numeric.") from None
+
+    postgres_host = os.getenv("DB_HOST")
+    postgres_db = os.getenv("DB_NAME")
+    if not postgres_host or not postgres_db:
+        raise ValueError("DB_HOST and DB_NAME must be set in environment variables.")
 
     db_config = {
-        "host": os.getenv("POSTGRES_HOST", "localhost"),
+        "host": postgres_host,
         "port": postgres_port,
-        "database": os.getenv("POSTGRES_DB", "aeronautical_information_system"),
+        "database": postgres_db,
         "user": postgres_user,
         "password": postgres_password,
     }

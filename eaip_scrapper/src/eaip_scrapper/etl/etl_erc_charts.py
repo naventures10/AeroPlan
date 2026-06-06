@@ -6,17 +6,23 @@ import tempfile
 
 import boto3
 import requests
+from dotenv import load_dotenv
 
 from eaip_scrapper.validation.core.central_validator import ValidationRouter
 
-MINIO_ENDPOINT = "http://localhost:9000"
+load_dotenv()
+
+MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT")
 MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY")
 MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY")
+
+if not all([MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY]):
+    raise ValueError("Missing MinIO credentials in environment variables")
 MINIO_BUCKET = "ais"
 MINIO_METADATA_KEY = "output/enr_6_en_route_charts.json"
 
 TARGET_CHART_NAME = "En route Chart- INDIA.pdf"
-OUTPUT_PMTILES_KEY = "output/ERC-VOMF.pmtiles"
+OUTPUT_PMTILES_KEY = "ERC-VOMF.pmtiles"
 
 EXTERNAL_CMD_TIMEOUT = 600  # 10 minutes max for heavy gdal processing
 

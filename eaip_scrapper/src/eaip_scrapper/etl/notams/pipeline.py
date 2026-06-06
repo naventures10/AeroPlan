@@ -222,14 +222,22 @@ def main():
     )
     args = parser.parse_args()
 
+    from dotenv import load_dotenv
+
+    load_dotenv()
+
     # Get database URL from env, or construct it from separate parts, or fallback to default
-    db_url = os.getenv("DATABASE_URL")
+    db_url = os.getenv("DB_URL")
     if not db_url:
-        db_user = os.getenv("DB_USER", "postgres")
-        db_pass = os.getenv("DB_PASS", "postgres")
-        db_host = os.getenv("DB_HOST", "localhost")
-        db_port = os.getenv("DB_PORT", "5432")
-        db_name = os.getenv("DB_NAME", "aeronautical_information_system")
+        db_user = os.getenv("DB_USER")
+        db_pass = os.getenv("DB_PASSWORD")
+        db_host = os.getenv("DB_HOST")
+        db_port = os.getenv("DB_PORT")
+        db_name = os.getenv("DB_NAME")
+        if not all([db_user, db_pass, db_host, db_port, db_name]):
+            raise ValueError(
+                "DB_URL or individual DB credentials must be set in environment variables."
+            )
         db_url = f"postgresql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}"
 
     etl_pipeline = NOTAMETL(db_url, force_recreate=args.force_recreate)

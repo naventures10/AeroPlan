@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 # Constants
 URL = "https://aim-india.aai.aero/aip-supplements"
 BASE_URL = "https://aim-india.aai.aero"
-FILE_KEY = "output/aip_supplements.json"
+FILE_KEY = "aip_supplements.json"
 
 
 def scrape_supplements() -> list | None:

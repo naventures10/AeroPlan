@@ -20,17 +20,25 @@ class RouteLoader:
         )
         self.bucket_name = bucket_name
 
-        pg_user = os.getenv("PG_USER")
-        pg_password = os.getenv("PG_PASSWORD")
-        if not pg_user or not pg_password:
-            raise ValueError("Missing required env var PG_USER/PG_PASSWORD")
+        from dotenv import load_dotenv
+
+        load_dotenv()
+
+        db_host = os.getenv("DB_HOST")
+        db_port = os.getenv("DB_PORT")
+        db_name = os.getenv("DB_NAME")
+        db_user = os.getenv("DB_USER")
+        db_password = os.getenv("DB_PASSWORD")
+
+        if not all([db_host, db_port, db_name, db_user, db_password]):
+            raise ValueError("Missing required DB credentials in environment variables")
 
         self.conn = psycopg2.connect(
-            dbname=os.getenv("PG_DBNAME", "aeronautical_information_system"),
-            user=pg_user,
-            password=pg_password,
-            host="localhost",
-            port="5432",
+            dbname=db_name,
+            user=db_user,
+            password=db_password,
+            host=db_host,
+            port=db_port,
         )
         self.conn.autocommit = False
 

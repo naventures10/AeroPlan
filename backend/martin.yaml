@@ -113,7 +113,7 @@ postgres:
 
 pmtiles:
   sources:
-    erc_india: "/mnt/gcs/output/ERC-VOMF.pmtiles"
+    erc_india: "/mnt/gcs/ERC-VOMF.pmtiles"
 
 observability:
   metrics:

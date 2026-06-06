@@ -5,10 +5,13 @@ import sys
 
 import boto3
 import psycopg2
+from dotenv import load_dotenv
 from psycopg2.extras import Json
 from pydantic import ValidationError
 
 from eaip_scrapper.validation.schemas.database.airspace import AirspaceMetadataDatabaseValidator
+
+load_dotenv()
 
 # --- Configuration ---
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "http://localhost:9000")
@@ -16,14 +19,14 @@ MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY")
 MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY")
 MINIO_BUCKET = os.getenv("MINIO_BUCKET", "ais")
 
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME", "aeronautical_information_system")
-DB_USER = os.getenv("PG_USER")
-DB_PASS = os.getenv("PG_PASSWORD")
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
+DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASSWORD")
 
-if not DB_USER or not DB_PASS:
-    raise ValueError("PG_USER and PG_PASSWORD must be set in environment variables")
+if not all([DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS]):
+    raise ValueError("Missing database credentials in environment variables.")
 
 # Files to process
 METADATA_FILES = [

@@ -117,7 +117,7 @@ pmtiles:
   endpoint: "http://minio:9000"
   endpoint_url: "http://minio:9000"
   sources:
-    erc_india: http://minio:9000/ais/output/ERC-VOMF.pmtiles
+    erc_india: http://minio:9000/ais/ERC-VOMF.pmtiles
 
 observability:
   metrics:
