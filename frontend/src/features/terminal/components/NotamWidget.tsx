@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Info } from 'lucide-react';
 import type { NotamData } from '../../../types';
 import { sanitizeNotamDescription } from '../../../utils/sanitize';
 
@@ -23,6 +23,18 @@ export function NotamWidget({ notams }: NotamWidgetProps) {
         </span>
       </h3>
       <div className="flex flex-col gap-4 overflow-y-auto pb-6 custom-scrollbar pr-2">
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex gap-3 text-sm text-on-surface-variant">
+          <Info className="text-amber-500 shrink-0 mt-0.5" size={18} />
+          <div className="flex flex-col gap-1 text-xs">
+            <span className="font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+              Notice
+            </span>
+            <span className="leading-relaxed">
+              The active NOTAMs shown below are compiled from the current NOTAM summary. For
+              recently issued NOTAMs, please consult the Preflight Information Bulletin (PIB).
+            </span>
+          </div>
+        </div>
         {notams.length > 0 ? (
           notams.map((n) => (
             <div
