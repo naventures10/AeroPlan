@@ -72,6 +72,21 @@ interface UseWeatherFrameLoaderOptions<TFrame> {
 }
 
 /**
+ * Helper to determine if an error was caused by a request/decode abortion.
+ * We check the name, the message, and the wrapped cause since library-level
+ * decoders (e.g. geotiff.js/weatherlayers-gl) sometimes wrap standard AbortErrors.
+ */
+function isAbortError(err: any): boolean {
+  if (!err) return false;
+  return (
+    err.name === 'AbortError' ||
+    err.message?.includes('aborted') ||
+    err.message?.includes('decoding aborted') ||
+    err.cause?.name === 'AbortError'
+  );
+}
+
+/**
  * Shared hook that orchestrates priority-based progressive loading of
  * weather forecast frames, with automatic stale-manifest recovery.
  *
@@ -119,19 +134,31 @@ export function useWeatherFrameLoader<TFrame>({
       );
 
       try {
-        // Step A: Load prioritised frames in parallel
-        const prioritizedResults = await Promise.all(
+        // Step A: Load prioritised frames in parallel using Promise.allSettled to avoid unhandled rejections
+        const prioritizedSettled = await Promise.allSettled(
           prioritizedIndices.map((idx) => loadFrame(idx, levelKey, signal, forecastTimestamps)),
         );
         if (!active) return;
 
-        // Apply prioritised frames immediately
         const frameMap: Record<number, TFrame> = {};
-        prioritizedResults.forEach((r) => {
-          frameMap[r.index] = r.data;
-        });
+        let firstNonAbortError: any = null;
+
+        for (const res of prioritizedSettled) {
+          if (res.status === 'fulfilled') {
+            frameMap[res.value.index] = res.value.data;
+          } else {
+            if (!isAbortError(res.reason)) {
+              firstNonAbortError = res.reason;
+            }
+          }
+        }
 
         setFrames((prev) => ({ ...prev, ...frameMap }));
+
+        if (firstNonAbortError) {
+          throw firstNonAbortError;
+        }
+
         setStatus({ state: 'ready', message: 'Active frames ready' });
 
         // Step B: Load remaining frames sequentially in the background
@@ -142,12 +169,12 @@ export function useWeatherFrameLoader<TFrame>({
             if (!active) return;
             setFrames((prev) => ({ ...prev, [r.index]: r.data }));
           } catch (err: any) {
-            if (err.name === 'AbortError' || !active) return;
+            if (isAbortError(err) || !active) return;
             console.error(`[${logPrefix}] Background load error for frame ${idx}:`, err);
           }
         }
       } catch (err: any) {
-        if (err.name === 'AbortError' || !active) return;
+        if (isAbortError(err) || !active) return;
         console.error(`[${logPrefix}] Load error:`, err);
 
         // Stale manifest auto-heal
