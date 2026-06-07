@@ -62,6 +62,7 @@ jobs:
         run: |-
           gcloud run services update eaip-backend \
             --region ${{ env.REGION }} \
+            --update-env-vars OTEL_SERVICE_NAME="aeroplan_GCP_backend" \
             --update-env-vars OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}/v1/traces \
             --update-env-vars OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}/v1/metrics \
             --update-env-vars OTEL_EXPORTER_OTLP_HEADERS="${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}"

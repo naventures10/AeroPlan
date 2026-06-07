@@ -51,6 +51,11 @@ resource "google_cloud_run_v2_service" "backend" {
       }
 
       env {
+        name  = "OTEL_SERVICE_NAME"
+        value = "aeroplan_GCP_backend"
+      }
+
+      env {
         name  = "STORAGE_PATH"
         value = "/mnt/gcs"
       }

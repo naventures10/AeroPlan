@@ -29,7 +29,7 @@ logger = structlog.get_logger()
 
 
 # ── OpenTelemetry Instrumentation ────────────────────────────────────────────
-resource = Resource.create({"service.name": "eaip-backend"})
+resource = Resource.create({"service.name": os.getenv("OTEL_SERVICE_NAME", "eaip-backend")})
 
 # Traces — endpoint + auth read from OTEL_EXPORTER_OTLP_TRACES_ENDPOINT / OTEL_EXPORTER_OTLP_HEADERS env vars
 provider = TracerProvider(resource=resource)
