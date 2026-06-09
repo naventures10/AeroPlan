@@ -210,6 +210,10 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     };
   }, [viewState]);
 
+  const terrainConfig = useMemo(() => {
+    return viewMode === 'TERMINAL' ? { source: 'maptiler-terrain', exaggeration: 1 } : undefined;
+  }, [viewMode]);
+
   // 3. fitBounds watcher (triggered by intent in global store)
   useEffect(() => {
     if (boundsToFit && boundsToFit.length === 4) {
@@ -365,9 +369,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
           onLoad={onMapLoad}
           onStyleData={onMapLoad}
           reuseMaps
-          terrain={
-            viewMode === 'TERMINAL' ? { source: 'maptiler-terrain', exaggeration: 1 } : undefined
-          }
+          terrain={terrainConfig}
           interactiveLayerIds={
             viewMode === 'TERMINAL' ? TERMINAL_INTERACTIVE_LAYERS : EMPTY_INTERACTIVE_LAYERS
           }
@@ -393,7 +395,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
             </Source>
           )}
 
-          {viewMode === 'TERMINAL' && <TerminalSpatialLayers />}
+          <TerminalSpatialLayers />
         </Map>
       </DeckGL>
       <FeatureInfoCard />
