@@ -167,7 +167,23 @@ async def get_aerodrome_metadata(
 ) -> JSONResponse:
     """Fetches the JSONB AIP document metadata for a specific aerodrome, bypassing serialization overhead."""
     query = text("""
-        SELECT aip_document
+        SELECT jsonb_build_object(
+            'icao', aip_document->'icao',
+            'name', aip_document->'name',
+            'source_url', aip_document->'source_url',
+            'data', jsonb_build_object(
+                'geographical_data', aip_document->'data'->'geographical_data',
+                'radio_navigation_and_landing_aids', aip_document->'data'->'radio_navigation_and_landing_aids',
+                'runway_physical_characteristics', aip_document->'data'->'runway_physical_characteristics',
+                'obstacles', CASE
+                    WHEN jsonb_typeof(aip_document->'data'->'obstacles') = 'array' THEN (
+                        SELECT COALESCE(jsonb_agg(elem - 'coordinates'), '[]'::jsonb)
+                        FROM jsonb_array_elements(aip_document->'data'->'obstacles') AS elem
+                    )
+                    ELSE '[]'::jsonb
+                END
+            )
+        )
         FROM aerodrome_documents
         WHERE icao_code = :icao;
     """)

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Source, Layer, useMap } from 'react-map-gl/maplibre';
 import type { FilterSpecification } from 'maplibre-gl';
 import {
@@ -33,12 +33,55 @@ import { useMapStore } from '../../../../store/useMapStore';
 /** Empty GeoJSON to avoid MapLibre source errors when no data is available */
 const EMPTY_FC: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
 
+const RUNWAY_LABEL_LAYOUT = {
+  'text-field': ['get', 'label'],
+  'text-size': 18,
+  'text-font': ['Inter Bold', 'Arial Unicode MS Regular'],
+  'text-offset': [0, 1.5] as [number, number],
+  'text-rotate': ['get', 'bearing'],
+  'text-rotation-alignment': 'map' as const,
+  'text-allow-overlap': true,
+  'text-ignore-placement': true,
+};
+
+const RUNWAY_LABEL_PAINT = {
+  'text-color': '#ffffff',
+  'text-halo-color': 'rgba(0,0,0,0.8)',
+  'text-halo-width': 1.5,
+};
+
 export function TerminalSpatialLayers() {
   const { current: map } = useMap();
   const runwayData = useRunwayPolygons();
   const terminalSpatialFilters = useMapStore((state) => state.terminalSpatialFilters);
   const activeAirport = useMapStore((state) => state.activeAirport);
   const isDarkMode = useMapStore((state) => state.mapStyle !== 'light');
+  const viewMode = useMapStore((state) => state.viewMode);
+
+  const polygonPaint = useMemo(() => getPolygonPaint(isDarkMode), [isDarkMode]);
+  const pointPaint = useMemo(() => getPointPaint(isDarkMode), [isDarkMode]);
+
+  const isVisible = viewMode === 'TERMINAL';
+  const visibility: 'visible' | 'none' = isVisible ? 'visible' : 'none';
+
+  const runwayFillLayout = useMemo(() => ({ visibility }), [visibility]);
+  const runwayOutlineLayout = useMemo(() => ({ visibility }), [visibility]);
+  const runwayLabelLayout = useMemo(
+    () => ({
+      ...RUNWAY_LABEL_LAYOUT,
+      visibility,
+    }),
+    [visibility],
+  );
+
+  const polygonLayout = useMemo(() => ({ visibility }), [visibility]);
+  const pointLayout = useMemo(
+    () => ({
+      ...POINT_LAYOUT,
+      visibility,
+    }),
+    [visibility],
+  );
 
   useEffect(() => {
     if (!map) return;
@@ -66,103 +109,124 @@ export function TerminalSpatialLayers() {
     };
   }, [map]);
 
-  const pointFilter: FilterSpecification = [
-    'all',
-    ['==', ['upcase', ['coalesce', ['get', 'icao_code'], '']], (activeAirport || '').toUpperCase()],
-    ['==', ['geometry-type'], 'Point'],
-    ['!', ['>=', ['index-of', 'RUNWAY', SEARCH_EXPR], 0]],
-    [
-      'any',
-      // Always show ARP/Helipads
+  const pointFilter: FilterSpecification = useMemo(
+    () =>
       [
-        'any',
-        ['==', ['get', 'feature_category'], 'ARP'],
-        ['==', ['get', 'feature_category'], 'HELIPAD'],
-      ],
-      // Toggleable categories
-      ...(terminalSpatialFilters.buildings
-        ? [
-            [
-              'any',
-              ['>=', ['index-of', 'BUILDING', SEARCH_EXPR], 0],
-              ['>=', ['index-of', 'HOUSE', SEARCH_EXPR], 0],
-              ['>=', ['index-of', 'SCHOOL', SEARCH_EXPR], 0],
-            ],
-          ]
-        : []),
-      ...(terminalSpatialFilters.infrastructure
-        ? [
-            [
-              'any',
-              ['>=', ['index-of', 'TOWER', SEARCH_EXPR], 0],
-              ['>=', ['index-of', 'MAST', SEARCH_EXPR], 0],
-              ['>=', ['index-of', 'ANTENNA', SEARCH_EXPR], 0],
-              ['>=', ['index-of', 'POLE', SEARCH_EXPR], 0],
-              ['>=', ['index-of', 'CRANE', SEARCH_EXPR], 0],
-            ],
-          ]
-        : []),
-      ...(terminalSpatialFilters.natural
-        ? [
-            [
-              'any',
-              ['>=', ['index-of', 'TREE', SEARCH_EXPR], 0],
-              ['>=', ['index-of', 'NATURAL', SEARCH_EXPR], 0],
-            ],
-          ]
-        : []),
-      ...(terminalSpatialFilters.navaids
-        ? [
-            [
-              'any',
-              ['>=', ['index-of', 'NAV', SEARCH_EXPR], 0],
-              ['>=', ['index-of', 'RADIO', SEARCH_EXPR], 0],
-            ],
-          ]
-        : []),
-      ...(terminalSpatialFilters.other
-        ? [
-            [
-              'all',
-              ['==', ['get', 'feature_category'], 'OBSTACLE'],
-              [
-                '!',
+        'all',
+        [
+          '==',
+          ['upcase', ['coalesce', ['get', 'icao_code'], '']],
+          (activeAirport || '').toUpperCase(),
+        ],
+        ['==', ['geometry-type'], 'Point'],
+        ['!', ['>=', ['index-of', 'RUNWAY', SEARCH_EXPR], 0]],
+        [
+          'any',
+          // Always show ARP/Helipads
+          [
+            'any',
+            ['==', ['get', 'feature_category'], 'ARP'],
+            ['==', ['get', 'feature_category'], 'HELIPAD'],
+          ],
+          // Toggleable categories
+          ...(terminalSpatialFilters.buildings
+            ? [
                 [
                   'any',
                   ['>=', ['index-of', 'BUILDING', SEARCH_EXPR], 0],
                   ['>=', ['index-of', 'HOUSE', SEARCH_EXPR], 0],
                   ['>=', ['index-of', 'SCHOOL', SEARCH_EXPR], 0],
+                ],
+              ]
+            : []),
+          ...(terminalSpatialFilters.infrastructure
+            ? [
+                [
+                  'any',
                   ['>=', ['index-of', 'TOWER', SEARCH_EXPR], 0],
                   ['>=', ['index-of', 'MAST', SEARCH_EXPR], 0],
                   ['>=', ['index-of', 'ANTENNA', SEARCH_EXPR], 0],
                   ['>=', ['index-of', 'POLE', SEARCH_EXPR], 0],
                   ['>=', ['index-of', 'CRANE', SEARCH_EXPR], 0],
+                ],
+              ]
+            : []),
+          ...(terminalSpatialFilters.natural
+            ? [
+                [
+                  'any',
                   ['>=', ['index-of', 'TREE', SEARCH_EXPR], 0],
                   ['>=', ['index-of', 'NATURAL', SEARCH_EXPR], 0],
                 ],
-              ],
-            ],
-          ]
-        : []),
-    ],
-  ] as any;
+              ]
+            : []),
+          ...(terminalSpatialFilters.navaids
+            ? [
+                [
+                  'any',
+                  ['>=', ['index-of', 'NAV', SEARCH_EXPR], 0],
+                  ['>=', ['index-of', 'RADIO', SEARCH_EXPR], 0],
+                ],
+              ]
+            : []),
+          ...(terminalSpatialFilters.other
+            ? [
+                [
+                  'all',
+                  ['==', ['get', 'feature_category'], 'OBSTACLE'],
+                  [
+                    '!',
+                    [
+                      'any',
+                      ['>=', ['index-of', 'BUILDING', SEARCH_EXPR], 0],
+                      ['>=', ['index-of', 'HOUSE', SEARCH_EXPR], 0],
+                      ['>=', ['index-of', 'SCHOOL', SEARCH_EXPR], 0],
+                      ['>=', ['index-of', 'TOWER', SEARCH_EXPR], 0],
+                      ['>=', ['index-of', 'MAST', SEARCH_EXPR], 0],
+                      ['>=', ['index-of', 'ANTENNA', SEARCH_EXPR], 0],
+                      ['>=', ['index-of', 'POLE', SEARCH_EXPR], 0],
+                      ['>=', ['index-of', 'CRANE', SEARCH_EXPR], 0],
+                      ['>=', ['index-of', 'TREE', SEARCH_EXPR], 0],
+                      ['>=', ['index-of', 'NATURAL', SEARCH_EXPR], 0],
+                    ],
+                  ],
+                ],
+              ]
+            : []),
+        ],
+      ] as any,
+    [activeAirport, terminalSpatialFilters],
+  );
 
-  const polygonFilter: FilterSpecification = [
-    'all',
-    ['==', ['upcase', ['coalesce', ['get', 'icao_code'], '']], (activeAirport || '').toUpperCase()],
-    ['==', ['geometry-type'], 'Polygon'],
-    ['!', ['>=', ['index-of', 'RUNWAY', SEARCH_EXPR], 0]],
-    terminalSpatialFilters.buildings
-      ? ['literal', true]
-      : ['!', ['>=', ['index-of', 'BUILDING', SEARCH_EXPR], 0]],
-  ] as any;
+  const polygonFilter: FilterSpecification = useMemo(
+    () =>
+      [
+        'all',
+        [
+          '==',
+          ['upcase', ['coalesce', ['get', 'icao_code'], '']],
+          (activeAirport || '').toUpperCase(),
+        ],
+        ['==', ['geometry-type'], 'Polygon'],
+        ['!', ['>=', ['index-of', 'RUNWAY', SEARCH_EXPR], 0]],
+        terminalSpatialFilters.buildings
+          ? ['literal', true]
+          : ['!', ['>=', ['index-of', 'BUILDING', SEARCH_EXPR], 0]],
+      ] as any,
+    [activeAirport, terminalSpatialFilters.buildings],
+  );
 
   return (
     <>
       {/* Runway strips — flat fill drapes on terrain, outline for definition */}
       <Source id="runway-polygons-source" type="geojson" data={runwayData?.polygons ?? EMPTY_FC}>
-        <Layer id="runway-fill" type="fill" paint={RUNWAY_FILL_PAINT} />
-        <Layer id="runway-outline" type="line" paint={RUNWAY_OUTLINE_PAINT} />
+        <Layer id="runway-fill" type="fill" layout={runwayFillLayout} paint={RUNWAY_FILL_PAINT} />
+        <Layer
+          id="runway-outline"
+          type="line"
+          layout={runwayOutlineLayout}
+          paint={RUNWAY_OUTLINE_PAINT}
+        />
       </Source>
 
       {/* Runway threshold designators (labels) */}
@@ -170,21 +234,8 @@ export function TerminalSpatialLayers() {
         <Layer
           id="runway-threshold-labels"
           type="symbol"
-          layout={{
-            'text-field': ['get', 'label'],
-            'text-size': 18,
-            'text-font': ['Inter Bold', 'Arial Unicode MS Regular'],
-            'text-offset': [0, 1.5],
-            'text-rotate': ['get', 'bearing'],
-            'text-rotation-alignment': 'map',
-            'text-allow-overlap': true,
-            'text-ignore-placement': true,
-          }}
-          paint={{
-            'text-color': '#ffffff',
-            'text-halo-color': 'rgba(0,0,0,0.8)',
-            'text-halo-width': 1.5,
-          }}
+          layout={runwayLabelLayout as any}
+          paint={RUNWAY_LABEL_PAINT}
         />
       </Source>
 
@@ -195,15 +246,16 @@ export function TerminalSpatialLayers() {
           type="fill-extrusion"
           source-layer="spatial_features"
           filter={polygonFilter}
-          paint={getPolygonPaint(isDarkMode) as any}
+          layout={polygonLayout}
+          paint={polygonPaint as any}
         />
         <Layer
           id="mvt-points"
           type="symbol"
           source-layer="spatial_features"
           filter={pointFilter}
-          layout={POINT_LAYOUT as any}
-          paint={getPointPaint(isDarkMode) as any}
+          layout={pointLayout as any}
+          paint={pointPaint as any}
         />
       </Source>
     </>

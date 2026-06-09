@@ -19,12 +19,25 @@ interface InterleavedDeckGLProps {
 export function InterleavedDeckGL(props: InterleavedDeckGLProps) {
   const { onOverlayCreated, ...overlayProps } = props;
   const onOverlayCreatedRef = useRef(onOverlayCreated);
+  const overlayRef = useRef<MapboxOverlay | null>(null);
 
   useEffect(() => {
     onOverlayCreatedRef.current = onOverlayCreated;
   }, [onOverlayCreated]);
 
-  const overlay = useControl(() => new MapboxOverlay({ ...overlayProps, interleaved: true }));
+  const overlay = useControl(
+    () => {
+      const instance = new MapboxOverlay({ ...overlayProps, interleaved: true });
+      overlayRef.current = instance;
+      return instance;
+    },
+    () => {
+      if (overlayRef.current) {
+        overlayRef.current.finalize();
+        overlayRef.current = null;
+      }
+    },
+  );
   overlay.setProps(overlayProps);
 
   useEffect(() => {
