@@ -35,6 +35,73 @@ let lastIndexedMetadata: IndexedMetadata | null = null;
 let lastHoveredKey = '';
 let lastHoveredTooltip: { html: string } | null = null;
 
+// fallow-ignore-next-line complexity
+function indexObstacles(docs: any): Map<string, IndexedObstacle[]> {
+  const obstaclesByType = new Map<string, IndexedObstacle[]>();
+  if (!Array.isArray(docs.obstacles)) return obstaclesByType;
+  for (const o of docs.obstacles) {
+    const type = (o.obstacle_type || '').toLowerCase().trim();
+    const elevStr = o.elevation || '';
+    let elevM: number | null = null;
+    const docElevMatch = elevStr.match(/(\d+(?:\.\d+)?)/);
+    if (docElevMatch) {
+      const docElevRaw = parseFloat(docElevMatch[1]);
+      elevM = elevStr.toUpperCase().includes('FT') ? docElevRaw / 3.28084 : docElevRaw;
+    }
+
+    const indexedObs: IndexedObstacle = {
+      obstacle_type: o.obstacle_type || '',
+      elevation: elevStr,
+      elevationM: elevM,
+      marking_lgt: o.marking_lgt || 'NIL',
+      area_affected: o.area_affected || '',
+      remarks: o.remarks || '',
+    };
+
+    let list = obstaclesByType.get(type);
+    if (!list) {
+      list = [];
+      obstaclesByType.set(type, list);
+    }
+    list.push(indexedObs);
+  }
+  return obstaclesByType;
+}
+
+function indexNavaids(docs: any): Map<string, any[]> {
+  const navaidsByIdent = new Map<string, any[]>();
+  if (!Array.isArray(docs.radio_navigation_and_landing_aids)) return navaidsByIdent;
+  for (const n of docs.radio_navigation_and_landing_aids) {
+    const ident = (n.identification || '').trim().toUpperCase();
+    if (ident) {
+      let list = navaidsByIdent.get(ident);
+      if (!list) {
+        list = [];
+        navaidsByIdent.set(ident, list);
+      }
+      list.push(n);
+    }
+  }
+  return navaidsByIdent;
+}
+
+function indexRunways(docs: any): Map<string, any> {
+  const runwaysByDesignator = new Map<string, any>();
+  if (!Array.isArray(docs.runway_physical_characteristics)) return runwaysByDesignator;
+  for (const r of docs.runway_physical_characteristics) {
+    const designation = (r.designation || '').trim();
+    if (designation) {
+      runwaysByDesignator.set(designation, r);
+      const parts = designation.split('/');
+      for (const p of parts) {
+        const trimmedPart = p.trim();
+        if (trimmedPart) runwaysByDesignator.set(trimmedPart, r);
+      }
+    }
+  }
+  return runwaysByDesignator;
+}
+
 /**
  * Pre-processes and indexes active aerodrome metadata on-load/change
  * to optimize O(1) matching during map hover events.
@@ -52,7 +119,7 @@ function getOrCreateIndexedMetadata(metadata: any): IndexedMetadata | null {
 
   const docs = metadata.data || metadata;
 
-  // 1. Extract geographical elevation
+  // Extract geographical elevation
   let elevation: string | null = null;
   let elevationM: number | null = null;
   const rawElev = docs.geographical_data?.elevation_reference_temp;
@@ -64,86 +131,44 @@ function getOrCreateIndexedMetadata(metadata: any): IndexedMetadata | null {
     }
   }
 
-  // 2. Pre-parse and group obstacles by type
-  const obstaclesByType = new Map<string, IndexedObstacle[]>();
-  if (Array.isArray(docs.obstacles)) {
-    for (const o of docs.obstacles) {
-      const type = (o.obstacle_type || '').toLowerCase().trim();
-      const elevStr = o.elevation || '';
-      let elevM: number | null = null;
-      const docElevMatch = elevStr.match(/(\d+(?:\.\d+)?)/);
-      if (docElevMatch) {
-        const docElevRaw = parseFloat(docElevMatch[1]);
-        elevM = elevStr.toUpperCase().includes('FT') ? docElevRaw / 3.28084 : docElevRaw;
-      }
-
-      const indexedObs: IndexedObstacle = {
-        obstacle_type: o.obstacle_type || '',
-        elevation: elevStr,
-        elevationM: elevM,
-        marking_lgt: o.marking_lgt || 'NIL',
-        area_affected: o.area_affected || '',
-        remarks: o.remarks || '',
-      };
-
-      let list = obstaclesByType.get(type);
-      if (!list) {
-        list = [];
-        obstaclesByType.set(type, list);
-      }
-      list.push(indexedObs);
-    }
-  }
-
-  // 3. Group navaids by identification (ident)
-  const navaidsByIdent = new Map<string, any[]>();
-  if (Array.isArray(docs.radio_navigation_and_landing_aids)) {
-    for (const n of docs.radio_navigation_and_landing_aids) {
-      const ident = (n.identification || '').trim().toUpperCase();
-      if (ident) {
-        let list = navaidsByIdent.get(ident);
-        if (!list) {
-          list = [];
-          navaidsByIdent.set(ident, list);
-        }
-        list.push(n);
-      }
-    }
-  }
-
-  // 4. Index runways by designation
-  const runwaysByDesignator = new Map<string, any>();
-  if (Array.isArray(docs.runway_physical_characteristics)) {
-    for (const r of docs.runway_physical_characteristics) {
-      const designation = (r.designation || '').trim();
-      if (designation) {
-        runwaysByDesignator.set(designation, r);
-        const parts = designation.split('/');
-        for (const p of parts) {
-          const trimmedPart = p.trim();
-          if (trimmedPart) {
-            runwaysByDesignator.set(trimmedPart, r);
-          }
-        }
-      }
-    }
-  }
-
   lastMetadataRaw = metadata;
   lastIndexedMetadata = {
     icao: metadata.icao || '',
     elevation,
     elevationM,
-    obstaclesByType,
-    navaidsByIdent,
-    runwaysByDesignator,
+    obstaclesByType: indexObstacles(docs),
+    navaidsByIdent: indexNavaids(docs),
+    runwaysByDesignator: indexRunways(docs),
   };
   return lastIndexedMetadata;
+}
+
+function getMapLibreHoverKey(
+  mapRef: React.RefObject<MapRef | null>,
+  x?: number,
+  y?: number,
+): string {
+  const map = mapRef.current?.getMap();
+  if (!map || x === undefined || y === undefined) return '';
+  try {
+    const currentLayers = map.getStyle()?.layers?.map((l: any) => l.id) || [];
+    const safeLayers = ['mvt-points', 'mvt-polygons'].filter((l) => currentLayers.includes(l));
+    if (safeLayers.length > 0) {
+      const features = map.queryRenderedFeatures([x, y], { layers: safeLayers });
+      if (features && features.length > 0) {
+        return `ml-${features.map((f) => f.properties?.feature_id || f.id || f.properties?.name || f.properties?.feature_name || '').join('_')}`;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return '';
 }
 
 /**
  * Computes a unique hover key based on the layer and feature properties under the cursor.
  */
+// fallow-ignore-next-line complexity
 function getHoverKey(info: any, mapRef: React.RefObject<MapRef | null>): string {
   const { object, layer, x, y } = info;
   if (object && layer?.id) {
@@ -156,23 +181,7 @@ function getHoverKey(info: any, mapRef: React.RefObject<MapRef | null>): string 
     if (layer.id.startsWith('atsRoutes-waypoints-layer')) return `deck-ats-wp-${p.waypoint_name}`;
     return `deck-obj-${layer.id}-${object.id || JSON.stringify(p)}`;
   }
-
-  const map = mapRef.current?.getMap();
-  if (map && x !== undefined && y !== undefined) {
-    try {
-      const currentLayers = map.getStyle()?.layers?.map((l: any) => l.id) || [];
-      const safeLayers = ['mvt-points', 'mvt-polygons'].filter((l) => currentLayers.includes(l));
-      if (safeLayers.length > 0) {
-        const features = map.queryRenderedFeatures([x, y], { layers: safeLayers });
-        if (features && features.length > 0) {
-          return `ml-${features.map((f) => f.properties?.feature_id || f.id || f.properties?.name || f.properties?.feature_name || '').join('_')}`;
-        }
-      }
-    } catch {
-      /* ignore */
-    }
-  }
-  return '';
+  return getMapLibreHoverKey(mapRef, x, y);
 }
 
 // ── Tooltip Builders ────────────────────────────────────────────────────────

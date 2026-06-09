@@ -24,7 +24,6 @@
     "@deck.gl/layers": "~9.2.6",
     "@deck.gl/mapbox": "~9.2.6",
     "@deck.gl/react": "~9.2.6",
-    "@grafana/faro-react": "^2.7.1",
     "@grafana/faro-web-sdk": "^2.7.1",
     "@grafana/faro-web-tracing": "^2.7.1",
     "@luma.gl/core": "~9.2.6",
