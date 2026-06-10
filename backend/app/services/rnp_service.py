@@ -660,13 +660,18 @@ def build_3d_paths(
             next_g = groups[final_group_idx + 1]
             if next_g and len(next_g) > 0:
                 first_leg = next_g[0]
+                ident_str = (
+                    str(first_leg.waypoint_ident).upper() if first_leg.waypoint_ident else ""
+                )
                 role_str = str(first_leg.role).upper() if first_leg.role else ""
                 waypoint_role_raw = getattr(first_leg, "waypoint_role", None)
                 waypoint_role_str = (
                     str(waypoint_role_raw).upper() if isinstance(waypoint_role_raw, str) else ""
                 )
                 raw_coords_str = str(getattr(first_leg, "coordinates_raw", "") or "").upper()
-                if "MAPT" in role_str or "MAPT" in waypoint_role_str or "MAPT" in raw_coords_str:
+                if (
+                    "MAPT" in role_str or "MAPT" in waypoint_role_str or "MAPT" in raw_coords_str
+                ) and not (ident_str.startswith("RW") or ident_str.startswith("RWY")):
                     has_explicit_mapt = True
 
         raw_missed_approach = [] if has_explicit_mapt else final_group[rw_index:]
@@ -837,7 +842,10 @@ def build_3d_paths(
             str(waypoint_role_raw).upper() if isinstance(waypoint_role_raw, str) else ""
         )
         raw_coords_str = str(getattr(first_leg, "coordinates_raw", "") or "").upper()
-        if "MAPT" in role_str or "MAPT" in waypoint_role_str or "MAPT" in raw_coords_str:
+        ident_str = str(first_leg.waypoint_ident).upper() if first_leg.waypoint_ident else ""
+        if ("MAPT" in role_str or "MAPT" in waypoint_role_str or "MAPT" in raw_coords_str) and not (
+            ident_str.startswith("RW") or ident_str.startswith("RWY")
+        ):
             is_explicit_mapt = True
 
         thresh_alt = extract_altitude(first_leg)
@@ -849,11 +857,25 @@ def build_3d_paths(
             )
 
         if is_explicit_mapt:
-            start_alt_ft = thresh_alt if thresh_alt is not None else 10300.0
+            if thresh_alt is not None:
+                start_alt_ft = thresh_alt
+            elif runway_threshold and len(runway_threshold) > 2 and runway_threshold[2] is not None:
+                start_alt_ft = runway_threshold[2] / FT_TO_M
+            elif final_app_p3d and len(final_app_p3d) > 0 and final_app_p3d[-1][2] is not None:
+                start_alt_ft = final_app_p3d[-1][2] / FT_TO_M
+            else:
+                start_alt_ft = 10300.0
         elif decision_point and len(decision_point) > 2 and decision_point[2] is not None:
             start_alt_ft = decision_point[2] / FT_TO_M
         else:
-            start_alt_ft = (thresh_alt + 300.0) if thresh_alt is not None else 10300.0
+            if thresh_alt is not None:
+                start_alt_ft = thresh_alt + 300.0
+            elif runway_threshold and len(runway_threshold) > 2 and runway_threshold[2] is not None:
+                start_alt_ft = runway_threshold[2] / FT_TO_M + 300.0
+            elif final_app_p3d and len(final_app_p3d) > 0 and final_app_p3d[-1][2] is not None:
+                start_alt_ft = final_app_p3d[-1][2] / FT_TO_M + 300.0
+            else:
+                start_alt_ft = 10300.0
 
         missed_end_alt_ft = 10000.0
         if raw_missed_approach:

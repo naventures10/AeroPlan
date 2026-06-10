@@ -1624,7 +1624,7 @@ def test_explicit_mapt_via_role():
         DummyLeg(
             source_serial="10",
             path_descriptor="IF",
-            waypoint_ident="RW09",
+            waypoint_ident="MAPT09",
             lon=1,
             lat=0,
             role="MAPT",
@@ -1645,3 +1645,61 @@ def test_explicit_mapt_via_role():
     assert res.missed_approach_path is not None
     first_pt = res.missed_approach_path.path[0]
     assert math.isclose(first_pt[0], 1.0, rel_tol=1e-5)
+
+
+def test_missed_approach_start_altitude_runway_threshold_fallback():
+    import math
+
+    from app.services.rnp_service import FT_TO_M
+
+    proc = DummyProc(id=1, name="TEST", type="STAR", airport_id="TEST", runway="09")
+
+    # When thresh_alt is None, but runway_threshold is passed.
+    legs = [
+        DummyLeg(
+            source_serial="10",
+            path_descriptor="IF",
+            waypoint_ident="START",
+            lon=0,
+            lat=0,
+            role="IF",
+            altitude_numeric=1000.0,
+        ),
+        DummyLeg(
+            source_serial="20",
+            path_descriptor="TF",
+            waypoint_ident="RW09",
+            lon=1,
+            lat=0,
+            role="TF",
+            altitude_numeric=None,
+        ),
+        DummyLeg(
+            source_serial="10",
+            path_descriptor="IF",
+            waypoint_ident="MAPT09",
+            lon=1,
+            lat=0,
+            role="MAPT",
+            altitude_numeric=None,
+        ),
+        DummyLeg(
+            source_serial="20",
+            path_descriptor="TF",
+            waypoint_ident="W1",
+            lon=2,
+            lat=0,
+            role="TF",
+            altitude_numeric=2300.0,
+        ),
+    ]
+
+    # Explicit runway_threshold with elevation = 500 ft
+    runway_threshold = [1.0, 0.0, 500.0 * FT_TO_M]
+
+    res = build_3d_paths(proc, legs, runway_threshold=runway_threshold)
+    assert res.missed_approach_path is not None
+    first_pt = res.missed_approach_path.path[0]
+
+    # Altitude of first point of missed approach should be runway_threshold elevation (500 ft in meters)
+    assert math.isclose(first_pt[2], 500.0 * FT_TO_M, rel_tol=1e-5)
