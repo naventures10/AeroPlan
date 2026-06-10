@@ -249,33 +249,80 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     }
   }, [boundsToFit, setViewState, viewState, fitBounds, viewMode]);
 
-  // 4. Hide base map labels/roads below zoom 8
-  const onMapLoad = useCallback((e: any) => {
-    const map = e.target;
-    const layers = map.getStyle()?.layers;
-    if (layers) {
-      layers.forEach((layer: any) => {
-        // Only target base map layers, exclude our custom terminal layers
-        if (layer.id.startsWith('mvt-') || layer.id.startsWith('runway-')) {
-          return;
-        }
+  // Ref so the stable onMapLoad callback can read current viewMode
+  const viewModeRef = useRef(viewMode);
+  useEffect(() => {
+    viewModeRef.current = viewMode;
+  }, [viewMode]);
 
-        if (
-          layer.type === 'symbol' ||
-          layer.id.includes('road') ||
-          layer.id.includes('place') ||
-          layer.id.includes('label')
-        ) {
-          try {
-            map.setLayerZoomRange(layer.id, BASE_MAP_LABEL_ZOOM_THRESHOLD, 24);
-          } catch (err) {
-            // Some layers might not support zoom range or be removed
-            console.warn(`Failed to set zoom range for ${layer.id}`, err);
-          }
+  /**
+   * Applies zoom-range thresholds and TERMINAL visibility to base map
+   * symbol / label / road layers.  Skips our own terminal layers
+   * (mvt-*, runway-*) so they remain under react-map-gl control.
+   */
+  const configureBaseMap = useCallback((map: any, isTerminal: boolean) => {
+    const layers = map.getStyle()?.layers;
+    if (!layers) return;
+
+    const targetVisibility = isTerminal ? 'none' : 'visible';
+
+    layers.forEach((layer: any) => {
+      if (layer.id.startsWith('mvt-') || layer.id.startsWith('runway-')) return;
+
+      if (
+        layer.type === 'symbol' ||
+        layer.id.includes('road') ||
+        layer.id.includes('place') ||
+        layer.id.includes('label')
+      ) {
+        try {
+          map.setLayerZoomRange(layer.id, BASE_MAP_LABEL_ZOOM_THRESHOLD, 24);
+          map.setLayoutProperty(layer.id, 'visibility', targetVisibility);
+        } catch {
+          // Layer may not exist yet or was removed during a style rebuild
         }
-      });
-    }
+      }
+    });
   }, []);
+
+  // 4. Initial load: configure base map layers
+  const onMapLoad = useCallback(
+    (e: any) => {
+      configureBaseMap(e.target, viewModeRef.current === 'TERMINAL');
+    },
+    [configureBaseMap],
+  );
+
+  /**
+   * 5. Performance: Toggle base map symbol/label/road visibility.
+   *
+   * Runs when viewMode changes OR when the base map style is switched.
+   * After a style switch MapLibre rebuilds all layers from scratch (all
+   * visible by default), so we must re-apply the TERMINAL hide.  We
+   * schedule a one-shot `idle` listener to ensure the new style has
+   * fully loaded and react-map-gl has re-added its declarative layers
+   * before we touch anything.
+   */
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+
+    const isTerminal = viewMode === 'TERMINAL';
+
+    const apply = () => {
+      if (map.isStyleLoaded()) {
+        configureBaseMap(map, isTerminal);
+      }
+    };
+
+    // Apply immediately if the style is already loaded
+    apply();
+    // Also apply after the map next idles (covers async style rebuilds)
+    map.once('idle', apply);
+    return () => {
+      map.off('idle', apply);
+    };
+  }, [viewMode, mapStyle, configureBaseMap]);
 
   const handleDeckClick = useCallback(
     // fallow-ignore-next-line complexity
@@ -367,7 +414,6 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
           ref={mapRef}
           mapStyle={getMapStyleUrl(mapStyle, MAPTILER_KEY)}
           onLoad={onMapLoad}
-          onStyleData={onMapLoad}
           reuseMaps
           terrain={terrainConfig}
           interactiveLayerIds={
@@ -375,7 +421,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
           }
         >
           {TERRAIN_SOURCE_URL && (
-            <Source id="maptiler-terrain" type="raster-dem" url={TERRAIN_SOURCE_URL} />
+            <Source id="maptiler-terrain" type="raster-dem" url={TERRAIN_SOURCE_URL} maxzoom={12} />
           )}
 
           {hasInterleavedLayers && (

@@ -88,21 +88,35 @@ export function TerminalSpatialLayers() {
 
     const activeImages: HTMLImageElement[] = [];
 
-    Object.entries(TERMINAL_ICONS).forEach(([name, svg]) => {
-      if (map.hasImage(name)) return;
+    const addImages = () => {
+      Object.entries(TERMINAL_ICONS).forEach(([name, svg]) => {
+        if (map.hasImage(name)) return;
 
-      const img = new Image(64, 64);
-      img.onload = () => {
-        if (map && !map.hasImage(name)) {
-          map.addImage(name, img, { sdf: true });
-        }
-      };
-      // UTF-8 safe base64 encoding
-      img.src = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
-      activeImages.push(img);
-    });
+        const img = new Image(64, 64);
+        img.onload = () => {
+          if (map && !map.hasImage(name)) {
+            map.addImage(name, img, { sdf: true });
+          }
+        };
+        // UTF-8 safe base64 encoding
+        img.src = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+        activeImages.push(img);
+      });
+    };
+
+    // Add immediately
+    addImages();
+
+    // MapLibre removes all custom images when a new style is loaded.
+    // We must re-add them after the style data is applied.
+    if (typeof map.on === 'function') {
+      map.on('style.load', addImages);
+    }
 
     return () => {
+      if (typeof map.off === 'function') {
+        map.off('style.load', addImages);
+      }
       activeImages.forEach((img) => {
         img.onload = null;
       });
