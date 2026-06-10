@@ -34,9 +34,11 @@ describe('ConditionsWidget', () => {
   };
 
   it('renders correctly with full data', () => {
+    const mockWeather = { icao: 'VAAU', metar: 'VAAU 010203Z 10010KT...' };
     render(
       <ConditionsWidget
         icaoCode="VAAU"
+        weather={mockWeather as any}
         parsedMetar={mockMetar as any}
         daylight={mockDaylight}
         todayStr="2024-01-01"
@@ -58,35 +60,45 @@ describe('ConditionsWidget', () => {
 
   it('renders correctly with VRB wind', () => {
     const vrbMetar = { ...mockMetar, windDir: 'VRB' };
+    const mockWeather = { icao: 'VAAU', metar: 'VAAU 010203Z VRB10KT...' };
     render(
       <ConditionsWidget
         icaoCode="VAAU"
+        weather={mockWeather as any}
         parsedMetar={vrbMetar as any}
         daylight={mockDaylight}
         todayStr="2024-01-01"
       />,
     );
-    expect(screen.getByText('VRB°T')).toBeInTheDocument();
+    expect(screen.getAllByText('VRB').length).toBeGreaterThan(0);
     expect(screen.getByText('10')).toBeInTheDocument();
   });
 
-  it('renders correctly with empty data', () => {
-    const emptyMetar = {
-      clouds: [],
-      weather: [],
-      temp: null,
-      dew: null,
-      qnh: null,
-    };
+  it('renders Weather Data Unavailable when weather data is missing', () => {
     render(
       <ConditionsWidget
         icaoCode="VAAU"
-        parsedMetar={emptyMetar as any}
-        daylight={null}
+        weather={null}
+        parsedMetar={{
+          windDir: null,
+          windSpeed: null,
+          windUnit: null,
+          visibility: null,
+          clouds: [],
+          temp: null,
+          dew: null,
+          qnh: null,
+        }}
+        daylight={mockDaylight}
         todayStr="2024-01-01"
       />,
     );
-    expect(screen.getByText('VAAU')).toBeInTheDocument();
-    expect(screen.getAllByText('–').length).toBeGreaterThan(0); // Multiple dash fallbacks
+    expect(screen.getAllByText('VAAU').length).toBeGreaterThan(0);
+    expect(screen.getByText('Weather Data Unavailable')).toBeInTheDocument();
+    expect(
+      screen.getByText(/No live METAR or observations are currently reported/i),
+    ).toBeInTheDocument();
+    // Daylight is still rendered
+    expect(screen.getByText('06:00')).toBeInTheDocument();
   });
 });

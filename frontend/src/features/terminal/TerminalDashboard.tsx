@@ -195,6 +195,7 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
               {activeTab === 'CONDITIONS' && (
                 <ConditionsWidget
                   icaoCode={icaoCode}
+                  weather={weather}
                   parsedMetar={parsedMetar}
                   daylight={daylight}
                   todayStr={todayStr}
