@@ -118,50 +118,84 @@ export const POINT_LAYOUT = {
   ],
   'icon-allow-overlap': true,
   'icon-anchor': 'center' as const,
-};
-
-export const getPointPaint = (isDarkMode: boolean) => ({
-  'icon-color': [
+  'text-field': [
     'let',
     's',
     GET_SEARCH_STRING,
     [
       'case',
-      ['>=', ['index-of', 'ARP', ['var', 's']], 0],
-      isDarkMode ? '#c084fc' : '#8b5a8c',
-      ['>=', ['index-of', 'HELIPAD', ['var', 's']], 0],
-      isDarkMode ? '#0ea5e9' : '#427ab5',
       [
         'any',
+        ['>=', ['index-of', 'ARP', ['var', 's']], 0],
+        ['>=', ['index-of', 'HELIPAD', ['var', 's']], 0],
         ['>=', ['index-of', 'NAV', ['var', 's']], 0],
         ['>=', ['index-of', 'RADIO', ['var', 's']], 0],
       ],
-      isDarkMode ? '#34d399' : '#219b9d',
+      '',
       [
-        'any',
-        ['>=', ['index-of', 'TREE', ['var', 's']], 0],
-        ['>=', ['index-of', 'NATURAL', ['var', 's']], 0],
+        'let',
+        'elev',
+        ['coalesce', ['to-number', ['get', 'elevation_m']], 0],
+        [
+          'case',
+          ['>', ['var', 'elev'], 0],
+          ['to-string', ['round', ['*', ['var', 'elev'], 3.28084]]],
+          '',
+        ],
       ],
-      isDarkMode ? '#22c55e' : '#0a7c6e',
-      [
-        'any',
-        ['>=', ['index-of', 'TOWER', ['var', 's']], 0],
-        ['>=', ['index-of', 'MAST', ['var', 's']], 0],
-        ['>=', ['index-of', 'ANTENNA', ['var', 's']], 0],
-        ['>=', ['index-of', 'POLE', ['var', 's']], 0],
-        ['>=', ['index-of', 'CRANE', ['var', 's']], 0],
-      ],
-      isDarkMode ? '#dc2626' : '#c45b4b',
-      [
-        'any',
-        ['>=', ['index-of', 'BUILDING', ['var', 's']], 0],
-        ['>=', ['index-of', 'HOUSE', ['var', 's']], 0],
-        ['>=', ['index-of', 'SCHOOL', ['var', 's']], 0],
-      ],
-      isDarkMode ? '#3b82f6' : '#64748b',
-      isDarkMode ? '#f97316' : '#d97706',
     ],
   ],
+  'text-font': ['Inter SemiBold', 'Arial Unicode MS Regular'],
+  'text-size': 11,
+  'text-anchor': 'bottom' as const,
+  'text-offset': [0, -1.2] as [number, number],
+  'text-optional': true,
+};
+
+const getPointColor = (isDarkMode: boolean) => [
+  'let',
+  's',
+  GET_SEARCH_STRING,
+  [
+    'case',
+    ['>=', ['index-of', 'ARP', ['var', 's']], 0],
+    isDarkMode ? '#c084fc' : '#8b5a8c',
+    ['>=', ['index-of', 'HELIPAD', ['var', 's']], 0],
+    isDarkMode ? '#0ea5e9' : '#427ab5',
+    [
+      'any',
+      ['>=', ['index-of', 'NAV', ['var', 's']], 0],
+      ['>=', ['index-of', 'RADIO', ['var', 's']], 0],
+    ],
+    isDarkMode ? '#34d399' : '#219b9d',
+    [
+      'any',
+      ['>=', ['index-of', 'TREE', ['var', 's']], 0],
+      ['>=', ['index-of', 'NATURAL', ['var', 's']], 0],
+    ],
+    isDarkMode ? '#22c55e' : '#0a7c6e',
+    [
+      'any',
+      ['>=', ['index-of', 'TOWER', ['var', 's']], 0],
+      ['>=', ['index-of', 'MAST', ['var', 's']], 0],
+      ['>=', ['index-of', 'ANTENNA', ['var', 's']], 0],
+      ['>=', ['index-of', 'POLE', ['var', 's']], 0],
+      ['>=', ['index-of', 'CRANE', ['var', 's']], 0],
+    ],
+    isDarkMode ? '#dc2626' : '#c45b4b',
+    [
+      'any',
+      ['>=', ['index-of', 'BUILDING', ['var', 's']], 0],
+      ['>=', ['index-of', 'HOUSE', ['var', 's']], 0],
+      ['>=', ['index-of', 'SCHOOL', ['var', 's']], 0],
+    ],
+    isDarkMode ? '#3b82f6' : '#64748b',
+    isDarkMode ? '#f97316' : '#d97706',
+  ],
+];
+
+export const getPointPaint = (isDarkMode: boolean) => ({
+  'icon-color': getPointColor(isDarkMode),
   'icon-halo-color': isDarkMode ? '#000000' : '#ffffff',
   'icon-halo-width': [
     'let',
@@ -179,6 +213,9 @@ export const getPointPaint = (isDarkMode: boolean) => ({
     ],
   ],
   'icon-halo-blur': 0,
+  'text-color': isDarkMode ? '#f8fafc' : '#0f172a',
+  'text-halo-color': isDarkMode ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.85)',
+  'text-halo-width': 1.5,
 });
 
 export const RUNWAY_FILL_PAINT = {
