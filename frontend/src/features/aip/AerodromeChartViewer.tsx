@@ -34,16 +34,7 @@ function isNonRnpChart(chart: ChartItem): boolean {
     (s ?? '').toLowerCase(),
   );
 
-  const keywords = [
-    'coding',
-    'table',
-    'tabel',
-    'fas',
-    'profile',
-    'cat-a-b-c-d',
-    'cat-a-b-c',
-    'cat-a-b',
-  ];
+  const keywords = ['coding', 'table', 'tabel', 'fas', 'profile'];
 
   return fields.some((field) => keywords.some((keyword) => field.includes(keyword)));
 }

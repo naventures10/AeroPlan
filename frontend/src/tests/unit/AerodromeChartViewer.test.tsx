@@ -99,6 +99,42 @@ describe('AerodromeChartViewer', () => {
     expect(screen.queryByRole('button', { name: /view in 3d/i })).not.toBeInTheDocument();
   });
 
+  it('shows the "View in 3D space" button for RNP charts with category suffixes', async () => {
+    useMapStore.setState({
+      activeAirport: 'VOGB',
+      activeAerodromeMetadata: { id: 'VOGB' },
+      viewMode: 'TERMINAL',
+    });
+
+    (client.fetchCharts as any).mockResolvedValue([
+      {
+        chart_id: '1',
+        chart_title: 'VOGB-RNP-Y-RWY-27-CAT-A-B-C.pdf',
+        chart_url: 'u',
+        chart_index: 'i',
+      },
+    ]);
+    (client.fetchRnpProcedures as any).mockResolvedValue([
+      { procedure_id: 1, chart_key: 'VOGB-RNP-Y-RWY-27' },
+    ]);
+
+    act(() => {
+      render(<AerodromeChartViewer icaoCode="VOGB" />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('VOGB-RNP-Y-RWY-27-CAT-A-B-C.pdf')).toBeInTheDocument();
+    });
+
+    const button = screen.getByText('VOGB-RNP-Y-RWY-27-CAT-A-B-C.pdf').closest('button');
+    act(() => {
+      fireEvent.click(button!);
+    });
+
+    expect(screen.getByTestId('mock-pdf-doc')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /view in 3d/i })).toBeInTheDocument();
+  });
+
   it('sorts charts in the carousel correctly', async () => {
     useMapStore.setState({
       activeAirport: 'VAAU',
