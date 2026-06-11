@@ -29,7 +29,7 @@ function candidateChartKeys(chart: ChartItem): string[] {
   return [...new Set(keys)];
 }
 
-function isNonRnpChart(chart: ChartItem): boolean {
+function isSecondaryChart(chart: ChartItem): boolean {
   const fields = [chart.chart_url, chart.chart_title, chart.chart_index].map((s) =>
     (s ?? '').toLowerCase(),
   );
@@ -43,7 +43,7 @@ function findRnpForChart(
   chart: ChartItem,
   byChartKey: Map<string, RnpProcedureApi>,
 ): RnpProcedureApi | null {
-  if (isNonRnpChart(chart)) return null;
+  if (isSecondaryChart(chart)) return null;
   for (const k of candidateChartKeys(chart)) {
     const hit = byChartKey.get(k);
     if (hit) return hit;
@@ -119,10 +119,10 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
           });
           if (indexCompare !== 0) return indexCompare;
 
-          const isNonRnpA = isNonRnpChart(a);
-          const isNonRnpB = isNonRnpChart(b);
-          if (isNonRnpA !== isNonRnpB) {
-            return isNonRnpA ? 1 : -1;
+          const isSecondaryA = isSecondaryChart(a);
+          const isSecondaryB = isSecondaryChart(b);
+          if (isSecondaryA !== isSecondaryB) {
+            return isSecondaryA ? 1 : -1;
           }
 
           const titleA = a.chart_title ?? '';

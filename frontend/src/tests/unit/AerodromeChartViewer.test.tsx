@@ -68,7 +68,7 @@ describe('AerodromeChartViewer', () => {
     expect(screen.getByRole('button', { name: /view in 3d/i })).toBeInTheDocument();
   });
 
-  it('does not show the "View in 3D space" button for non-RNP charts like coding tables', async () => {
+  it('does not show the "View in 3D space" button for secondary charts like coding tables', async () => {
     useMapStore.setState({
       activeAirport: 'VAAU',
       activeAerodromeMetadata: { id: 'VAAU' },
