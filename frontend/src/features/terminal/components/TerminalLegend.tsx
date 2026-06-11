@@ -1,100 +1,88 @@
 import { motion } from 'framer-motion';
-import HoverTooltip from '../../../components/HoverTooltip';
 import './TerminalLegend.css';
 import { Building2, TowerControl, TreePine, Construction, Radio } from 'lucide-react';
 import { useMapStore } from '../../../store/useMapStore';
 
+const categories = [
+  {
+    id: 'buildings',
+    label: 'Buildings',
+    icon: Building2,
+    color: 'text-slate-500 dark:text-blue-400',
+  },
+  {
+    id: 'infrastructure',
+    label: 'Infrastructure',
+    icon: TowerControl,
+    color: 'text-[#c45b4b] dark:text-red-400',
+  },
+  {
+    id: 'natural',
+    label: 'Natural Hazards',
+    icon: TreePine,
+    color: 'text-[#0a7c6e] dark:text-green-400',
+  },
+  {
+    id: 'navaids',
+    label: 'NavAids',
+    icon: Radio,
+    color: 'text-[#8b5a8c] dark:text-purple-400',
+  },
+  {
+    id: 'other',
+    label: 'Other Hazards',
+    icon: Construction,
+    color: 'text-amber-600 dark:text-orange-400',
+  },
+] as const;
+
 /**
  * TerminalLegend Component
  *
- * A minimalist horizontal icon-bar for toggling spatial categories.
- * Designed to be placed below the Aerodrome Information dropdown.
+ * A compact card with vertically stacked icon + label rows
+ * for toggling spatial obstacle categories.
+ * Positioned at bottom-left of the map in TERMINAL view.
  */
 export default function TerminalLegend() {
   const { terminalSpatialFilters, toggleTerminalSpatialFilter } = useMapStore();
 
-  const categories = [
-    {
-      id: 'buildings',
-      label: 'Buildings',
-      icon: Building2,
-      color: 'text-slate-500 dark:text-blue-400',
-      glow: 'shadow-blue-500/20',
-    },
-    {
-      id: 'infrastructure',
-      label: 'Infrastructure',
-      icon: TowerControl,
-      color: 'text-[#c45b4b] dark:text-red-400',
-      glow: 'shadow-red-500/20',
-    },
-    {
-      id: 'natural',
-      label: 'Natural Hazards',
-      icon: TreePine,
-      color: 'text-[#0a7c6e] dark:text-green-400',
-      glow: 'shadow-green-500/20',
-    },
-    {
-      id: 'navaids',
-      label: 'NavAids',
-      icon: Radio,
-      color: 'text-[#8b5a8c] dark:text-purple-400',
-      glow: 'shadow-purple-500/20',
-    },
-    {
-      id: 'other',
-      label: 'Other Hazards',
-      icon: Construction,
-      color: 'text-amber-600 dark:text-orange-400',
-      glow: 'shadow-orange-500/20',
-    },
-  ] as const;
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: 5 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="obstacle-legend-container flex items-center pointer-events-auto w-fit"
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      className="obstacle-legend-card pointer-events-auto"
     >
-      <div className="obstacle-legend-header mr-1">
+      <div className="px-2 pb-1">
         <span className="text-[9px] font-black tracking-[0.25em] text-on-surface-variant uppercase select-none">
           Obstacles
         </span>
       </div>
 
-      <div className="flex items-center gap-0.5">
-        {categories.map(({ id, label, icon: Icon, color, glow }) => {
-          const isActive = terminalSpatialFilters ? terminalSpatialFilters[id] : false;
-          return (
-            <HoverTooltip<HTMLButtonElement> key={id} content={label} placement="bottom">
-              {({ ref, interestfor, className }) => (
-                <motion.button
-                  ref={ref}
-                  interestfor={interestfor}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => toggleTerminalSpatialFilter(id)}
-                  className={`${className} relative flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 cursor-pointer ${
-                    isActive
-                      ? `bg-surface-container-high ${color} ${glow} shadow-lg`
-                      : 'text-on-surface-variant hover:text-on-surface-variant hover:bg-surface-container-high'
-                  }`}
-                >
-                  <Icon size={15} strokeWidth={isActive ? 2.5 : 1.5} />
-
-                  {isActive && (
-                    <motion.div
-                      layoutId={`active-pill-dot-${id}`}
-                      className={`absolute -bottom-0.5 w-1 h-1 rounded-full ${color.replace('text-', 'bg-')}`}
-                    />
-                  )}
-                </motion.button>
-              )}
-            </HoverTooltip>
-          );
-        })}
-      </div>
+      {categories.map(({ id, label, icon: Icon, color }) => {
+        const isActive = terminalSpatialFilters ? terminalSpatialFilters[id] : false;
+        return (
+          <motion.button
+            key={id}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => toggleTerminalSpatialFilter(id)}
+            className="obstacle-legend-row w-full"
+          >
+            <Icon
+              size={14}
+              strokeWidth={isActive ? 2.5 : 1.5}
+              className={`shrink-0 transition-colors duration-200 ${
+                isActive ? color : 'text-on-surface-variant'
+              }`}
+            />
+            <span
+              className={`obstacle-legend-label ${isActive ? color : 'text-on-surface-variant'}`}
+            >
+              {label}
+            </span>
+          </motion.button>
+        );
+      })}
     </motion.div>
   );
 }

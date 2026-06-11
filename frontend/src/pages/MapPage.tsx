@@ -74,7 +74,9 @@ export default function MapPage() {
           transition={{ duration: 0.3, ease: 'easeInOut' }}
           className="absolute inset-0 pointer-events-none"
         >
-          <div className="absolute top-6 left-[4.5rem] flex flex-col gap-3 pointer-events-auto z-50">
+          <div
+            className={`absolute top-6 flex flex-col gap-3 pointer-events-auto z-50 ${viewMode === 'TERMINAL' ? 'left-6' : 'left-[4.5rem]'}`}
+          >
             {viewMode === 'ENROUTE' && viewState.pitch === 0 && (
               <Suspense fallback={null}>
                 <SearchBar {...search} />
@@ -89,9 +91,9 @@ export default function MapPage() {
                     activeAirport={activeAirport}
                   />
                 </Suspense>
-                {viewMode === 'TERMINAL' && (
+                {activeAirport && (
                   <Suspense fallback={null}>
-                    <TerminalLegend />
+                    <AerodromeChartViewer icaoCode={activeAirport} />
                   </Suspense>
                 )}
               </>
@@ -106,10 +108,10 @@ export default function MapPage() {
             </div>
           )}
 
-          {activeAirport && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-auto z-40">
+          {viewMode === 'TERMINAL' && (
+            <div className="absolute bottom-6 left-6 pointer-events-auto z-40">
               <Suspense fallback={null}>
-                <AerodromeChartViewer icaoCode={activeAirport} />
+                <TerminalLegend />
               </Suspense>
             </div>
           )}

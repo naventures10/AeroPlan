@@ -55,6 +55,14 @@ describe('AerodromeChartViewer', () => {
       render(<AerodromeChartViewer icaoCode="VAAU" />);
     });
 
+    // Open the dropdown first
+    await waitFor(() => {
+      expect(screen.getByText('AERODROME CHARTS')).toBeInTheDocument();
+    });
+    act(() => {
+      fireEvent.click(screen.getByText('AERODROME CHARTS'));
+    });
+
     await waitFor(() => {
       expect(screen.getByText('ChartTitle')).toBeInTheDocument();
     });
@@ -84,6 +92,14 @@ describe('AerodromeChartViewer', () => {
 
     act(() => {
       render(<AerodromeChartViewer icaoCode="VAAU" />);
+    });
+
+    // Open the dropdown first
+    await waitFor(() => {
+      expect(screen.getByText('AERODROME CHARTS')).toBeInTheDocument();
+    });
+    act(() => {
+      fireEvent.click(screen.getByText('AERODROME CHARTS'));
     });
 
     await waitFor(() => {
@@ -122,6 +138,14 @@ describe('AerodromeChartViewer', () => {
       render(<AerodromeChartViewer icaoCode="VOGB" />);
     });
 
+    // Open the dropdown first
+    await waitFor(() => {
+      expect(screen.getByText('AERODROME CHARTS')).toBeInTheDocument();
+    });
+    act(() => {
+      fireEvent.click(screen.getByText('AERODROME CHARTS'));
+    });
+
     await waitFor(() => {
       expect(screen.getByText('VOGB-RNP-Y-RWY-27-CAT-A-B-C.pdf')).toBeInTheDocument();
     });
@@ -135,7 +159,7 @@ describe('AerodromeChartViewer', () => {
     expect(screen.getByRole('button', { name: /view in 3d/i })).toBeInTheDocument();
   });
 
-  it('sorts charts in the carousel correctly', async () => {
+  it('sorts charts in the dropdown correctly', async () => {
     useMapStore.setState({
       activeAirport: 'VAAU',
       activeAerodromeMetadata: { id: 'VAAU' },
@@ -158,6 +182,14 @@ describe('AerodromeChartViewer', () => {
 
     act(() => {
       render(<AerodromeChartViewer icaoCode="VAAU" />);
+    });
+
+    // Open the dropdown first
+    await waitFor(() => {
+      expect(screen.getByText('AERODROME CHARTS')).toBeInTheDocument();
+    });
+    act(() => {
+      fireEvent.click(screen.getByText('AERODROME CHARTS'));
     });
 
     await waitFor(() => {

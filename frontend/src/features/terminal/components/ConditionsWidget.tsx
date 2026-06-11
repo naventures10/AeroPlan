@@ -23,10 +23,10 @@ interface ConditionsWidgetProps {
 
 // Shared card label style
 const sectionLabel =
-  'text-[9px] font-black tracking-[0.25em] text-on-surface-variant  uppercase block mb-3';
+  'text-[9px] font-black tracking-[0.25em] text-on-surface-variant  uppercase block mb-2';
 
 // Shared card surface class
-const cardBase = 'bg-surface-container rounded-2xl p-4 border border-outline-variant';
+const cardBase = 'bg-surface-container rounded-2xl p-3 border border-outline-variant';
 
 function UnavailableCard({ icaoCode }: { icaoCode: string }) {
   return (
@@ -212,30 +212,44 @@ function DaylightCard({
           {todayStr}
         </span>
       </div>
-      <div className="grid grid-cols-4 gap-2">
-        {[
-          {
-            icon: Sunrise,
-            color: 'text-amber-400',
-            label: 'MCT',
-            value: daylight?.twilight_from,
-          },
-          { icon: Sun, color: 'text-amber-500', label: 'Sunrise', value: daylight?.sunrise },
-          { icon: Sunset, color: 'text-orange-500', label: 'Sunset', value: daylight?.sunset },
-          { icon: Moon, color: 'text-indigo-400', label: 'ECT', value: daylight?.twilight_to },
-        ].map(({ icon: Icon, color, label, value }) => (
-          <div
-            key={label}
-            className="flex flex-col items-center gap-1.5 bg-surface rounded-xl p-3 border border-outline-variant"
-          >
-            <Icon size={18} className={color} />
-            <span className="text-[8px] text-on-surface-variant font-black uppercase tracking-widest">
-              {label}
-            </span>
-            <span className="text-sm font-bold text-on-surface tabular-nums">{value || '–'}</span>
+      {daylight ? (
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            {
+              icon: Sunrise,
+              color: 'text-amber-400',
+              label: 'MCT',
+              value: daylight.twilight_from,
+            },
+            { icon: Sun, color: 'text-amber-500', label: 'Sunrise', value: daylight.sunrise },
+            { icon: Sunset, color: 'text-orange-500', label: 'Sunset', value: daylight.sunset },
+            { icon: Moon, color: 'text-indigo-400', label: 'ECT', value: daylight.twilight_to },
+          ].map(({ icon: Icon, color, label, value }) => (
+            <div
+              key={label}
+              className="flex flex-col items-center gap-1.5 bg-surface rounded-xl p-2 border border-outline-variant"
+            >
+              <Icon size={18} className={color} />
+              <span className="text-[8px] text-on-surface-variant font-black uppercase tracking-widest">
+                {label}
+              </span>
+              <span className="text-sm font-bold text-on-surface tabular-nums">{value || '–'}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-6 text-center">
+          <div className="relative flex items-center justify-center w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/20 mb-3 shadow-inner">
+            <Sun className="text-amber-500/70 animate-pulse" size={24} />
           </div>
-        ))}
-      </div>
+          <h4 className="text-xs font-black tracking-widest text-on-surface uppercase mb-1">
+            Daylight Data Unavailable
+          </h4>
+          <p className="text-[10px] text-on-surface-variant max-w-[280px] leading-relaxed font-medium">
+            No daylight calculations or twilight information found for today.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -260,7 +274,7 @@ export function ConditionsWidget({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="flex flex-col gap-5"
+      className="flex flex-col gap-3.5"
     >
       {/* Header */}
       <div className="flex justify-between items-end mb-1">
