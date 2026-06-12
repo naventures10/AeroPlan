@@ -61,9 +61,11 @@ function WindCard({ parsedMetar }: { parsedMetar: ParsedMetar }) {
           <div className="flex items-center gap-2">
             <Wind className="text-teal-700 dark:text-cyan-400 shrink-0" size={16} />
             <span className="text-xl font-black text-on-surface">
-              {parsedMetar.windDir && parsedMetar.windDir !== 'VRB'
-                ? `${parsedMetar.windDir}°T`
-                : 'VRB'}
+              {parsedMetar.windDir === 'VRB'
+                ? 'VRB'
+                : parsedMetar.windDir
+                  ? `${parsedMetar.windDir}°T`
+                  : '–'}
             </span>
           </div>
           <span className="text-3xl font-black text-on-surface leading-none">
@@ -100,11 +102,15 @@ function WindCard({ parsedMetar }: { parsedMetar: ParsedMetar }) {
 
 function getVisibilityPercentage(vis: string | null): string {
   if (!vis) return '0%';
-  const upperVis = vis.toUpperCase();
-  if (vis.includes('>') || upperVis === 'CAVOK' || upperVis === '9999') return '100%';
+  if (/CAVOK|9999|KM|>/i.test(vis)) return '100%';
+
   const val = parseInt(vis, 10);
-  if (isNaN(val)) return '100%';
-  return `${Math.max(0, Math.min((val / 10000) * 100, 100))}%`;
+  if (Number.isInteger(val)) {
+    const pct = (val / 10000) * 100;
+    const clamped = Math.max(0, Math.min(pct, 100));
+    return `${clamped}%`;
+  }
+  return '100%';
 }
 
 function VisibilityCloudCard({ parsedMetar }: { parsedMetar: ParsedMetar }) {
