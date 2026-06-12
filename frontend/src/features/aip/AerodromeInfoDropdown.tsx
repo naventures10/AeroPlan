@@ -69,7 +69,7 @@ export default function AerodromeInfoDropdown({
         onClick={() => {
           setIsOpen(!isOpen);
         }}
-        className={`aip-dropdown-trigger flex items-center gap-2.5 px-4 py-2.5 focus:outline-none ${
+        className={`aip-dropdown-trigger flex items-center w-full gap-2.5 px-3 py-1.5 focus:outline-none ${
           isOpen ? 'active' : ''
         }`}
       >
@@ -84,7 +84,7 @@ export default function AerodromeInfoDropdown({
         <ChevronDown
           size={14}
           strokeWidth={2.5}
-          className={`transition-transform duration-300 ${isOpen ? 'rotate-180 text-teal-700 dark:text-cyan-400' : 'text-on-surface-variant '}`}
+          className={`ml-auto transition-transform duration-300 ${isOpen ? 'rotate-180 text-teal-700 dark:text-cyan-400' : 'text-on-surface-variant '}`}
         />
       </button>
 
@@ -96,7 +96,7 @@ export default function AerodromeInfoDropdown({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.96 }}
             transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="aip-dropdown-menu mt-2 w-80 max-h-[60vh] aip-scrollbar"
+            className="aip-dropdown-menu mt-2 w-80 max-h-[35vh] aip-scrollbar"
           >
             <div className="py-1.5">
               {AIP_SECTIONS.map((section, idx) => (

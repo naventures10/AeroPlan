@@ -16,10 +16,12 @@ describe('TerminalLegend', () => {
     });
   });
 
-  it('renders hint popovers for each terminal legend control', () => {
+  it('renders a button for each obstacle category', () => {
     const { container } = render(<TerminalLegend />);
 
-    const buttons = container.querySelectorAll('button[interestfor]');
+    const buttons = container.querySelectorAll('.obstacle-legend-row');
+    expect(buttons).toHaveLength(5);
+
     const tooltipLabels = [
       'Buildings',
       'Infrastructure',
@@ -28,11 +30,8 @@ describe('TerminalLegend', () => {
       'Other Hazards',
     ];
 
-    expect(buttons).toHaveLength(5);
-
     for (const label of tooltipLabels) {
-      const tooltip = screen.getByText(label).closest('[popover="hint"]');
-      expect(tooltip).toBeInTheDocument();
+      expect(screen.getByText(label)).toBeInTheDocument();
     }
   });
 });

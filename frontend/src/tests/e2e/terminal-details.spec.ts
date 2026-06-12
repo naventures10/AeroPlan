@@ -147,27 +147,21 @@ test.describe('Terminal View - Detailed Interactions', () => {
     await expect(modal).not.toBeVisible();
   });
 
-  test('Chart Carousel scrolling', async ({ page }) => {
+  test('Chart Dropdown scrollable list', async () => {
     await mapPage.search('VOMM');
-    await expect(terminalPage.chartCarousel).toBeVisible({ timeout: 15000 });
+    await expect(terminalPage.chartDropdownTrigger).toBeVisible({ timeout: 15000 });
 
-    const scrollRight = terminalPage.chartCarousel
-      .locator('button')
-      .filter({ has: page.locator('svg.lucide-chevron-right') });
-    const scrollLeft = terminalPage.chartCarousel
-      .locator('button')
-      .filter({ has: page.locator('svg.lucide-chevron-left') });
+    // 1. Click the trigger to open the dropdown
+    await terminalPage.chartDropdownTrigger.click();
+    await expect(terminalPage.chartDropdownMenu).toBeVisible();
 
-    // With 20 charts, scroll right must be visible
-    await expect(scrollRight).toBeVisible({ timeout: 10000 });
+    // 2. Check that there are items (we mock 20 charts)
+    const items = terminalPage.chartDropdownMenu.locator('.aip-dropdown-item');
+    await expect(items).toHaveCount(20);
 
-    const lastChart = page.locator('button[title="CHART 20"]');
-
-    await scrollRight.click();
-    await scrollRight.click();
-    await scrollRight.click();
-
-    await expect(scrollLeft).toBeVisible();
+    // 3. Scroll to the last item and verify it is visible
+    const lastChart = terminalPage.chartDropdownMenu.locator('.aip-dropdown-item').last();
+    await lastChart.scrollIntoViewIfNeeded();
     await expect(lastChart).toBeVisible();
   });
 

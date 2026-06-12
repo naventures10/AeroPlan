@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 
-import { FileText, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
+import { FileText, ChevronDown, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import './AerodromeChartViewer.css';
+import '../aip/AerodromeInfoDropdown.css';
 
 import { useMapStore } from '../../store/useMapStore';
 import { normalizeChartKey } from '../../utils/chartKey';
@@ -60,19 +61,34 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
   const [currentPage, setCurrentPage] = useState(1);
   const [pdfScale, setPdfScale] = useState(1.2);
   const [isLoading, setIsLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const onOpen = useCallback(() => setIsOpen(true), []);
-  const onClose = useCallback(() => setIsOpen(false), []);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const onModalOpen = useCallback(() => setIsModalOpen(true), []);
+  const onModalClose = useCallback(() => setIsModalOpen(false), []);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Close the chart modal on Escape — stop propagation so the global
   // handler does not also exit the 3D terminal view.
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isModalOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopImmediatePropagation();
-        onClose();
+        onModalClose();
         setSelectedChart(null);
         setNumPages(0);
         setCurrentPage(1);
@@ -80,7 +96,7 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
     };
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, [isOpen, onClose]);
+  }, [isModalOpen, onModalClose]);
 
   const setViewMode = useMapStore((s) => s.setViewMode);
   const setSelectedRnpProcedure = useMapStore((s) => s.setSelectedRnpProcedure);
@@ -158,9 +174,10 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
       setCurrentPage(1);
       setNumPages(0);
       setPdfScale(1.2);
-      onOpen();
+      setIsDropdownOpen(false);
+      onModalOpen();
     },
-    [onOpen],
+    [onModalOpen],
   );
 
   const onDocumentLoadSuccess = useCallback(({ numPages: total }: { numPages: number }) => {
@@ -168,11 +185,11 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
   }, []);
 
   const handleModalClose = useCallback(() => {
-    onClose();
+    onModalClose();
     setSelectedChart(null);
     setNumPages(0);
     setCurrentPage(1);
-  }, [onClose]);
+  }, [onModalClose]);
 
   // fallow-ignore-next-line complexity
   const handleViewIn3D = useCallback(() => {
@@ -218,16 +235,6 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
     handleModalClose,
   ]);
 
-  // Scroll left/right in the carousel
-  const scroll = useCallback((direction: 'left' | 'right') => {
-    if (!scrollRef.current) return;
-    const amount = 200;
-    scrollRef.current.scrollBy({
-      left: direction === 'left' ? -amount : amount,
-      behavior: 'smooth',
-    });
-  }, []);
-
   // Use proxy URL directly for on-demand fetching via react-pdf
   const pdfUrl = selectedChart ? getProxyPdfUrl(selectedChart.chart_url!) : '';
 
@@ -235,99 +242,80 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
 
   return (
     <>
-      {/* ── Carousel Container ────────────────────────────── */}
-      <AnimatePresence>
-        {icaoCode && (
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 40 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            data-testid="chart-carousel"
-            className="relative flex items-center gap-2"
-          >
-            {/* Scroll Left */}
-            {charts.length > 3 && (
-              <button
-                onClick={() => {
-                  scroll('left');
-                }}
-                className="shrink-0 w-8 h-8 rounded-full bg-slate-300/60 dark:bg-zinc-700/60 hover:bg-slate-300/80 dark:hover:bg-zinc-700/80 border border-outline/40 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors backdrop-blur-xl"
-              >
-                <ChevronLeft size={16} />
-              </button>
-            )}
+      {/* ── Dropdown Container ────────────────────────────── */}
+      <div ref={dropdownRef} className="relative z-50" data-testid="chart-dropdown">
+        {/* Trigger Button */}
+        <button
+          onClick={() => {
+            setIsDropdownOpen(!isDropdownOpen);
+          }}
+          className={`aip-dropdown-trigger flex items-center w-full gap-2.5 px-3 py-1.5 focus:outline-none ${
+            isDropdownOpen ? 'active' : ''
+          }`}
+        >
+          <FileText
+            size={16}
+            strokeWidth={2}
+            className={
+              isDropdownOpen ? 'text-teal-700 dark:text-cyan-400' : 'text-on-surface-variant'
+            }
+          />
+          <span className="text-[11px] font-bold tracking-[0.15em] uppercase">
+            AERODROME CHARTS
+          </span>
+          {isLoading ? (
+            <div className="ml-auto w-3.5 h-3.5 border-2 border-white/10 border-t-cyan-400 rounded-full animate-spin" />
+          ) : (
+            <ChevronDown
+              size={14}
+              strokeWidth={2.5}
+              className={`ml-auto transition-transform duration-300 ${isDropdownOpen ? 'rotate-180 text-teal-700 dark:text-cyan-400' : 'text-on-surface-variant'}`}
+            />
+          )}
+        </button>
 
-            {/* Cards Container */}
-            <div className="relative rounded-2xl overflow-hidden border border-outline/40 shadow-2xl glass-morphism">
-              {/* Title bar */}
-              <div className="px-4 pt-2 pb-0.5">
-                <span className="text-[9px] font-bold tracking-[0.25em] text-on-surface-variant uppercase">
-                  Aerodrome Charts
-                </span>
-              </div>
-
-              <div
-                ref={scrollRef}
-                className="flex gap-2.5 px-4 pb-2.5 pt-0.5 overflow-x-auto chart-scroll max-w-[820px]"
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center w-full py-6 px-8">
-                    <div className="w-5 h-5 border-2 border-white/10 border-t-cyan-400 rounded-full animate-spin" />
-                  </div>
-                ) : charts.length === 0 ? (
-                  <div className="text-zinc-500 text-[11px] font-medium tracking-wide py-4 px-6 whitespace-nowrap">
+        {/* Dropdown Menu */}
+        <AnimatePresence>
+          {isDropdownOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.96 }}
+              transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              className="aip-dropdown-menu mt-2 w-80 max-h-[35vh] aip-scrollbar"
+            >
+              <div className="py-1.5">
+                {charts.length === 0 ? (
+                  <div className="text-on-surface-variant text-[11px] font-medium tracking-wide py-4 px-4 text-center">
                     No charts available
                   </div>
                 ) : (
                   charts.map((chart, idx) => (
-                    <motion.button
+                    <button
                       key={chart.chart_id}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: idx * 0.05, duration: 0.2 }}
                       onClick={() => {
                         handleChartClick(chart);
                       }}
-                      className="group shrink-0 flex flex-col items-center gap-1.5 p-2 rounded-xl border border-outline/40 hover:border-teal-500/40 dark:hover:border-cyan-500/40 bg-surface-bright/50 hover:bg-teal-500/10 dark:hover:bg-cyan-500/10 transition-colors duration-200 cursor-pointer w-[82px]"
-                      title={chart.chart_title || undefined}
+                      className={`aip-dropdown-item ${
+                        idx !== charts.length - 1 ? 'border-b border-outline-variant' : ''
+                      }`}
                     >
-                      {/* Chart Icon */}
-                      <div className="w-10 h-11 rounded-lg bg-surface-bright/50 border border-outline/50 group-hover:border-teal-500/40 dark:group-hover:border-cyan-500/40 flex items-center justify-center transition-colors">
-                        <FileText
-                          size={18}
-                          className="text-teal-700 dark:text-cyan-400 group-hover:text-teal-500 dark:group-hover:text-cyan-300 transition-colors"
-                        />
-                      </div>
-                      {/* Title */}
-                      <span className="text-[8px] font-bold text-on-surface-variant group-hover:text-on-surface dark:group-hover:text-zinc-200 text-center leading-tight tracking-wider uppercase line-clamp-1 transition-colors w-full">
+                      <span className="aip-dropdown-item-title">
                         {chart.chart_title || chart.chart_index}
                       </span>
-                    </motion.button>
+                    </button>
                   ))
                 )}
               </div>
-            </div>
-
-            {/* Scroll Right */}
-            {charts.length > 3 && (
-              <button
-                onClick={() => {
-                  scroll('right');
-                }}
-                className="shrink-0 w-8 h-8 rounded-full bg-slate-300/60 dark:bg-zinc-700/60 hover:bg-slate-300/80 dark:hover:bg-zinc-700/80 border border-outline/40 flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors backdrop-blur-xl"
-              >
-                <ChevronRight size={16} />
-              </button>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* ── PDF Modal ────────────────────────────────────── */}
       {createPortal(
         <AnimatePresence>
-          {isOpen && (
+          {isModalOpen && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

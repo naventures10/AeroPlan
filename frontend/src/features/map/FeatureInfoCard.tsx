@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import './FeatureInfoCard.css';
 
-import { X } from 'lucide-react';
+import { X, EyeOff, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMapStore } from '../../store/useMapStore';
 import { fetchAtsRouteDetails, fetchNavaidDetails } from '../../api/client';
@@ -15,6 +15,11 @@ import { AirspaceDetailsPanel } from './components/AirspaceDetailsPanel';
 // fallow-ignore-next-line complexity
 export function FeatureInfoCard() {
   const { selectedFeature, setSelectedFeature, viewMode, setSelectedRouteIds } = useMapStore();
+  const [isPanelHidden, setIsPanelHidden] = useState(false);
+
+  useEffect(() => {
+    setIsPanelHidden(false);
+  }, [selectedFeature]);
 
   const isVisible = viewMode === 'ENROUTE' && selectedFeature !== null;
   const type = selectedFeature?.type || '';
@@ -114,7 +119,7 @@ export function FeatureInfoCard() {
 
   return (
     <AnimatePresence>
-      {isVisible && (
+      {isVisible && !isPanelHidden && (
         <motion.div
           key="feature-info-card"
           data-testid="feature-info-card"
@@ -128,11 +133,11 @@ export function FeatureInfoCard() {
             <div
               className={
                 type === 'AIRSPACE'
-                  ? 'absolute top-1 right-1 z-10 !p-1 flex'
+                  ? 'absolute top-1 right-1 z-10 !p-1 flex items-center gap-1'
                   : 'aip-feature-card-header flex p-4 pb-3'
               }
             >
-              {type !== 'AIRSPACE' && (
+              {type !== 'AIRSPACE' ? (
                 <div className="flex flex-col gap-1.5 w-full">
                   <div className="flex items-center gap-1">
                     <span
@@ -146,19 +151,37 @@ export function FeatureInfoCard() {
                   </div>
                   <h3 className="aip-feature-card-title">{title}</h3>
                 </div>
-              )}
-              <button
-                type="button"
-                data-testid="close-feature-card"
-                onClick={() => {
-                  setSelectedFeature(null);
-                  setSelectedRouteIds([]);
-                }}
-                className="aip-feature-card-close p-2 hover:bg-surface-container-high rounded-full transition-colors ml-auto flex-shrink-0 self-start"
-                aria-label="Close"
+              ) : null}
+
+              <div
+                className={
+                  type === 'AIRSPACE'
+                    ? 'flex items-center gap-1'
+                    : 'flex items-center gap-1.5 ml-auto flex-shrink-0 self-start'
+                }
               >
-                <X size={18} />
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setIsPanelHidden(true)}
+                  className="p-2 hover:bg-surface-container-high rounded-full transition-colors text-on-surface-variant hover:text-primary cursor-pointer"
+                  title="Hide details"
+                  aria-label="Hide details"
+                >
+                  <EyeOff size={18} />
+                </button>
+                <button
+                  type="button"
+                  data-testid="close-feature-card"
+                  onClick={() => {
+                    setSelectedFeature(null);
+                    setSelectedRouteIds([]);
+                  }}
+                  className="aip-feature-card-close p-2 hover:bg-surface-container-high rounded-full transition-colors cursor-pointer"
+                  aria-label="Close"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
             {type !== 'AIRSPACE' && (
               <hr className="aip-feature-card-divider m-0 border-t border-outline-variant" />
@@ -186,6 +209,36 @@ export function FeatureInfoCard() {
               {type === 'AIRSPACE' && <AirspaceDetailsPanel data={data} />}
             </div>
           </div>
+        </motion.div>
+      )}
+
+      {isVisible && isPanelHidden && (
+        <motion.div
+          key="feature-info-card-hidden"
+          initial={{ x: 50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: 50, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+          className="absolute top-6 right-6 z-50 pointer-events-auto flex items-center gap-1.5 p-1 bg-surface-container rounded-xl border border-outline-variant shadow-lg backdrop-blur-md"
+        >
+          <button
+            onClick={() => setIsPanelHidden(false)}
+            className="flex items-center gap-2 py-1.5 pl-3 pr-2 hover:bg-surface-container-high rounded-lg text-on-surface-variant hover:text-primary transition-all cursor-pointer"
+          >
+            <ChevronLeft size={14} className="text-teal-700 dark:text-cyan-400" />
+            <span className="text-[9px] font-black tracking-[0.15em] uppercase">Show Details</span>
+          </button>
+          <div className="w-[1px] h-4 bg-outline-variant" />
+          <button
+            onClick={() => {
+              setSelectedFeature(null);
+              setSelectedRouteIds([]);
+            }}
+            className="p-1.5 hover:bg-surface-container-high rounded-lg text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+            aria-label="Close"
+          >
+            <X size={14} />
+          </button>
         </motion.div>
       )}
     </AnimatePresence>

@@ -114,7 +114,7 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
       animate={{ opacity: 1 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       exit={{ opacity: 0 }}
-      className="h-fit max-h-[calc(100vh-22rem)] flex pointer-events-none"
+      className="h-fit max-h-[calc(100vh-12rem)] flex pointer-events-none"
     >
       <motion.div
         animate={{ width: isCollapsed ? 44 : 72, backdropFilter: 'blur(20px)' }}
@@ -190,7 +190,7 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
             <div className="w-7 h-7 border-t-2 border-teal-600 dark:border-cyan-400 border-solid rounded-full animate-spin"></div>
           </div>
         ) : (
-          <div className="p-6 h-full overflow-y-auto aip-scrollbar w-[480px]">
+          <div className="py-4 px-6 h-full overflow-y-auto aip-scrollbar w-[480px]">
             <AnimatePresence>
               {activeTab === 'CONDITIONS' && (
                 <ConditionsWidget
