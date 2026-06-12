@@ -5,7 +5,8 @@ export class TerminalPage {
   readonly page: Page;
   readonly dashboard: Locator;
   readonly expandButton: Locator;
-  readonly chartCarousel: Locator;
+  readonly chartDropdownTrigger: Locator;
+  readonly chartDropdownMenu: Locator;
   readonly viewIn3DButton: Locator;
   readonly modalCloseButton: Locator;
 
@@ -13,8 +14,8 @@ export class TerminalPage {
     this.page = page;
     this.dashboard = page.locator('div').filter({ hasText: 'CONDITIONS' }).first();
     this.expandButton = page.getByTitle('Expand Dashboard');
-    // More robust selector for the carousel container that includes the buttons
-    this.chartCarousel = page.getByTestId('chart-carousel');
+    this.chartDropdownTrigger = page.getByRole('button', { name: 'AERODROME CHARTS' });
+    this.chartDropdownMenu = page.locator('.aip-dropdown-menu');
     this.viewIn3DButton = page.getByText('View in 3D space');
     this.modalCloseButton = page.locator('button:has-text("✕")');
   }
@@ -24,6 +25,8 @@ export class TerminalPage {
   }
 
   async openChart(chartTitle: string) {
+    await expect(this.chartDropdownTrigger).toBeVisible({ timeout: 10000 });
+    await this.chartDropdownTrigger.click();
     const chartButton = this.page.getByRole('button', { name: chartTitle });
     await expect(chartButton).toBeVisible({ timeout: 10000 });
     await chartButton.click();
