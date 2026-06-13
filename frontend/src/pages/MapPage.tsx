@@ -2,12 +2,14 @@ import { useMapStore } from '../store/useMapStore';
 import { useSearch } from '../hooks/useSearch';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useAerodromeData } from '../hooks/useAerodromeData';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import GlobalLoader from '../components/GlobalLoader';
 
 const MapView = lazy(() => import('../features/map/MapView'));
 const SearchBar = lazy(() => import('../features/map/controls/SearchBar'));
+const MobileSearchBar = lazy(() => import('../features/map/controls/MobileSearchBar'));
 const LayerToolbar = lazy(() => import('../features/map/controls/LayerToolbar'));
 const ViewToggle = lazy(() => import('../features/map/controls/ViewToggle'));
 const WeatherControls = lazy(() =>
@@ -33,6 +35,7 @@ const UserProfileModal = lazy(() => import('../features/user/UserProfileModal'))
 export default function MapPage() {
   const { viewMode, activeAirport, viewState, isWeatherMode } = useMapStore();
   const search = useSearch();
+  const isMobile = useIsMobile();
 
   const {
     aerodromes,
@@ -75,11 +78,11 @@ export default function MapPage() {
           className="absolute inset-0 pointer-events-none"
         >
           <div
-            className={`absolute top-6 flex flex-col gap-3 pointer-events-auto z-50 ${viewMode === 'TERMINAL' ? 'left-6' : 'left-[4.5rem]'}`}
+            className={`absolute top-6 flex flex-col gap-3 pointer-events-auto ${search.isSearchFocused ? 'z-[250]' : 'z-50'} ${viewMode === 'TERMINAL' ? 'left-6' : 'left-[4.5rem]'}`}
           >
             {viewMode === 'ENROUTE' && viewState.pitch === 0 && (
               <Suspense fallback={null}>
-                <SearchBar {...search} />
+                {isMobile ? <MobileSearchBar {...search} /> : <SearchBar {...search} />}
               </Suspense>
             )}
 

@@ -73,6 +73,9 @@ const TERRAIN_SOURCE_URL =
  * 2. Bind Middle-Mouse button to Rotation/Tilt
  */
 class CustomMapController extends MapController {
+  _myStartPinchRotation = 0;
+  _myPinchRotationUnlocked = false;
+
   /**
    * Override rotation detection to swap Right-Click for Middle-Click.
    */
@@ -116,6 +119,27 @@ class CustomMapController extends MapController {
     }
 
     return super.handleEvent(event);
+  }
+
+  _onPinchStart(event: any) {
+    this._myStartPinchRotation = event.rotation || 0;
+    this._myPinchRotationUnlocked = false;
+    return super._onPinchStart(event);
+  }
+
+  _onPinch(event: any) {
+    const delta = Math.abs((event.rotation || 0) - this._myStartPinchRotation);
+
+    if (this.touchRotate && !this._myPinchRotationUnlocked) {
+      if (delta > 20) {
+        this._myPinchRotationUnlocked = true;
+      } else {
+        // Lock rotation by passing a cloned event where rotation matches the start rotation
+        return super._onPinch({ ...event, rotation: this._myStartPinchRotation });
+      }
+    }
+
+    return super._onPinch(event);
   }
 }
 
