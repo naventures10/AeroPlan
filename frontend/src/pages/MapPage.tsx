@@ -19,6 +19,11 @@ const WeatherControls = lazy(() =>
     default: m.WeatherControls,
   })),
 );
+const MobileWeatherControls = lazy(() =>
+  import('../features/map/controls/mobile/MobileWeatherControls').then((m) => ({
+    default: m.MobileWeatherControls,
+  })),
+);
 
 const AerodromeInfoDropdown = lazy(() => import('../features/aip/AerodromeInfoDropdown'));
 const AerodromeChartViewer = lazy(() => import('../features/aip/AerodromeChartViewer'));
@@ -137,7 +142,7 @@ export default function MapPage() {
           className="absolute inset-0 pointer-events-none"
         >
           <Suspense fallback={null}>
-            <WeatherControls />
+            {isMobile ? <MobileWeatherControls /> : <WeatherControls />}
           </Suspense>
         </motion.div>
 
