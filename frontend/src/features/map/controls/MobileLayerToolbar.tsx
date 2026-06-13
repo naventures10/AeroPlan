@@ -12,12 +12,32 @@ export default function MobileLayerToolbar() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const toggleButtons = [
-    { id: 'aerodromes' as const, title: 'Aerodromes', iconClass: 'aip-icon-aerodromes' },
-    { id: 'waypoints' as const, title: 'Waypoints', iconClass: 'aip-icon-waypoints' },
-    { id: 'navaids' as const, title: 'NavAids', iconClass: 'aip-icon-navaids' },
-    { id: 'atsRoutes' as const, title: 'ATS Routes', iconClass: 'aip-icon-atsRoutes' },
-    { id: 'airspaces' as const, title: 'Airspaces', iconClass: 'aip-icon-airspaces' },
-    { id: 'weather' as const, title: 'Weather', iconClass: 'aip-icon-weather' },
+    {
+      id: 'aerodromes' as const,
+      title: 'Aerodromes',
+      iconClass: 'aip-icon-aerodromes',
+      shortform: 'AD',
+    },
+    {
+      id: 'waypoints' as const,
+      title: 'Waypoints',
+      iconClass: 'aip-icon-waypoints',
+      shortform: 'WPT',
+    },
+    { id: 'navaids' as const, title: 'NavAids', iconClass: 'aip-icon-navaids', shortform: 'NAV' },
+    {
+      id: 'atsRoutes' as const,
+      title: 'ATS Routes',
+      iconClass: 'aip-icon-atsRoutes',
+      shortform: 'RTE',
+    },
+    {
+      id: 'airspaces' as const,
+      title: 'Airspaces',
+      iconClass: 'aip-icon-airspaces',
+      shortform: 'ASP',
+    },
+    { id: 'weather' as const, title: 'Weather', iconClass: 'aip-icon-weather', shortform: 'WX' },
   ];
 
   return (
@@ -38,7 +58,7 @@ export default function MobileLayerToolbar() {
       {/* Horizontal Floating Layer Dock (Bottom-Center) */}
       <div className="aip-mobile-layer-dock-container">
         <div className="aip-mobile-layer-dock">
-          {toggleButtons.map(({ id, title, iconClass }) => {
+          {toggleButtons.map(({ id, title, iconClass, shortform }) => {
             const isActive = id === 'weather' ? isWeatherMode : activeLayers[id];
             return (
               <button
@@ -56,6 +76,7 @@ export default function MobileLayerToolbar() {
                 className={`aip-mobile-layer-toggle ${isActive ? 'active' : ''}`}
               >
                 <span className={`aip-layer-icon ${iconClass}`} />
+                <span className="aip-mobile-layer-label">{shortform}</span>
               </button>
             );
           })}

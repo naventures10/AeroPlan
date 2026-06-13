@@ -13,6 +13,7 @@ const MobileSearchBar = lazy(() => import('../features/map/controls/MobileSearch
 const LayerToolbar = lazy(() => import('../features/map/controls/LayerToolbar'));
 const MobileLayerToolbar = lazy(() => import('../features/map/controls/MobileLayerToolbar'));
 const ViewToggle = lazy(() => import('../features/map/controls/ViewToggle'));
+const MobileViewToggle = lazy(() => import('../features/map/controls/MobileViewToggle'));
 const WeatherControls = lazy(() =>
   import('../features/map/controls/WeatherControls').then((m) => ({
     default: m.WeatherControls,
@@ -121,9 +122,7 @@ export default function MapPage() {
           )}
 
           {/* Removed LayerToolbar from here to prevent weather layer hijacking */}
-          <Suspense fallback={null}>
-            <ViewToggle />
-          </Suspense>
+          <Suspense fallback={null}>{isMobile ? <MobileViewToggle /> : <ViewToggle />}</Suspense>
         </motion.div>
 
         <motion.div
