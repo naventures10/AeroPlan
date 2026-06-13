@@ -11,6 +11,7 @@ const MapView = lazy(() => import('../features/map/MapView'));
 const SearchBar = lazy(() => import('../features/map/controls/SearchBar'));
 const MobileSearchBar = lazy(() => import('../features/map/controls/MobileSearchBar'));
 const LayerToolbar = lazy(() => import('../features/map/controls/LayerToolbar'));
+const MobileLayerToolbar = lazy(() => import('../features/map/controls/MobileLayerToolbar'));
 const ViewToggle = lazy(() => import('../features/map/controls/ViewToggle'));
 const WeatherControls = lazy(() =>
   import('../features/map/controls/WeatherControls').then((m) => ({
@@ -57,7 +58,7 @@ export default function MapPage() {
   });
 
   return (
-    <div className="w-screen h-screen overflow-hidden bg-surface relative font-sans">
+    <div className="w-screen h-[100dvh] overflow-hidden bg-surface relative font-sans">
       {/* Map (Primary Chunk) */}
       <Suspense fallback={<GlobalLoader />}>
         <MapView aerodromes={aerodromes} onAerodromeClick={handleAerodromeClick} />
@@ -144,7 +145,7 @@ export default function MapPage() {
         {/* Persistently render LayerToolbar outside the crossfade in 2D ENROUTE view */}
         {viewMode === 'ENROUTE' && viewState.pitch === 0 && (
           <Suspense fallback={null}>
-            <LayerToolbar />
+            {isMobile ? <MobileLayerToolbar /> : <LayerToolbar />}
           </Suspense>
         )}
       </div>
