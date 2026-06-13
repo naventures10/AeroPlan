@@ -76,7 +76,7 @@
   border: none;
   color: light-dark(
     color-mix(in srgb, var(--on-surface-variant) 50%, transparent),
-    rgba(255, 255, 255, 0.3)
+    color-mix(in srgb, var(--on-surface-variant) 30%, transparent)
   );
   cursor: pointer;
   transition: all 0.2s ease;
@@ -93,8 +93,8 @@
 }
 
 .aip-mobile-layer-toggle.active {
-  color: light-dark(var(--accent-cyan), var(--accent-cyan));
-  background: light-dark(rgba(0, 0, 0, 0.03), rgba(255, 255, 255, 0.03));
+  color: var(--accent-cyan);
+  background: var(--accent-cyan-opacity-10);
 }
 
 .aip-mobile-layer-label {
