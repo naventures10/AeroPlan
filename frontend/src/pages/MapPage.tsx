@@ -80,7 +80,7 @@ export default function MapPage() {
           className="absolute inset-0 pointer-events-none"
         >
           <div
-            className={`absolute top-6 flex flex-col gap-3 pointer-events-auto ${search.isSearchFocused ? 'z-[250]' : 'z-50'} ${viewMode === 'TERMINAL' ? 'left-6' : isMobile ? 'left-[5.25rem]' : 'left-[4.5rem]'}`}
+            className={`absolute top-6 flex flex-col gap-3 pointer-events-auto ${search.isSearchFocused ? 'z-[250]' : 'z-50'} ${viewMode === 'TERMINAL' ? 'left-6' : isMobile ? 'left-[4.75rem]' : 'left-[4.5rem]'}`}
           >
             {viewMode === 'ENROUTE' && viewState.pitch === 0 && (
               <Suspense fallback={null}>

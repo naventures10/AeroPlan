@@ -61,7 +61,7 @@ export default function MobileSearchBar({
           className="aip-mobile-search-trigger"
           onClick={() => setIsSearchFocused(true)}
         >
-          <Search size={20} />
+          <Search size={18} />
         </button>
       )}
 
