@@ -9,11 +9,11 @@ import GlobalLoader from '../components/GlobalLoader';
 
 const MapView = lazy(() => import('../features/map/MapView'));
 const SearchBar = lazy(() => import('../features/map/controls/SearchBar'));
-const MobileSearchBar = lazy(() => import('../features/map/controls/MobileSearchBar'));
+const MobileSearchBar = lazy(() => import('../features/map/controls/mobile/MobileSearchBar'));
 const LayerToolbar = lazy(() => import('../features/map/controls/LayerToolbar'));
-const MobileLayerToolbar = lazy(() => import('../features/map/controls/MobileLayerToolbar'));
+const MobileLayerToolbar = lazy(() => import('../features/map/controls/mobile/MobileLayerToolbar'));
 const ViewToggle = lazy(() => import('../features/map/controls/ViewToggle'));
-const MobileViewToggle = lazy(() => import('../features/map/controls/MobileViewToggle'));
+const MobileViewToggle = lazy(() => import('../features/map/controls/mobile/MobileViewToggle'));
 const WeatherControls = lazy(() =>
   import('../features/map/controls/WeatherControls').then((m) => ({
     default: m.WeatherControls,

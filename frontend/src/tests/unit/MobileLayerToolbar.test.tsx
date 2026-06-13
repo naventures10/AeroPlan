@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
-import MobileLayerToolbar from '../../features/map/controls/MobileLayerToolbar';
+import MobileLayerToolbar from '../../features/map/controls/mobile/MobileLayerToolbar';
 import { useMapStore } from '../../store/useMapStore';
 
 describe('MobileLayerToolbar Component', () => {

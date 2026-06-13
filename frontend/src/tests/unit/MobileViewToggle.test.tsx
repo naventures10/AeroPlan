@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
-import MobileViewToggle from '../../features/map/controls/MobileViewToggle';
+import MobileViewToggle from '../../features/map/controls/mobile/MobileViewToggle';
 import { useMapStore } from '../../store/useMapStore';
 
 describe('MobileViewToggle Component', () => {

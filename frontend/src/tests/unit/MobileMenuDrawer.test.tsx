@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent, screen } from '@testing-library/react';
-import MobileMenuDrawer from '../../features/map/controls/MobileMenuDrawer';
+import MobileMenuDrawer from '../../features/map/controls/mobile/MobileMenuDrawer';
 import { useMapStore } from '../../store/useMapStore';
 
 describe('MobileMenuDrawer Component', () => {

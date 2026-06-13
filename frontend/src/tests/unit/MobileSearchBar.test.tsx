@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, renderHook, act } from '@testing-library/react';
-import MobileSearchBar from '../../features/map/controls/MobileSearchBar';
+import MobileSearchBar from '../../features/map/controls/mobile/MobileSearchBar';
 import { useIsMobile } from '../../hooks/useIsMobile';
 
 describe('useIsMobile hook', () => {

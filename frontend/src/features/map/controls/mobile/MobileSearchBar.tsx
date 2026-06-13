@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import './MobileSearchBar.css';
 import { Search, X, Loader2, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { SearchResult } from '../../../types';
+import type { SearchResult } from '../../../../types';
 
 interface SearchBarProps {
   searchInput: string;

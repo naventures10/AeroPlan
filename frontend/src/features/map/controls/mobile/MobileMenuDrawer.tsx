@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { useMapStore } from '../../../store/useMapStore';
-import { fetchAirspaceNotams } from '../../../api/client';
+import { useMapStore } from '../../../../store/useMapStore';
+import { fetchAirspaceNotams } from '../../../../api/client';
 import './MobileMenuDrawer.css';
 
 interface MobileMenuDrawerProps {
