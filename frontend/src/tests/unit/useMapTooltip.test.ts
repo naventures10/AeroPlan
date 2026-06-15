@@ -7,9 +7,15 @@ vi.mock('../../utils/sanitize', () => ({
   sanitizeHtml: (html: string) => html,
 }));
 
+const mockUseIsMobile = vi.fn(() => false);
+vi.mock('../../hooks/useIsMobile', () => ({
+  useIsMobile: () => mockUseIsMobile(),
+}));
+
 describe('useMapTooltip', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseIsMobile.mockReturnValue(false);
   });
 
   it('handles aerodromes layer', () => {
@@ -413,5 +419,93 @@ describe('useMapTooltip', () => {
     });
 
     expect(tooltip).toBeNull();
+  });
+
+  describe('mobile view tooltips', () => {
+    beforeEach(() => {
+      mockUseIsMobile.mockReturnValue(true);
+    });
+
+    it('suppresses tooltips for waypoints-layer on mobile', () => {
+      useMapStore.setState({
+        activeAerodromeMetadata: null,
+        activeLayers: {} as any,
+        selectedRouteIds: [],
+      });
+      const { result } = renderHook(() => useMapTooltip({ current: null }));
+
+      const tooltip = result.current({
+        object: { properties: { waypoint_name: 'FIX', raw_coordinates: '10N 020E' } },
+        layer: { id: 'waypoints-layer' },
+        x: 10,
+        y: 10,
+      });
+
+      expect(tooltip).toBeNull();
+    });
+
+    it('suppresses tooltips for navaids-layer on mobile', () => {
+      useMapStore.setState({
+        activeAerodromeMetadata: null,
+        activeLayers: {} as any,
+        selectedRouteIds: [],
+      });
+      const { result } = renderHook(() => useMapTooltip({ current: null }));
+
+      const tooltip = result.current({
+        object: { properties: { ident: 'V1', aid_type: 'VOR', frequency: '112.5' } },
+        layer: { id: 'navaids-layer' },
+        x: 10,
+        y: 10,
+      });
+
+      expect(tooltip).toBeNull();
+    });
+
+    it('suppresses tooltips for atsRoutes-waypoints-layer on mobile', () => {
+      useMapStore.setState({
+        activeAerodromeMetadata: null,
+        activeLayers: { atsRoutes: true } as any,
+        selectedRouteIds: [],
+      });
+      const { result } = renderHook(() => useMapTooltip({ current: null }));
+
+      const tooltip = result.current({
+        object: { properties: { waypoint_name: 'FIX2', route_ids: 'L333' } },
+        layer: { id: 'atsRoutes-waypoints-layer-1' },
+        x: 10,
+        y: 10,
+      });
+
+      expect(tooltip).toBeNull();
+    });
+
+    it('does not suppress tooltips for atsRoutes-geom-layer on mobile', () => {
+      useMapStore.setState({
+        activeAerodromeMetadata: null,
+        activeLayers: { atsRoutes: true } as any,
+        selectedRouteIds: [],
+      });
+      const { result } = renderHook(() => useMapTooltip({ current: null }));
+
+      const tooltip = result.current({
+        object: {
+          properties: {
+            route_id: 'L333',
+            route_type: 'RNAV',
+            lower_limit: 'FL150',
+            upper_limit: 'FL400',
+            distance_nm: '100',
+            track_magnetic: '090',
+          },
+        },
+        layer: { id: 'atsRoutes-geom-layer-1' },
+        x: 10,
+        y: 10,
+      });
+
+      expect(tooltip).not.toBeNull();
+      expect(tooltip!.html).toContain('L333');
+    });
   });
 });

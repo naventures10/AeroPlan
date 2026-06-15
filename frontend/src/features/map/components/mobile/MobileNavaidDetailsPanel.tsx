@@ -1,8 +1,8 @@
-import type { NavAidDetails } from '../../../api/client';
-import { LabelVal } from './SharedLabel';
-import { CollapsibleRemarks } from './CollapsibleRemarks';
+import type { NavAidDetails } from '../../../../api/client';
+import { LabelVal } from '../SharedLabel';
+import { CollapsibleRemarks } from '../CollapsibleRemarks';
 
-export function NavaidDetailsPanel({
+export function MobileNavaidDetailsPanel({
   isLoadingNavaid,
   navaidDetails,
   data,

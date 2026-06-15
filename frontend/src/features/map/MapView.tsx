@@ -16,6 +16,7 @@ import { useDeckLayers } from './layers/useDeckLayers';
 import { InterleavedDeckGL } from './InterleavedDeckGL';
 import { useMapTooltip } from './tooltips/useMapTooltip';
 import { FeatureInfoCard } from './FeatureInfoCard';
+import { MobileFeatureInfoCard } from './components/mobile/MobileFeatureInfoCard';
 import {
   TerminalSpatialLayers,
   TERMINAL_INTERACTIVE_LAYERS,
@@ -469,6 +470,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
         </Map>
       </DeckGL>
       <FeatureInfoCard />
+      <MobileFeatureInfoCard />
       {windHoverInfo && <WindTooltip {...windHoverInfo} />}
     </div>
   );

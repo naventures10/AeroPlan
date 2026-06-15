@@ -1,0 +1,97 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Mobile Feature Info Card Panel (Bottom Sheet style matching MobileWeatherControls)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.aip-mobile-feature-card {
+  position: absolute;
+  bottom: calc(4.75rem + env(safe-area-inset-bottom, 16px));
+  left: 12px;
+  right: 12px;
+  width: calc(100% - 24px);
+  z-index: 150;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: slide-up-mobile-feature 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family:
+    var(--font-inter),
+    system-ui,
+    -apple-system,
+    sans-serif;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slide-up-mobile-feature {
+  from {
+    transform: translateY(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.aip-mobile-feature-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.aip-mobile-feature-badge-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.aip-mobile-feature-badge {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.aip-mobile-feature-badge-waypoint {
+  color: var(--route-waypoint);
+}
+
+.aip-mobile-feature-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.aip-mobile-feature-close-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--on-surface-variant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  touch-action: manipulation;
+}
+
+.aip-mobile-feature-close-btn:active {
+  transform: scale(0.9);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.aip-mobile-feature-body {
+  max-height: 25vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
