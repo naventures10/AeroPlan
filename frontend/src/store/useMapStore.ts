@@ -400,6 +400,25 @@ export const useMapStore = create<MapState>()(
       navaidDetails: null,
       isLoadingNavaid: false,
       setSelectedFeature: (feature) => {
+        const current = get().selectedFeature;
+        if (current && feature && current.type === feature.type) {
+          const currentData = current.data?.properties || current.data || {};
+          const newData = feature.data?.properties || feature.data || {};
+          let isSame = false;
+          if (feature.type === 'WAYPOINT') {
+            isSame = currentData.waypoint_name === newData.waypoint_name;
+          } else if (feature.type === 'NAVAID') {
+            isSame = (currentData.ident || currentData.id) === (newData.ident || newData.id);
+          } else if (feature.type === 'AIRSPACE') {
+            isSame = (currentData.id || currentData.name) === (newData.id || newData.name);
+          } else if (feature.type === 'ATS_ROUTE') {
+            isSame = currentData.route_id === newData.route_id;
+          }
+          if (isSame) return;
+        } else if (!current && !feature) {
+          return;
+        }
+
         set({
           selectedFeature: feature,
           routeDetails: null,

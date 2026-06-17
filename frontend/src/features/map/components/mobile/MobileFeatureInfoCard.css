@@ -19,24 +19,11 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  animation: slide-up-mobile-feature 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   font-family:
     var(--font-inter),
     system-ui,
     -apple-system,
     sans-serif;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes slide-up-mobile-feature {
-  from {
-    transform: translateY(120%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
 }
 
 .aip-mobile-feature-header {

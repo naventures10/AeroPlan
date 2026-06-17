@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import './FeatureInfoCard.css';
 
 import { X, EyeOff, ChevronLeft } from 'lucide-react';
@@ -12,17 +12,15 @@ import { WaypointDetailsPanel } from './components/WaypointDetailsPanel';
 import { AirspaceDetailsPanel } from './components/AirspaceDetailsPanel';
 
 // fallow-ignore-next-line complexity
-export function FeatureInfoCard() {
-  const {
-    selectedFeature,
-    setSelectedFeature,
-    viewMode,
-    setSelectedRouteIds,
-    routeDetails,
-    isLoadingRoute,
-    navaidDetails,
-    isLoadingNavaid,
-  } = useMapStore();
+export const FeatureInfoCard = memo(function FeatureInfoCard() {
+  const selectedFeature = useMapStore((state) => state.selectedFeature);
+  const setSelectedFeature = useMapStore((state) => state.setSelectedFeature);
+  const viewMode = useMapStore((state) => state.viewMode);
+  const setSelectedRouteIds = useMapStore((state) => state.setSelectedRouteIds);
+  const routeDetails = useMapStore((state) => state.routeDetails);
+  const isLoadingRoute = useMapStore((state) => state.isLoadingRoute);
+  const navaidDetails = useMapStore((state) => state.navaidDetails);
+  const isLoadingNavaid = useMapStore((state) => state.isLoadingNavaid);
   const [isPanelHidden, setIsPanelHidden] = useState(false);
 
   useEffect(() => {
@@ -192,4 +190,4 @@ export function FeatureInfoCard() {
       )}
     </AnimatePresence>
   );
-}
+});

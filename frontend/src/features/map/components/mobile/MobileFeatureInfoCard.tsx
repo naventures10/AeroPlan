@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import './MobileFeatureInfoCard.css';
-import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMapStore } from '../../../../store/useMapStore';
 import { useIsMobile } from '../../../../hooks/useIsMobile';
@@ -9,15 +8,11 @@ import { MobileWaypointDetailsPanel } from './MobileWaypointDetailsPanel';
 import { MobileNavaidDetailsPanel } from './MobileNavaidDetailsPanel';
 import { AirspaceDetailsPanel } from '../AirspaceDetailsPanel';
 
-export function MobileFeatureInfoCard() {
-  const {
-    selectedFeature,
-    setSelectedFeature,
-    viewMode,
-    setSelectedRouteIds,
-    navaidDetails,
-    isLoadingNavaid,
-  } = useMapStore();
+export const MobileFeatureInfoCard = memo(function MobileFeatureInfoCard() {
+  const selectedFeature = useMapStore((state) => state.selectedFeature);
+  const viewMode = useMapStore((state) => state.viewMode);
+  const navaidDetails = useMapStore((state) => state.navaidDetails);
+  const isLoadingNavaid = useMapStore((state) => state.isLoadingNavaid);
   const [isPanelHidden, setIsPanelHidden] = useState(false);
 
   useEffect(() => {
@@ -39,11 +34,6 @@ export function MobileFeatureInfoCard() {
   } else {
     title = data.station_name || data.waypoint_name || 'Feature Details';
   }
-
-  const handleClose = () => {
-    setSelectedFeature(null);
-    setSelectedRouteIds([]);
-  };
 
   return (
     <AnimatePresence>
@@ -68,15 +58,6 @@ export function MobileFeatureInfoCard() {
               </span>
               <h3 className="aip-mobile-feature-title">{title}</h3>
             </div>
-            <button
-              type="button"
-              data-testid="close-mobile-feature-card"
-              onClick={handleClose}
-              className="aip-mobile-feature-close-btn"
-              aria-label="Close"
-            >
-              <X size={16} />
-            </button>
           </div>
 
           <div className="aip-mobile-feature-body custom-scrollbar">
@@ -94,4 +75,4 @@ export function MobileFeatureInfoCard() {
       )}
     </AnimatePresence>
   );
-}
+});

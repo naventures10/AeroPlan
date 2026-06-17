@@ -1,12 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MobileFeatureInfoCard } from '../../features/map/components/mobile/MobileFeatureInfoCard';
 import { useMapStore } from '../../store/useMapStore';
 
 // Mock the store
-vi.mock('../../store/useMapStore', () => ({
-  useMapStore: vi.fn(),
-}));
+vi.mock('../../store/useMapStore', () => {
+  const stateRef = { current: {} as any };
+  const mockStore = vi.fn((selector?: any) => {
+    if (typeof selector === 'function') {
+      return selector(stateRef.current);
+    }
+    return stateRef.current;
+  });
+  (mockStore as any).mockReturnValue = (val: any) => {
+    stateRef.current = val;
+    return mockStore;
+  };
+  return { useMapStore: mockStore };
+});
 
 // Mock useIsMobile hook
 const mockUseIsMobile = vi.fn(() => true);
@@ -134,23 +145,5 @@ describe('MobileFeatureInfoCard', () => {
     const elements = screen.getAllByText('MUMBAI CTR');
     expect(elements.length).toBeGreaterThan(0);
     expect(screen.getByText('CTR')).toBeDefined();
-  });
-
-  it('should close the card when close button is clicked', () => {
-    (useMapStore as any).mockReturnValue({
-      selectedFeature: { type: 'WAYPOINT', data: { waypoint_name: 'FIX' } },
-      setSelectedFeature,
-      viewMode: 'ENROUTE',
-      setSelectedRouteIds,
-      navaidDetails: null,
-      isLoadingNavaid: false,
-    });
-
-    render(<MobileFeatureInfoCard />);
-    const closeBtn = screen.getByTestId('close-mobile-feature-card');
-    fireEvent.click(closeBtn);
-
-    expect(setSelectedFeature).toHaveBeenCalledWith(null);
-    expect(setSelectedRouteIds).toHaveBeenCalledWith([]);
   });
 });

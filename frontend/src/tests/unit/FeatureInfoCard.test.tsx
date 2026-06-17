@@ -4,9 +4,20 @@ import { FeatureInfoCard } from '../../features/map/FeatureInfoCard';
 import { useMapStore } from '../../store/useMapStore';
 
 // Mock the store
-vi.mock('../../store/useMapStore', () => ({
-  useMapStore: vi.fn(),
-}));
+vi.mock('../../store/useMapStore', () => {
+  const stateRef = { current: {} as any };
+  const mockStore = vi.fn((selector?: any) => {
+    if (typeof selector === 'function') {
+      return selector(stateRef.current);
+    }
+    return stateRef.current;
+  });
+  (mockStore as any).mockReturnValue = (val: any) => {
+    stateRef.current = val;
+    return mockStore;
+  };
+  return { useMapStore: mockStore };
+});
 
 // Mock useIsMobile hook
 const mockUseIsMobile = vi.fn(() => false);
