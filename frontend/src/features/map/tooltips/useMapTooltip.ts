@@ -517,7 +517,8 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
         if (
           lid === 'waypoints-layer' ||
           lid === 'navaids-layer' ||
-          lid.startsWith('atsRoutes-waypoints-layer')
+          lid.startsWith('atsRoutes-waypoints-layer') ||
+          lid.startsWith('atsRoutes-geom-layer')
         ) {
           return null;
         }
@@ -587,7 +588,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
       lastHoveredTooltip = tooltipResult;
       return tooltipResult;
     },
-    [mapRef],
+    [mapRef, isMobile],
   );
 
   return getTooltip;

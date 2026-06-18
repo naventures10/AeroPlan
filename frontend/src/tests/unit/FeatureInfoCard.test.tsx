@@ -227,7 +227,7 @@ describe('FeatureInfoCard', () => {
     expect(screen.queryByTestId('feature-info-card')).toBeNull();
   });
 
-  it('should render ATS Route details on mobile', () => {
+  it('should not render ATS Route details on mobile', () => {
     mockUseIsMobile.mockReturnValue(true);
     const mockRouteDetails = {
       route_id: 'L333',
@@ -250,6 +250,6 @@ describe('FeatureInfoCard', () => {
     });
 
     render(<FeatureInfoCard />);
-    expect(screen.getByTestId('feature-info-card')).toBeDefined();
+    expect(screen.queryByTestId('feature-info-card')).toBeNull();
   });
 });

@@ -36,6 +36,11 @@ const AirspaceNotamsModal = lazy(() =>
     default: module.AirspaceNotamsModal,
   })),
 );
+const MobileFeatureInfoCard = lazy(() =>
+  import('../features/map/components/mobile/MobileFeatureInfoCard').then((m) => ({
+    default: m.MobileFeatureInfoCard,
+  })),
+);
 const UserProfileModal = lazy(() => import('../features/user/UserProfileModal'));
 
 // fallow-ignore-next-line complexity
@@ -150,6 +155,13 @@ export default function MapPage() {
         {viewMode === 'ENROUTE' && viewState.pitch === 0 && (
           <Suspense fallback={null}>
             {isMobile ? <MobileLayerToolbar /> : <LayerToolbar />}
+          </Suspense>
+        )}
+
+        {/* Mobile Feature Info Card — rendered outside MapView/DeckGL to avoid event conflicts */}
+        {isMobile && (
+          <Suspense fallback={null}>
+            <MobileFeatureInfoCard />
           </Suspense>
         )}
       </div>

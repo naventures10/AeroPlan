@@ -29,8 +29,7 @@ export const FeatureInfoCard = memo(function FeatureInfoCard() {
 
   const isMobile = useIsMobile();
   const type = selectedFeature?.type || '';
-  const isVisible =
-    viewMode === 'ENROUTE' && selectedFeature !== null && (!isMobile || type === 'ATS_ROUTE');
+  const isVisible = viewMode === 'ENROUTE' && selectedFeature !== null && !isMobile;
   const rawData = selectedFeature?.data || {};
   // Normalize data: if it has a 'properties' key (like MVT features), use that.
   // Otherwise use it directly (like search results).

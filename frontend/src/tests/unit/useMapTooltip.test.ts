@@ -480,7 +480,7 @@ describe('useMapTooltip', () => {
       expect(tooltip).toBeNull();
     });
 
-    it('does not suppress tooltips for atsRoutes-geom-layer on mobile', () => {
+    it('suppresses tooltips for atsRoutes-geom-layer on mobile', () => {
       useMapStore.setState({
         activeAerodromeMetadata: null,
         activeLayers: { atsRoutes: true } as any,
@@ -504,8 +504,7 @@ describe('useMapTooltip', () => {
         y: 10,
       });
 
-      expect(tooltip).not.toBeNull();
-      expect(tooltip!.html).toContain('L333');
+      expect(tooltip).toBeNull();
     });
   });
 });

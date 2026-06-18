@@ -24,13 +24,20 @@
     system-ui,
     -apple-system,
     sans-serif;
+  /* Force hardware acceleration for smooth swipe performance */
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .aip-mobile-feature-header {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  margin-top: 4px;
 }
 
 .aip-mobile-feature-badge-title {
@@ -57,28 +64,48 @@
   color: var(--primary);
 }
 
-.aip-mobile-feature-close-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid var(--glass-border);
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--on-surface-variant);
+.aip-mobile-feature-drag-zone {
+  width: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  touch-action: manipulation;
+  cursor: grab;
+  touch-action: none;
+  margin-top: -6px; /* Offset card padding */
+  padding-top: 6px;
+  padding-bottom: 4px;
 }
 
-.aip-mobile-feature-close-btn:active {
-  transform: scale(0.9);
-  background: rgba(255, 255, 255, 0.1);
+.aip-mobile-feature-drag-zone:active {
+  cursor: grabbing;
+}
+
+.aip-mobile-feature-drag-handle {
+  width: 36px;
+  height: 4px;
+  background-color: var(--glass-border);
+  border-radius: 2px;
+  opacity: 0.7;
+  transition:
+    opacity 0.2s,
+    background-color 0.2s;
+}
+
+.aip-mobile-feature-drag-zone:active .aip-mobile-feature-drag-handle {
+  background-color: var(--primary);
+  opacity: 1;
 }
 
 .aip-mobile-feature-body {
   max-height: 25vh;
   overflow-y: auto;
   padding-right: 4px;
+}
+
+.aip-mobile-feature-card.is-route .aip-mobile-feature-body {
+  max-height: 55vh;
+}
+
+.aip-mobile-feature-card.collapsed {
+  gap: 0;
 }
