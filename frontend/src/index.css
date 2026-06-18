@@ -152,6 +152,27 @@ body,
   background-color: var(--background);
   color: var(--on-background);
   font-family: var(--font-hanken);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Allow text selection in inputs, textareas, and panel bodies */
+input,
+textarea,
+select,
+[contenteditable='true'],
+.aip-feature-card-body,
+.aip-mobile-feature-body,
+.aip-terminal-dashboard-body,
+.aip-notam-list {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Disable tap highlight color on mobile devices */
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
