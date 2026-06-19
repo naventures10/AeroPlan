@@ -182,11 +182,49 @@ describe('MapView Component', () => {
     expect(getByTestId('mock-deckgl')).toBeInTheDocument();
   });
 
-  it('handles fitBounds', () => {
-    useMapStore.setState({ boundsToFit: [0, 0, 10, 10] });
+  it('handles fitBounds gracefully on extremely small viewports to avoid NaN/crashes', () => {
+    const originalInnerWidth = window.innerWidth;
+    const originalInnerHeight = window.innerHeight;
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 200,
+    });
+    Object.defineProperty(window, 'innerHeight', {
+      writable: true,
+      configurable: true,
+      value: 200,
+    });
+
+    const setViewStateMock = vi.fn();
+    useMapStore.setState({
+      boundsToFit: [77, 20, 79, 22],
+      setViewState: setViewStateMock,
+    });
 
     render(<MapView aerodromes={[]} onAerodromeClick={vi.fn()} />);
-    // WebMercatorViewport is mocked or fails in JSDOM often, but it's handled in try/catch in component
+
+    // Restore original window sizes
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: originalInnerWidth,
+    });
+    Object.defineProperty(window, 'innerHeight', {
+      writable: true,
+      configurable: true,
+      value: originalInnerHeight,
+    });
+
+    // Since width/height is 200, padding is restricted to safePadding (200 * 0.2 = 40px)
+    expect(setViewStateMock).toHaveBeenCalled();
+    const firstCall = setViewStateMock.mock.calls[0];
+    expect(firstCall).toBeDefined();
+    const callArgs = firstCall?.[0];
+    expect(callArgs).toBeDefined();
+    expect(Number.isFinite(callArgs.longitude)).toBe(true);
+    expect(Number.isFinite(callArgs.latitude)).toBe(true);
+    expect(Number.isFinite(callArgs.zoom)).toBe(true);
   });
 
   it('handles FLY transition', () => {

@@ -28,6 +28,13 @@ const MobileWeatherControls = lazy(() =>
 const AerodromeInfoDropdown = lazy(() => import('../features/aip/AerodromeInfoDropdown'));
 const AerodromeChartViewer = lazy(() => import('../features/aip/AerodromeChartViewer'));
 const SectionModal = lazy(() => import('../features/aip/SectionModal'));
+const MobileAerodromeInfoDropdown = lazy(
+  () => import('../features/aip/mobile/MobileAerodromeInfoDropdown'),
+);
+const MobileAerodromeChartViewer = lazy(
+  () => import('../features/aip/mobile/MobileAerodromeChartViewer'),
+);
+const MobileSectionModal = lazy(() => import('../features/aip/mobile/MobileSectionModal'));
 const TerminalDashboard = lazy(() => import('../features/terminal/TerminalDashboard'));
 const MobileTerminalDashboard = lazy(() =>
   import('../features/terminal/mobile/MobileTerminalDashboard').then((module) => ({
@@ -115,7 +122,7 @@ export default function MapPage() {
           className="absolute inset-0 pointer-events-none"
         >
           <div
-            className={`absolute top-6 flex flex-col gap-3 pointer-events-auto ${search.isSearchFocused ? 'z-[250]' : 'z-50'} ${viewMode === 'TERMINAL' ? 'left-6' : isMobile ? 'left-[4.75rem]' : 'left-[4.5rem]'}`}
+            className={`absolute top-6 flex ${isMobile ? 'flex-row items-center gap-2' : 'flex-col gap-3'} pointer-events-auto ${search.isSearchFocused ? 'z-[250]' : 'z-50'} ${viewMode === 'TERMINAL' ? 'left-6' : isMobile ? 'left-[4.75rem]' : 'left-[4.5rem]'}`}
           >
             {viewMode === 'ENROUTE' && viewState.pitch === 0 && (
               <Suspense fallback={null}>
@@ -123,7 +130,7 @@ export default function MapPage() {
               </Suspense>
             )}
 
-            {(activeAirport || viewMode === 'TERMINAL') && (
+            {!isMobile && (activeAirport || viewMode === 'TERMINAL') && (
               <>
                 <Suspense fallback={null}>
                   <AerodromeInfoDropdown
@@ -139,6 +146,22 @@ export default function MapPage() {
               </>
             )}
           </div>
+
+          {isMobile && (activeAirport || viewMode === 'TERMINAL') && (
+            <div className="absolute top-6 left-1/2 -translate-x-1/2 flex flex-row items-center gap-2 pointer-events-auto z-50">
+              <Suspense fallback={null}>
+                <MobileAerodromeInfoDropdown
+                  onSectionSelect={handleSectionSelect}
+                  activeAirport={activeAirport}
+                />
+              </Suspense>
+              {activeAirport && (
+                <Suspense fallback={null}>
+                  <MobileAerodromeChartViewer icaoCode={activeAirport} />
+                </Suspense>
+              )}
+            </div>
+          )}
 
           {activeAirport && (viewMode === 'TERMINAL' || viewState.pitch > 0) && !isMobile && (
             <div className="absolute top-6 right-6 pointer-events-auto z-40">
@@ -198,15 +221,27 @@ export default function MapPage() {
       </div>
 
       <Suspense fallback={null}>
-        <SectionModal
-          isOpen={sectionModalOpen}
-          onClose={closeSectionModal}
-          title={sectionTitle}
-          sectionId={sectionId}
-          data={sectionData}
-          dataType={sectionDataType}
-          isLoading={sectionLoading}
-        />
+        {isMobile ? (
+          <MobileSectionModal
+            isOpen={sectionModalOpen}
+            onClose={closeSectionModal}
+            title={sectionTitle}
+            sectionId={sectionId}
+            data={sectionData}
+            dataType={sectionDataType}
+            isLoading={sectionLoading}
+          />
+        ) : (
+          <SectionModal
+            isOpen={sectionModalOpen}
+            onClose={closeSectionModal}
+            title={sectionTitle}
+            sectionId={sectionId}
+            data={sectionData}
+            dataType={sectionDataType}
+            isLoading={sectionLoading}
+          />
+        )}
       </Suspense>
 
       <Suspense fallback={null}>

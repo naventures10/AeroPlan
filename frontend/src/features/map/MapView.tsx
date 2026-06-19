@@ -242,28 +242,41 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
   useEffect(() => {
     if (boundsToFit && boundsToFit.length === 4) {
       try {
+        const width = window.innerWidth || 1024;
+        const height = window.innerHeight || 768;
+        // Limit padding dynamically to a safe percentage (e.g., 20%) of the smallest viewport dimension
+        const safePadding = Math.min(150, Math.floor(Math.min(width, height) * 0.2));
+
         const vp = new WebMercatorViewport({
-          width: window.innerWidth || 1024,
-          height: window.innerHeight || 768,
+          width,
+          height,
         });
         const { longitude, latitude, zoom } = vp.fitBounds(
           [
             [boundsToFit[0], boundsToFit[1]],
             [boundsToFit[2], boundsToFit[3]],
           ],
-          { padding: 150 },
+          { padding: safePadding },
         );
 
-        setViewState({
-          ...viewState,
-          longitude,
-          latitude,
-          zoom,
-          pitch: viewMode === 'TERMINAL' ? 45 : 0,
-          bearing: 0,
-          transitionDuration: 1200,
-          transitionType: 'FLY',
-        });
+        if (Number.isFinite(longitude) && Number.isFinite(latitude) && Number.isFinite(zoom)) {
+          setViewState({
+            ...viewState,
+            longitude,
+            latitude,
+            zoom,
+            pitch: viewMode === 'TERMINAL' ? 45 : 0,
+            bearing: 0,
+            transitionDuration: 1200,
+            transitionType: 'FLY',
+          });
+        } else {
+          console.warn('fitBounds produced invalid coordinates or zoom:', {
+            longitude,
+            latitude,
+            zoom,
+          });
+        }
 
         // Reset the intent so it doesn't re-trigger
         fitBounds(null);
