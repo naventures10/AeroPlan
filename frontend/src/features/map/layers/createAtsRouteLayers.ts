@@ -180,11 +180,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
       },
       binary: true,
       transitions: {
-        getLineColor: {
-          type: 'interpolation',
-          duration: 300,
-          enter: (value: number[]) => [value[0], value[1], value[2], 0],
-        },
+        getLineColor: 300,
         getLineWidth: 300,
       },
     }),
@@ -253,10 +249,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
           blendFunc: [0, 771], // [GL.ZERO, GL.ONE_MINUS_SRC_ALPHA]
         },
         transitions: {
-          getColor: {
-            duration: 300,
-            enter: (value: number[]) => [value[0], value[1], value[2], 0],
-          },
+          getColor: 300,
         },
       }),
     );
@@ -303,10 +296,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         },
         parameters: { depthTest: false },
         transitions: {
-          getColor: {
-            duration: 300,
-            enter: (value: number[]) => [value[0], value[1], value[2], 0],
-          },
+          getColor: 300,
         },
       }),
     );
@@ -351,10 +341,7 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         },
         parameters: { depthTest: false },
         transitions: {
-          getColor: {
-            duration: 300,
-            enter: (value: number[]) => [value[0], value[1], value[2], 0],
-          },
+          getColor: 300,
         },
       }),
     );
@@ -452,17 +439,9 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
       },
       binary: false,
       transitions: {
-        getIconColor: {
-          type: 'interpolation',
-          duration: 300,
-          enter: (value: number[]) => [value[0], value[1], value[2], 0],
-        },
+        getIconColor: 300,
         getIconSize: 300,
-        getTextColor: {
-          type: 'interpolation',
-          duration: 300,
-          enter: (value: number[]) => [value[0], value[1], value[2], 0],
-        },
+        getTextColor: 300,
       },
     }),
   );

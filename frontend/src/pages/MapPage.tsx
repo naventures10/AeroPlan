@@ -29,11 +29,26 @@ const AerodromeInfoDropdown = lazy(() => import('../features/aip/AerodromeInfoDr
 const AerodromeChartViewer = lazy(() => import('../features/aip/AerodromeChartViewer'));
 const SectionModal = lazy(() => import('../features/aip/SectionModal'));
 const TerminalDashboard = lazy(() => import('../features/terminal/TerminalDashboard'));
+const MobileTerminalDashboard = lazy(() =>
+  import('../features/terminal/mobile/MobileTerminalDashboard').then((module) => ({
+    default: module.default,
+  })),
+);
 const TerminalLegend = lazy(() => import('../features/terminal/components/TerminalLegend'));
 const AipSupplementsModal = lazy(() => import('../features/aip/AipSupplementsModal'));
+const MobileAipSupplementsModal = lazy(() =>
+  import('../features/aip/mobile/MobileAipSupplementsModal').then((module) => ({
+    default: module.MobileAipSupplementsModal,
+  })),
+);
 const AirspaceNotamsModal = lazy(() =>
   import('../features/aip/AirspaceNotamsModal').then((module) => ({
     default: module.AirspaceNotamsModal,
+  })),
+);
+const MobileAirspaceNotamsModal = lazy(() =>
+  import('../features/aip/mobile/MobileAirspaceNotamsModal').then((module) => ({
+    default: module.MobileAirspaceNotamsModal,
   })),
 );
 const MobileFeatureInfoCard = lazy(() =>
@@ -42,6 +57,11 @@ const MobileFeatureInfoCard = lazy(() =>
   })),
 );
 const UserProfileModal = lazy(() => import('../features/user/UserProfileModal'));
+const MobileUserProfileModal = lazy(() =>
+  import('../features/user/mobile/MobileUserProfileModal').then((module) => ({
+    default: module.MobileUserProfileModal,
+  })),
+);
 
 // fallow-ignore-next-line complexity
 export default function MapPage() {
@@ -115,7 +135,7 @@ export default function MapPage() {
             )}
           </div>
 
-          {activeAirport && (viewMode === 'TERMINAL' || viewState.pitch > 0) && (
+          {activeAirport && (viewMode === 'TERMINAL' || viewState.pitch > 0) && !isMobile && (
             <div className="absolute top-6 right-6 pointer-events-auto z-40">
               <Suspense fallback={null}>
                 <TerminalDashboard icaoCode={activeAirport} />
@@ -179,9 +199,12 @@ export default function MapPage() {
       </Suspense>
 
       <Suspense fallback={null}>
-        <AipSupplementsModal />
-        <AirspaceNotamsModal />
-        <UserProfileModal />
+        {isMobile ? <MobileAipSupplementsModal /> : <AipSupplementsModal />}
+        {isMobile ? <MobileAirspaceNotamsModal /> : <AirspaceNotamsModal />}
+        {isMobile ? <MobileUserProfileModal /> : <UserProfileModal />}
+        {isMobile && activeAirport && (viewMode === 'TERMINAL' || viewState.pitch > 0) && (
+          <MobileTerminalDashboard icaoCode={activeAirport} />
+        )}
       </Suspense>
     </div>
   );
