@@ -5,6 +5,7 @@ import { useAerodromeData } from '../hooks/useAerodromeData';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
+import { LogOut } from 'lucide-react';
 import GlobalLoader from '../components/GlobalLoader';
 
 const MapView = lazy(() => import('../features/map/MapView'));
@@ -77,7 +78,7 @@ const MobileUserProfileModal = lazy(() =>
 
 // fallow-ignore-next-line complexity
 export default function MapPage() {
-  const { viewMode, activeAirport, viewState, isWeatherMode } = useMapStore();
+  const { viewMode, activeAirport, viewState, isWeatherMode, returnToEnroute } = useMapStore();
   const search = useSearch();
   const isMobile = useIsMobile();
 
@@ -148,18 +149,31 @@ export default function MapPage() {
           </div>
 
           {isMobile && (activeAirport || viewMode === 'TERMINAL') && (
-            <div className="absolute top-6 left-1/2 -translate-x-1/2 flex flex-row items-center gap-2 pointer-events-auto z-50">
-              <Suspense fallback={null}>
-                <MobileAerodromeInfoDropdown
-                  onSectionSelect={handleSectionSelect}
-                  activeAirport={activeAirport}
-                />
-              </Suspense>
-              {activeAirport && (
+            <div className="absolute top-6 left-4 right-4 flex flex-row items-center justify-between pointer-events-auto z-50">
+              {/* Exit Terminal Button */}
+              <button
+                type="button"
+                onClick={() => returnToEnroute()}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 active:scale-95 transition-all duration-200 backdrop-blur-xl shadow-lg focus:outline-none shrink-0"
+                aria-label="Exit Terminal View"
+              >
+                <LogOut size={16} strokeWidth={2.5} className="rotate-180" />
+              </button>
+
+              {/* Centered triggers with matching right-side offset to maintain visual centering */}
+              <div className="flex flex-row items-center gap-1.5 justify-center flex-1 pr-9">
                 <Suspense fallback={null}>
-                  <MobileAerodromeChartViewer icaoCode={activeAirport} />
+                  <MobileAerodromeInfoDropdown
+                    onSectionSelect={handleSectionSelect}
+                    activeAirport={activeAirport}
+                  />
                 </Suspense>
-              )}
+                {activeAirport && (
+                  <Suspense fallback={null}>
+                    <MobileAerodromeChartViewer icaoCode={activeAirport} />
+                  </Suspense>
+                )}
+              </div>
             </div>
           )}
 
