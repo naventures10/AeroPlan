@@ -61,26 +61,26 @@
 
 /* Cube Face positions */
 .view-toggle-face-2d {
-  transform: translateZ(24px);
+  transform: translateZ(20px);
 }
 
 .view-toggle-face-3d {
-  transform: rotateX(90deg) translateZ(24px);
+  transform: rotateX(90deg) translateZ(20px);
   background-color: var(--accent-cyan-opacity-10);
 }
 
 .view-toggle-side-top {
-  transform: rotateX(-90deg) translateZ(24px);
+  transform: rotateX(-90deg) translateZ(20px);
 }
 
 .view-toggle-side-right {
-  transform: rotateY(90deg) translateZ(24px);
+  transform: rotateY(90deg) translateZ(20px);
 }
 
 .view-toggle-side-left {
-  transform: rotateY(-90deg) translateZ(24px);
+  transform: rotateY(-90deg) translateZ(20px);
 }
 
 .view-toggle-side-back {
-  transform: rotateY(180deg) translateZ(24px);
+  transform: rotateY(180deg) translateZ(20px);
 }

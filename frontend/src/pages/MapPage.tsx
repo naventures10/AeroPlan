@@ -35,6 +35,11 @@ const MobileTerminalDashboard = lazy(() =>
   })),
 );
 const TerminalLegend = lazy(() => import('../features/terminal/components/TerminalLegend'));
+const MobileTerminalLegend = lazy(() =>
+  import('../features/terminal/mobile/components/MobileTerminalLegend').then((module) => ({
+    default: module.default,
+  })),
+);
 const AipSupplementsModal = lazy(() => import('../features/aip/AipSupplementsModal'));
 const MobileAipSupplementsModal = lazy(() =>
   import('../features/aip/mobile/MobileAipSupplementsModal').then((module) => ({
@@ -143,12 +148,18 @@ export default function MapPage() {
             </div>
           )}
 
-          {viewMode === 'TERMINAL' && (
+          {viewMode === 'TERMINAL' && !isMobile && (
             <div className="absolute bottom-6 left-6 pointer-events-auto z-40">
               <Suspense fallback={null}>
                 <TerminalLegend />
               </Suspense>
             </div>
+          )}
+
+          {viewMode === 'TERMINAL' && isMobile && (
+            <Suspense fallback={null}>
+              <MobileTerminalLegend />
+            </Suspense>
           )}
 
           {/* Removed LayerToolbar from here to prevent weather layer hijacking */}

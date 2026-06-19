@@ -185,7 +185,7 @@ export default function MobileViewToggle() {
                 transitionDuration: 1000,
               });
             }}
-            className="relative w-12 h-12 group focus:outline-none transition-transform active:scale-95 duration-200 view-toggle-cube-container"
+            className="relative w-10 h-10 group focus:outline-none transition-transform active:scale-95 duration-200 view-toggle-cube-container"
             title="Toggle View Mode"
           >
             <div
@@ -195,10 +195,10 @@ export default function MobileViewToggle() {
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--glass-bg-heavy)] backdrop-blur-xl border border-[var(--glass-border)] rounded-xl shadow-xl transition-all duration-300 group-hover:border-[var(--glass-border-highlight)] view-toggle-face-2d">
                 <Layers
                   className="text-on-surface-variant group-hover:text-on-surface dark:group-hover:text-white transition-colors"
-                  size={20}
+                  size={18}
                   strokeWidth={2}
                 />
-                <span className="text-[9px] font-bold text-on-surface-variant tracking-widest mt-0.5">
+                <span className="text-[8px] font-bold text-on-surface-variant tracking-widest mt-0.5">
                   2D
                 </span>
               </div>
@@ -207,10 +207,10 @@ export default function MobileViewToggle() {
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--glass-bg-heavy)] backdrop-blur-xl border border-[var(--accent-cyan)] rounded-xl transition-all duration-300 shadow-[var(--glass-shadow)] view-toggle-face-3d">
                 <Building2
                   className="text-[var(--accent-cyan)] group-hover:scale-110 transition-transform duration-300"
-                  size={20}
+                  size={18}
                   strokeWidth={2}
                 />
-                <span className="text-[9px] font-bold text-teal-800 dark:text-cyan-200 tracking-widest mt-0.5">
+                <span className="text-[8px] font-bold text-teal-800 dark:text-cyan-200 tracking-widest mt-0.5">
                   3D
                 </span>
               </div>
