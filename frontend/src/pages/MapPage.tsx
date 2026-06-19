@@ -149,7 +149,7 @@ export default function MapPage() {
           </div>
 
           {isMobile && (activeAirport || viewMode === 'TERMINAL') && (
-            <div className="absolute top-6 left-4 right-4 flex flex-row items-center justify-between pointer-events-auto z-50">
+            <div className="absolute top-6 left-1/2 -translate-x-1/2 flex flex-row items-center gap-2 pointer-events-auto z-50">
               {/* Exit Terminal Button */}
               <button
                 type="button"
@@ -160,20 +160,17 @@ export default function MapPage() {
                 <LogOut size={16} strokeWidth={2.5} className="rotate-180" />
               </button>
 
-              {/* Centered triggers with matching right-side offset to maintain visual centering */}
-              <div className="flex flex-row items-center gap-1.5 justify-center flex-1 pr-9">
+              <Suspense fallback={null}>
+                <MobileAerodromeInfoDropdown
+                  onSectionSelect={handleSectionSelect}
+                  activeAirport={activeAirport}
+                />
+              </Suspense>
+              {activeAirport && (
                 <Suspense fallback={null}>
-                  <MobileAerodromeInfoDropdown
-                    onSectionSelect={handleSectionSelect}
-                    activeAirport={activeAirport}
-                  />
+                  <MobileAerodromeChartViewer icaoCode={activeAirport} />
                 </Suspense>
-                {activeAirport && (
-                  <Suspense fallback={null}>
-                    <MobileAerodromeChartViewer icaoCode={activeAirport} />
-                  </Suspense>
-                )}
-              </div>
+              )}
             </div>
           )}
 
