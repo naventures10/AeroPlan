@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, memo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
-import { X, FileText, ZoomIn, ZoomOut, ArrowLeft } from 'lucide-react';
+import { X, FileText, ZoomIn, ZoomOut } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -191,12 +191,6 @@ export const MobileAipSupplementsModal = memo(function MobileAipSupplementsModal
     setPdfScale(0.8);
   }, [setOpen]);
 
-  const handleBackToList = () => {
-    setSelectedPdfUrl(null);
-    setNumPages(0);
-    setPdfScale(0.8);
-  };
-
   // Handle ESC
   useEscapeKey(isOpen, onClose);
 
@@ -265,17 +259,7 @@ export const MobileAipSupplementsModal = memo(function MobileAipSupplementsModal
             {/* Header */}
             <div className="aip-mobile-supps-header">
               <div className="aip-mobile-supps-title-group">
-                {selectedPdfUrl ? (
-                  <button
-                    onClick={handleBackToList}
-                    className="aip-mobile-supps-close-btn mr-1"
-                    aria-label="Back to supplements list"
-                  >
-                    <ArrowLeft size={20} />
-                  </button>
-                ) : (
-                  <FileText className="aip-mobile-supps-title-icon" size={18} />
-                )}
+                <FileText className="aip-mobile-supps-title-icon" size={18} />
                 <h2 className="aip-mobile-supps-title">
                   {selectedPdfUrl ? 'Supplement Document' : 'AIP Supplements'}
                 </h2>

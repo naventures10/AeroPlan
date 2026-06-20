@@ -109,7 +109,7 @@ describe('MobileAipSupplementsModal', () => {
     expect(screen.getByText('View PDF')).toBeInTheDocument();
   });
 
-  it('switches to PDF viewer and allows going back to the list', async () => {
+  it('switches to PDF viewer and closes the modal on close click', async () => {
     const mockData = [
       {
         supplement_number: '11/2026',
@@ -135,12 +135,11 @@ describe('MobileAipSupplementsModal', () => {
 
     expect(screen.getByText('Supplement Document')).toBeInTheDocument();
 
-    // Click back button
-    const backBtn = screen.getByLabelText('Back to supplements list');
-    fireEvent.click(backBtn);
+    // Click close button
+    const closeBtn = screen.getByLabelText('Close modal');
+    fireEvent.click(closeBtn);
 
-    // List view should be active again
-    expect(screen.queryByTestId('pdf-document')).not.toBeInTheDocument();
-    expect(screen.getByText('AIP Supplements')).toBeInTheDocument();
+    // Modal should trigger store close
+    expect(mockSetOpen).toHaveBeenCalledWith(false);
   });
 });
