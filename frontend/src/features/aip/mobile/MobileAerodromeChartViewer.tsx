@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { FileText, ChevronDown, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, X } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
@@ -60,6 +60,214 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
   const [isLoading, setIsLoading] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [pageDimensions, setPageDimensions] = useState<{ width: number; height: number } | null>(
+    null,
+  );
+
+  // Refs to track drag/pinch state
+  const isDraggingRef = useRef(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const panStartRef = useRef({ x: 0, y: 0 });
+
+  const isPinchingRef = useRef(false);
+  const pinchStartDistRef = useRef(0);
+  const pinchStartScaleRef = useRef(0.9);
+  const pinchStartPanOffsetRef = useRef({ x: 0, y: 0 });
+  const pinchStartCenterRef = useRef({ x: 0, y: 0 });
+  const lastTouchTimeRef = useRef(0);
+
+  // Calculate constraints based on scale and page dimensions
+  const clampOffset = useCallback(
+    (x: number, y: number, scale: number) => {
+      if (!pageDimensions) return { x, y };
+
+      const Wc = window.innerWidth;
+      const Hc = window.innerHeight;
+
+      // Base dimensions used in the react-pdf Page component (width={Wc * 0.95})
+      const Wp = Wc * 0.95;
+      const Hp = Wp * (pageDimensions.height / pageDimensions.width);
+
+      // Current scaled dimensions
+      const Wscaled = Wp * scale;
+      const Hscaled = Hp * scale;
+
+      let clampedX = x;
+      let clampedY = y;
+
+      // Bounding horizontal panning
+      if (Wscaled <= Wc) {
+        clampedX = 0;
+      } else {
+        const maxDragX = (Wscaled - Wc) / 2;
+        clampedX = Math.min(maxDragX, Math.max(-maxDragX, x));
+      }
+
+      // Bounding vertical panning
+      if (Hscaled <= Hc) {
+        clampedY = 0;
+      } else {
+        const maxDragY = (Hscaled - Hc) / 2;
+        clampedY = Math.min(maxDragY, Math.max(-maxDragY, y));
+      }
+
+      return { x: clampedX, y: clampedY };
+    },
+    [pageDimensions],
+  );
+
+  const handleZoom = useCallback(
+    (newScale: number) => {
+      const scale = Math.min(4, Math.max(0.5, newScale));
+      setPdfScale(scale);
+      setPanOffset((prev) => clampOffset(prev.x, prev.y, scale));
+    },
+    [clampOffset],
+  );
+
+  // Double tap handler
+  const handleDoubleTap = useCallback(
+    (clientX: number, clientY: number) => {
+      if (pdfScale > 1.2) {
+        // Reset scale and center
+        setPdfScale(0.9);
+        setPanOffset({ x: 0, y: 0 });
+      } else {
+        // Zoom to 2.0x centered at the double-tap point
+        const scale = 2.0;
+        const r = scale / pdfScale;
+        const Vcx = window.innerWidth / 2;
+        const Vcy = window.innerHeight / 2;
+        const dx = clientX - Vcx;
+        const dy = clientY - Vcy;
+        const targetX = panOffset.x - dx * (r - 1);
+        const targetY = panOffset.y - dy * (r - 1);
+
+        setPdfScale(scale);
+        setPanOffset(clampOffset(targetX, targetY, scale));
+      }
+    },
+    [pdfScale, panOffset, clampOffset],
+  );
+
+  // Touch handlers
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      const now = Date.now();
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        if (!touch) return;
+        // Check for double tap
+        if (now - lastTouchTimeRef.current < 300) {
+          e.preventDefault();
+          handleDoubleTap(touch.clientX, touch.clientY);
+          lastTouchTimeRef.current = 0;
+          return;
+        }
+        lastTouchTimeRef.current = now;
+
+        isDraggingRef.current = true;
+        isPinchingRef.current = false;
+        dragStartRef.current = { x: touch.clientX, y: touch.clientY };
+        panStartRef.current = { ...panOffset };
+      } else if (e.touches.length === 2) {
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        if (!touch1 || !touch2) return;
+        isPinchingRef.current = true;
+        isDraggingRef.current = false;
+        const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+        pinchStartDistRef.current = dist;
+        pinchStartScaleRef.current = pdfScale;
+        pinchStartPanOffsetRef.current = { ...panOffset };
+        pinchStartCenterRef.current = {
+          x: (touch1.clientX + touch2.clientX) / 2,
+          y: (touch1.clientY + touch2.clientY) / 2,
+        };
+      }
+    },
+    [panOffset, pdfScale, handleDoubleTap],
+  );
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (isPinchingRef.current && e.touches.length === 2) {
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        if (!touch1 || !touch2) return;
+        const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+        if (pinchStartDistRef.current > 0) {
+          const factor = dist / pinchStartDistRef.current;
+          const scale = Math.min(4, Math.max(0.5, pinchStartScaleRef.current * factor));
+
+          const currentCenterX = (touch1.clientX + touch2.clientX) / 2;
+          const currentCenterY = (touch1.clientY + touch2.clientY) / 2;
+
+          const r = scale / pinchStartScaleRef.current;
+          const Vcx = window.innerWidth / 2;
+          const Vcy = window.innerHeight / 2;
+
+          const dx = pinchStartCenterRef.current.x - Vcx;
+          const dy = pinchStartCenterRef.current.y - Vcy;
+
+          const targetX =
+            pinchStartPanOffsetRef.current.x -
+            dx * (r - 1) +
+            (currentCenterX - pinchStartCenterRef.current.x);
+          const targetY =
+            pinchStartPanOffsetRef.current.y -
+            dy * (r - 1) +
+            (currentCenterY - pinchStartCenterRef.current.y);
+
+          setPdfScale(scale);
+          setPanOffset(clampOffset(targetX, targetY, scale));
+        }
+      } else if (isDraggingRef.current && e.touches.length === 1) {
+        const touch = e.touches[0];
+        if (!touch) return;
+        const dx = touch.clientX - dragStartRef.current.x;
+        const dy = touch.clientY - dragStartRef.current.y;
+        const newX = panStartRef.current.x + dx;
+        const newY = panStartRef.current.y + dy;
+        setPanOffset(clampOffset(newX, newY, pdfScale));
+      }
+    },
+    [pdfScale, clampOffset],
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    isDraggingRef.current = false;
+    isPinchingRef.current = false;
+    pinchStartDistRef.current = 0;
+  }, []);
+
+  // Mouse drag handlers
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.button !== 0) return; // Only left click
+      isDraggingRef.current = true;
+      dragStartRef.current = { x: e.clientX, y: e.clientY };
+      panStartRef.current = { ...panOffset };
+    },
+    [panOffset],
+  );
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      const dx = e.clientX - dragStartRef.current.x;
+      const dy = e.clientY - dragStartRef.current.y;
+      const newX = panStartRef.current.x + dx;
+      const newY = panStartRef.current.y + dy;
+      setPanOffset(clampOffset(newX, newY, pdfScale));
+    },
+    [pdfScale, clampOffset],
+  );
+
+  const handleMouseUp = useCallback(() => {
+    isDraggingRef.current = false;
+  }, []);
 
   const dragControls = useDragControls();
 
@@ -138,6 +346,8 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
     setCurrentPage(1);
     setNumPages(0);
     setPdfScale(0.9);
+    setPanOffset({ x: 0, y: 0 });
+    setPageDimensions(null);
     setIsDrawerOpen(false);
     setIsModalOpen(true);
   }, []);
@@ -151,6 +361,9 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
     setSelectedChart(null);
     setNumPages(0);
     setCurrentPage(1);
+    setPdfScale(0.9);
+    setPanOffset({ x: 0, y: 0 });
+    setPageDimensions(null);
   }, []);
 
   const handleViewIn3D = useCallback(() => {
@@ -330,14 +543,14 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
                 <div className="absolute top-4 left-4 z-[210] flex flex-col gap-2">
                   <div className="flex flex-col bg-zinc-900/80 backdrop-blur-xl border border-zinc-700/50 rounded-2xl overflow-hidden shadow-2xl">
                     <button
-                      onClick={() => setPdfScale((s) => Math.min(4, s + 0.2))}
+                      onClick={() => handleZoom(pdfScale + 0.2)}
                       aria-label="Zoom in"
                       className="p-3.5 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors border-b border-zinc-800/50"
                     >
                       <ZoomIn size={20} />
                     </button>
                     <button
-                      onClick={() => setPdfScale((s) => Math.max(0.5, s - 0.2))}
+                      onClick={() => handleZoom(pdfScale - 0.2)}
                       aria-label="Zoom out"
                       className="p-3.5 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
                     >
@@ -394,19 +607,24 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
                 {/* PDF rendering with drag & wheel zoom */}
                 <div
                   className="w-full h-full flex items-center justify-center overflow-hidden bg-zinc-950"
+                  style={{ touchAction: 'none' }}
                   onWheel={(e) => {
                     const delta = e.deltaY;
-                    setPdfScale((s) => {
-                      const newScale = delta > 0 ? s - 0.1 : s + 0.1;
-                      return Math.min(4, Math.max(0.5, newScale));
-                    });
+                    const factor = delta > 0 ? -0.1 : 0.1;
+                    handleZoom(pdfScale + factor);
                   }}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  onDoubleClick={(e) => handleDoubleTap(e.clientX, e.clientY)}
                 >
                   {pdfUrl && (
                     <motion.div
-                      drag
-                      dragMomentum={false}
-                      animate={{ scale: pdfScale }}
+                      animate={{ scale: pdfScale, x: panOffset.x, y: panOffset.y }}
                       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                       className="relative cursor-inherit"
                     >
@@ -426,6 +644,9 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
                         <Page
                           pageNumber={currentPage}
                           scale={1}
+                          onLoadSuccess={(page) => {
+                            setPageDimensions({ width: page.width, height: page.height });
+                          }}
                           className="rounded-sm overflow-hidden"
                           renderTextLayer={true}
                           renderAnnotationLayer={true}

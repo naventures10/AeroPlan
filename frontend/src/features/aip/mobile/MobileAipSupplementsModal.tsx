@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, memo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { X, FileText, ZoomIn, ZoomOut, ArrowLeft } from 'lucide-react';
@@ -31,6 +31,120 @@ export const MobileAipSupplementsModal = memo(function MobileAipSupplementsModal
   const [pdfScale, setPdfScale] = useState(0.8);
   const [loadError, setLoadError] = useState(false);
 
+  const renderAreaRef = useRef<HTMLDivElement | null>(null);
+  const isPinchingRef = useRef(false);
+  const pinchStartDistRef = useRef(0);
+  const pinchStartScaleRef = useRef(0.8);
+  const pinchStartScrollLeftRef = useRef(0);
+  const pinchStartScrollTopRef = useRef(0);
+  const pinchStartCenterRef = useRef({ x: 0, y: 0 });
+  const lastTouchTimeRef = useRef(0);
+
+  const handleDoubleTap = useCallback(
+    (clientX: number, clientY: number) => {
+      const container = renderAreaRef.current;
+      if (!container) return;
+
+      if (pdfScale > 1.0) {
+        setPdfScale(0.8);
+        container.scrollLeft = 0;
+        container.scrollTop = 0;
+      } else {
+        const scale = 1.8;
+        const r = scale / pdfScale;
+        const rect = container.getBoundingClientRect();
+        const clickX = clientX - rect.left;
+        const clickY = clientY - rect.top;
+
+        const targetScrollLeft = (container.scrollLeft + clickX) * r - clickX;
+        const targetScrollTop = (container.scrollTop + clickY) * r - clickY;
+
+        setPdfScale(scale);
+        requestAnimationFrame(() => {
+          container.scrollLeft = targetScrollLeft;
+          container.scrollTop = targetScrollTop;
+        });
+      }
+    },
+    [pdfScale],
+  );
+
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      const now = Date.now();
+      const container = renderAreaRef.current;
+      if (!container) return;
+
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        if (!touch) return;
+        if (now - lastTouchTimeRef.current < 300) {
+          e.preventDefault();
+          handleDoubleTap(touch.clientX, touch.clientY);
+          lastTouchTimeRef.current = 0;
+          return;
+        }
+        lastTouchTimeRef.current = now;
+      } else if (e.touches.length === 2) {
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        if (!touch1 || !touch2) return;
+
+        isPinchingRef.current = true;
+        const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+        pinchStartDistRef.current = dist;
+        pinchStartScaleRef.current = pdfScale;
+        pinchStartScrollLeftRef.current = container.scrollLeft;
+        pinchStartScrollTopRef.current = container.scrollTop;
+        pinchStartCenterRef.current = {
+          x: (touch1.clientX + touch2.clientX) / 2,
+          y: (touch1.clientY + touch2.clientY) / 2,
+        };
+      }
+    },
+    [pdfScale, handleDoubleTap],
+  );
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    const container = renderAreaRef.current;
+    if (!container) return;
+
+    if (isPinchingRef.current && e.touches.length === 2) {
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      if (!touch1 || !touch2) return;
+
+      const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+      if (pinchStartDistRef.current > 0) {
+        const factor = dist / pinchStartDistRef.current;
+        const scale = Math.min(3, Math.max(0.4, pinchStartScaleRef.current * factor));
+
+        const currentCenterX = (touch1.clientX + touch2.clientX) / 2;
+        const currentCenterY = (touch1.clientY + touch2.clientY) / 2;
+
+        const r = scale / pinchStartScaleRef.current;
+        const rect = container.getBoundingClientRect();
+        const pinchStartX = pinchStartCenterRef.current.x - rect.left;
+        const pinchStartY = pinchStartCenterRef.current.y - rect.top;
+        const currentPinchX = currentCenterX - rect.left;
+        const currentPinchY = currentCenterY - rect.top;
+
+        const targetScrollLeft =
+          (pinchStartScrollLeftRef.current + pinchStartX) * r - currentPinchX;
+        const targetScrollTop = (pinchStartScrollTopRef.current + pinchStartY) * r - currentPinchY;
+
+        setPdfScale(scale);
+        container.scrollLeft = targetScrollLeft;
+        container.scrollTop = targetScrollTop;
+      }
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    isPinchingRef.current = false;
+    pinchStartDistRef.current = 0;
+  }, []);
+
   const dragControls = useDragControls();
 
   useEffect(() => {
@@ -49,11 +163,13 @@ export const MobileAipSupplementsModal = memo(function MobileAipSupplementsModal
 
   const onClose = useCallback(() => {
     setOpen(false);
+    setPdfScale(0.8);
   }, [setOpen]);
 
   const handleBackToList = () => {
     setSelectedPdfUrl(null);
     setNumPages(0);
+    setPdfScale(0.8);
   };
 
   // Handle ESC
@@ -185,7 +301,14 @@ export const MobileAipSupplementsModal = memo(function MobileAipSupplementsModal
                   )}
 
                   {/* PDF Render Area */}
-                  <div className="aip-mobile-pdf-render-area aip-scrollbar">
+                  <div
+                    ref={renderAreaRef}
+                    className="aip-mobile-pdf-render-area aip-scrollbar"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    onDoubleClick={(e) => handleDoubleTap(e.clientX, e.clientY)}
+                  >
                     <motion.div
                       animate={{ scale: pdfScale }}
                       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
