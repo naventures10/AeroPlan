@@ -37,6 +37,8 @@ export const MobileAipSupplementsModal = memo(function MobileAipSupplementsModal
   const pinchStartScaleRef = useRef(0.8);
   const pinchStartScrollLeftRef = useRef(0);
   const pinchStartScrollTopRef = useRef(0);
+  const pinchStartChildLeftRef = useRef(0);
+  const pinchStartChildTopRef = useRef(0);
   const pinchStartCenterRef = useRef({ x: 0, y: 0 });
   const lastTouchTimeRef = useRef(0);
 
@@ -90,12 +92,22 @@ export const MobileAipSupplementsModal = memo(function MobileAipSupplementsModal
         const touch2 = e.touches[1];
         if (!touch1 || !touch2) return;
 
+        const child = container.firstElementChild as HTMLElement;
+        if (!child) return;
+
         isPinchingRef.current = true;
         const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
         pinchStartDistRef.current = dist;
         pinchStartScaleRef.current = pdfScale;
         pinchStartScrollLeftRef.current = container.scrollLeft;
         pinchStartScrollTopRef.current = container.scrollTop;
+
+        const rect = container.getBoundingClientRect();
+        const childRect = child.getBoundingClientRect();
+
+        pinchStartChildLeftRef.current = container.scrollLeft + (childRect.left - rect.left);
+        pinchStartChildTopRef.current = container.scrollTop + (childRect.top - rect.top);
+
         pinchStartCenterRef.current = {
           x: (touch1.clientX + touch2.clientX) / 2,
           y: (touch1.clientY + touch2.clientY) / 2,
@@ -124,14 +136,27 @@ export const MobileAipSupplementsModal = memo(function MobileAipSupplementsModal
 
         const r = scale / pinchStartScaleRef.current;
         const rect = container.getBoundingClientRect();
-        const pinchStartX = pinchStartCenterRef.current.x - rect.left;
-        const pinchStartY = pinchStartCenterRef.current.y - rect.top;
-        const currentPinchX = currentCenterX - rect.left;
-        const currentPinchY = currentCenterY - rect.top;
 
-        const targetScrollLeft =
-          (pinchStartScrollLeftRef.current + pinchStartX) * r - currentPinchX;
-        const targetScrollTop = (pinchStartScrollTopRef.current + pinchStartY) * r - currentPinchY;
+        const touchXStart = pinchStartCenterRef.current.x - rect.left;
+        const touchYStart = pinchStartCenterRef.current.y - rect.top;
+
+        const touchXCurrent = currentCenterX - rect.left;
+        const touchYCurrent = currentCenterY - rect.top;
+
+        const touchXStart_child =
+          pinchStartScrollLeftRef.current + touchXStart - pinchStartChildLeftRef.current;
+        const touchYStart_child =
+          pinchStartScrollTopRef.current + touchYStart - pinchStartChildTopRef.current;
+
+        const child = container.firstElementChild as HTMLElement;
+        if (!child) return;
+
+        const baseWidth = child.offsetWidth;
+        const childLeftNew = Math.max(0, (rect.width - baseWidth * scale) / 2);
+
+        const targetScrollLeft = childLeftNew + touchXStart_child * r - touchXCurrent;
+        const targetScrollTop =
+          pinchStartChildTopRef.current + touchYStart_child * r - touchYCurrent;
 
         setPdfScale(scale);
         container.scrollLeft = targetScrollLeft;
@@ -309,10 +334,12 @@ export const MobileAipSupplementsModal = memo(function MobileAipSupplementsModal
                     onTouchEnd={handleTouchEnd}
                     onDoubleClick={(e) => handleDoubleTap(e.clientX, e.clientY)}
                   >
-                    <motion.div
-                      animate={{ scale: pdfScale }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                      className="relative origin-top"
+                    <div
+                      style={{
+                        transform: `scale(${pdfScale})`,
+                        transformOrigin: 'top center',
+                      }}
+                      className="relative"
                     >
                       <Document
                         file={selectedPdfUrl}
@@ -334,7 +361,7 @@ export const MobileAipSupplementsModal = memo(function MobileAipSupplementsModal
                           ))}
                         </div>
                       </Document>
-                    </motion.div>
+                    </div>
                   </div>
                 </div>
               ) : isLoading ? (
