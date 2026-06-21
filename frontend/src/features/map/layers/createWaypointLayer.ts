@@ -84,11 +84,13 @@ export function createWaypointLayer(ctx: LayerContext): any[] {
         getTextColor: [isLayerActive, ctx.isDarkMode],
       },
       binary: false,
-      transitions: {
-        getIconColor: 300,
-        getIconSize: 300,
-        getTextColor: 300,
-      },
+      transitions: ctx.isMobile
+        ? undefined
+        : {
+            getIconColor: 300,
+            getIconSize: 300,
+            getTextColor: 300,
+          },
     }),
   ];
 }

@@ -196,10 +196,12 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
         getLineWidth: [],
       },
       binary: true,
-      transitions: {
-        getFillColor: 300,
-        getLineColor: 300,
-      },
+      transitions: ctx.isMobile
+        ? undefined
+        : {
+            getFillColor: 300,
+            getLineColor: 300,
+          },
     }),
 
     new MVTLayer({
@@ -303,11 +305,13 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
         ],
       },
       binary: false,
-      transitions: {
-        getTextColor: 300,
-        getBackgroundColor: 300,
-        getBorderColor: 300,
-      },
+      transitions: ctx.isMobile
+        ? undefined
+        : {
+            getTextColor: 300,
+            getBackgroundColor: 300,
+            getBorderColor: 300,
+          },
     }),
   ];
 }

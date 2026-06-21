@@ -179,10 +179,12 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         getLineWidth: [selectedRouteIds, isLayerActive],
       },
       binary: true,
-      transitions: {
-        getLineColor: 300,
-        getLineWidth: 300,
-      },
+      transitions: ctx.isMobile
+        ? undefined
+        : {
+            getLineColor: 300,
+            getLineWidth: 300,
+          },
     }),
   );
 
@@ -248,9 +250,11 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
           blend: true,
           blendFunc: [0, 771], // [GL.ZERO, GL.ONE_MINUS_SRC_ALPHA]
         },
-        transitions: {
-          getColor: 300,
-        },
+        transitions: ctx.isMobile
+          ? undefined
+          : {
+              getColor: 300,
+            },
       }),
     );
 
@@ -295,9 +299,11 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
           ],
         },
         parameters: { depthTest: false },
-        transitions: {
-          getColor: 300,
-        },
+        transitions: ctx.isMobile
+          ? undefined
+          : {
+              getColor: 300,
+            },
       }),
     );
 
@@ -340,9 +346,11 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
           ],
         },
         parameters: { depthTest: false },
-        transitions: {
-          getColor: 300,
-        },
+        transitions: ctx.isMobile
+          ? undefined
+          : {
+              getColor: 300,
+            },
       }),
     );
   }
@@ -438,11 +446,13 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         getTextSize: [isZoomAtsWaypoints, selectedRouteIds, isLayerActive],
       },
       binary: false,
-      transitions: {
-        getIconColor: 300,
-        getIconSize: 300,
-        getTextColor: 300,
-      },
+      transitions: ctx.isMobile
+        ? undefined
+        : {
+            getIconColor: 300,
+            getIconSize: 300,
+            getTextColor: 300,
+          },
     }),
   );
 

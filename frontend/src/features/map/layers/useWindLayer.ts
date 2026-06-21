@@ -3,6 +3,7 @@ import * as WeatherLayers from 'weatherlayers-gl';
 import * as geotiff from 'geotiff';
 import { ClipExtension } from '@deck.gl/extensions';
 import { useMapStore } from '../../../store/useMapStore';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 import { WIND_BOUNDS, CLIP_BOUNDS, WIND_PALETTE } from '../utils/windUtils';
 import {
   useWeatherFrameLoader,
@@ -57,6 +58,7 @@ async function loadWindFrame(
 }
 
 export function useWindLayer() {
+  const isMobile = useIsMobile();
   const {
     isWeatherMode,
     isWindMode,
@@ -123,7 +125,7 @@ export function useWindLayer() {
       image2: renderImages[index2] || null,
       imageWeight: interpolationWeight,
       bounds: WIND_BOUNDS,
-      numParticles: 1000,
+      numParticles: isMobile ? 400 : 1000,
       maxAge: 100,
       speedFactor: 5,
       width: 2,
@@ -131,7 +133,7 @@ export function useWindLayer() {
       extensions: [new ClipExtension()],
       clipBounds: CLIP_BOUNDS,
     });
-  }, [isWindActive, renderImages, index1, index2, interpolationWeight]);
+  }, [isWindActive, renderImages, index1, index2, interpolationWeight, isMobile]);
 
   // Tooltip helper
   const getWindAtLngLat = useCallback(

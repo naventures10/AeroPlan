@@ -12,6 +12,7 @@ import { useRnpAnimation } from '../../terminal/layers/rnp/useRnpAnimation';
 import { useWindLayer } from './useWindLayer';
 import { useCloudLayer } from './useCloudLayer';
 import { useDelayedUnmount } from '../../../hooks/useDelayedUnmount';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 import type { LayerContext } from './types';
 
 /**
@@ -55,6 +56,7 @@ export function useDeckLayers({
 
   // Derive isDarkMode from the reactive mapStyle field (getter is not reactive)
   const isDarkMode = mapStyle !== 'light';
+  const isMobile = useIsMobile();
 
   const { isAtsRendered, currentTime } = useRouteAnimation();
 
@@ -112,6 +114,7 @@ export function useDeckLayers({
     atsRoutesToggleCounter,
     isAirspaceLoaded,
     setAirspaceLoaded,
+    isMobile,
   };
 
   // fallow-ignore-next-line complexity
@@ -164,6 +167,7 @@ export function useDeckLayers({
     }
 
     return { overlaidLayers, interleavedLayers };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     aerodromes,
     viewMode,
@@ -197,7 +201,7 @@ export function useDeckLayers({
     mountAerodromes,
     mountWaypoints,
     mountNavaids,
-
+    isMobile,
     isAirspaceLoaded,
     setAirspaceLoaded,
   ]);

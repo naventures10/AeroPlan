@@ -8,6 +8,7 @@ import {
 } from '@deck.gl/core';
 import Map, { Source, Layer } from 'react-map-gl/maplibre';
 import type { MapRef } from 'react-map-gl/maplibre';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { useMapStore, TERMINAL_EXIT_ZOOM_THRESHOLD } from '../../store/useMapStore';
@@ -16,6 +17,7 @@ import { useDeckLayers } from './layers/useDeckLayers';
 import { InterleavedDeckGL } from './InterleavedDeckGL';
 import { useMapTooltip } from './tooltips/useMapTooltip';
 import { FeatureInfoCard } from './FeatureInfoCard';
+import PerformanceOverlay from './components/PerformanceOverlay';
 import {
   TerminalSpatialLayers,
   TERMINAL_INTERACTIVE_LAYERS,
@@ -33,8 +35,6 @@ const RASTER_PAINT = {
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 const IS_E2E = import.meta.env.VITE_E2E === 'true';
-
-const BASE_MAP_LABEL_ZOOM_THRESHOLD = 12;
 
 // Mock style for E2E tests to save MapTiler quota
 const MOCK_STYLE = {
@@ -164,6 +164,8 @@ interface MapViewProps {
  * - MapLibre raster/vector sources (WAC, spatial features)
  */
 export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) {
+  const isMobile = useIsMobile();
+  const baseMapZoomThreshold = isMobile ? 14 : 12;
   const {
     viewState,
     setViewState,
@@ -297,30 +299,33 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
    * symbol / label / road layers.  Skips our own terminal layers
    * (mvt-*, runway-*) so they remain under react-map-gl control.
    */
-  const configureBaseMap = useCallback((map: any, isTerminal: boolean) => {
-    const layers = map.getStyle()?.layers;
-    if (!layers) return;
+  const configureBaseMap = useCallback(
+    (map: any, isTerminal: boolean) => {
+      const layers = map.getStyle()?.layers;
+      if (!layers) return;
 
-    const targetVisibility = isTerminal ? 'none' : 'visible';
+      const targetVisibility = isTerminal ? 'none' : 'visible';
 
-    layers.forEach((layer: any) => {
-      if (layer.id.startsWith('mvt-') || layer.id.startsWith('runway-')) return;
+      layers.forEach((layer: any) => {
+        if (layer.id.startsWith('mvt-') || layer.id.startsWith('runway-')) return;
 
-      if (
-        layer.type === 'symbol' ||
-        layer.id.includes('road') ||
-        layer.id.includes('place') ||
-        layer.id.includes('label')
-      ) {
-        try {
-          map.setLayerZoomRange(layer.id, BASE_MAP_LABEL_ZOOM_THRESHOLD, 24);
-          map.setLayoutProperty(layer.id, 'visibility', targetVisibility);
-        } catch {
-          // Layer may not exist yet or was removed during a style rebuild
+        if (
+          layer.type === 'symbol' ||
+          layer.id.includes('road') ||
+          layer.id.includes('place') ||
+          layer.id.includes('label')
+        ) {
+          try {
+            map.setLayerZoomRange(layer.id, baseMapZoomThreshold, 24);
+            map.setLayoutProperty(layer.id, 'visibility', targetVisibility);
+          } catch {
+            // Layer may not exist yet or was removed during a style rebuild
+          }
         }
-      }
-    });
-  }, []);
+      });
+    },
+    [baseMapZoomThreshold],
+  );
 
   // 4. Initial load: configure base map layers
   const onMapLoad = useCallback(
@@ -483,6 +488,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
       </DeckGL>
       <FeatureInfoCard />
       {windHoverInfo && <WindTooltip {...windHoverInfo} />}
+      <PerformanceOverlay />
     </div>
   );
 }

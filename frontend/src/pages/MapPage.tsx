@@ -153,7 +153,7 @@ export default function MapPage() {
               {/* Exit Terminal Button */}
               <button
                 type="button"
-                onClick={() => returnToEnroute()}
+                onClick={() => returnToEnroute(true)}
                 className="w-9 h-9 flex items-center justify-center rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 active:scale-95 transition-all duration-200 backdrop-blur-xl shadow-lg focus:outline-none shrink-0"
                 aria-label="Exit Terminal View"
               >
