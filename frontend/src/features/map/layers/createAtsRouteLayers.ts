@@ -210,7 +210,64 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
   // ── 3. Route Labels (Text only) ───────────────────────────────────
 
   if (atsRouteLabels?.features) {
-    const labelFeatures = atsRouteLabels.features; // keep all features, so they can fade out!
+    const labelFeatures = atsRouteLabels.features.map((f: any) => ({
+      ...f,
+      geometry: { ...f.geometry, coordinates: [...f.geometry.coordinates] },
+      properties: { ...f.properties },
+    }));
+
+    // Separate overlapping labels:
+    // - Same bearing (shared segment) → offset perpendicular to the route
+    // - Different bearings (crossing routes) → slide along each label's own bearing
+    const SLIDE_ALONG_M = 10000; // along-bearing slide for crossing routes
+    const PERP_STEP_M = 4000; // perpendicular step (~1 text height) for shared segments
+    const coordsMap = new Map<string, any[]>();
+    for (const f of labelFeatures) {
+      if (f.geometry?.coordinates) {
+        const coordKey = f.geometry.coordinates.map((c: number) => c.toFixed(6)).join(',');
+        if (!coordsMap.has(coordKey)) {
+          coordsMap.set(coordKey, []);
+        }
+        coordsMap.get(coordKey)!.push(f);
+      }
+    }
+
+    for (const group of coordsMap.values()) {
+      if (group.length <= 1) continue;
+      const n = group.length;
+
+      // Check if all bearings are collinear (same line, either direction)
+      const refBearing = group[0].properties.bearing;
+      const allCollinear = group.every((f: any) => {
+        let diff = Math.abs(f.properties.bearing - refBearing) % 360;
+        if (diff > 180) diff = 360 - diff;
+        return diff < 20 || 180 - diff < 20;
+      });
+
+      for (let i = 0; i < n; i++) {
+        const factor = i - (n - 1) / 2;
+        const [lon, lat] = group[i].geometry.coordinates;
+        const latRad = (lat * Math.PI) / 180;
+
+        if (allCollinear) {
+          // Shared segment: offset perpendicular to the reference bearing
+          const perpRad = (refBearing * Math.PI) / 180 + Math.PI / 2;
+          const offsetM = factor * PERP_STEP_M;
+          group[i].geometry.coordinates = [
+            lon + (offsetM * Math.sin(perpRad)) / (111320 * Math.cos(latRad)),
+            lat + (offsetM * Math.cos(perpRad)) / 111320,
+          ];
+        } else {
+          // Crossing routes: slide along own bearing
+          const bearingRad = (group[i].properties.bearing * Math.PI) / 180;
+          const offsetM = factor * SLIDE_ALONG_M;
+          group[i].geometry.coordinates = [
+            lon + (offsetM * Math.sin(bearingRad)) / (111320 * Math.cos(latRad)),
+            lat + (offsetM * Math.cos(bearingRad)) / 111320,
+          ];
+        }
+      }
+    }
 
     // 3c. Text label
     layers.push(

@@ -262,4 +262,52 @@ describe('createAtsRouteLayers', () => {
       labelTextLayer.props.getColor({ properties: { route_id: 'A1', route_type: 'RNAV' } }),
     ).toEqual([0, 0, 0, 0]);
   });
+
+  it('handles overlapping labels by sliding positions along bearing', () => {
+    const ctx = {
+      isDarkMode: true,
+      viewMode: 'ENROUTE',
+      zoom: 8,
+      activeLayers: {
+        atsRoutes: true,
+      },
+      selectedRouteIds: [],
+      selectedFeature: null,
+      selectedRouteType: null,
+      isAtsGeometryLoaded: true,
+      setAtsGeometryLoaded: vi.fn(),
+      atsRoutesToggleCounter: 1,
+      animatedTrips: [],
+      currentTime: 0,
+      atsRouteLabels: {
+        features: [
+          {
+            geometry: { coordinates: [80.123456, 13.123456] },
+            properties: { route_id: 'W111', bearing: 45, route_type: 'CONV' },
+          },
+          {
+            geometry: { coordinates: [80.123456, 13.123456] },
+            properties: { route_id: 'G272', bearing: 90, route_type: 'RNAV' },
+          },
+        ],
+      },
+      setSelectedRouteIds: vi.fn(),
+      setSelectedFeature: vi.fn(),
+    };
+
+    const layers = createAtsRouteLayers(ctx as any);
+    const labelTextLayer = layers[1]; // ats-route-labels-text-layer
+
+    const data = labelTextLayer.props.data;
+    expect(data.length).toBe(2);
+
+    // Overlapping labels should have their coordinates modified (no longer identical)
+    const [lon0] = data[0].geometry.coordinates;
+    const [lon1] = data[1].geometry.coordinates;
+    expect(lon0).not.toBeCloseTo(lon1, 4);
+
+    // Original coordinates should not be mutated
+    expect(ctx.atsRouteLabels.features[0]!.geometry.coordinates[0]).toBe(80.123456);
+    expect(ctx.atsRouteLabels.features[0]!.geometry.coordinates[1]).toBe(13.123456);
+  });
 });
