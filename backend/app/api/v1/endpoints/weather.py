@@ -118,7 +118,9 @@ def _extract_metar_time(metar: str | None) -> int:
 async def _fetch_from_source(source_name: str, url: str) -> dict | None:
     """Fetch and parse weather from a single source. Returns None on failure."""
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        # Disable SSL verification (verify=False) because Chennai and Delhi OLBS government
+        # servers frequently use self-signed certificates or incomplete certificate chains.
+        async with httpx.AsyncClient(timeout=15.0, verify=False) as client:
             resp = await client.get(url)
             resp.raise_for_status()
         return {"source": source_name, "html": resp.text}

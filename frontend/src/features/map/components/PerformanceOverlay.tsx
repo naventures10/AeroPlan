@@ -165,49 +165,63 @@ export default function PerformanceOverlay() {
     .filter(Boolean) as string[];
 
   return (
-    <div className="absolute top-16 right-4 z-50 pointer-events-none flex flex-col items-end gap-2.5">
-      {/* Mini FPS HUD */}
-      <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/60 px-3.5 py-2.5 backdrop-blur-xl shadow-lg">
-        <Activity className={`h-4 w-4 ${fpsColorClass}`} />
-        <span className="font-mono text-lg font-bold text-white leading-none">{fps}</span>
-        <span className="text-[9px] font-semibold uppercase tracking-wider text-white/40">FPS</span>
-        <span className={`h-1.5 w-1.5 rounded-full ${fpsBgIndicator}`} />
-      </div>
-
-      {/* Active Diagnostics Drawer */}
-      <div className="w-56 rounded-2xl border border-white/10 bg-black/60 p-3.5 backdrop-blur-xl shadow-xl">
-        <div className="flex items-center gap-1.5 border-b border-white/5 pb-2 text-[9px] font-semibold uppercase tracking-[0.15em] text-white/40">
-          <Layers className="h-3 w-3" />
-          Layer Diagnostics
+    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+      <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-white/10 bg-black/60 px-4 py-2 backdrop-blur-xl shadow-lg text-xs text-white">
+        {/* Mini FPS HUD */}
+        <div className="flex items-center gap-1.5 border-r border-white/10 pr-3">
+          <Activity className={`h-3.5 w-3.5 ${fpsColorClass}`} />
+          <span className="font-mono text-sm font-bold text-white leading-none">{fps}</span>
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-white/40">
+            FPS
+          </span>
+          <span className={`h-1.5 w-1.5 rounded-full ${fpsBgIndicator}`} />
         </div>
 
-        <div className="mt-2.5 space-y-2">
-          <div className="flex items-center justify-between text-[10px] text-white/60">
-            <span className="font-medium">Mode:</span>
-            <span className="font-mono text-[9px] font-bold text-cyan-400 uppercase bg-cyan-950/40 border border-cyan-800/30 px-1.5 py-0.5 rounded">
-              {viewMode}
-            </span>
-          </div>
+        {/* View Mode */}
+        <div className="flex items-center gap-1.5 border-r border-white/10 pr-3">
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-white/40">
+            Mode:
+          </span>
+          <span className="font-mono text-[9px] font-bold text-cyan-400 uppercase bg-cyan-950/40 border border-cyan-800/30 px-1.5 py-0.5 rounded leading-none">
+            {viewMode}
+          </span>
+        </div>
 
-          <div className="space-y-1">
-            <div className="text-[9px] font-semibold uppercase tracking-[0.1em] text-white/30">
-              Active Layers ({layersList.length})
-            </div>
-            {layersList.length === 0 ? (
-              <div className="text-[10px] text-white/30 italic">No layers loaded</div>
-            ) : (
-              <div className="flex flex-wrap gap-1 mt-1">
-                {layersList.map((layer) => (
-                  <span
-                    key={layer}
-                    className="text-[9px] font-medium text-emerald-400/90 bg-emerald-950/30 border border-emerald-900/30 px-1.5 py-0.5 rounded flex items-center gap-1"
-                  >
-                    <Zap className="h-2 w-2" />
-                    {layer}
-                  </span>
-                ))}
+        {/* Active Diagnostics Hover Dropdown */}
+        <div className="group relative flex items-center gap-1.5 cursor-help">
+          <Layers className="h-3.5 w-3.5 text-white/60" />
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-white/40">
+            Layers:
+          </span>
+          <span className="font-mono text-[9px] font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-800/30 px-1.5 py-0.5 rounded leading-none">
+            {layersList.length}
+          </span>
+
+          {/* Diagnostics Tooltip */}
+          <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 scale-95 opacity-0 transition-all duration-150 group-hover:scale-100 group-hover:opacity-100 z-50">
+            <div className="rounded-2xl border border-white/10 bg-black/80 p-3.5 backdrop-blur-xl shadow-xl text-left">
+              <div className="flex items-center gap-1.5 border-b border-white/5 pb-2 text-[9px] font-semibold uppercase tracking-[0.15em] text-white/40">
+                <Layers className="h-3 w-3" />
+                Active Layers
               </div>
-            )}
+              <div className="mt-2">
+                {layersList.length === 0 ? (
+                  <div className="text-[10px] text-white/30 italic">No layers loaded</div>
+                ) : (
+                  <div className="flex flex-wrap gap-1">
+                    {layersList.map((layer) => (
+                      <span
+                        key={layer}
+                        className="text-[9px] font-medium text-emerald-400/90 bg-emerald-950/30 border border-emerald-900/30 px-1.5 py-0.5 rounded flex items-center gap-1"
+                      >
+                        <Zap className="h-2 w-2" />
+                        {layer}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
