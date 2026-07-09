@@ -193,27 +193,39 @@ class SpatialRouter:
 
 class DBLoader:
     def __init__(self, bucket_name="ais"):
+        from dotenv import load_dotenv
+
+        load_dotenv()
+
         self.s3 = boto3.client(
             "s3",
-            endpoint_url="http://localhost:9000",
+            endpoint_url=os.getenv("MINIO_ENDPOINT", "http://localhost:9000"),
             aws_access_key_id=os.environ.get("MINIO_ACCESS_KEY"),
             aws_secret_access_key=os.environ.get("MINIO_SECRET_KEY"),
             region_name="us-east-1",
         )
         self.bucket_name = bucket_name
 
-        # Connecting to the newly named database!
-        pg_user = os.getenv("PG_USER")
-        pg_password = os.getenv("PG_PASSWORD")
+        # Connecting to the database!
+        pg_user = os.getenv("PG_USER") or os.getenv("DB_USER") or os.getenv("POSTGRES_USER")
+        pg_password = (
+            os.getenv("PG_PASSWORD") or os.getenv("DB_PASSWORD") or os.getenv("POSTGRES_PASSWORD")
+        )
+        db_host = os.getenv("DB_HOST") or os.getenv("POSTGRES_HOST") or "localhost"
+        db_port = os.getenv("DB_PORT") or os.getenv("POSTGRES_PORT") or "5432"
+        db_name = (
+            os.getenv("DB_NAME") or os.getenv("POSTGRES_DB") or "aeronautical_information_system"
+        )
+
         if not pg_user or not pg_password:
-            raise ValueError("Missing required env var PG_USER/PG_PASSWORD")
+            raise ValueError("Missing required DB user/password in environment variables")
 
         self.conn = psycopg2.connect(
-            dbname="aeronautical_information_system",
+            dbname=db_name,
             user=pg_user,
             password=pg_password,
-            host="localhost",
-            port="5432",
+            host=db_host,
+            port=db_port,
         )
         self.conn.autocommit = False  # We manage transactions manually now for safety
 
@@ -258,6 +270,49 @@ class DBLoader:
             return
 
         print(f"[*] Found {len(master_data)} airports. Commencing segregated DB ingestion...")
+
+        # Ensure database extension and tables exist
+        print("[!] Ensuring database tables exist...")
+        with self.conn.cursor() as cur:
+            cur.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS aerodrome_documents (
+                    icao_code VARCHAR(10) PRIMARY KEY,
+                    airport_name VARCHAR(255),
+                    source_url TEXT,
+                    aip_document JSONB NOT NULL,
+                    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE INDEX IF NOT EXISTS ix_aerodrome_documents_icao_code ON aerodrome_documents (icao_code);
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS spatial_features (
+                    feature_id SERIAL PRIMARY KEY,
+                    icao_code VARCHAR(10),
+                    feature_category VARCHAR(50),
+                    feature_name VARCHAR(100),
+                    elevation_m NUMERIC,
+                    marking_lgt VARCHAR(50),
+                    is_grouped BOOLEAN DEFAULT FALSE,
+                    height_m NUMERIC,
+                    geom GEOMETRY(GEOMETRY, 4326)
+                );
+                CREATE INDEX IF NOT EXISTS ix_spatial_features_feature_id ON spatial_features (feature_id);
+                CREATE INDEX IF NOT EXISTS ix_spatial_features_icao_code ON spatial_features (icao_code);
+                CREATE INDEX IF NOT EXISTS idx_spatial_features_geom ON spatial_features USING GIST (geom);
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS aerodrome_charts (
+                    chart_id SERIAL PRIMARY KEY,
+                    icao_code VARCHAR(10),
+                    chart_title VARCHAR(255),
+                    chart_index VARCHAR(50),
+                    chart_url TEXT
+                );
+                CREATE INDEX IF NOT EXISTS ix_aerodrome_charts_chart_id ON aerodrome_charts (chart_id);
+                CREATE INDEX IF NOT EXISTS ix_aerodrome_charts_icao_code ON aerodrome_charts (icao_code);
+            """)
+            self.conn.commit()
 
         # Hard Reset: Truncate existing data to ensure a fresh reload
         print("[!] Dropping all existing records for a complete refresh...")

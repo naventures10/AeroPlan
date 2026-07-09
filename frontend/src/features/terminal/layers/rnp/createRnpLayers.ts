@@ -199,23 +199,23 @@ export function createRnpLayers({
         const isShort = !isNaN(distNum) && distNum < 2.2;
 
         if (isShort) {
-          // Compact single-line formatting: "↑ 024° / ↔ 1.5 NM"
+          // Compact single-line formatting: "024° / 1.5 NM"
           const parts: string[] = [];
           if (leg.course) {
             const match = leg.course.match(/^([\d.]+)/);
             if (match && match[0]) {
               const courseNum = Math.round(parseFloat(match[0]));
-              parts.push(`↑ ${courseNum.toString().padStart(3, '0')}°`);
+              parts.push(`${courseNum.toString().padStart(3, '0')}°`);
             } else {
-              parts.push(`↑ ${leg.course}`);
+              parts.push(leg.course);
             }
           }
           if (leg.distance) {
             const isMin = leg.distance.toLowerCase().includes('min');
             if (!isNaN(distNum)) {
-              parts.push(`↔ ${distNum.toFixed(1)} ${isMin ? 'MIN' : 'NM'}`);
+              parts.push(`${distNum.toFixed(1)} ${isMin ? 'MIN' : 'NM'}`);
             } else {
-              parts.push(`↔ ${leg.distance}`);
+              parts.push(leg.distance);
             }
           }
           text = parts.join(' / ');
@@ -225,17 +225,17 @@ export function createRnpLayers({
             const match = leg.course.match(/^([\d.]+)/);
             if (match && match[0]) {
               const courseNum = Math.round(parseFloat(match[0]));
-              text += `↑ ${courseNum.toString().padStart(3, '0')}°\n`;
+              text += `${courseNum.toString().padStart(3, '0')}°\n`;
             } else {
-              text += `↑ ${leg.course}\n`;
+              text += `${leg.course}\n`;
             }
           }
           if (leg.distance) {
             const isMin = leg.distance.toLowerCase().includes('min');
             if (!isNaN(distNum)) {
-              text += `↔ ${distNum.toFixed(1)} ${isMin ? 'MIN' : 'NM'}\n`;
+              text += `${distNum.toFixed(1)} ${isMin ? 'MIN' : 'NM'}\n`;
             } else {
-              text += `↔ ${leg.distance}\n`;
+              text += `${leg.distance}\n`;
             }
           }
           if (leg.path_descriptor) {
@@ -555,12 +555,12 @@ export function createRnpLayers({
       // Inbound course
       if (hp.inbound_course != null) {
         const courseStr = Math.round(hp.inbound_course).toString().padStart(3, '0');
-        lines.push(`↑ ${courseStr}°`);
+        lines.push(`Inbound ${courseStr}°`);
       }
 
       // Turn direction
       if (hp.turn_direction) {
-        lines.push(hp.turn_direction === 'L' ? '⟲ Left' : '⟳ Right');
+        lines.push(hp.turn_direction === 'L' ? 'Left Turn' : 'Right Turn');
       }
 
       // Altitude
@@ -718,7 +718,7 @@ export function createRnpLayers({
           id: 'rnp-hold-chevrons-layer',
           data: holdChevrons,
           getPosition: (d: (typeof holdChevrons)[0]) => d.position,
-          getText: () => '▶',
+          getText: () => '>',
           getAngle: (d: (typeof holdChevrons)[0]) => d.angle,
           getSize: 14,
           getColor: [50, 220, 80, 230],

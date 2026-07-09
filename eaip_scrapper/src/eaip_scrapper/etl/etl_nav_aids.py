@@ -22,18 +22,18 @@ class NavAidLoader:
     ]
 
     def __init__(self, bucket_name="ais"):
+        from dotenv import load_dotenv
+
+        load_dotenv()
+
         self.s3 = boto3.client(
             "s3",
-            endpoint_url="http://localhost:9000",
+            endpoint_url=os.getenv("MINIO_ENDPOINT", "http://localhost:9000"),
             aws_access_key_id=os.environ.get("MINIO_ACCESS_KEY"),
             aws_secret_access_key=os.environ.get("MINIO_SECRET_KEY"),
             region_name="us-east-1",
         )
         self.bucket_name = bucket_name
-
-        from dotenv import load_dotenv
-
-        load_dotenv()
 
         db_host = os.getenv("DB_HOST")
         db_port = os.getenv("DB_PORT")
@@ -195,6 +195,27 @@ class NavAidLoader:
         print(f"[*] Parsed and validated {len(records)} nav aids. Pushing to database...")
 
         with self.conn.cursor() as cur:
+            # Ensure database extension and tables exist
+            cur.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS radio_nav_aids (
+                    id SERIAL PRIMARY KEY,
+                    station_name VARCHAR(100) NOT NULL,
+                    ident VARCHAR(10) NOT NULL,
+                    aid_type VARCHAR(30),
+                    frequency VARCHAR(30),
+                    hours_of_operation VARCHAR(100),
+                    elevation VARCHAR(30),
+                    remarks TEXT,
+                    raw_coordinates VARCHAR(40),
+                    geom GEOMETRY(GEOMETRY, 4326),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE INDEX IF NOT EXISTS ix_radio_nav_aids_id ON radio_nav_aids (id);
+                CREATE INDEX IF NOT EXISTS ix_radio_nav_aids_ident ON radio_nav_aids (ident);
+                CREATE INDEX IF NOT EXISTS idx_radio_nav_aids_geom ON radio_nav_aids USING GIST (geom);
+            """)
+
             # Truncate for a clean idempotent reload
             cur.execute("TRUNCATE TABLE radio_nav_aids RESTART IDENTITY;")
             print("[!] Cleared existing records for a clean reload.")

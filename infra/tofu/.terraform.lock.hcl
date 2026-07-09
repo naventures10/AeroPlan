@@ -12,6 +12,7 @@ provider "registry.opentofu.org/hashicorp/google" {
     "h1:Dm34S6/Q+8uAtrmX+tWkQZCkrvVveU6lHbk4NBkgGBc=",
     "h1:RYRrPC1vvSyNu4aYq5MFkRpTyCx84YMan5cNP01XUUk=",
     "h1:YEQOp7Ou1+GtpcKyCX6Cr/mAGqKIogpi85MX51GuG4s=",
+    "h1:fnLycwgFS12SQBkQoC2ZkzAf2we+P+IPZyTQNW07mMA=",
     "h1:fwPyxJ8zBHeuEyv87dn8YkRHAqXGbJ9AqLN1I8loPr8=",
     "h1:lg2ogfA9WQfN1nKFQzWpZEqX+0+/J5yz2hvw6Mea/qk=",
     "h1:qYSz8K/mE6U1q05/GBky/xOPaUJ4BZn4f4kyDvxcugo=",

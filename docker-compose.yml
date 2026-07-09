@@ -60,6 +60,9 @@ services:
 
   backend:
     image: eaip-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: eaip-backend
     restart: unless-stopped
     environment:
@@ -81,14 +84,10 @@ services:
       - minio
     networks:
       - eaip_network
-
-
 volumes:
   postgres_data:
-    name: cea54d8184a203b630ab55ae2e2429ee565b144cbc8e5430cd5fe4d6dc90c4de
+    name: eaip_postgres_data
     external: true
-
-
 networks:
   eaip_network:
     name: eaip_network

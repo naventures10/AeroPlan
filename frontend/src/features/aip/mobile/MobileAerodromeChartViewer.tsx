@@ -25,7 +25,15 @@ interface MobileAerodromeChartViewerProps {
 function candidateChartKeys(chart: ChartItem): string[] {
   const raw = [chart.chart_url, chart.chart_title, chart.chart_index];
   const keys = raw.map((s) => normalizeChartKey(s ?? '')).filter(Boolean);
-  return [...new Set(keys)];
+  const derived: string[] = [];
+  for (const k of keys) {
+    derived.push(k);
+    const stripped = k.replace(/-RNP-[A-Z]-RWY-/gi, '-RNP-RWY-');
+    if (stripped !== k) {
+      derived.push(stripped);
+    }
+  }
+  return [...new Set(derived)];
 }
 
 function isSecondaryChart(chart: ChartItem): boolean {
@@ -277,8 +285,16 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
 
   const rnpByChartKey = useMemo(() => {
     const m = new Map<string, RnpProcedureApi>();
+    // First pass: exact matches
     for (const p of rnpProcedures) {
       if (!m.has(p.chart_key)) m.set(p.chart_key, p);
+    }
+    // Second pass: fallback matches (strip Y/Z suffixes)
+    for (const p of rnpProcedures) {
+      const stripped = p.chart_key.replace(/-RNP-[A-Z]-RWY-/gi, '-RNP-RWY-');
+      if (stripped !== p.chart_key && !m.has(stripped)) {
+        m.set(stripped, p);
+      }
     }
     return m;
   }, [rnpProcedures]);
@@ -364,6 +380,21 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
     setPdfScale(0.9);
     setPanOffset({ x: 0, y: 0 });
     setPageDimensions(null);
+    try {
+      (pdfjs as any).cleanup();
+    } catch (e) {
+      console.warn('Failed to cleanup pdfjs:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      try {
+        (pdfjs as any).cleanup();
+      } catch (e) {
+        console.warn('Failed to cleanup pdfjs on unmount:', e);
+      }
+    };
   }, []);
 
   const handleViewIn3D = useCallback(() => {
@@ -644,6 +675,7 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
                         <Page
                           pageNumber={currentPage}
                           scale={1}
+                          devicePixelRatio={1.0}
                           onLoadSuccess={(page) => {
                             setPageDimensions({ width: page.width, height: page.height });
                           }}

@@ -11,18 +11,18 @@ class WaypointLoader:
     """Loads ENR 4.4 Significant Points from MinIO into the PostGIS database."""
 
     def __init__(self, bucket_name="ais"):
+        from dotenv import load_dotenv
+
+        load_dotenv()
+
         self.s3 = boto3.client(
             "s3",
-            endpoint_url="http://localhost:9000",
+            endpoint_url=os.getenv("MINIO_ENDPOINT", "http://localhost:9000"),
             aws_access_key_id=os.environ.get("MINIO_ACCESS_KEY"),
             aws_secret_access_key=os.environ.get("MINIO_SECRET_KEY"),
             region_name="us-east-1",
         )
         self.bucket_name = bucket_name
-
-        from dotenv import load_dotenv
-
-        load_dotenv()
 
         db_host = os.getenv("DB_HOST")
         db_port = os.getenv("DB_PORT")
@@ -114,6 +114,21 @@ class WaypointLoader:
             except Exception as e:
                 print(f"[!] Validation failed: {e}")
                 raise e
+
+            # Ensure database extension and tables exist
+            cur.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS significant_points (
+                    id SERIAL PRIMARY KEY,
+                    waypoint_name VARCHAR(10) NOT NULL UNIQUE,
+                    routes TEXT[],
+                    raw_coordinates VARCHAR(30),
+                    geom GEOMETRY(GEOMETRY, 4326),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE INDEX IF NOT EXISTS ix_significant_points_id ON significant_points (id);
+                CREATE INDEX IF NOT EXISTS idx_significant_points_geom ON significant_points USING GIST (geom);
+            """)
 
             # Truncate for a clean idempotent reload
             cur.execute("TRUNCATE TABLE significant_points RESTART IDENTITY;")

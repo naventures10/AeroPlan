@@ -43,8 +43,8 @@ describe('createAtsRouteLayers', () => {
 
     const layers = createAtsRouteLayers(ctx as any);
 
-    // MVT routes, trips, label-bg, label-hex, label-text, MVT waypoints
-    expect(layers.length).toBe(6);
+    // MVT routes, trips, label-text, MVT waypoints
+    expect(layers.length).toBe(4);
 
     const mvtRoutes = layers[0];
 
@@ -79,7 +79,7 @@ describe('createAtsRouteLayers', () => {
     expect(tripsLayer.props.getColor({ route_type: 'RNAV' })).toEqual([115, 236, 139]);
     expect(tripsLayer.props.getColor({ route_type: 'CONV' })).toEqual([68, 172, 255]);
 
-    const mvtWaypoints = layers[5];
+    const mvtWaypoints = layers[3];
     expect(mvtWaypoints.id).toBe('atsRoutes-waypoints-layer-1');
 
     const wpFeature = { properties: { route_ids: '{"A1","B2"}', waypoint_name: 'FIX' } };
@@ -90,8 +90,8 @@ describe('createAtsRouteLayers', () => {
     // Test conventional route waypoints highlight in cyan
     const convCtx = { ...ctx, selectedRouteIds: ['B2'], selectedRouteType: 'CONV' };
     const convLayers = createAtsRouteLayers(convCtx as any);
-    expect(convLayers[5].props.getIconColor(wpFeature)).toEqual([68, 172, 255, 255]); // Blue for selected CONV route waypoints
-    expect(convLayers[5].props.getTextColor(wpFeature)).toEqual([68, 172, 255, 255]);
+    expect(convLayers[3].props.getIconColor(wpFeature)).toEqual([68, 172, 255, 255]); // Blue for selected CONV route waypoints
+    expect(convLayers[3].props.getTextColor(wpFeature)).toEqual([68, 172, 255, 255]);
 
     mvtWaypoints.props.onClick({
       object: { geometry: { coordinates: [0, 0] }, properties: wpFeature.properties },
@@ -101,7 +101,7 @@ describe('createAtsRouteLayers', () => {
     // Test clicking a waypoint that's already selected
     const selectedCtx = { ...ctx, selectedRouteIds: ['A1', 'B2'] };
     const selectedLayers = createAtsRouteLayers(selectedCtx as any);
-    selectedLayers[5].props.onClick({
+    selectedLayers[3].props.onClick({
       object: { geometry: { coordinates: [0, 0] }, properties: wpFeature.properties },
     });
     expect(ctx.setSelectedRouteIds).toHaveBeenCalledWith([]);
@@ -111,15 +111,10 @@ describe('createAtsRouteLayers', () => {
     expect(ctx.setSelectedRouteIds).toHaveBeenCalledWith([]);
 
     // Testing label layer logic
-    const labelBgLayer = layers[2]; // ats-route-labels-bg-layer
-    expect(labelBgLayer.props.getSize({ properties: { route_id: 'A1' } })).toBeGreaterThan(0);
-    const labelHexLayer = layers[3]; // ats-route-labels-hex-layer
-    expect(
-      labelHexLayer.props.getColor({ properties: { route_id: 'B2', route_type: 'CONV' } }),
-    ).toEqual([68, 172, 255, 140]);
+    const labelTextLayer = layers[2]; // ats-route-labels-text-layer
     // selected label is base color when not glowing (Option B)
     expect(
-      labelHexLayer.props.getColor({ properties: { route_id: 'A1', route_type: 'RNAV' } }),
+      labelTextLayer.props.getColor({ properties: { route_id: 'A1', route_type: 'RNAV' } }),
     ).toEqual([115, 236, 139, 255]);
   });
 
@@ -260,11 +255,11 @@ describe('createAtsRouteLayers', () => {
     };
 
     const layers = createAtsRouteLayers(ctx as any);
-    const labelHexLayer = layers[3]; // ats-route-labels-hex-layer
+    const labelTextLayer = layers[1]; // ats-route-labels-text-layer
 
     // When not loaded and not selected, alpha is 0
     expect(
-      labelHexLayer.props.getColor({ properties: { route_id: 'A1', route_type: 'RNAV' } }),
+      labelTextLayer.props.getColor({ properties: { route_id: 'A1', route_type: 'RNAV' } }),
     ).toEqual([0, 0, 0, 0]);
   });
 });

@@ -208,4 +208,140 @@ describe('AerodromeChartViewer', () => {
       'VAAU-RNP-Y-RWY-27-CODING-TABLE',
     ]);
   });
+
+  it('shows the "View in 3D space" button when chart has category suffix but procedure does not', async () => {
+    useMapStore.setState({
+      activeAirport: 'VOCI',
+      activeAerodromeMetadata: { id: 'VOCI' },
+      viewMode: 'TERMINAL',
+    });
+
+    (client.fetchCharts as any).mockResolvedValue([
+      {
+        chart_id: '10',
+        chart_title: 'VOCI-RNP-Y-RWY-09.pdf',
+        chart_url: 'u',
+        chart_index: 'i',
+      },
+    ]);
+    (client.fetchRnpProcedures as any).mockResolvedValue([
+      { procedure_id: 94, chart_key: 'VOCI-RNP-RWY-09' },
+    ]);
+
+    act(() => {
+      render(<AerodromeChartViewer icaoCode="VOCI" />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('AERODROME CHARTS')).toBeInTheDocument();
+    });
+    act(() => {
+      fireEvent.click(screen.getByText('AERODROME CHARTS'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('VOCI-RNP-Y-RWY-09.pdf')).toBeInTheDocument();
+    });
+
+    const button = screen.getByText('VOCI-RNP-Y-RWY-09.pdf').closest('button');
+    act(() => {
+      fireEvent.click(button!);
+    });
+
+    expect(screen.getByTestId('mock-pdf-doc')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /view in 3d/i })).toBeInTheDocument();
+  });
+
+  it('shows the "View in 3D space" button when procedure has category suffix but chart does not', async () => {
+    useMapStore.setState({
+      activeAirport: 'VABB',
+      activeAerodromeMetadata: { id: 'VABB' },
+      viewMode: 'TERMINAL',
+    });
+
+    (client.fetchCharts as any).mockResolvedValue([
+      {
+        chart_id: '20',
+        chart_title: 'VABB-RNP-RWY-09.pdf',
+        chart_url: 'u',
+        chart_index: 'i',
+      },
+    ]);
+    (client.fetchRnpProcedures as any).mockResolvedValue([
+      { procedure_id: 5, chart_key: 'VABB-RNP-Y-RWY-09' },
+    ]);
+
+    act(() => {
+      render(<AerodromeChartViewer icaoCode="VABB" />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('AERODROME CHARTS')).toBeInTheDocument();
+    });
+    act(() => {
+      fireEvent.click(screen.getByText('AERODROME CHARTS'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('VABB-RNP-RWY-09.pdf')).toBeInTheDocument();
+    });
+
+    const button = screen.getByText('VABB-RNP-RWY-09.pdf').closest('button');
+    act(() => {
+      fireEvent.click(button!);
+    });
+
+    expect(screen.getByTestId('mock-pdf-doc')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /view in 3d/i })).toBeInTheDocument();
+  });
+
+  it('prefers exact match over fallback match when multiple suffixed procedures exist', async () => {
+    useMapStore.setState({
+      activeAirport: 'VIKG',
+      activeAerodromeMetadata: { id: 'VIKG' },
+      viewMode: 'TERMINAL',
+    });
+
+    (client.fetchCharts as any).mockResolvedValue([
+      {
+        chart_id: '30',
+        chart_title: 'VIKG-RNP-Z-RWY-05.pdf',
+        chart_url: 'u',
+        chart_index: 'i',
+      },
+    ]);
+    const mockProcedures = [
+      { procedure_id: 101, name: 'VIKG-RNP-Y-RWY-05', chart_key: 'VIKG-RNP-Y-RWY-05' },
+      { procedure_id: 102, name: 'VIKG-RNP-Z-RWY-05', chart_key: 'VIKG-RNP-Z-RWY-05' },
+    ];
+    (client.fetchRnpProcedures as any).mockResolvedValue(mockProcedures);
+
+    act(() => {
+      render(<AerodromeChartViewer icaoCode="VIKG" />);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('AERODROME CHARTS')).toBeInTheDocument();
+    });
+    act(() => {
+      fireEvent.click(screen.getByText('AERODROME CHARTS'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('VIKG-RNP-Z-RWY-05.pdf')).toBeInTheDocument();
+    });
+
+    const button = screen.getByText('VIKG-RNP-Z-RWY-05.pdf').closest('button');
+    act(() => {
+      fireEvent.click(button!);
+    });
+
+    expect(screen.getByTestId('mock-pdf-doc')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /view in 3d/i })).toBeInTheDocument();
+
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: /view in 3d/i }));
+    });
+    expect(useMapStore.getState().selectedRnpProcedureId).toEqual(102);
+  });
 });

@@ -8,14 +8,12 @@
  *  4. Route waypoints (MVTLayer — points with icon+text)
  */
 
-import { TextLayer, IconLayer } from '@deck.gl/layers';
+import { TextLayer } from '@deck.gl/layers';
 import { MVTLayer, TripsLayer } from '@deck.gl/geo-layers';
 import { getDistanceNm } from '../utils/routeAnimation';
 import {
-  EXTENSIONS,
   ZOOM_ATS_WAYPOINTS,
   parseRouteIds,
-  ATS_ROUTE_LABEL_MAX_PIXELS,
   ATS_ROUTE_LABEL_TEXT_MAX_PIXELS,
   getLayerPalette,
 } from './constants';
@@ -209,103 +207,10 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
     );
   }
 
-  // ── 3. Route Labels (Background + Hex + Text) ─────────────────────
+  // ── 3. Route Labels (Text only) ───────────────────────────────────
 
   if (atsRouteLabels?.features) {
     const labelFeatures = atsRouteLabels.features; // keep all features, so they can fade out!
-
-    // 3a. Background mask — punches a transparent hole behind the label
-    layers.push(
-      new IconLayer({
-        id: 'ats-route-labels-bg-layer',
-        data: labelFeatures,
-        visible: viewMode === 'ENROUTE',
-        iconAtlas: '/ROUTE_HEXAGON_FILL.svg',
-        iconMapping: {
-          hex: { x: 0, y: 0, width: 140, height: 50, anchorY: 25, mask: true },
-        },
-        getIcon: () => 'hex',
-        getPosition: (d: any) => d.geometry.coordinates,
-        getAngle: (d: any) => d.properties.bearing,
-        getSize: (d: any) => {
-          const isSelected = selectedRouteIds.includes(d.properties.route_id);
-          return isSelected ? 5000 + getLabelIntensity(d, ctx) * 1500 : 5000;
-        },
-        getColor: (d: any): [number, number, number, number] => {
-          const isSelected = selectedRouteIds.includes(d.properties.route_id);
-          const isActive = (isLayerActive && isAtsGeometryLoaded) || isSelected;
-          return [0, 0, 0, isActive ? (ctx.isDarkMode ? 255 : 230) : 0];
-        },
-        sizeUnits: 'meters',
-        sizeMaxPixels: ATS_ROUTE_LABEL_MAX_PIXELS,
-        extensions: EXTENSIONS,
-        collisionGroup: 'ats-labels',
-        collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
-        updateTriggers: {
-          getSize: [selectedRouteIds, currentTime, selectedFeature],
-          getColor: [isLayerActive, selectedRouteIds, ctx.isDarkMode, isAtsGeometryLoaded],
-        },
-        parameters: {
-          depthTest: false,
-          blend: true,
-          blendFunc: [0, 771], // [GL.ZERO, GL.ONE_MINUS_SRC_ALPHA]
-        },
-        transitions: ctx.isMobile
-          ? undefined
-          : {
-              getColor: 300,
-            },
-      }),
-    );
-
-    // 3b. Hex outline icon
-    layers.push(
-      new IconLayer({
-        id: 'ats-route-labels-hex-layer',
-        data: labelFeatures,
-        visible: viewMode === 'ENROUTE',
-        iconAtlas: '/ROUTE_HEXAGON.svg',
-        iconMapping: {
-          hex: { x: 0, y: 0, width: 140, height: 50, anchorY: 25, mask: true },
-        },
-        getIcon: () => 'hex',
-        getPosition: (d: any) => d.geometry.coordinates,
-        getAngle: (d: any) => d.properties.bearing,
-        getSize: 5000,
-        getColor: (d: any): [number, number, number, number] => {
-          const isSelected = selectedRouteIds.includes(d.properties.route_id);
-          const isActive = (isLayerActive && isAtsGeometryLoaded) || isSelected;
-          if (!isActive) return [0, 0, 0, 0];
-
-          const baseRgb = routeBaseRgb(d.properties.route_type, palette);
-
-          if (!isSelected) {
-            return [baseRgb[0], baseRgb[1], baseRgb[2], ctx.isDarkMode ? 140 : 255];
-          }
-          return glowColor(baseRgb, getLabelIntensity(d, ctx), selectedRouteType, palette);
-        },
-        sizeUnits: 'meters',
-        sizeMaxPixels: ATS_ROUTE_LABEL_MAX_PIXELS,
-        extensions: EXTENSIONS,
-        collisionGroup: 'ats-labels',
-        collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
-        updateTriggers: {
-          getColor: [
-            selectedRouteIds,
-            currentTime,
-            selectedFeature,
-            isLayerActive,
-            isAtsGeometryLoaded,
-          ],
-        },
-        parameters: { depthTest: false },
-        transitions: ctx.isMobile
-          ? undefined
-          : {
-              getColor: 300,
-            },
-      }),
-    );
 
     // 3c. Text label
     layers.push(
@@ -315,7 +220,10 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         visible: viewMode === 'ENROUTE',
         getPosition: (d: any) => d.geometry.coordinates,
         getText: (d: any) => d.properties.route_id,
-        getAngle: (d: any) => d.properties.bearing,
+        getAngle: (d: any) => {
+          const ang = (90 - d.properties.bearing + 360) % 360;
+          return ang > 90 && ang < 270 ? (ang + 180) % 360 : ang;
+        },
         getSize: 4000,
         sizeUnits: 'meters',
         sizeMaxPixels: ATS_ROUTE_LABEL_TEXT_MAX_PIXELS,
@@ -333,9 +241,10 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         },
         fontFamily: 'Geist, sans-serif',
         fontWeight: 700,
-        extensions: EXTENSIONS,
-        collisionGroup: 'ats-labels',
-        collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
+        getTextAnchor: 'middle',
+        getAlignmentBaseline: 'bottom',
+        characterSet: 'auto',
+        fontSettings: { sdf: false },
         updateTriggers: {
           getColor: [
             selectedRouteIds,
