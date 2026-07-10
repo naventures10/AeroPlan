@@ -9,7 +9,10 @@ import MenuDrawer from './MenuDrawer';
  * Visible only in ENROUTE view mode.
  */
 export default function LayerToolbar() {
-  const { activeLayers, toggleLayer, isWeatherMode, setIsWeatherMode } = useMapStore();
+  const activeLayers = useMapStore((s) => s.activeLayers);
+  const toggleLayer = useMapStore((s) => s.toggleLayer);
+  const isWeatherMode = useMapStore((s) => s.isWeatherMode);
+  const setIsWeatherMode = useMapStore((s) => s.setIsWeatherMode);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const toggleButtons = [

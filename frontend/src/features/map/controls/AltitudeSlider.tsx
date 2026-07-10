@@ -16,7 +16,8 @@ const ALTITUDE_LEVELS = Array.from({ length: 40 }, (_, i) => {
 });
 
 export function AltitudeSlider() {
-  const { windAltitude, setWindAltitude } = useMapStore();
+  const windAltitude = useMapStore((s) => s.windAltitude);
+  const setWindAltitude = useMapStore((s) => s.setWindAltitude);
 
   // Find the current index within our levels
   const currentIdx = ALTITUDE_LEVELS.findIndex((l) => l.value === windAltitude);

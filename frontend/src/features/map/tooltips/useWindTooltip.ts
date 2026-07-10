@@ -3,7 +3,9 @@ import { useMapStore } from '../../../store/useMapStore';
 import { useWindLayer } from '../layers/useWindLayer';
 
 export function useWindTooltip() {
-  const { isWeatherMode, isWindMode, viewMode } = useMapStore();
+  const isWeatherMode = useMapStore((s) => s.isWeatherMode);
+  const isWindMode = useMapStore((s) => s.isWindMode);
+  const viewMode = useMapStore((s) => s.viewMode);
   const { getWindAtLngLat } = useWindLayer();
   const [windHoverInfo, setWindHoverInfo] = useState<{
     x: number;

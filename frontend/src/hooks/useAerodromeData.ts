@@ -15,16 +15,14 @@ import { useMapStore } from '../store/useMapStore';
  *  - Lazy ATS route labels fetch (deferred until layer is toggled on)
  */
 export function useAerodromeData() {
-  const {
-    flyToLocation,
-    setActiveAirport,
-    setActiveAerodromeMetadata,
-    activeAirport,
-    setAtsRouteLabels,
-    setTerminalPivot,
-    activeLayers,
-    selectedRouteIds,
-  } = useMapStore();
+  const flyToLocation = useMapStore((s) => s.flyToLocation);
+  const setActiveAirport = useMapStore((s) => s.setActiveAirport);
+  const setActiveAerodromeMetadata = useMapStore((s) => s.setActiveAerodromeMetadata);
+  const activeAirport = useMapStore((s) => s.activeAirport);
+  const setAtsRouteLabels = useMapStore((s) => s.setAtsRouteLabels);
+  const setTerminalPivot = useMapStore((s) => s.setTerminalPivot);
+  const activeLayers = useMapStore((s) => s.activeLayers);
+  const selectedRouteIds = useMapStore((s) => s.selectedRouteIds);
 
   const [aerodromes, setAerodromes] = useState<any>(null);
   const atsLabelsFetched = useRef(false);

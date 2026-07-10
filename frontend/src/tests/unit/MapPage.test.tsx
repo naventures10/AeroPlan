@@ -49,7 +49,7 @@ vi.mock('../../hooks/useSearch');
 describe('MapPage Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useMapStore as any).mockReturnValue({
+    const storeObj = {
       viewMode: 'ENROUTE',
       activeAirport: null,
       viewState: { pitch: 0 },
@@ -63,7 +63,10 @@ describe('MapPage Component', () => {
         navaids: true,
       },
       toggleTerminalSpatialFilter: vi.fn(),
-    });
+    };
+    (useMapStore as any).mockImplementation((selector: any) =>
+      selector ? selector(storeObj) : storeObj,
+    );
     (useAerodromeData as any).mockReturnValue({
       aerodromes: null,
       handleAerodromeClick: vi.fn(),
@@ -106,7 +109,7 @@ describe('MapPage Component', () => {
   });
 
   it('renders terminal dashboard and charts when aerodrome selected in terminal mode', async () => {
-    (useMapStore as any).mockReturnValue({
+    const storeObj = {
       viewMode: 'TERMINAL',
       activeAirport: 'VOBM',
       viewState: { pitch: 60 },
@@ -120,7 +123,10 @@ describe('MapPage Component', () => {
         navaids: true,
       },
       toggleTerminalSpatialFilter: vi.fn(),
-    });
+    };
+    (useMapStore as any).mockImplementation((selector: any) =>
+      selector ? selector(storeObj) : storeObj,
+    );
 
     act(() => {
       render(<MapPage />);
@@ -134,7 +140,7 @@ describe('MapPage Component', () => {
   });
 
   it('renders terminal view elements correctly when pitch > 0 but viewMode is ENROUTE', async () => {
-    (useMapStore as any).mockReturnValue({
+    const storeObj = {
       viewMode: 'ENROUTE',
       activeAirport: 'VOBM',
       viewState: { pitch: 60 },
@@ -148,7 +154,10 @@ describe('MapPage Component', () => {
         navaids: true,
       },
       toggleTerminalSpatialFilter: vi.fn(),
-    });
+    };
+    (useMapStore as any).mockImplementation((selector: any) =>
+      selector ? selector(storeObj) : storeObj,
+    );
 
     act(() => {
       render(<MapPage />);
@@ -190,7 +199,7 @@ describe('MapPage Component', () => {
   });
 
   it('renders weather controls when in wind mode', async () => {
-    (useMapStore as any).mockReturnValue({
+    const storeObj = {
       viewMode: 'ENROUTE',
       activeAirport: null,
       viewState: { pitch: 0 },
@@ -204,7 +213,10 @@ describe('MapPage Component', () => {
         navaids: true,
       },
       toggleTerminalSpatialFilter: vi.fn(),
-    });
+    };
+    (useMapStore as any).mockImplementation((selector: any) =>
+      selector ? selector(storeObj) : storeObj,
+    );
 
     act(() => {
       render(<MapPage />);

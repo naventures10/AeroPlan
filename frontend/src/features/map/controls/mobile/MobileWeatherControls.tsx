@@ -22,24 +22,22 @@ const ALTITUDE_LEVELS = Array.from({ length: 40 }, (_, i) => {
 
 export function MobileWeatherControls() {
   const { windStatus } = useWindLayer();
-  const {
-    isWindMode,
-    setIsWindMode,
-    isCloudMode,
-    setIsCloudMode,
-    cloudLoadingStatus,
-    isWeatherMode,
-    viewMode,
-    windIsPlaying,
-    setWindIsPlaying,
-    setWindAnimationTime,
-    forecastTimestamps,
-    fetchWeatherManifest,
-    windAltitude,
-    setWindAltitude,
-    toggleWindPlayback,
-    windAnimationTime,
-  } = useMapStore();
+  const isWindMode = useMapStore((s) => s.isWindMode);
+  const setIsWindMode = useMapStore((s) => s.setIsWindMode);
+  const isCloudMode = useMapStore((s) => s.isCloudMode);
+  const setIsCloudMode = useMapStore((s) => s.setIsCloudMode);
+  const cloudLoadingStatus = useMapStore((s) => s.cloudLoadingStatus);
+  const isWeatherMode = useMapStore((s) => s.isWeatherMode);
+  const viewMode = useMapStore((s) => s.viewMode);
+  const windIsPlaying = useMapStore((s) => s.windIsPlaying);
+  const setWindIsPlaying = useMapStore((s) => s.setWindIsPlaying);
+  const setWindAnimationTime = useMapStore((s) => s.setWindAnimationTime);
+  const forecastTimestamps = useMapStore((s) => s.forecastTimestamps);
+  const fetchWeatherManifest = useMapStore((s) => s.fetchWeatherManifest);
+  const windAltitude = useMapStore((s) => s.windAltitude);
+  const setWindAltitude = useMapStore((s) => s.setWindAltitude);
+  const toggleWindPlayback = useMapStore((s) => s.toggleWindPlayback);
+  const windAnimationTime = useMapStore((s) => s.windAnimationTime);
 
   const altitudeScrollContainerRef = useRef<HTMLDivElement>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);

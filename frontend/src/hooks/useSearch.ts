@@ -24,16 +24,14 @@ function cacheSet(key: string, value: SearchResult[]) {
  *  - "Select" handler (flyTo + layer activation + search reset)
  */
 export function useSearch() {
-  const {
-    flyToLocation,
-    fitBounds,
-    activeLayers,
-    toggleLayer,
-    setActiveAirport,
-    setActiveAerodromeMetadata,
-    setSelectedRouteIds,
-    setSelectedFeature,
-  } = useMapStore();
+  const flyToLocation = useMapStore((s) => s.flyToLocation);
+  const fitBounds = useMapStore((s) => s.fitBounds);
+  const activeLayers = useMapStore((s) => s.activeLayers);
+  const toggleLayer = useMapStore((s) => s.toggleLayer);
+  const setActiveAirport = useMapStore((s) => s.setActiveAirport);
+  const setActiveAerodromeMetadata = useMapStore((s) => s.setActiveAerodromeMetadata);
+  const setSelectedRouteIds = useMapStore((s) => s.setSelectedRouteIds);
+  const setSelectedFeature = useMapStore((s) => s.setSelectedFeature);
 
   const [searchInput, setSearchInput] = useState('');
   const [suggestions, setSuggestions] = useState<SearchResult[]>([]);

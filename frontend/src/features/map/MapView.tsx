@@ -448,7 +448,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
           return isHovering ? 'pointer' : isDragging ? 'grabbing' : 'grab';
         }}
         pickingRadius={15}
-        useDevicePixels={isMobile ? 1.0 : Math.min(window.devicePixelRatio, 1.5)}
+        useDevicePixels={Math.min(window.devicePixelRatio, 1.5)}
         _typedArrayManagerProps={isMobile ? { overAlloc: 1, poolSize: 0 } : undefined}
         onClick={handleDeckClick}
         onHover={handleDeckHover}

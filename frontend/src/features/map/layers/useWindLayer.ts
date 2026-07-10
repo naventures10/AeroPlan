@@ -59,16 +59,14 @@ async function loadWindFrame(
 
 export function useWindLayer() {
   const isMobile = useIsMobile();
-  const {
-    isWeatherMode,
-    isWindMode,
-    viewMode,
-    windAltitude,
-    windAnimationTime,
-    forecastTimestamps,
-    fetchWeatherManifest,
-    weatherStatus,
-  } = useMapStore();
+  const isWeatherMode = useMapStore((s) => s.isWeatherMode);
+  const isWindMode = useMapStore((s) => s.isWindMode);
+  const viewMode = useMapStore((s) => s.viewMode);
+  const windAltitude = useMapStore((s) => s.windAltitude);
+  const windAnimationTime = useMapStore((s) => s.windAnimationTime);
+  const forecastTimestamps = useMapStore((s) => s.forecastTimestamps);
+  const fetchWeatherManifest = useMapStore((s) => s.fetchWeatherManifest);
+  const weatherStatus = useMapStore((s) => s.weatherStatus);
 
   const isWindActive = isWeatherMode && isWindMode && viewMode === 'ENROUTE';
 

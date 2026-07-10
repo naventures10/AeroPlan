@@ -91,7 +91,20 @@ export function useDeckLayers({
     }));
   }, [aerodromes]);
 
-  const zoom = viewState.zoom;
+  const currentZoom = viewState.zoom;
+  const { effectiveZoom, isZoomWaypoints, isZoomNavaids, isZoomAtsWaypoints } = useMemo(() => {
+    const effectiveZoom =
+      [2.0, 2.5, 4.0, 4.5, 6.0, 6.5, 7.0, 7.5].reverse().find((z) => currentZoom >= z) || 0;
+    const isZoomWaypoints = currentZoom > 7.0; // ZOOM_WAYPOINTS
+    const isZoomNavaids = currentZoom > 2.5; // ZOOM_NAVAIDS
+    const isZoomAtsWaypoints = currentZoom > 7.5; // ZOOM_ATS_WAYPOINTS
+    return {
+      effectiveZoom,
+      isZoomWaypoints,
+      isZoomNavaids,
+      isZoomAtsWaypoints,
+    };
+  }, [currentZoom]);
 
   // Pre-process overlapping ATS route labels only when raw labels change
   const processedRouteLabels = useMemo(() => {
@@ -110,7 +123,7 @@ export function useDeckLayers({
     selectedRouteIds,
     selectedRouteType,
     selectedFeature,
-    zoom,
+    zoom: currentZoom,
     isDarkMode,
     atsRouteLabels: processedRouteLabels,
     animatedTrips,
@@ -141,7 +154,9 @@ export function useDeckLayers({
     selectedRouteIds,
     selectedRouteType,
     selectedFeature,
-    zoom,
+    effectiveZoom,
+    isZoomWaypoints,
+    isZoomNavaids,
     isDarkMode,
     atsRouteLabels,
     animatedTrips,
@@ -170,7 +185,7 @@ export function useDeckLayers({
     selectedRouteIds,
     selectedRouteType,
     selectedFeature,
-    zoom,
+    isZoomAtsWaypoints,
     isDarkMode,
     atsRouteLabels,
     animatedTrips,

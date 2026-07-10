@@ -16,8 +16,10 @@ export function useKeyboardShortcuts({
   onCloseSectionModal: () => void;
   cancelPendingSelection: () => void;
 }) {
-  const { returnToEnroute, setSelectedRouteIds, setSelectedFeature, setIsWeatherMode } =
-    useMapStore();
+  const returnToEnroute = useMapStore((s) => s.returnToEnroute);
+  const setSelectedRouteIds = useMapStore((s) => s.setSelectedRouteIds);
+  const setSelectedFeature = useMapStore((s) => s.setSelectedFeature);
+  const setIsWeatherMode = useMapStore((s) => s.setIsWeatherMode);
 
   useEffect(() => {
     // fallow-ignore-next-line complexity

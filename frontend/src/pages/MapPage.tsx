@@ -78,7 +78,11 @@ const MobileUserProfileModal = lazy(() =>
 
 // fallow-ignore-next-line complexity
 export default function MapPage() {
-  const { viewMode, activeAirport, viewState, isWeatherMode, returnToEnroute } = useMapStore();
+  const viewMode = useMapStore((s) => s.viewMode);
+  const activeAirport = useMapStore((s) => s.activeAirport);
+  const pitch = useMapStore((s) => s.viewState.pitch);
+  const isWeatherMode = useMapStore((s) => s.isWeatherMode);
+  const returnToEnroute = useMapStore((s) => s.returnToEnroute);
   const search = useSearch();
   const isMobile = useIsMobile();
 
@@ -114,7 +118,7 @@ export default function MapPage() {
         <motion.div
           key="primary-ui"
           initial={false}
-          animate={!isWeatherMode || viewState.pitch > 0 ? 'visible' : 'hidden'}
+          animate={!isWeatherMode || pitch > 0 ? 'visible' : 'hidden'}
           variants={{
             visible: { opacity: 1, display: 'block' },
             hidden: { opacity: 0, transitionEnd: { display: 'none' } },
@@ -125,7 +129,7 @@ export default function MapPage() {
           <div
             className={`absolute top-6 flex ${isMobile ? 'flex-row items-center gap-2' : 'flex-col gap-3'} pointer-events-auto ${search.isSearchFocused ? 'z-[250]' : 'z-50'} ${viewMode === 'TERMINAL' ? 'left-6' : isMobile ? 'left-[4.75rem]' : 'left-[4.5rem]'}`}
           >
-            {viewMode === 'ENROUTE' && viewState.pitch === 0 && (
+            {viewMode === 'ENROUTE' && pitch === 0 && (
               <Suspense fallback={null}>
                 {isMobile ? <MobileSearchBar {...search} /> : <SearchBar {...search} />}
               </Suspense>
@@ -174,8 +178,8 @@ export default function MapPage() {
             </div>
           )}
 
-          {activeAirport && (viewMode === 'TERMINAL' || viewState.pitch > 0) && !isMobile && (
-            <div className="absolute top-6 right-6 pointer-events-auto z-40">
+          {activeAirport && (viewMode === 'TERMINAL' || pitch > 0) && !isMobile && (
+            <div className="absolute top-32 lg:top-6 right-6 pointer-events-auto z-40">
               <Suspense fallback={null}>
                 <TerminalDashboard icaoCode={activeAirport} />
               </Suspense>
@@ -203,7 +207,7 @@ export default function MapPage() {
         <motion.div
           key="weather-ui"
           initial={false}
-          animate={isWeatherMode && viewState.pitch === 0 ? 'visible' : 'hidden'}
+          animate={isWeatherMode && pitch === 0 ? 'visible' : 'hidden'}
           variants={{
             visible: { opacity: 1, display: 'block' },
             hidden: { opacity: 0, transitionEnd: { display: 'none' } },
@@ -217,7 +221,7 @@ export default function MapPage() {
         </motion.div>
 
         {/* Persistently render LayerToolbar outside the crossfade in 2D ENROUTE view */}
-        {viewMode === 'ENROUTE' && viewState.pitch === 0 && (
+        {viewMode === 'ENROUTE' && pitch === 0 && (
           <Suspense fallback={null}>
             {isMobile ? <MobileLayerToolbar /> : <LayerToolbar />}
           </Suspense>
@@ -259,7 +263,7 @@ export default function MapPage() {
         {isMobile ? <MobileAipSupplementsModal /> : <AipSupplementsModal />}
         {isMobile ? <MobileAirspaceNotamsModal /> : <AirspaceNotamsModal />}
         {isMobile ? <MobileUserProfileModal /> : <UserProfileModal />}
-        {isMobile && activeAirport && (viewMode === 'TERMINAL' || viewState.pitch > 0) && (
+        {isMobile && activeAirport && (viewMode === 'TERMINAL' || pitch > 0) && (
           <MobileTerminalDashboard icaoCode={activeAirport} />
         )}
       </Suspense>

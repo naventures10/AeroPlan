@@ -221,21 +221,23 @@ export function useCloudLayer() {
   const isMobile = useIsMobile();
   const maxParticles = isMobile ? 12_000 : MAX_PARTICLES;
 
-  const {
-    isWeatherMode,
-    isCloudMode,
-    viewMode,
-    windAltitude,
-    windAnimationTime,
-    setCloudLoadingStatus,
-    viewState,
-    forecastTimestamps,
-    windIsPlaying,
-    fetchWeatherManifest,
-    weatherStatus,
-  } = useMapStore();
+  const isWeatherMode = useMapStore((s) => s.isWeatherMode);
+  const isCloudMode = useMapStore((s) => s.isCloudMode);
+  const viewMode = useMapStore((s) => s.viewMode);
+  const windAltitude = useMapStore((s) => s.windAltitude);
+  const windAnimationTime = useMapStore((s) => s.windAnimationTime);
+  const setCloudLoadingStatus = useMapStore((s) => s.setCloudLoadingStatus);
+  const forecastTimestamps = useMapStore((s) => s.forecastTimestamps);
+  const windIsPlaying = useMapStore((s) => s.windIsPlaying);
+  const fetchWeatherManifest = useMapStore((s) => s.fetchWeatherManifest);
+  const weatherStatus = useMapStore((s) => s.weatherStatus);
 
   const isCloudActive = isWeatherMode && isCloudMode && viewMode === 'ENROUTE';
+
+  const viewState = useMapStore((s) => {
+    const active = s.isWeatherMode && s.isCloudMode && s.viewMode === 'ENROUTE';
+    return active ? s.viewState : null;
+  });
 
   // Create a stable, altitude-dependent frame loader
   const [loadFrame, setLoadFrame] = useState(() => createCloudFrameLoader(windAltitude));
@@ -291,9 +293,9 @@ export function useCloudLayer() {
   const isSurface = windAltitude === 0;
   const baseAltMeters = isSurface ? 1000 : windAltitude * 100 * 0.3048;
 
-  const zoom = viewState.zoom;
-  const lng = viewState.longitude;
-  const lat = viewState.latitude;
+  const zoom = viewState?.zoom ?? 0;
+  const lng = viewState?.longitude ?? 0;
+  const lat = viewState?.latitude ?? 0;
 
   // 3. Helper to generate cloud particle geometry for a single frame
   const generateCloudGeometry = useCallback(

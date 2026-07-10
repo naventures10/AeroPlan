@@ -46,7 +46,8 @@ const categories = [
 ] as const;
 
 export default function MobileTerminalLegend() {
-  const { terminalSpatialFilters, toggleTerminalSpatialFilter } = useMapStore();
+  const terminalSpatialFilters = useMapStore((s) => s.terminalSpatialFilters);
+  const toggleTerminalSpatialFilter = useMapStore((s) => s.toggleTerminalSpatialFilter);
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Count active filters

@@ -15,6 +15,7 @@ load_dotenv()
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT")
 MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY")
 MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY")
+ERC_MAP_POLYGON = os.getenv("ERC_MAP_POLYGON")
 
 if not all([MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY]):
     raise ValueError("Missing MinIO credentials in environment variables")
@@ -106,9 +107,45 @@ class ERCChartsETL:
             "--config",
             "GDAL_PDF_DPI",
             "300",
-            pdf_path,
-            tif_path,
         ]
+
+        cutline_path = None
+        if ERC_MAP_POLYGON:
+            try:
+                coords = json.loads(ERC_MAP_POLYGON)
+                geojson_data = {
+                    "type": "FeatureCollection",
+                    "features": [
+                        {
+                            "type": "Feature",
+                            "properties": {},
+                            "geometry": {
+                                "type": "Polygon",
+                                "coordinates": [coords],
+                            },
+                        }
+                    ],
+                }
+                tmp_geojson = tempfile.NamedTemporaryFile(suffix=".geojson", delete=False)
+                tmp_geojson.write(json.dumps(geojson_data).encode("utf-8"))
+                tmp_geojson.close()
+                cutline_path = tmp_geojson.name
+
+                print(f"    Applying crop cutline polygon with {len(coords)} vertices.")
+                cmd_warp.extend(
+                    [
+                        "-cutline",
+                        cutline_path,
+                        "-crop_to_cutline",
+                        "-cutline_srs",
+                        "EPSG:4326",
+                        "-dstalpha",
+                    ]
+                )
+            except Exception as e:
+                print(f"    [!] Error parsing ERC_MAP_POLYGON or writing temp GeoJSON: {e}")
+
+        cmd_warp.extend([pdf_path, tif_path])
 
         try:
             subprocess.run(
@@ -121,6 +158,9 @@ class ERCChartsETL:
         except subprocess.CalledProcessError as e:
             print(f"    [X] gdalwarp failed: {e.stderr.decode('utf-8', errors='replace')}")
             raise
+        finally:
+            if cutline_path and os.path.exists(cutline_path):
+                os.remove(cutline_path)
 
         # 2. Translate GeoTIFF to MBTiles
         print("  [Step 2] Translating GeoTIFF to MBTiles database...")

@@ -8,7 +8,10 @@ import MobileMenuDrawer from './MobileMenuDrawer';
  * Floating menu button top-left, horizontal layers dock bottom-center.
  */
 export default function MobileLayerToolbar() {
-  const { activeLayers, toggleLayer, isWeatherMode, setIsWeatherMode } = useMapStore();
+  const activeLayers = useMapStore((s) => s.activeLayers);
+  const toggleLayer = useMapStore((s) => s.toggleLayer);
+  const isWeatherMode = useMapStore((s) => s.isWeatherMode);
+  const setIsWeatherMode = useMapStore((s) => s.setIsWeatherMode);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const toggleButtons = [
