@@ -1,5 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { createAtsRouteLayers } from '../../features/map/layers/createAtsRouteLayers';
+import {
+  createAtsRouteLayers,
+  preProcessRouteLabels,
+} from '../../features/map/layers/createAtsRouteLayers';
 
 describe('createAtsRouteLayers', () => {
   it('creates layers with correct logic', () => {
@@ -264,6 +267,19 @@ describe('createAtsRouteLayers', () => {
   });
 
   it('handles overlapping labels by sliding positions along bearing', () => {
+    const rawLabels = {
+      features: [
+        {
+          geometry: { coordinates: [80.123456, 13.123456] },
+          properties: { route_id: 'W111', bearing: 45, route_type: 'CONV' },
+        },
+        {
+          geometry: { coordinates: [80.123456, 13.123456] },
+          properties: { route_id: 'G272', bearing: 90, route_type: 'RNAV' },
+        },
+      ],
+    };
+
     const ctx = {
       isDarkMode: true,
       viewMode: 'ENROUTE',
@@ -280,16 +296,8 @@ describe('createAtsRouteLayers', () => {
       animatedTrips: [],
       currentTime: 0,
       atsRouteLabels: {
-        features: [
-          {
-            geometry: { coordinates: [80.123456, 13.123456] },
-            properties: { route_id: 'W111', bearing: 45, route_type: 'CONV' },
-          },
-          {
-            geometry: { coordinates: [80.123456, 13.123456] },
-            properties: { route_id: 'G272', bearing: 90, route_type: 'RNAV' },
-          },
-        ],
+        type: 'FeatureCollection',
+        features: preProcessRouteLabels(rawLabels),
       },
       setSelectedRouteIds: vi.fn(),
       setSelectedFeature: vi.fn(),
@@ -307,7 +315,7 @@ describe('createAtsRouteLayers', () => {
     expect(lon0).not.toBeCloseTo(lon1, 4);
 
     // Original coordinates should not be mutated
-    expect(ctx.atsRouteLabels.features[0]!.geometry.coordinates[0]).toBe(80.123456);
-    expect(ctx.atsRouteLabels.features[0]!.geometry.coordinates[1]).toBe(13.123456);
+    expect(rawLabels.features[0]!.geometry.coordinates[0]).toBe(80.123456);
+    expect(rawLabels.features[0]!.geometry.coordinates[1]).toBe(13.123456);
   });
 });

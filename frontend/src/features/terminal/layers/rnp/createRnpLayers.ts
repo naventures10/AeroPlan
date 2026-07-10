@@ -134,20 +134,35 @@ export interface RnpContext {
   opacity?: number;
 }
 
+export interface RnpStaticContext {
+  pathData: RnpPath3d | null;
+  selectedRnpApproachId: string | null;
+  hoveredRnpApproachId?: string | null;
+  setSelectedRnpApproachId: (id: string | null) => void;
+  pickable?: boolean;
+  opacity?: number;
+}
+
+export interface RnpDynamicContext {
+  pathData: RnpPath3d | null;
+  selectedRnpApproachId: string | null;
+  rnpCurrentTime: number;
+  approachDist: number;
+  opacity?: number;
+}
+
 /**
- * Build DeckGL layers for the active RNP procedure.
+ * Build static DeckGL layers for the active RNP procedure.
  */
 // fallow-ignore-next-line complexity
-export function createRnpLayers({
+export function createStaticRnpLayers({
   pathData,
   selectedRnpApproachId,
   hoveredRnpApproachId,
   setSelectedRnpApproachId,
-  rnpCurrentTime,
-  approachDist,
   pickable,
   opacity,
-}: RnpContext): any[] {
+}: RnpStaticContext): any[] {
   if (!pathData) return [];
 
   const layers: any[] = [];
@@ -160,6 +175,12 @@ export function createRnpLayers({
       if (p[2] < minZ) minZ = p[2];
     });
   });
+  if (pathData.missed_approach_path) {
+    pathData.missed_approach_path.path.forEach((p: [number, number, number]) => {
+      if (p[2] < minZ) minZ = p[2];
+    });
+  }
+  if (minZ === Infinity) minZ = 0;
 
   // ── 0. Compute Leg Annotations ─────────────────────────────────────────
   interface LegAnnotation {
@@ -264,13 +285,6 @@ export function createRnpLayers({
     processLegs(pathData.missed_approach_path.legs, [255, 100, 80, 255]);
   }
 
-  if (pathData.missed_approach_path) {
-    pathData.missed_approach_path.path.forEach((p: [number, number, number]) => {
-      if (p[2] < minZ) minZ = p[2];
-    });
-  }
-  if (minZ === Infinity) minZ = 0;
-
   // Transform approach paths by adding exaggeration
   const approachTripData = pathData.approach_paths.map((ap: RnpApproachPath) => ({
     entry_waypoint: ap.entry_waypoint,
@@ -325,7 +339,7 @@ export function createRnpLayers({
       }),
     );
 
-    // ── 2. Animated 3D Approach Trail (Only for Selected) ───────────────
+    // ── 2. Static Gradient Line for the Selected Route ───────────────
     if (selectedRnpApproachId) {
       const selectedTrip = approachTripData.find((t) => t.entry_waypoint === selectedRnpApproachId);
 
@@ -367,39 +381,11 @@ export function createRnpLayers({
             }),
           );
         }
-
-        // Clamp the approach head to approachDist so it freezes at the RW waypoint
-        // once the missed approach phase begins (rnpCurrentTime > approachDist).
-        const approachTime = Math.min(
-          rnpCurrentTime,
-          approachDist > 0 ? approachDist : rnpCurrentTime,
-        );
-
-        layers.push(
-          new TripsLayer({
-            id: 'rnp-approach-trips-layer',
-            data: [selectedTrip],
-            getPath: (d: any) => d.path.map((p: any) => [p[0], p[1], p[2] + 0.5]), // Tiny lift above static paths
-            getTimestamps: (d: any) => d.timestamps,
-            getColor: RGB_APPROACH,
-            opacity: opacity ?? 1,
-            widthMinPixels: 4,
-            pickable: false, // TripsLayer is usually not pickable for procedure selection
-            jointRounded: true,
-            capRounded: true,
-            billboard: true,
-            trailLength: Math.min(selectedTrip.total_dist * 0.4, 250),
-            currentTime: approachTime,
-          }),
-        );
       }
     }
   }
 
   // ── 3. Missed Approach — static dashed path ──────────────────────
-  // We walk the 3D path in NM-space and slice it into fixed-length dash segments.
-  // Each dash is a real path geometry so they follow curves and
-  // are always the same NM length.
   if (
     selectedRnpApproachId &&
     pathData.missed_approach_path &&
@@ -411,7 +397,7 @@ export function createRnpLayers({
     const missedPath3d = pathData.missed_approach_path.path.map((p: [number, number, number]) => [
       p[0],
       p[1],
-      minZ + (p[2] - minZ) * ALT_EXAGGERATION + 2,
+      minZ + (p[2] - minZ) * ALT_EXAGGERATION + 2.1,
     ]);
 
     // All dashes along the full route
@@ -421,7 +407,7 @@ export function createRnpLayers({
       layers.push(
         new PathLayer({
           id: 'rnp-missed-approach-static-layer',
-          data: allDashes.map((seg) => ({ path: seg.map((p: any) => [p[0], p[1], p[2] + 0.1]) })),
+          data: allDashes.map((seg) => ({ path: seg })),
           getPath: (d: any) => d.path,
           getColor: [255, 100, 80, 200],
           opacity: opacity ?? 1,
@@ -652,12 +638,6 @@ export function createRnpLayers({
     }
 
     // ── Hold pattern directional arrows on straight legs ──────────────────
-    // Path structure (steps=16): [0..16]=outbound arc, [17]=outbound end,
-    // [18..34]=inbound arc, [35]=fix. Straight legs are [16]→[17] and [34]→[35].
-    //
-    // deck.gl getAngle rotates clockwise.
-    // Since '▶' points East (bearing 90) at angle 0:
-    // angle = (bearing - 90 + 360) % 360
     const STEPS = 16;
     const holdChevrons: Array<{
       position: [number, number, number];
@@ -717,9 +697,9 @@ export function createRnpLayers({
         new TextLayer({
           id: 'rnp-hold-chevrons-layer',
           data: holdChevrons,
-          getPosition: (d: (typeof holdChevrons)[0]) => d.position,
+          getPosition: (d: any) => d.position,
           getText: () => '>',
-          getAngle: (d: (typeof holdChevrons)[0]) => d.angle,
+          getAngle: (d: any) => d.angle,
           getSize: 14,
           getColor: [50, 220, 80, 230],
           opacity: opacity ?? 1,
@@ -741,8 +721,8 @@ export function createRnpLayers({
         new TextLayer({
           id: 'rnp-hold-chevron-labels-layer',
           data: holdChevrons,
-          getPosition: (d: (typeof holdChevrons)[0]) => d.position,
-          getText: (d: (typeof holdChevrons)[0]) => d.label,
+          getPosition: (d: any) => d.position,
+          getText: (d: any) => d.label,
           getSize: 10,
           getColor: [50, 220, 80, 200],
           opacity: opacity ?? 1,
@@ -912,4 +892,89 @@ export function createRnpLayers({
   }
 
   return layers;
+}
+
+/**
+ * Build dynamic DeckGL TripsLayer for the active RNP procedure.
+ */
+export function createDynamicRnpLayers({
+  pathData,
+  selectedRnpApproachId,
+  rnpCurrentTime,
+  approachDist,
+  opacity,
+}: RnpDynamicContext): any[] {
+  if (!pathData || !selectedRnpApproachId) return [];
+
+  const layers: any[] = [];
+
+  // Find the lowest altitude (usually the runway / MAPt) to anchor the exaggeration
+  // so the path touches the real MapLibre map plane at Z=0.
+  let minZ = Infinity;
+  pathData.approach_paths.forEach((ap: RnpApproachPath) => {
+    ap.path.forEach((p: [number, number, number]) => {
+      if (p[2] < minZ) minZ = p[2];
+    });
+  });
+  if (pathData.missed_approach_path) {
+    pathData.missed_approach_path.path.forEach((p: [number, number, number]) => {
+      if (p[2] < minZ) minZ = p[2];
+    });
+  }
+  if (minZ === Infinity) minZ = 0;
+
+  // Transform approach paths by adding exaggeration
+  const approachTripData = pathData.approach_paths.map((ap: RnpApproachPath) => ({
+    entry_waypoint: ap.entry_waypoint,
+    path: ap.path.map((p: [number, number, number]) => [
+      p[0],
+      p[1],
+      minZ + (p[2] - minZ) * ALT_EXAGGERATION + 2,
+    ]),
+    timestamps: ap.timestamps,
+    total_dist: ap.total_distance_nm,
+  }));
+
+  const selectedTrip = approachTripData.find((t) => t.entry_waypoint === selectedRnpApproachId);
+
+  if (selectedTrip) {
+    // Clamp the approach head to approachDist so it freezes at the RW waypoint
+    // once the missed approach phase begins (rnpCurrentTime > approachDist).
+    const approachTime = Math.min(rnpCurrentTime, approachDist > 0 ? approachDist : rnpCurrentTime);
+
+    layers.push(
+      new TripsLayer({
+        id: 'rnp-approach-trips-layer',
+        data: [selectedTrip],
+        getPath: (d: any) => d.path.map((p: any) => [p[0], p[1], p[2] + 0.5]), // Tiny lift above static paths
+        getTimestamps: (d: any) => d.timestamps,
+        getColor: RGB_APPROACH,
+        opacity: opacity ?? 1,
+        widthMinPixels: 4,
+        pickable: false, // TripsLayer is usually not pickable for procedure selection
+        jointRounded: true,
+        capRounded: true,
+        billboard: true,
+        trailLength: Math.min(selectedTrip.total_dist * 0.4, 250),
+        currentTime: approachTime,
+      }),
+    );
+  }
+
+  return layers;
+}
+
+/**
+ * Build DeckGL layers for the active RNP procedure (wrapper for backward compatibility).
+ */
+export function createRnpLayers(ctx: RnpContext): any[] {
+  const staticLayers = createStaticRnpLayers(ctx);
+  const dynamicLayers = createDynamicRnpLayers(ctx);
+
+  const result = [...staticLayers];
+  if (dynamicLayers.length > 0) {
+    // Insert TripsLayer at index 2 to match the exact original order
+    result.splice(2, 0, ...dynamicLayers);
+  }
+  return result;
 }

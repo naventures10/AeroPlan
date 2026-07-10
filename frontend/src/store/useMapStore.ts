@@ -296,6 +296,15 @@ export const useMapStore = create<MapState>()(
               ...stateUpdates,
               isAirspaceLoaded: false,
             };
+
+            // Fallback timeout to ensure layer is marked loaded if tiles are cached
+            // or if onViewportLoad fails to fire within 200ms
+            setTimeout(() => {
+              const currentStore = get();
+              if (currentStore.activeLayers.airspaces && !currentStore.isAirspaceLoaded) {
+                set({ isAirspaceLoaded: true });
+              }
+            }, 200);
           }
 
           if (layer === 'atsRoutes' && !newActiveLayers.atsRoutes) {
@@ -313,6 +322,15 @@ export const useMapStore = create<MapState>()(
               isAtsGeometryLoaded: false,
               atsRoutesToggleCounter: state.atsRoutesToggleCounter + 1,
             };
+
+            // Fallback timeout to ensure route labels render if tiles are cached
+            // or if onViewportLoad fails to fire within 200ms
+            setTimeout(() => {
+              const currentStore = get();
+              if (currentStore.activeLayers.atsRoutes && !currentStore.isAtsGeometryLoaded) {
+                set({ isAtsGeometryLoaded: true });
+              }
+            }, 200);
           }
 
           if (

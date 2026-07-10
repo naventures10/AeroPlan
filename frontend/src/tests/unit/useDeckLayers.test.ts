@@ -31,6 +31,8 @@ vi.mock('../../features/map/layers/createAirspaceLayers', () => ({
 }));
 
 vi.mock('../../features/terminal/layers/rnp/createRnpLayers', () => ({
+  createStaticRnpLayers: vi.fn(() => [{ id: 'rnp1' }]),
+  createDynamicRnpLayers: vi.fn(() => []),
   createRnpLayers: vi.fn(() => [{ id: 'rnp1' }]),
 }));
 
@@ -97,7 +99,7 @@ describe('useDeckLayers', () => {
   it('aggregates layers based on state', () => {
     (aRoutes.createAtsRouteLayers as any).mockReturnValue([{ id: 'ats1' }]);
     (aAirspaces.createAirspaceLayers as any).mockReturnValue([{ id: 'air1' }]);
-    (aTerminal.createRnpLayers as any).mockReturnValue([{ id: 'rnp2' }]);
+    (aTerminal.createStaticRnpLayers as any).mockReturnValue([{ id: 'rnp2' }]);
 
     const props = {
       aerodromes: {},
@@ -118,7 +120,7 @@ describe('useDeckLayers', () => {
     );
   });
 
-  it('delays unmounting of all toolbar layers by 300ms when toggled off', () => {
+  it('delays unmounting of atsRoutes by 300ms when toggled off, while keeping other layers mounted', () => {
     vi.useFakeTimers();
     (aRoutes.createAtsRouteLayers as any).mockReturnValue([{ id: 'ats1' }]);
     (aAirspaces.createAirspaceLayers as any).mockReturnValue([{ id: 'air1' }]);
@@ -131,43 +133,46 @@ describe('useDeckLayers', () => {
 
     const { result, rerender } = renderHook(() => useDeckLayers(props as any));
 
-    const layersToTest = [
-      { key: 'aerodromes', id: 'aero1' },
-      { key: 'waypoints', id: 'wp' },
-      { key: 'navaids', id: 'nav' },
-      { key: 'atsRoutes', id: 'ats1' },
-      { key: 'airspaces', id: 'air1' },
-    ];
+    // Initially all layers should be present
+    expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain('ats1');
+    expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain('aero1');
+    expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain('wp');
+    expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain('nav');
+    expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain('air1');
 
-    layersToTest.forEach(({ key, id }) => {
-      // Initially layer should be present.
-      expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain(id);
+    // Toggle off all layers
+    useMapStore.setState((state: any) => ({
+      activeLayers: {
+        ...state.activeLayers,
+        atsRoutes: false,
+        aerodromes: false,
+        waypoints: false,
+        navaids: false,
+        airspaces: false,
+      },
+    }));
+    rerender();
 
-      // Toggle off the layer
-      useMapStore.setState((state: any) => ({
-        activeLayers: { ...state.activeLayers, [key]: false },
-      }));
-      rerender();
-
-      // Immediately after toggle, it should still be mounted
-      expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain(id);
-    });
+    // Immediately after toggle, they should all still be mounted
+    expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain('ats1');
+    expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain('aero1');
 
     // Advance time by 299ms
     vi.advanceTimersByTime(299);
     rerender();
-    layersToTest.forEach(({ id }) => {
-      expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain(id);
-    });
+    expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain('ats1');
+    expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain('aero1');
 
     // Advance time to 300ms
     vi.advanceTimersByTime(1);
     rerender();
 
-    // Now all layers should be completely unmounted
-    layersToTest.forEach(({ id }) => {
-      expect(result.current.overlaidLayers.map((l: any) => l?.id)).not.toContain(id);
-    });
+    // Now ats1 should be completely unmounted, but others remain mounted
+    expect(result.current.overlaidLayers.map((l: any) => l?.id)).not.toContain('ats1');
+    expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain('aero1');
+    expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain('wp');
+    expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain('nav');
+    expect(result.current.overlaidLayers.map((l: any) => l?.id)).toContain('air1');
 
     vi.useRealTimers();
   });

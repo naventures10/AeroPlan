@@ -32,6 +32,8 @@ export function InterleavedDeckGL(props: InterleavedDeckGLProps) {
       const instance = new MapboxOverlay({
         ...overlayProps,
         interleaved: true,
+        // Disable Retina on mobile — 4× fragment shader savings
+        useDevicePixels: isMobile ? 1 : true,
         _typedArrayManagerProps: isMobile ? { overAlloc: 1, poolSize: 0 } : undefined,
       });
       overlayRef.current = instance;
