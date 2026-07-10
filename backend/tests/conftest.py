@@ -104,6 +104,26 @@ def override_get_db(db_session):
     app.dependency_overrides.pop(get_db, None)
 
 
+@pytest.fixture(autouse=True)
+def mock_redis(monkeypatch):
+    """Mock Redis client to avoid network calls during tests."""
+    mock_client = AsyncMock()
+    mock_client.ping.return_value = True
+    mock_client.close = AsyncMock()
+    mock_client.get = AsyncMock(return_value=None)
+    mock_client.set = AsyncMock(return_value=True)
+
+    monkeypatch.setattr("app.core.redis.from_url", lambda *args, **kwargs: mock_client)
+
+    import app.core.redis
+
+    app.core.redis.redis_client = mock_client
+
+    yield mock_client
+
+    app.core.redis.redis_client = None
+
+
 @pytest_asyncio.fixture
 async def api_client():
     """

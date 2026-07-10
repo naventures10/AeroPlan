@@ -1,9 +1,11 @@
 import os
 import time
 import traceback
+from contextlib import asynccontextmanager
 
 import structlog
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
+from fastapi.concurrency import iterate_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from opentelemetry import metrics, trace
@@ -21,6 +23,7 @@ from sqlalchemy import text
 from app.api.v1.api import api_router
 from app.core.database import AsyncSessionLocal, engine
 from app.core.logging_config import setup_logging
+from app.core.redis import close_redis, get_cached_json, init_redis, set_cached_json
 from app.schemas.geojson import HealthResponse
 
 # ── Initialise structured logging ────────────────────────────────────────────
@@ -42,8 +45,22 @@ metric_reader = PeriodicExportingMetricReader(OTLPMetricExporter())
 meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
 metrics.set_meter_provider(meter_provider)
 
+
+# ── Lifespan Handler ─────────────────────────────────────────────────────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Initialise Redis connection pool
+    try:
+        await init_redis()
+    except Exception as exc:
+        logger.error("redis_init_failed", error=str(exc))
+    yield
+    # Shutdown: Clean up Redis connections
+    await close_redis()
+
+
 # ── Application ──────────────────────────────────────────────────────────────
-app = FastAPI(title="Aero Plan API", version="0.1.0")
+app = FastAPI(title="Aero Plan API", version="0.1.0", lifespan=lifespan)
 
 FastAPIInstrumentor.instrument_app(app)
 
@@ -94,6 +111,67 @@ async def logging_middleware(request: Request, call_next):  # type: ignore[no-un
     return response
 
 
+# ── Caching Middleware ───────────────────────────────────────────────────────
+@app.middleware("http")
+async def cache_middleware(request: Request, call_next):  # type: ignore[no-untyped-def]
+    """Cache all JSON GET requests in Redis, excluding health and auth endpoints."""
+    # Only cache GET requests
+    if request.method != "GET":
+        return await call_next(request)
+
+    path = request.url.path
+    # Exclude health and auth endpoints
+    if path.endswith("/health") or "/auth" in path:
+        return await call_next(request)
+
+    # Generate cache key (based on path and query parameters)
+    query_string = request.url.query
+    cache_key = f"api_cache:{path}"
+    if query_string:
+        cache_key += f"?{query_string}"
+
+    try:
+        cached_response = await get_cached_json(cache_key)
+        if cached_response:
+            return Response(
+                content=cached_response["body"],
+                status_code=cached_response["status_code"],
+                media_type=cached_response.get("media_type", "application/json"),
+                headers={"X-Cache": "HIT"},
+            )
+    except Exception as exc:
+        logger.warning("cache_middleware_read_failed", key=cache_key, error=str(exc))
+
+    response = await call_next(request)
+
+    # Cache only successful 200 OK JSON/GeoJSON responses
+    content_type = response.headers.get("content-type", "")
+    if response.status_code == 200 and "application/json" in content_type:
+        try:
+            # Consume stream to get body content
+            body_parts = []
+            async for chunk in response.body_iterator:
+                body_parts.append(chunk)
+
+            # Reconstruct body_iterator
+            response.body_iterator = iterate_in_threadpool(iter(body_parts))
+
+            body_content = b"".join(body_parts).decode("utf-8")
+
+            cache_data = {
+                "body": body_content,
+                "status_code": response.status_code,
+                "media_type": content_type,
+            }
+            # Cache for 5 minutes (300 seconds)
+            await set_cached_json(cache_key, cache_data, ttl_seconds=300)
+            response.headers["X-Cache"] = "MISS"
+        except Exception as exc:
+            logger.warning("cache_middleware_write_failed", key=cache_key, error=str(exc))
+
+    return response
+
+
 # ── Global Exception Handler ────────────────────────────────────────────────
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -116,7 +194,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 @app.get("/api/v1/health", response_model=HealthResponse)
 async def health_check() -> dict:
     """
-    Returns service status and database connectivity.
+    Returns service status, database connectivity, and redis connectivity.
     """
     db_status = "unknown"
     try:
@@ -127,7 +205,18 @@ async def health_check() -> dict:
         db_status = "error"
         logger.warning("health_check_db_failed", error=str(exc))
 
-    return {"status": "online", "database": db_status}
+    redis_status = "unknown"
+    try:
+        from app.core.redis import get_redis
+
+        client = get_redis()
+        await client.ping()
+        redis_status = "connected"
+    except Exception as exc:
+        redis_status = "error"
+        logger.warning("health_check_redis_failed", error=str(exc))
+
+    return {"status": "online", "database": db_status, "redis": redis_status}
 
 
 # ── Register Routers ─────────────────────────────────────────────────────────

@@ -4,12 +4,31 @@ from httpx import AsyncClient
 
 @pytest.mark.asyncio
 async def test_health_check_success(api_client: AsyncClient) -> None:
-    """Test that the health check endpoint returns 200 OK and DB is connected."""
+    """Test that the health check endpoint returns 200 OK and DB/Redis are connected."""
     response = await api_client.get("/api/v1/health")
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "online"
     assert data["database"] == "connected"
+    assert data["redis"] == "connected"
+
+
+@pytest.mark.asyncio
+async def test_health_check_redis_error(api_client: AsyncClient, monkeypatch) -> None:
+    """Test health check when Redis is down."""
+    from unittest.mock import AsyncMock
+
+    mock_failing_redis = AsyncMock()
+    mock_failing_redis.ping.side_effect = Exception("Redis Down")
+
+    monkeypatch.setattr("app.core.redis.get_redis", lambda: mock_failing_redis)
+
+    response = await api_client.get("/api/v1/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "online"
+    assert data["database"] == "connected"
+    assert data["redis"] == "error"
 
 
 @pytest.mark.asyncio

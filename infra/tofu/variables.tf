@@ -15,3 +15,9 @@ variable "environment" {
   type        = string
   default     = "staging"
 }
+
+variable "redis_host" {
+  description = "The Redis host IP address"
+  type        = string
+  default     = "localhost"
+}

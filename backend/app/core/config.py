@@ -43,6 +43,15 @@ class Settings(BaseSettings):
     # ── Storage (Local / GCS FUSE) ───────────────────────────────────────
     STORAGE_PATH: str = "./data"
 
+    # ── Redis ──────────────────────────────────────────────────────────
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_DB: int = 0
+
+    @property
+    def redis_url(self) -> str:
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+
     # ── Dev / Debug ────────────────────────────────────────────────────
     DEBUG: bool = False
     ENVIRONMENT: str = "local"

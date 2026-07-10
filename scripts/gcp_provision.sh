@@ -165,6 +165,11 @@ docker run -d --name eaip-postgres --restart unless-stopped \
   -p 5432:5432 \
   -v postgres_data:/var/lib/postgresql/data \
   postgis/postgis:15-3.4
+
+docker run -d --name eaip-redis --restart unless-stopped \
+  -p 6379:6379 \
+  redis:7.4-alpine \
+  redis-server --maxmemory 100mb --maxmemory-policy allkeys-lru
 '
 fi
 
@@ -178,6 +183,18 @@ if ! gcloud compute firewall-rules describe allow-postgres > /dev/null 2>&1; the
         --action=ALLOW \
         --rules=tcp:5432 \
         --source-ranges=${POSTGRES_INGRESS_RANGE:-"10.0.0.0/8"} \
+        --target-tags=allow-postgres
+fi
+
+echo "Creating Firewall Rule for Redis..."
+if ! gcloud compute firewall-rules describe allow-redis > /dev/null 2>&1; then
+    gcloud compute firewall-rules create allow-redis \
+        --direction=INGRESS \
+        --priority=1000 \
+        --network=default \
+        --action=ALLOW \
+        --rules=tcp:6379 \
+        --source-ranges=${REDIS_INGRESS_RANGE:-"10.0.0.0/8"} \
         --target-tags=allow-postgres
 fi
 
