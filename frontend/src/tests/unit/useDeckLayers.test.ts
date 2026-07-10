@@ -24,6 +24,9 @@ vi.mock('../../features/map/layers/createNavaidLayer', () => ({
 
 vi.mock('../../features/map/layers/createAtsRouteLayers', () => ({
   createAtsRouteLayers: vi.fn(() => [{ id: 'ats1' }]),
+  createStaticAtsRouteLayers: vi.fn(() => [{ id: 'ats1' }]),
+  createDynamicAtsRouteLayers: vi.fn(() => []),
+  preProcessRouteLabels: vi.fn((labels) => labels),
 }));
 
 vi.mock('../../features/map/layers/createAirspaceLayers', () => ({
@@ -97,7 +100,8 @@ describe('useDeckLayers', () => {
   });
 
   it('aggregates layers based on state', () => {
-    (aRoutes.createAtsRouteLayers as any).mockReturnValue([{ id: 'ats1' }]);
+    (aRoutes.createStaticAtsRouteLayers as any).mockReturnValue([{ id: 'ats1' }]);
+    (aRoutes.createDynamicAtsRouteLayers as any).mockReturnValue([]);
     (aAirspaces.createAirspaceLayers as any).mockReturnValue([{ id: 'air1' }]);
     (aTerminal.createStaticRnpLayers as any).mockReturnValue([{ id: 'rnp2' }]);
 
@@ -122,7 +126,8 @@ describe('useDeckLayers', () => {
 
   it('delays unmounting of atsRoutes by 300ms when toggled off, while keeping other layers mounted', () => {
     vi.useFakeTimers();
-    (aRoutes.createAtsRouteLayers as any).mockReturnValue([{ id: 'ats1' }]);
+    (aRoutes.createStaticAtsRouteLayers as any).mockReturnValue([{ id: 'ats1' }]);
+    (aRoutes.createDynamicAtsRouteLayers as any).mockReturnValue([]);
     (aAirspaces.createAirspaceLayers as any).mockReturnValue([{ id: 'air1' }]);
 
     const props = {

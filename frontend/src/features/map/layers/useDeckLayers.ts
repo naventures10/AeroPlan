@@ -5,7 +5,11 @@ import { createAirspaceLayers } from './createAirspaceLayers';
 import { createAerodromeLayers } from './createAerodromeLayers';
 import { createWaypointLayer } from './createWaypointLayer';
 import { createNavaidLayer } from './createNavaidLayer';
-import { createAtsRouteLayers, preProcessRouteLabels } from './createAtsRouteLayers';
+import {
+  createStaticAtsRouteLayers,
+  createDynamicAtsRouteLayers,
+  preProcessRouteLabels,
+} from './createAtsRouteLayers';
 import {
   createStaticRnpLayers,
   createDynamicRnpLayers,
@@ -173,10 +177,28 @@ export function useDeckLayers({
 
   // ── 2. ATS Route Layers Memo ───────────────────────────────────────
 
-  const atsRouteLayers = useMemo(() => {
+  const staticAtsRouteLayers = useMemo(() => {
+    if (!isAtsRendered) return [];
+    return createStaticAtsRouteLayers({ ...baseCtx, currentTime: 0 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isAtsRendered,
+    viewMode,
+    activeLayers,
+    selectedRouteIds,
+    selectedRouteType,
+    isZoomAtsWaypoints,
+    isDarkMode,
+    isAtsGeometryLoaded,
+    setAtsGeometryLoaded,
+    atsRoutesToggleCounter,
+    isMobile,
+  ]);
+
+  const dynamicAtsRouteLayers = useMemo(() => {
     if (!isAtsRendered) return [];
     const atsCtx: LayerContext = { ...baseCtx, currentTime };
-    return createAtsRouteLayers(atsCtx);
+    return createDynamicAtsRouteLayers(atsCtx);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isAtsRendered,
@@ -185,14 +207,11 @@ export function useDeckLayers({
     selectedRouteIds,
     selectedRouteType,
     selectedFeature,
-    isZoomAtsWaypoints,
     isDarkMode,
     atsRouteLabels,
     animatedTrips,
     currentTime,
     isAtsGeometryLoaded,
-    setAtsGeometryLoaded,
-    atsRoutesToggleCounter,
     isMobile,
   ]);
 
@@ -248,8 +267,20 @@ export function useDeckLayers({
       rnpCombined.splice(2, 0, ...dynamicRnpLayers);
     }
     return {
-      overlaidLayers: [...staticLayers, ...atsRouteLayers, ...weatherLayers],
+      overlaidLayers: [
+        ...staticLayers,
+        ...staticAtsRouteLayers,
+        ...dynamicAtsRouteLayers,
+        ...weatherLayers,
+      ],
       interleavedLayers: rnpCombined,
     };
-  }, [staticLayers, atsRouteLayers, weatherLayers, staticRnpLayers, dynamicRnpLayers]);
+  }, [
+    staticLayers,
+    staticAtsRouteLayers,
+    dynamicAtsRouteLayers,
+    weatherLayers,
+    staticRnpLayers,
+    dynamicRnpLayers,
+  ]);
 }
