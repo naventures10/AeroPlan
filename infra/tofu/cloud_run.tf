@@ -256,7 +256,8 @@ resource "google_cloud_run_v2_service" "martin" {
 
   depends_on = [
     google_project_service.run,
-    google_secret_manager_secret_iam_member.sa_secret_access_martin
+    google_secret_manager_secret_iam_member.sa_secret_access_martin,
+    terraform_data.upload_martin_yaml
   ]
 }
 

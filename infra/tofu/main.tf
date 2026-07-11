@@ -19,6 +19,21 @@ resource "google_storage_bucket" "staging_data" {
   uniform_bucket_level_access = true
 }
 
+resource "terraform_data" "upload_martin_yaml" {
+  input = google_storage_bucket.staging_data.name
+
+  provisioner "local-exec" {
+    command = <<EOT
+      sed '/connection_string:/d' ../../backend/martin.yaml.example > martin.yaml
+      gcloud storage cp martin.yaml gs://${google_storage_bucket.staging_data.name}/martin.yaml
+      rm martin.yaml
+    EOT
+  }
+
+  depends_on = [google_storage_bucket.staging_data]
+}
+
+
 # Service Accounts
 resource "google_service_account" "storage_sa" {
   account_id   = "eaip-storage-sa"
