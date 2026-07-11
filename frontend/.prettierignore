@@ -8,3 +8,6 @@ public
 *.log
 package-lock.json
 stats.html
+**/._*
+._*
+

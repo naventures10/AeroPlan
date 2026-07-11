@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useMapStore } from '../../../store/useMapStore';
-import { Activity, Layers, Zap } from 'lucide-react';
+import { Activity, Layers, Zap, Cpu, HardDrive } from 'lucide-react';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 
 declare global {
   interface Window {
@@ -15,6 +16,13 @@ declare global {
       activeLayers: Record<string, boolean>;
     } | null;
   }
+  interface Performance {
+    memory?: {
+      usedJSHeapSize: number;
+      totalJSHeapSize: number;
+      jsHeapSizeLimit: number;
+    };
+  }
 }
 
 interface FPSProfile {
@@ -25,12 +33,116 @@ interface FPSProfile {
   lastFrameTime: number;
 }
 
-export default function PerformanceOverlay() {
+interface MemoryInfo {
+  used: number;
+  limit: number;
+  percent: number;
+  supported: boolean;
+}
+
+interface DataFootprint {
+  features: number;
+  bytes: number;
+}
+
+interface PerformanceOverlayProps {
+  deckRef: React.RefObject<any>;
+  overlayRef: React.RefObject<any>;
+}
+
+function estimateFeaturesCount(deck: any): { totalFeatures: number; estimatedBytes: number } {
+  let totalFeatures = 0;
+  let estimatedBytes = 0;
+
+  if (!deck) return { totalFeatures, estimatedBytes };
+
+  try {
+    const layers = deck.layerManager?.getLayers() || [];
+    for (const layer of layers) {
+      try {
+        // Tile/MVT Layer features count
+        if (layer.state && layer.state.tileset) {
+          const selectedTiles = layer.state.tileset.selectedTiles || [];
+          for (const tile of selectedTiles) {
+            if (tile.content) {
+              if (Array.isArray(tile.content)) {
+                const count = tile.content.length;
+                totalFeatures += count;
+                estimatedBytes += count * 500;
+              } else if (tile.content.features && Array.isArray(tile.content.features)) {
+                const count = tile.content.features.length;
+                totalFeatures += count;
+                estimatedBytes += count * 500;
+              } else {
+                let tileFeatures = 0;
+                if (tile.content.points) {
+                  const ptsCount = Math.floor(
+                    (tile.content.points.positions?.value?.length || 0) / 3,
+                  );
+                  tileFeatures += ptsCount;
+                  estimatedBytes += ptsCount * 24;
+                }
+                if (tile.content.lines) {
+                  const linesCount = tile.content.lines.pathIndices?.value?.length || 0;
+                  tileFeatures += linesCount;
+                  estimatedBytes += (tile.content.lines.positions?.value?.length || 0) * 8;
+                }
+                if (tile.content.polygons) {
+                  const polyCount = tile.content.polygons.polygonIndices?.value?.length || 0;
+                  tileFeatures += polyCount;
+                  estimatedBytes += (tile.content.polygons.positions?.value?.length || 0) * 8;
+                }
+                totalFeatures += tileFeatures;
+              }
+            }
+          }
+        }
+        // Static layer features count
+        else if (layer.props && layer.props.data) {
+          const data = layer.props.data;
+          if (Array.isArray(data)) {
+            const count = data.length;
+            totalFeatures += count;
+            estimatedBytes += count * 200;
+          } else if (data.features && Array.isArray(data.features)) {
+            const count = data.features.length;
+            totalFeatures += count;
+            estimatedBytes += count * 500;
+          } else if (typeof data === 'object' && typeof data.length === 'number') {
+            totalFeatures += data.length;
+            estimatedBytes += data.length * 100;
+          }
+        }
+      } catch {
+        // Fallback for individual layers
+      }
+    }
+  } catch {
+    // Fallback for deck instance
+  }
+
+  return { totalFeatures, estimatedBytes };
+}
+
+function formatFeatureCount(count: number): string {
+  if (count >= 1000000) {
+    return `${(count / 1000000).toFixed(1)}M`;
+  }
+  if (count >= 1000) {
+    return `${(count / 1000).toFixed(1)}K`;
+  }
+  return String(count);
+}
+
+export default function PerformanceOverlay({ deckRef, overlayRef }: PerformanceOverlayProps) {
   const activeLayers = useMapStore((state) => state.activeLayers);
   const viewMode = useMapStore((state) => state.viewMode);
+  const isMobile = useIsMobile();
 
   const [fps, setFps] = useState<number>(0);
   const [isVisible, setIsVisible] = useState<boolean>(false);
+  const [memoryInfo, setMemoryInfo] = useState<MemoryInfo | null>(null);
+  const [dataFootprint, setDataFootprint] = useState<DataFootprint>({ features: 0, bytes: 0 });
 
   // References for FPS calculation
   const frameCountRef = useRef<number>(0);
@@ -67,6 +179,48 @@ export default function PerformanceOverlay() {
         setFps(Math.round((frameCountRef.current * 1000) / delta));
         frameCountRef.current = 0;
         lastTimeRef.current = now;
+
+        // Memory usage info (Chromium only)
+        const perfMem =
+          (window.performance as any)?.memory ||
+          (performance as any)?.memory ||
+          (window as any)?.chrome?.performance?.memory;
+        if (perfMem) {
+          setMemoryInfo({
+            used: perfMem.usedJSHeapSize,
+            limit: perfMem.jsHeapSizeLimit,
+            percent: Math.round((perfMem.usedJSHeapSize / perfMem.jsHeapSizeLimit) * 100),
+            supported: true,
+          });
+        } else {
+          setMemoryInfo({
+            used: 0,
+            limit: 0,
+            percent: 0,
+            supported: false,
+          });
+        }
+
+        // Estimate features count from BOTH deck instances
+        let totalFeatures = 0;
+        let estimatedBytes = 0;
+
+        if (deckRef.current?.deck) {
+          const res = estimateFeaturesCount(deckRef.current.deck);
+          totalFeatures += res.totalFeatures;
+          estimatedBytes += res.estimatedBytes;
+        }
+
+        if (overlayRef.current?.deck) {
+          const res = estimateFeaturesCount(overlayRef.current.deck);
+          totalFeatures += res.totalFeatures;
+          estimatedBytes += res.estimatedBytes;
+        }
+
+        setDataFootprint({
+          features: totalFeatures,
+          bytes: estimatedBytes,
+        });
       }
 
       // Automated Profiler updates
@@ -139,7 +293,7 @@ export default function PerformanceOverlay() {
       window.startFPSProfiling = undefined;
       window.stopFPSProfiling = undefined;
     };
-  }, []);
+  }, [deckRef, overlayRef]);
 
   if (!isVisible) return null;
 
@@ -152,6 +306,25 @@ export default function PerformanceOverlay() {
   } else if (fps < 55) {
     fpsColorClass = 'text-amber-400';
     fpsBgIndicator = 'bg-amber-400 shadow-[0_0_8px_#fbbf24]';
+  }
+
+  // Warning colors for memory
+  let memoryColorClass = 'text-cyan-400';
+  if (memoryInfo && memoryInfo.supported) {
+    if (memoryInfo.percent >= 85) {
+      memoryColorClass = 'text-rose-400 animate-pulse';
+    } else if (memoryInfo.percent >= 70) {
+      memoryColorClass = 'text-amber-400';
+    }
+  }
+
+  // Warning colors for map data footprint
+  const mbFootprint = dataFootprint.bytes / 1024 / 1024;
+  let dataColorClass = 'text-emerald-400';
+  if (isMobile && mbFootprint >= 15) {
+    dataColorClass = 'text-rose-400 animate-pulse';
+  } else if (mbFootprint >= 30) {
+    dataColorClass = 'text-amber-400';
   }
 
   // Gather active layer names for display
@@ -175,6 +348,103 @@ export default function PerformanceOverlay() {
             FPS
           </span>
           <span className={`h-1.5 w-1.5 rounded-full ${fpsBgIndicator}`} />
+        </div>
+
+        {/* Memory Usage */}
+        <div className="group relative flex items-center gap-1.5 border-r border-white/10 pr-3 cursor-help">
+          <Cpu className={`h-3.5 w-3.5 ${memoryColorClass}`} />
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-white/40">
+            RAM:
+          </span>
+          <span className="font-mono text-[9px] font-bold text-white leading-none">
+            {memoryInfo?.supported ? `${(memoryInfo.used / 1024 / 1024).toFixed(1)}MB` : 'N/A'}
+          </span>
+          {memoryInfo?.supported && (
+            <span className={`font-mono text-[8px] font-semibold ${memoryColorClass}`}>
+              ({memoryInfo.percent}%)
+            </span>
+          )}
+
+          {/* Memory Tooltip */}
+          <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 scale-95 opacity-0 transition-all duration-150 group-hover:scale-100 group-hover:opacity-100 z-50">
+            <div className="rounded-2xl border border-white/10 bg-black/80 p-3.5 backdrop-blur-xl shadow-xl text-left">
+              <div className="flex items-center gap-1.5 border-b border-white/5 pb-2 text-[9px] font-semibold uppercase tracking-[0.15em] text-white/40">
+                <Cpu className="h-3 w-3" />
+                JS Heap Memory
+              </div>
+              <div className="mt-2 space-y-1 text-[10px] text-white/80 font-mono">
+                {memoryInfo?.supported ? (
+                  <>
+                    <div className="flex justify-between">
+                      <span>Used:</span>
+                      <span className="text-cyan-400">
+                        {(memoryInfo.used / 1024 / 1024).toFixed(1)} MB
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Limit:</span>
+                      <span>{(memoryInfo.limit / 1024 / 1024).toFixed(0)} MB</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Percentage:</span>
+                      <span className={memoryColorClass}>{memoryInfo.percent}%</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-white/40 italic leading-normal text-center font-sans space-y-2">
+                    <div>JS heap memory monitoring is not active.</div>
+                    <div className="text-[9px] text-white/30">
+                      If you are using Chrome/Chromium and see N/A, launch Chrome with the{' '}
+                      <code className="bg-white/15 px-1 py-0.5 rounded text-white/50">
+                        --enable-precise-memory-info
+                      </code>{' '}
+                      command-line flag.
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Map Data Footprint */}
+        <div className="group relative flex items-center gap-1.5 border-r border-white/10 pr-3 cursor-help">
+          <HardDrive className={`h-3.5 w-3.5 ${dataColorClass}`} />
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-white/40">
+            Data:
+          </span>
+          <span className="font-mono text-[9px] font-bold text-white leading-none">
+            {formatFeatureCount(dataFootprint.features)}
+          </span>
+          <span className={`font-mono text-[8px] font-semibold ${dataColorClass}`}>
+            (~{(dataFootprint.bytes / 1024 / 1024).toFixed(1)}MB)
+          </span>
+
+          {/* Data Footprint Tooltip */}
+          <div className="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 scale-95 opacity-0 transition-all duration-150 group-hover:scale-100 group-hover:opacity-100 z-50">
+            <div className="rounded-2xl border border-white/10 bg-black/80 p-3.5 backdrop-blur-xl shadow-xl text-left">
+              <div className="flex items-center gap-1.5 border-b border-white/5 pb-2 text-[9px] font-semibold uppercase tracking-[0.15em] text-white/40">
+                <HardDrive className="h-3 w-3" />
+                Map Data Footprint
+              </div>
+              <div className="mt-2 space-y-1 text-[10px] text-white/80 font-mono">
+                <div className="flex justify-between">
+                  <span>Active Obj:</span>
+                  <span className="text-cyan-400">{dataFootprint.features.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Estimated Size:</span>
+                  <span className="text-cyan-400">
+                    {(dataFootprint.bytes / 1024 / 1024).toFixed(2)} MB
+                  </span>
+                </div>
+                <div className="mt-2 text-[9px] text-white/40 leading-normal border-t border-white/5 pt-2 font-sans">
+                  Warning threshold on mobile: &gt;15MB (~30k features). Large layers can trigger
+                  iOS Safari page reloads.
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* View Mode */}

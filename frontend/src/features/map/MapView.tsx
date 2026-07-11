@@ -184,6 +184,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
 
   const mapRef = useRef<MapRef>(null);
   const overlayRef = useRef<MapboxOverlay | null>(null);
+  const deckRef = useRef<any>(null);
   const hoveredRnpApproachIdRef = useRef<string | null>(null);
   const [hoveredRnpApproachId, setHoveredRnpApproachId] = useState<string | null>(null);
   const { windHoverInfo, handleWindHover } = useWindTooltip();
@@ -435,6 +436,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
   return (
     <div className="absolute inset-0 z-0">
       <DeckGL
+        ref={deckRef}
         viewState={processedViewState}
         controller={DECK_CONTROLLER}
         layers={overlaidLayers}
@@ -489,7 +491,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
       </DeckGL>
       <FeatureInfoCard />
       {windHoverInfo && <WindTooltip {...windHoverInfo} />}
-      <PerformanceOverlay />
+      <PerformanceOverlay deckRef={deckRef} overlayRef={overlayRef} />
     </div>
   );
 }
