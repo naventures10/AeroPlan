@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 TOFU_DIR="$WORKSPACE_ROOT/infra/tofu"
 
-echo "=== Starting Cloud Infrastructure Teardown ==="
+echo "=== Starting Cloud Infrastructure Teardown (OpenTofu) ==="
 
 # Check if tofu directory exists
 if [ ! -d "$TOFU_DIR" ]; then
@@ -29,7 +29,6 @@ if ! GOOGLE_OAUTH_ACCESS_TOKEN=$(gcloud auth print-access-token 2>/dev/null) || 
 fi
 
 echo "Retrieving GCP project ID from variables..."
-# Get project_id by running tofu console
 if ! PROJECT_ID=$(cd "$TOFU_DIR" && tofu console <<< "var.project_id" 2>/dev/null | tr -d '"') || [ -z "$PROJECT_ID" ]; then
     echo "WARNING: Could not retrieve project ID using tofu console. Falling back to gcloud active project..."
     if ! PROJECT_ID=$(gcloud config get-value project 2>/dev/null) || [ -z "$PROJECT_ID" ]; then
@@ -44,7 +43,6 @@ STAGING_BUCKET="eaip-staging-data-$PROJECT_ID"
 echo "Checking GCS staging bucket: gs://$STAGING_BUCKET..."
 if gcloud storage buckets describe "gs://$STAGING_BUCKET" >/dev/null 2>&1; then
     echo "Emptying staging GCS bucket: gs://$STAGING_BUCKET..."
-    # Empty bucket recursively and handle empty/already cleaned bucket cleanly
     gcloud storage rm --recursive "gs://$STAGING_BUCKET/**" >/dev/null 2>&1 || true
     echo "Staging bucket cleaned."
 else
@@ -60,7 +58,14 @@ echo "Initializing OpenTofu backend..."
 echo "Destroying infrastructure via OpenTofu..."
 (
     cd "$TOFU_DIR"
-    tofu destroy -auto-approve
+    # Provide dummy password and secrets as they are required by variables but not used during destroy
+    tofu destroy -auto-approve \
+        -var="db_password=dummy_to_destroy" \
+        -var="vite_maptiler_key=dummy_to_destroy" \
+        -var="vite_faro_url=dummy_to_destroy" \
+        -var="otel_endpoint=dummy_to_destroy" \
+        -var="otel_headers=dummy_to_destroy"
+
 )
 
 echo "=== Teardown Completed Successfully ==="

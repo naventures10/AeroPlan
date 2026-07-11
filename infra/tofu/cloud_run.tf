@@ -30,9 +30,7 @@ resource "google_cloud_run_v2_service" "backend" {
     }
 
     containers {
-      # Use a placeholder image initially; Github Actions will deploy the real one.
-      # We ignore changes to this field so Tofu doesn't overwrite new deployments.
-      image = "us-docker.pkg.dev/cloudrun/container/hello"
+      image = var.backend_image
 
       resources {
         limits = {
@@ -56,6 +54,27 @@ resource "google_cloud_run_v2_service" "backend" {
       }
 
       env {
+        name = "OTEL_EXPORTER_OTLP_ENDPOINT"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.otel_endpoint.secret_id
+            version = "latest"
+          }
+        }
+      }
+
+      env {
+        name = "OTEL_EXPORTER_OTLP_HEADERS"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.otel_headers.secret_id
+            version = "latest"
+          }
+        }
+      }
+
+
+      env {
         name  = "STORAGE_PATH"
         value = "/mnt/gcs"
       }
@@ -77,7 +96,7 @@ resource "google_cloud_run_v2_service" "backend" {
 
       env {
         name  = "REDIS_HOST"
-        value = "localhost" # Overwritten dynamically during deployment
+        value = google_compute_instance.db_vm.network_interface[0].network_ip
       }
 
       env {
@@ -102,12 +121,16 @@ resource "google_cloud_run_v2_service" "backend" {
 
   lifecycle {
     ignore_changes = [
-      template[0].containers[0].image,
       template[0].containers[0].env,
     ]
   }
 
-  depends_on = [google_project_service.run]
+  depends_on = [
+    google_project_service.run,
+    google_secret_manager_secret_iam_member.sa_secret_access_db,
+    google_secret_manager_secret_iam_member.sa_secret_access_otel_endpoint,
+    google_secret_manager_secret_iam_member.sa_secret_access_otel_headers
+  ]
 }
 
 # Make backend public
@@ -136,7 +159,7 @@ resource "google_cloud_run_v2_service" "frontend" {
     }
 
     containers {
-      image = "us-docker.pkg.dev/cloudrun/container/hello"
+      image = var.frontend_image
 
       resources {
         limits = {
@@ -151,11 +174,7 @@ resource "google_cloud_run_v2_service" "frontend" {
     }
   }
 
-  lifecycle {
-    ignore_changes = [
-      template[0].containers[0].image
-    ]
-  }
+  # No lifecycle block needed since image is managed in OpenTofu
 
   depends_on = [google_project_service.run]
 }
@@ -194,7 +213,7 @@ resource "google_cloud_run_v2_service" "martin" {
     }
 
     containers {
-      image = "us-docker.pkg.dev/cloudrun/container/hello"
+      image = var.martin_image
       args  = ["--config", "/mnt/gcs/martin.yaml"]
 
       resources {
@@ -233,13 +252,12 @@ resource "google_cloud_run_v2_service" "martin" {
     }
   }
 
-  lifecycle {
-    ignore_changes = [
-      template[0].containers[0].image
-    ]
-  }
+  # No lifecycle block needed since image is managed in OpenTofu
 
-  depends_on = [google_project_service.run]
+  depends_on = [
+    google_project_service.run,
+    google_secret_manager_secret_iam_member.sa_secret_access_martin
+  ]
 }
 
 # Make martin public
@@ -264,7 +282,7 @@ resource "google_cloud_run_v2_job" "weather_pipeline" {
       service_account = google_service_account.storage_sa.email
 
       containers {
-        image = "us-docker.pkg.dev/cloudrun/container/hello"
+        image = var.weather_pipeline_image
 
         resources {
           limits = {
@@ -286,11 +304,7 @@ resource "google_cloud_run_v2_job" "weather_pipeline" {
     }
   }
 
-  lifecycle {
-    ignore_changes = [
-      template[0].template[0].containers[0].image
-    ]
-  }
+  # No lifecycle block needed since image is managed in OpenTofu
 
   depends_on = [google_project_service.run]
 }
