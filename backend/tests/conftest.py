@@ -10,6 +10,7 @@ os.environ["MINIO_ACCESS_KEY"] = "mock_minio_access"
 os.environ["MINIO_SECRET_KEY"] = "mock_minio_secret"
 os.environ["DATABASE_URL"] = "postgresql+asyncpg://postgres:mock_db_password@localhost/test_db"
 os.environ["POSTGRES_DB"] = "test_aeronautical_information_system"
+os.environ["ENVIRONMENT"] = "testing"
 
 
 @pytest.fixture(autouse=True)

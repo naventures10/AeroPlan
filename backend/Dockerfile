@@ -13,6 +13,7 @@ RUN uv sync --frozen --no-dev
 
 # Copy application source
 COPY app/ ./app/
+COPY jobs/ ./jobs/
 
 # Create logs directory
 RUN mkdir -p /app/logs

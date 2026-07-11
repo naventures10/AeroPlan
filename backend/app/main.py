@@ -54,7 +54,29 @@ async def lifespan(app: FastAPI):
         await init_redis()
     except Exception as exc:
         logger.error("redis_init_failed", error=str(exc))
+
+    # Start weather cache background task (skip in testing to avoid external network calls)
+    from app.core.config import settings
+
+    if settings.ENVIRONMENT != "testing":
+        try:
+            from jobs.weather import start_weather_cache_task
+
+            start_weather_cache_task()
+        except Exception as exc:
+            logger.error("weather_cache_task_start_failed", error=str(exc))
+
     yield
+
+    # Shutdown: Stop weather cache background task
+    if settings.ENVIRONMENT != "testing":
+        try:
+            from jobs.weather import stop_weather_cache_task
+
+            await stop_weather_cache_task()
+        except Exception as exc:
+            logger.error("weather_cache_task_stop_failed", error=str(exc))
+
     # Shutdown: Clean up Redis connections
     await close_redis()
 

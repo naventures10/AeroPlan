@@ -3,7 +3,7 @@ from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_get_weather_success(api_client: AsyncClient, monkeypatch) -> None:
+async def test_get_weather_success(api_client: AsyncClient, monkeypatch, mock_redis) -> None:
     from unittest.mock import MagicMock
 
     import httpx
@@ -34,10 +34,7 @@ async def test_get_weather_success(api_client: AsyncClient, monkeypatch) -> None
     monkeypatch.setattr(httpx, "AsyncClient", MockClient)
 
     # clear cache before test
-    from app.api.v1.endpoints import weather
-
-    if "VABF" in weather._weather_cache:
-        weather._weather_cache.pop("VABF")
+    mock_redis.get.return_value = None
 
     response = await api_client.get("/api/v1/weather/VABF")
     assert response.status_code == 200
@@ -48,7 +45,7 @@ async def test_get_weather_success(api_client: AsyncClient, monkeypatch) -> None
 
 
 @pytest.mark.asyncio
-async def test_get_weather_no_tables(api_client: AsyncClient, monkeypatch) -> None:
+async def test_get_weather_no_tables(api_client: AsyncClient, monkeypatch, mock_redis) -> None:
     from unittest.mock import MagicMock
 
     import httpx
@@ -76,10 +73,7 @@ async def test_get_weather_no_tables(api_client: AsyncClient, monkeypatch) -> No
     monkeypatch.setattr(httpx, "AsyncClient", MockClient)
 
     # clear cache before test
-    from app.api.v1.endpoints import weather
-
-    if "VABF" in weather._weather_cache:
-        weather._weather_cache.pop("VABF")
+    mock_redis.get.return_value = None
 
     response = await api_client.get("/api/v1/weather/VABF")
     assert response.status_code == 200
@@ -87,13 +81,11 @@ async def test_get_weather_no_tables(api_client: AsyncClient, monkeypatch) -> No
 
 
 @pytest.mark.asyncio
-async def test_get_weather_httpx_error(api_client: AsyncClient, monkeypatch) -> None:
+async def test_get_weather_httpx_error(api_client: AsyncClient, monkeypatch, mock_redis) -> None:
     import httpx
 
     # clear cache before test
-    from app.api.v1.endpoints import weather
-
-    weather._weather_cache.clear()
+    mock_redis.get.return_value = None
 
     class MockClient:
         def __init__(self, *args, **kwargs):
@@ -115,28 +107,27 @@ async def test_get_weather_httpx_error(api_client: AsyncClient, monkeypatch) -> 
 
 
 @pytest.mark.asyncio
-async def test_get_weather_cache_hit(api_client: AsyncClient, monkeypatch) -> None:
-    import time
-
-    from app.api.v1.endpoints import weather
+async def test_get_weather_cache_hit(api_client: AsyncClient, monkeypatch, mock_redis) -> None:
+    import json
 
     # Pre-populate cache
-    weather._weather_cache["VABF"] = {
-        "data": {"icao": "VABF", "metar": "METAR VABF 260830Z", "taf": [["TAF VABF 260830Z"]]},
-        "fetched_at": time.time(),
-        "sources_used": ["chennai"],
-    }
+    mock_redis.get.return_value = json.dumps(
+        {
+            "data": {"icao": "VABF", "metar": "METAR VABF 260830Z", "taf": [["TAF VABF 260830Z"]]},
+            "fetched_at": "2026-07-11T05:30:00Z",
+            "sources_used": ["chennai"],
+        }
+    )
 
     response = await api_client.get("/api/v1/weather/VABF")
     assert response.status_code == 200
     assert response.json()["cached"] is True
 
-    # clean up
-    weather._weather_cache.pop("VABF")
-
 
 @pytest.mark.asyncio
-async def test_get_weather_both_sources_success(api_client: AsyncClient, monkeypatch) -> None:
+async def test_get_weather_both_sources_success(
+    api_client: AsyncClient, monkeypatch, mock_redis
+) -> None:
     from unittest.mock import MagicMock
 
     import httpx
@@ -169,9 +160,7 @@ async def test_get_weather_both_sources_success(api_client: AsyncClient, monkeyp
     monkeypatch.setattr(httpx, "AsyncClient", MockClient)
 
     # clear cache before test
-    from app.api.v1.endpoints import weather
-
-    weather._weather_cache.clear()
+    mock_redis.get.return_value = None
 
     response = await api_client.get("/api/v1/weather/VABF")
     assert response.status_code == 200
@@ -181,7 +170,9 @@ async def test_get_weather_both_sources_success(api_client: AsyncClient, monkeyp
 
 
 @pytest.mark.asyncio
-async def test_get_weather_one_source_fails(api_client: AsyncClient, monkeypatch) -> None:
+async def test_get_weather_one_source_fails(
+    api_client: AsyncClient, monkeypatch, mock_redis
+) -> None:
     from unittest.mock import MagicMock
 
     import httpx
@@ -209,9 +200,7 @@ async def test_get_weather_one_source_fails(api_client: AsyncClient, monkeypatch
     monkeypatch.setattr(httpx, "AsyncClient", MockClient)
 
     # clear cache before test
-    from app.api.v1.endpoints import weather
-
-    weather._weather_cache.clear()
+    mock_redis.get.return_value = None
 
     response = await api_client.get("/api/v1/weather/VABF")
     assert response.status_code == 200
@@ -229,7 +218,9 @@ async def test_parse_weather_html_extract_metar_time() -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_weather_both_sources_match(api_client: AsyncClient, monkeypatch) -> None:
+async def test_get_weather_both_sources_match(
+    api_client: AsyncClient, monkeypatch, mock_redis
+) -> None:
     from unittest.mock import MagicMock
 
     import httpx
@@ -254,9 +245,7 @@ async def test_get_weather_both_sources_match(api_client: AsyncClient, monkeypat
 
     monkeypatch.setattr(httpx, "AsyncClient", MockClient)
 
-    from app.api.v1.endpoints import weather
-
-    weather._weather_cache.clear()
+    mock_redis.get.return_value = None
 
     response = await api_client.get("/api/v1/weather/VABF")
     assert response.status_code == 200
@@ -267,18 +256,11 @@ async def test_get_weather_both_sources_match(api_client: AsyncClient, monkeypat
 
 
 @pytest.mark.asyncio
-async def test_get_weather_cache_expiration(api_client: AsyncClient, monkeypatch) -> None:
-    """Test cache expiration."""
-    import time
-
-    from app.api.v1.endpoints import weather
-
-    # Pre-populate cache with old timestamp
-    weather._weather_cache["VABF"] = {
-        "data": {"icao": "VABF", "metar": "METAR VABF 260830Z", "taf": [["TAF VABF 260830Z"]]},
-        "fetched_at": time.time() - 400,  # 400 > 300 (CACHE_TTL_SECONDS)
-        "sources_used": ["chennai"],
-    }
+async def test_get_weather_cache_expiration(
+    api_client: AsyncClient, monkeypatch, mock_redis
+) -> None:
+    """Test cache expiration (simulated via Redis cache miss)."""
+    mock_redis.get.return_value = None
 
     from unittest.mock import MagicMock
 
@@ -311,7 +293,9 @@ async def test_get_weather_cache_expiration(api_client: AsyncClient, monkeypatch
 
 
 @pytest.mark.asyncio
-async def test_parse_weather_html_all_sources_fail(api_client: AsyncClient, monkeypatch) -> None:
+async def test_parse_weather_html_all_sources_fail(
+    api_client: AsyncClient, monkeypatch, mock_redis
+) -> None:
     """Test that all sources failing returns 502."""
 
     import httpx
@@ -332,9 +316,7 @@ async def test_parse_weather_html_all_sources_fail(api_client: AsyncClient, monk
 
     monkeypatch.setattr(httpx, "AsyncClient", MockClient)
 
-    from app.api.v1.endpoints import weather
-
-    weather._weather_cache.clear()
+    mock_redis.get.return_value = None
 
     response = await api_client.get("/api/v1/weather/VABF")
     assert response.status_code == 502
@@ -529,3 +511,32 @@ async def test_get_weather_manifest_with_forecasts(api_client: AsyncClient, monk
         data["forecasts"][0]["files"]["050"]
         == "https://mocked-signed-url/weather/weather_050_step000.tif"
     )
+
+
+@pytest.mark.asyncio
+async def test_update_weather_cache_loop(monkeypatch, mock_redis, db_session) -> None:
+    """Test the periodic background scheduler update loop."""
+    import asyncio
+
+    # 1. Mock database query response for ICAO codes
+    from unittest.mock import AsyncMock, MagicMock
+
+    from jobs import weather as weather_job
+
+    mock_result = MagicMock()
+    mock_result.fetchall.return_value = [("VABB",)]
+    db_session.execute = AsyncMock(return_value=mock_result)
+
+    # 2. Mock _fetch_weather to trace calls
+    mock_fetch = AsyncMock(return_value={"icao": "VABB"})
+    monkeypatch.setattr(weather_job, "_fetch_weather", mock_fetch)
+
+    # 3. Force the infinite loop to raise CancelledError immediately on sleep
+    mock_sleep = AsyncMock(side_effect=asyncio.CancelledError)
+    monkeypatch.setattr(asyncio, "sleep", mock_sleep)
+
+    # 4. Trigger one iteration of the loop
+    await weather_job.update_weather_cache_loop()
+
+    # 5. Assert it correctly scraped VABB
+    mock_fetch.assert_called_once_with("VABB")
