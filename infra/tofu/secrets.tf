@@ -94,6 +94,14 @@ resource "google_secret_manager_secret_iam_member" "compute_sa_secret_access_db"
   member    = "serviceAccount:${data.google_project.project.number}-compute@developer.gserviceaccount.com"
 }
 
+# Grant GitHub Actions service account access to the database password secret
+resource "google_secret_manager_secret_iam_member" "sa_secret_access_db_password" {
+  secret_id = google_secret_manager_secret.db_password.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.github_actions_sa.email}"
+}
+
+
 # Faro URL Secret
 resource "google_secret_manager_secret" "vite_faro_url" {
   secret_id = "vite-faro-url"
