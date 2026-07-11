@@ -24,7 +24,7 @@ resource "terraform_data" "upload_martin_yaml" {
 
   provisioner "local-exec" {
     command = <<EOT
-      sed '/connection_string:/d' ../../backend/martin.yaml.example > martin.yaml
+      sed 's|connection_string:.*|connection_string: $${DATABASE_URL}|g' ../../backend/martin.yaml.example > martin.yaml
       gcloud storage cp martin.yaml gs://${google_storage_bucket.staging_data.name}/martin.yaml
       rm martin.yaml
     EOT
