@@ -17,7 +17,11 @@ resource "google_secret_manager_secret" "database_url" {
 
 resource "google_secret_manager_secret_version" "database_url_version" {
   secret      = google_secret_manager_secret.database_url.id
-  secret_data = var.database_url
+  secret_data = "postgresql+asyncpg://postgres:${var.db_password}@${google_compute_instance.db_vm.network_interface[0].network_ip}:5432/aeronautical_information_system"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Martin Database URL Secret
@@ -33,7 +37,11 @@ resource "google_secret_manager_secret" "martin_database_url" {
 
 resource "google_secret_manager_secret_version" "martin_database_url_version" {
   secret      = google_secret_manager_secret.martin_database_url.id
-  secret_data = var.martin_database_url
+  secret_data = "postgresql://postgres:${var.db_password}@${google_compute_instance.db_vm.network_interface[0].network_ip}:5432/aeronautical_information_system"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Frontend MapTiler Key Secret
