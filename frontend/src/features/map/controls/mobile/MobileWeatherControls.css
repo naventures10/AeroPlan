@@ -1,0 +1,405 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Mobile Weather Controls Panel (Bottom Sheet style)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.aip-mobile-weather-panel {
+  position: absolute;
+  bottom: calc(4.75rem + env(safe-area-inset-bottom, 16px));
+  left: 12px;
+  right: 12px;
+  width: calc(100% - 24px);
+  z-index: 150;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: slide-up-mobile-weather 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family:
+    var(--font-inter),
+    system-ui,
+    -apple-system,
+    sans-serif;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slide-up-mobile-weather {
+  from {
+    transform: translateY(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* --- Header Section --- */
+.aip-mobile-weather-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.aip-mobile-weather-modes {
+  display: flex;
+  gap: 6px;
+}
+
+.aip-mobile-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 9999px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  touch-action: manipulation;
+}
+
+.aip-mobile-mode-btn.active-wind {
+  background: rgba(59, 130, 246, 0.16);
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+}
+
+.aip-mobile-mode-btn.active-cloud {
+  background: rgba(203, 213, 225, 0.16);
+  color: var(--on-surface);
+  border-color: rgba(203, 213, 225, 0.4);
+  box-shadow: 0 0 10px rgba(203, 213, 225, 0.2);
+}
+
+.aip-mobile-weather-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  background: rgba(0, 0, 0, 0.15);
+  padding: 4px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aip-mobile-weather-status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status--idle .aip-mobile-weather-status-dot {
+  background: var(--status-idle);
+}
+
+.status--loading .aip-mobile-weather-status-dot {
+  background: var(--status-warning);
+  animation: pulse-dot 1s infinite;
+}
+
+.status--ready .aip-mobile-weather-status-dot {
+  background: var(--status-success);
+}
+
+.status--error .aip-mobile-weather-status-dot {
+  background: var(--status-error);
+}
+
+.aip-mobile-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.aip-mobile-weather-collapse-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--on-surface-variant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  touch-action: manipulation;
+}
+
+.aip-mobile-weather-collapse-btn:active {
+  transform: scale(0.9);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* --- Altitude Section --- */
+.aip-mobile-alt-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aip-mobile-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--on-surface-variant);
+  opacity: 0.8;
+  text-transform: uppercase;
+}
+
+.aip-mobile-alt-chips-container {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE10+ */
+  -webkit-overflow-scrolling: touch;
+}
+
+.aip-mobile-alt-chips-container::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+.aip-mobile-alt-chip {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  touch-action: manipulation;
+}
+
+.aip-mobile-alt-chip.active {
+  background: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  color: #000000;
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
+}
+
+.aip-mobile-alt-chip-label {
+  font-size: 12px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+}
+
+.aip-mobile-alt-chip-sublabel {
+  font-size: 8px;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.aip-mobile-alt-chip.active .aip-mobile-alt-chip-sublabel {
+  opacity: 0.9;
+}
+
+/* --- Legend Section --- */
+.aip-mobile-legend-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.aip-mobile-legend-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(
+    to right,
+    #3288bd,
+    #66c2a5,
+    #abdda4,
+    #e6f598,
+    #fee08b,
+    #fdae61,
+    #d53e4f
+  );
+  width: 100%;
+}
+
+.aip-mobile-legend-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+}
+
+/* --- Timeline Section --- */
+.aip-mobile-timeline-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.aip-mobile-timeline-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.aip-mobile-play-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  touch-action: manipulation;
+}
+
+.aip-mobile-play-btn:active {
+  transform: scale(0.9);
+}
+
+.aip-mobile-timeline-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.aip-mobile-timeline-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+}
+
+.aip-mobile-timeline-date {
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--on-surface-variant);
+}
+
+.aip-mobile-timeline-track-container {
+  position: relative;
+  width: 100%;
+  height: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.aip-mobile-timeline-track-base {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--glass-border);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.aip-mobile-timeline-track-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 2px;
+}
+
+.aip-mobile-timeline-now-pointer {
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  width: 2px;
+  background: var(--accent-cyan);
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+.aip-mobile-timeline-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  outline: none;
+  cursor: pointer;
+  z-index: 5;
+  margin: 0;
+}
+
+.aip-mobile-timeline-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+.aip-mobile-timeline-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+.aip-mobile-timeline-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--outline);
+}
+
+.aip-mobile-timeline-label.active {
+  color: var(--primary);
+}
+
+.aip-mobile-timeline-now-row {
+  position: relative;
+  width: 100%;
+  height: 12px;
+}
+
+.aip-mobile-timeline-now-label {
+  position: absolute;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 8px;
+  font-weight: 800;
+  color: var(--accent-cyan);
+  pointer-events: none;
+}
+
+.aip-mobile-timeline-now-diamond {
+  width: 4px;
+  height: 4px;
+  background: var(--accent-cyan);
+  transform: rotate(45deg);
+}

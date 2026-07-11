@@ -17,7 +17,7 @@ describe('createWaypointLayer', () => {
 
     const layer = layers[0];
 
-    expect(layer.props.getIcon()).toBe('waypoint');
+    expect(layer.props.getIcon).toBe('waypoint');
     expect(layer.props.getIconColor({})).toEqual([255, 255, 255, 255]);
     expect(layer.props.getIconSize({})).toBe(10);
     expect(layer.props.getText({ properties: { waypoint_name: 'WPT' } })).toBe('WPT');

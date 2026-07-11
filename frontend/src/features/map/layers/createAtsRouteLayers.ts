@@ -8,14 +8,12 @@
  *  4. Route waypoints (MVTLayer — points with icon+text)
  */
 
-import { TextLayer, IconLayer } from '@deck.gl/layers';
+import { TextLayer } from '@deck.gl/layers';
 import { MVTLayer, TripsLayer } from '@deck.gl/geo-layers';
 import { getDistanceNm } from '../utils/routeAnimation';
 import {
-  EXTENSIONS,
   ZOOM_ATS_WAYPOINTS,
   parseRouteIds,
-  ATS_ROUTE_LABEL_MAX_PIXELS,
   ATS_ROUTE_LABEL_TEXT_MAX_PIXELS,
   getLayerPalette,
 } from './constants';
@@ -29,17 +27,22 @@ import type { LayerContext } from './types';
  * from the animation origin.
  */
 // fallow-ignore-next-line complexity
-function getLabelIntensity(d: any, ctx: LayerContext): number {
-  const { selectedFeature, animatedTrips, currentTime } = ctx;
+function getLabelIntensity(
+  d: any,
+  ctx: LayerContext,
+  tripOriginMap: Map<string, [number, number]>,
+): number {
+  const { selectedFeature, currentTime } = ctx;
+
+  // Early exit — no selection means no glow
+  if (!selectedFeature) return 0;
+
   let originCoord: [number, number] | null = null;
 
-  if (selectedFeature?.type === 'WAYPOINT' && selectedFeature.data.coordinates) {
+  if (selectedFeature.type === 'WAYPOINT' && selectedFeature.data.coordinates) {
     originCoord = selectedFeature.data.coordinates;
-  } else if (selectedFeature?.type === 'ATS_ROUTE' && animatedTrips) {
-    const trip = animatedTrips.find((t: any) => t.route_id === d.properties.route_id);
-    if (trip && trip.path.length > 0) {
-      originCoord = [trip.path[0][0], trip.path[0][1]];
-    }
+  } else if (selectedFeature.type === 'ATS_ROUTE') {
+    originCoord = tripOriginMap.get(d.properties.route_id) ?? null;
   }
 
   if (!originCoord) return 0;
@@ -90,18 +93,75 @@ function glowColor(
   ];
 }
 
+// ── Pre-process Overlapping Labels ───────────────────────────────────
+
+export function preProcessRouteLabels(atsRouteLabels: any): any[] {
+  if (!atsRouteLabels || !atsRouteLabels.features) return [];
+
+  const labelFeatures = atsRouteLabels.features.map((f: any) => ({
+    ...f,
+    geometry: { ...f.geometry, coordinates: [...f.geometry.coordinates] },
+    properties: { ...f.properties },
+  }));
+
+  const SLIDE_ALONG_M = 10000;
+  const PERP_STEP_M = 4000;
+  const coordsMap = new Map<string, any[]>();
+  for (const f of labelFeatures) {
+    if (f.geometry?.coordinates) {
+      const coordKey = f.geometry.coordinates.map((c: number) => c.toFixed(6)).join(',');
+      if (!coordsMap.has(coordKey)) {
+        coordsMap.set(coordKey, []);
+      }
+      coordsMap.get(coordKey)!.push(f);
+    }
+  }
+
+  for (const group of coordsMap.values()) {
+    if (group.length <= 1) continue;
+    const n = group.length;
+
+    const refBearing = group[0].properties.bearing;
+    const allCollinear = group.every((f: any) => {
+      let diff = Math.abs(f.properties.bearing - refBearing) % 360;
+      if (diff > 180) diff = 360 - diff;
+      return diff < 20 || 180 - diff < 20;
+    });
+
+    for (let i = 0; i < n; i++) {
+      const factor = i - (n - 1) / 2;
+      const [lon, lat] = group[i].geometry.coordinates;
+      const latRad = (lat * Math.PI) / 180;
+
+      if (allCollinear) {
+        const perpRad = (refBearing * Math.PI) / 180 + Math.PI / 2;
+        const offsetM = factor * PERP_STEP_M;
+        group[i].geometry.coordinates = [
+          lon + (offsetM * Math.sin(perpRad)) / (111320 * Math.cos(latRad)),
+          lat + (offsetM * Math.cos(perpRad)) / 111320,
+        ];
+      } else {
+        const bearingRad = (group[i].properties.bearing * Math.PI) / 180;
+        const offsetM = factor * SLIDE_ALONG_M;
+        group[i].geometry.coordinates = [
+          lon + (offsetM * Math.sin(bearingRad)) / (111320 * Math.cos(latRad)),
+          lat + (offsetM * Math.cos(bearingRad)) / 111320,
+        ];
+      }
+    }
+  }
+
+  return labelFeatures;
+}
+
 // ── Main Factory ─────────────────────────────────────────────────────
 
-export function createAtsRouteLayers(ctx: LayerContext): any[] {
+export function createStaticAtsRouteLayers(ctx: LayerContext): any[] {
   const {
     viewMode,
     activeLayers,
     selectedRouteIds,
     selectedRouteType,
-    selectedFeature,
-    animatedTrips,
-    currentTime,
-    atsRouteLabels,
     setSelectedRouteIds,
     setSelectedFeature,
     isAtsGeometryLoaded,
@@ -113,14 +173,62 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
   const palette = getLayerPalette(ctx.isDarkMode);
   const layers: any[] = [];
 
+  const selectedSet = new Set(selectedRouteIds);
+  const isSelected = selectedSet.size > 0;
+
+  const rnavSelectedColor: [number, number, number, number] = [
+    palette.rgbRnavGreen[0],
+    palette.rgbRnavGreen[1],
+    palette.rgbRnavGreen[2],
+    120,
+  ];
+  const atsSelectedColor: [number, number, number, number] = [
+    palette.rgbAtsBlue[0],
+    palette.rgbAtsBlue[1],
+    palette.rgbAtsBlue[2],
+    120,
+  ];
+  const purpleSelectedColor: [number, number, number, number] = [
+    palette.rgbPurple[0],
+    palette.rgbPurple[1],
+    palette.rgbPurple[2],
+    120,
+  ];
+
+  const rnavUnselectedColor: [number, number, number, number] = [
+    palette.rgbRnavGreen[0],
+    palette.rgbRnavGreen[1],
+    palette.rgbRnavGreen[2],
+    60,
+  ];
+  const atsUnselectedColor: [number, number, number, number] = [
+    palette.rgbAtsBlue[0],
+    palette.rgbAtsBlue[1],
+    palette.rgbAtsBlue[2],
+    60,
+  ];
+
+  const transparentColor: [number, number, number, number] = [0, 0, 0, 0];
+
+  const wpActiveUnselectedDark: [number, number, number, number] = [150, 150, 150, 80];
+  const wpActiveUnselectedLight: [number, number, number, number] = [
+    ...palette.rgbWhite,
+    120,
+  ] as any;
+  const wpActiveTextUnselectedDark: [number, number, number, number] = [150, 150, 150, 150];
+  const wpActiveTextUnselectedLight: [number, number, number, number] = [
+    ...palette.rgbWhite,
+    255,
+  ] as any;
+
   // ── 1. Route Segment Geometry ──────────────────────────────────────
 
   layers.push(
     new MVTLayer({
       id: `atsRoutes-geom-layer-${ctx.atsRoutesToggleCounter}`,
       data: `${window.location.origin}/tiles/ats_route_segments/{z}/{x}/{y}`,
-      visible: viewMode === 'ENROUTE',
-      pickable: (isLayerActive || selectedRouteIds.length > 0) && !activeLayers.weather,
+      visible: viewMode === 'ENROUTE' && (isLayerActive || isSelected),
+      pickable: (isLayerActive || selectedSet.size > 0) && !activeLayers.weather,
       autoHighlight: true,
       highlightColor: isLayerActive
         ? ctx.isDarkMode
@@ -128,23 +236,19 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
           : [0, 0, 0, 80]
         : [0, 0, 0, 0],
       getLineColor: (d: any) => {
-        const isSelected = selectedRouteIds.includes(d.properties.route_id);
+        const isSelected = selectedSet.has(d.properties.route_id);
         if (isSelected) {
-          const baseRgb =
-            selectedRouteType === 'WAYPOINT'
-              ? palette.rgbPurple
-              : d.properties.route_type === 'RNAV'
-                ? palette.rgbRnavGreen
-                : palette.rgbAtsBlue;
-          return [baseRgb[0], baseRgb[1], baseRgb[2], 120];
+          return selectedRouteType === 'WAYPOINT'
+            ? purpleSelectedColor
+            : d.properties.route_type === 'RNAV'
+              ? rnavSelectedColor
+              : atsSelectedColor;
         }
-        if (!isLayerActive) return [0, 0, 0, 0];
-        return d.properties.route_type === 'RNAV'
-          ? [palette.rgbRnavGreen[0], palette.rgbRnavGreen[1], palette.rgbRnavGreen[2], 60]
-          : [palette.rgbAtsBlue[0], palette.rgbAtsBlue[1], palette.rgbAtsBlue[2], 60];
+        if (!isLayerActive) return transparentColor;
+        return d.properties.route_type === 'RNAV' ? rnavUnselectedColor : atsUnselectedColor;
       },
       getLineWidth: (d: any) => {
-        const isSelected = selectedRouteIds.includes(d.properties.route_id);
+        const isSelected = selectedSet.has(d.properties.route_id);
         if (!isLayerActive && !isSelected) return 0;
         const limit = parseInt(d.properties.lateral_limits) || 10;
         const width = Math.max(1.5, limit / 4);
@@ -159,9 +263,9 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
       onClick: (info: any) => {
         if (info.object && info.object.properties.route_id) {
           const rId = info.object.properties.route_id;
-          if (!isLayerActive && !selectedRouteIds.includes(rId)) return;
+          if (!isLayerActive && !selectedSet.has(rId)) return;
           const rType = info.object.properties.route_type;
-          const isAlreadySelected = selectedRouteIds.includes(rId);
+          const isAlreadySelected = selectedSet.has(rId);
           if (isAlreadySelected) {
             setSelectedRouteIds([], null);
             setSelectedFeature(null);
@@ -179,195 +283,23 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         getLineWidth: [selectedRouteIds, isLayerActive],
       },
       binary: true,
-      transitions: {
-        getLineColor: {
-          type: 'interpolation',
-          duration: 300,
-          enter: (value: number[]) => [value[0], value[1], value[2], 0],
-        },
-        getLineWidth: 300,
-      },
+      transitions: ctx.isMobile
+        ? undefined
+        : {
+            getLineColor: 300,
+            getLineWidth: 300,
+          },
     }),
   );
 
-  // ── 2. Radial Trips Animation Overlay ──────────────────────────────
-
-  if (animatedTrips && animatedTrips.length > 0) {
-    layers.push(
-      new TripsLayer({
-        id: 'atsRoutes-trips-layer',
-        data: animatedTrips,
-        getPath: (d: any) => d.path.map((p: any) => [p[0], p[1]]),
-        getTimestamps: (d: any) => d.path.map((p: any) => p[2]),
-        getColor: (d: any) => {
-          if (selectedRouteType === 'WAYPOINT') return palette.rgbPurple;
-          return d.route_type === 'RNAV' ? palette.rgbRnavGreen : palette.rgbAtsBlue;
-        },
-        opacity: 1,
-        widthMinPixels: 4,
-        trailLength: 250, // 250 NM trail length to leave a long glowing trail
-        currentTime: currentTime,
-      }),
-    );
-  }
-
-  // ── 3. Route Labels (Background + Hex + Text) ─────────────────────
-
-  if (atsRouteLabels?.features) {
-    const labelFeatures = atsRouteLabels.features; // keep all features, so they can fade out!
-
-    // 3a. Background mask — punches a transparent hole behind the label
-    layers.push(
-      new IconLayer({
-        id: 'ats-route-labels-bg-layer',
-        data: labelFeatures,
-        visible: viewMode === 'ENROUTE',
-        iconAtlas: '/ROUTE_HEXAGON_FILL.svg',
-        iconMapping: {
-          hex: { x: 0, y: 0, width: 140, height: 50, anchorY: 25, mask: true },
-        },
-        getIcon: () => 'hex',
-        getPosition: (d: any) => d.geometry.coordinates,
-        getAngle: (d: any) => d.properties.bearing,
-        getSize: (d: any) => {
-          const isSelected = selectedRouteIds.includes(d.properties.route_id);
-          return isSelected ? 5000 + getLabelIntensity(d, ctx) * 1500 : 5000;
-        },
-        getColor: (d: any): [number, number, number, number] => {
-          const isSelected = selectedRouteIds.includes(d.properties.route_id);
-          const isActive = (isLayerActive && isAtsGeometryLoaded) || isSelected;
-          return [0, 0, 0, isActive ? (ctx.isDarkMode ? 255 : 230) : 0];
-        },
-        sizeUnits: 'meters',
-        sizeMaxPixels: ATS_ROUTE_LABEL_MAX_PIXELS,
-        extensions: EXTENSIONS,
-        collisionGroup: 'ats-labels',
-        collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
-        updateTriggers: {
-          getSize: [selectedRouteIds, currentTime, selectedFeature],
-          getColor: [isLayerActive, selectedRouteIds, ctx.isDarkMode, isAtsGeometryLoaded],
-        },
-        parameters: {
-          depthTest: false,
-          blend: true,
-          blendFunc: [0, 771], // [GL.ZERO, GL.ONE_MINUS_SRC_ALPHA]
-        },
-        transitions: {
-          getColor: {
-            duration: 300,
-            enter: (value: number[]) => [value[0], value[1], value[2], 0],
-          },
-        },
-      }),
-    );
-
-    // 3b. Hex outline icon
-    layers.push(
-      new IconLayer({
-        id: 'ats-route-labels-hex-layer',
-        data: labelFeatures,
-        visible: viewMode === 'ENROUTE',
-        iconAtlas: '/ROUTE_HEXAGON.svg',
-        iconMapping: {
-          hex: { x: 0, y: 0, width: 140, height: 50, anchorY: 25, mask: true },
-        },
-        getIcon: () => 'hex',
-        getPosition: (d: any) => d.geometry.coordinates,
-        getAngle: (d: any) => d.properties.bearing,
-        getSize: 5000,
-        getColor: (d: any): [number, number, number, number] => {
-          const isSelected = selectedRouteIds.includes(d.properties.route_id);
-          const isActive = (isLayerActive && isAtsGeometryLoaded) || isSelected;
-          if (!isActive) return [0, 0, 0, 0];
-
-          const baseRgb = routeBaseRgb(d.properties.route_type, palette);
-
-          if (!isSelected) {
-            return [baseRgb[0], baseRgb[1], baseRgb[2], ctx.isDarkMode ? 140 : 255];
-          }
-          return glowColor(baseRgb, getLabelIntensity(d, ctx), selectedRouteType, palette);
-        },
-        sizeUnits: 'meters',
-        sizeMaxPixels: ATS_ROUTE_LABEL_MAX_PIXELS,
-        extensions: EXTENSIONS,
-        collisionGroup: 'ats-labels',
-        collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
-        updateTriggers: {
-          getColor: [
-            selectedRouteIds,
-            currentTime,
-            selectedFeature,
-            isLayerActive,
-            isAtsGeometryLoaded,
-          ],
-        },
-        parameters: { depthTest: false },
-        transitions: {
-          getColor: {
-            duration: 300,
-            enter: (value: number[]) => [value[0], value[1], value[2], 0],
-          },
-        },
-      }),
-    );
-
-    // 3c. Text label
-    layers.push(
-      new TextLayer({
-        id: 'ats-route-labels-text-layer',
-        data: labelFeatures,
-        visible: viewMode === 'ENROUTE',
-        getPosition: (d: any) => d.geometry.coordinates,
-        getText: (d: any) => d.properties.route_id,
-        getAngle: (d: any) => d.properties.bearing,
-        getSize: 4000,
-        sizeUnits: 'meters',
-        sizeMaxPixels: ATS_ROUTE_LABEL_TEXT_MAX_PIXELS,
-        getColor: (d: any): [number, number, number, number] => {
-          const isSelected = selectedRouteIds.includes(d.properties.route_id);
-          const isActive = (isLayerActive && isAtsGeometryLoaded) || isSelected;
-          if (!isActive) return [0, 0, 0, 0];
-
-          const baseRgb = routeBaseRgb(d.properties.route_type, palette);
-
-          if (!isSelected) {
-            return [baseRgb[0], baseRgb[1], baseRgb[2], ctx.isDarkMode ? 140 : 255];
-          }
-          return glowColor(baseRgb, getLabelIntensity(d, ctx), selectedRouteType, palette);
-        },
-        fontFamily: 'Geist, sans-serif',
-        fontWeight: 700,
-        extensions: EXTENSIONS,
-        collisionGroup: 'ats-labels',
-        collisionPriority: (d: any) => (selectedRouteIds.includes(d.properties.route_id) ? 2 : 1),
-        updateTriggers: {
-          getColor: [
-            selectedRouteIds,
-            currentTime,
-            selectedFeature,
-            isLayerActive,
-            isAtsGeometryLoaded,
-          ],
-        },
-        parameters: { depthTest: false },
-        transitions: {
-          getColor: {
-            duration: 300,
-            enter: (value: number[]) => [value[0], value[1], value[2], 0],
-          },
-        },
-      }),
-    );
-  }
-
-  // ── 4. Route Waypoints ─────────────────────────────────────────────
+  // ── 2. Route Waypoints ─────────────────────────────────────────────
 
   layers.push(
     new MVTLayer({
       id: `atsRoutes-waypoints-layer-${ctx.atsRoutesToggleCounter}`,
       data: `${window.location.origin}/tiles/ats_route_waypoints/{z}/{x}/{y}`,
-      visible: viewMode === 'ENROUTE',
-      pickable: (isLayerActive || selectedRouteIds.length > 0) && !activeLayers.weather,
+      visible: viewMode === 'ENROUTE' && (isLayerActive || isSelected),
+      pickable: (isLayerActive || selectedSet.size > 0) && !activeLayers.weather,
       autoHighlight: true,
       highlightColor: ctx.isDarkMode ? [255, 255, 255, 60] : [0, 0, 0, 40],
       pointType: 'icon+text',
@@ -375,57 +307,72 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
       iconMapping: {
         waypoint: { x: 0, y: 0, width: 100, height: 100, anchorY: 50, mask: true },
       },
-      getIcon: () => 'waypoint',
+      getIcon: 'waypoint',
       getIconColor: (d: any) => {
-        const routes = parseRouteIds(d.properties.route_ids);
-        const isSelected = routes.some((r: string) => selectedRouteIds.includes(r));
+        if (d._parsedRouteIds === undefined) {
+          d._parsedRouteIds = parseRouteIds(d.properties.route_ids);
+        }
+        const routes = d._parsedRouteIds;
+        const isSelected = routes.some((r: string) => selectedSet.has(r));
         if (isSelected) {
           if (selectedRouteType === 'WAYPOINT') return palette.purple;
           return selectedRouteType === 'RNAV' ? palette.rnavGreen : palette.atsBlue;
         }
         return isLayerActive
           ? ctx.isDarkMode
-            ? [150, 150, 150, 80]
-            : ([...palette.rgbWhite, 120] as any)
-          : [0, 0, 0, 0];
+            ? wpActiveUnselectedDark
+            : wpActiveUnselectedLight
+          : transparentColor;
       },
       getIconSize: (d: any) => {
-        const routes = parseRouteIds(d.properties.route_ids);
-        if (routes.some((r: string) => selectedRouteIds.includes(r))) return 16;
+        if (d._parsedRouteIds === undefined) {
+          d._parsedRouteIds = parseRouteIds(d.properties.route_ids);
+        }
+        const routes = d._parsedRouteIds;
+        if (routes.some((r: string) => selectedSet.has(r))) return 16;
         if (!isLayerActive) return 0;
         return 6;
       },
       getText: (d: any) => d.properties.waypoint_name || '',
       getTextSize: (d: any) => {
-        const routes = parseRouteIds(d.properties.route_ids);
-        if (routes.some((r: string) => selectedRouteIds.includes(r))) return 10;
+        if (d._parsedRouteIds === undefined) {
+          d._parsedRouteIds = parseRouteIds(d.properties.route_ids);
+        }
+        const routes = d._parsedRouteIds;
+        if (routes.some((r: string) => selectedSet.has(r))) return 10;
         if (!isLayerActive) return 0;
         return isZoomAtsWaypoints ? 8 : 0;
       },
       getTextColor: (d: any) => {
-        const routes = parseRouteIds(d.properties.route_ids);
-        const isSelected = routes.some((r: string) => selectedRouteIds.includes(r));
+        if (d._parsedRouteIds === undefined) {
+          d._parsedRouteIds = parseRouteIds(d.properties.route_ids);
+        }
+        const routes = d._parsedRouteIds;
+        const isSelected = routes.some((r: string) => selectedSet.has(r));
         if (isSelected) {
           if (selectedRouteType === 'WAYPOINT') return palette.purple;
           return selectedRouteType === 'RNAV' ? palette.rnavGreen : palette.atsBlue;
         }
         return isLayerActive
           ? ctx.isDarkMode
-            ? [150, 150, 150, 150]
-            : ([...palette.rgbWhite, 255] as any)
-          : [0, 0, 0, 0];
+            ? wpActiveTextUnselectedDark
+            : wpActiveTextUnselectedLight
+          : transparentColor;
       },
       getTextPixelOffset: [0, -18],
       textFontFamily: 'Geist, sans-serif',
       textFontWeight: 600,
       onClick: (info: any) => {
         if (info.object && info.object.properties.route_ids) {
-          const routes = parseRouteIds(info.object.properties.route_ids);
+          if (info.object._parsedRouteIds === undefined) {
+            info.object._parsedRouteIds = parseRouteIds(info.object.properties.route_ids);
+          }
+          const routes = info.object._parsedRouteIds;
           const isAlreadySelected =
             routes.length > 0 &&
-            selectedRouteIds.length === routes.length &&
-            routes.every((r: string) => selectedRouteIds.includes(r));
-          if (!isLayerActive && !routes.some((r: string) => selectedRouteIds.includes(r))) return;
+            routes.length === selectedSet.size &&
+            routes.every((r: string) => selectedSet.has(r));
+          if (!isLayerActive && !routes.some((r: string) => selectedSet.has(r))) return;
           if (isAlreadySelected) {
             setSelectedRouteIds([]);
             setSelectedFeature(null);
@@ -451,21 +398,148 @@ export function createAtsRouteLayers(ctx: LayerContext): any[] {
         getTextSize: [isZoomAtsWaypoints, selectedRouteIds, isLayerActive],
       },
       binary: false,
-      transitions: {
-        getIconColor: {
-          type: 'interpolation',
-          duration: 300,
-          enter: (value: number[]) => [value[0], value[1], value[2], 0],
-        },
-        getIconSize: 300,
-        getTextColor: {
-          type: 'interpolation',
-          duration: 300,
-          enter: (value: number[]) => [value[0], value[1], value[2], 0],
-        },
-      },
+      transitions: ctx.isMobile
+        ? undefined
+        : {
+            getIconColor: 300,
+            getIconSize: 300,
+            getTextColor: 300,
+          },
     }),
   );
+
+  return layers;
+}
+
+export function createDynamicAtsRouteLayers(ctx: LayerContext): any[] {
+  const {
+    viewMode,
+    activeLayers,
+    selectedRouteIds,
+    selectedRouteType,
+    selectedFeature,
+    animatedTrips,
+    currentTime,
+    atsRouteLabels,
+    isAtsGeometryLoaded,
+  } = ctx;
+
+  const isLayerActive = activeLayers.atsRoutes;
+  const palette = getLayerPalette(ctx.isDarkMode);
+  const layers: any[] = [];
+
+  const selectedSet = new Set(selectedRouteIds);
+  const transparentColor: [number, number, number, number] = [0, 0, 0, 0];
+
+  // Pre-compute trip origin coords for O(1) lookup in label glow calculation
+  const tripOriginMap = new Map<string, [number, number]>();
+  if (animatedTrips) {
+    for (const trip of animatedTrips) {
+      if (trip.path.length > 0) {
+        tripOriginMap.set(trip.route_id, [trip.path[0][0], trip.path[0][1]]);
+      }
+    }
+  }
+
+  // ── 1. Radial Trips Animation Overlay ──────────────────────────────
+
+  if (animatedTrips && animatedTrips.length > 0) {
+    layers.push(
+      new TripsLayer({
+        id: 'atsRoutes-trips-layer',
+        data: animatedTrips,
+        getPath: (d: any) => d.path2d || d.path.map((p: any) => [p[0], p[1]]),
+        getTimestamps: (d: any) => d.timestamps || d.path.map((p: any) => p[2]),
+        getColor: (d: any) => {
+          if (selectedRouteType === 'WAYPOINT') return palette.rgbPurple;
+          return d.route_type === 'RNAV' ? palette.rgbRnavGreen : palette.rgbAtsBlue;
+        },
+        opacity: 1,
+        widthMinPixels: 4,
+        trailLength: 250,
+        currentTime: currentTime,
+      }),
+    );
+  }
+
+  // ── 2. Route Labels (Text only) ───────────────────────────────────
+
+  if (atsRouteLabels?.features) {
+    layers.push(
+      new TextLayer({
+        id: 'ats-route-labels-text-layer',
+        data: atsRouteLabels.features,
+        visible: viewMode === 'ENROUTE',
+        getPosition: (d: any) => d.geometry.coordinates,
+        getText: (d: any) => d.properties.route_id,
+        getAngle: (d: any) => {
+          const ang = (90 - d.properties.bearing + 360) % 360;
+          return ang > 90 && ang < 270 ? (ang + 180) % 360 : ang;
+        },
+        getSize: 4000,
+        sizeUnits: 'meters',
+        sizeMaxPixels: ATS_ROUTE_LABEL_TEXT_MAX_PIXELS,
+        getColor: (d: any): [number, number, number, number] => {
+          const isSelected = selectedSet.has(d.properties.route_id);
+          const isActive = (isLayerActive && isAtsGeometryLoaded) || isSelected;
+          if (!isActive) return transparentColor;
+
+          const baseRgb = routeBaseRgb(d.properties.route_type, palette);
+
+          if (!isSelected) {
+            return [baseRgb[0], baseRgb[1], baseRgb[2], ctx.isDarkMode ? 140 : 255];
+          }
+          return glowColor(
+            baseRgb,
+            getLabelIntensity(d, ctx, tripOriginMap),
+            selectedRouteType,
+            palette,
+          );
+        },
+        fontFamily: 'Geist, sans-serif',
+        fontWeight: 700,
+        getTextAnchor: 'middle',
+        getAlignmentBaseline: 'bottom',
+        characterSet: 'auto',
+        fontSettings: { sdf: false },
+        updateTriggers: {
+          getColor: [
+            selectedRouteIds,
+            currentTime,
+            selectedFeature,
+            isLayerActive,
+            isAtsGeometryLoaded,
+          ],
+        },
+        parameters: { depthTest: false },
+        transitions: ctx.isMobile
+          ? undefined
+          : {
+              getColor: 300,
+            },
+      }),
+    );
+  }
+
+  return layers;
+}
+
+export function createAtsRouteLayers(ctx: LayerContext): any[] {
+  const staticLayers = createStaticAtsRouteLayers(ctx);
+  const dynamicLayers = createDynamicAtsRouteLayers(ctx);
+  const layers: any[] = [];
+
+  const segments = staticLayers.find((l) => l.id.startsWith('atsRoutes-geom-layer'));
+  if (segments) layers.push(segments);
+
+  const trips = dynamicLayers.find((l) => l.id === 'atsRoutes-trips-layer');
+  if (trips) layers.push(trips);
+
+  const labels = dynamicLayers.find((l) => l.id === 'ats-route-labels-text-layer');
+  if (labels) layers.push(labels);
+
+  const waypoints = staticLayers.find((l) => l.id.startsWith('atsRoutes-waypoints-layer'));
+  if (waypoints) layers.push(waypoints);
 
   return layers;
 }

@@ -26,6 +26,7 @@ from bs4 import BeautifulSoup
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
+from app.core.redis import get_cached_json, set_cached_json
 from app.core.storage import get_storage_path
 from app.core.storage_client import UnifiedStorageClient
 from app.schemas.weather import WeatherResponse
@@ -56,16 +57,11 @@ WEATHER_S3_PREFIX = "weather"
 # Strict filename whitelist: alphanumeric, underscores, hyphens, and .tif/.tiff/.json extensions
 SAFE_FILENAME_RE = re.compile(r"^[A-Za-z0-9_\-]+\.(tiff?|json)$")
 
-# ── In-Memory Cache ──────────────────────────────────────────────────────────
-# { "VABB": { "data": {...}, "fetched_at": float, "source": str } }
-_weather_cache: dict[str, dict] = {}
 
-
-def _is_cache_fresh(icao: str) -> bool:
-    entry = _weather_cache.get(icao)
-    if not entry:
-        return False
-    return (time.time() - float(entry["fetched_at"])) < CACHE_TTL_SECONDS
+# ── Redis Cache ──────────────────────────────────────────────────────────────
+def _get_cache_key(icao: str) -> str:
+    """Build the Redis cache key for a given ICAO code."""
+    return f"weather:icao:{icao.upper()}"
 
 
 def _parse_weather_html(html: str, icao: str) -> dict:
@@ -118,7 +114,9 @@ def _extract_metar_time(metar: str | None) -> int:
 async def _fetch_from_source(source_name: str, url: str) -> dict | None:
     """Fetch and parse weather from a single source. Returns None on failure."""
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        # Disable SSL verification (verify=False) because Chennai and Delhi OLBS government
+        # servers frequently use self-signed certificates or incomplete certificate chains.
+        async with httpx.AsyncClient(timeout=15.0, verify=False) as client:
             resp = await client.get(url)
             resp.raise_for_status()
         return {"source": source_name, "html": resp.text}
@@ -183,17 +181,19 @@ async def _fetch_weather(icao: str) -> dict:
             p.pop("_metar_time", None)
 
     now = time.time()
+    fetched_at_str = datetime.fromtimestamp(now, tz=UTC).isoformat()
 
-    # Cache the best result
-    _weather_cache[icao_upper] = {
+    # Cache the best result in Redis with a 1-hour TTL (3600s)
+    cache_data = {
         "data": {k: v for k, v in best.items() if k != "_metar_time"},
-        "fetched_at": now,
+        "fetched_at": fetched_at_str,
         "sources_used": sources_used,
     }
+    await set_cached_json(_get_cache_key(icao_upper), cache_data, ttl_seconds=3600)
 
     return {
         **{k: v for k, v in best.items() if k != "_metar_time"},
-        "fetched_at": datetime.fromtimestamp(now, tz=UTC).isoformat(),
+        "fetched_at": fetched_at_str,
         "sources_available": sources_used,
     }
 
@@ -335,16 +335,17 @@ async def get_weather(icao_code: str) -> WeatherResponse:
 
     Scrapes both Chennai and Delhi OLBS concurrently for redundancy.
     Returns the freshest data; falls back to whichever source is available.
-    Data is cached in-memory for 5 minutes.
+    Data is cached in Redis for up to 1 hour, updated periodically every 30 minutes.
     """
     icao = icao_code.upper()
+    cache_key = _get_cache_key(icao)
 
-    if _is_cache_fresh(icao):
-        entry = _weather_cache[icao]
+    cached_data = await get_cached_json(cache_key)
+    if cached_data:
         return WeatherResponse(
-            **entry["data"],
-            fetched_at=datetime.fromtimestamp(entry["fetched_at"], tz=UTC).isoformat(),
-            sources_available=entry.get("sources_used", []),
+            **cached_data["data"],
+            fetched_at=cached_data.get("fetched_at"),
+            sources_available=cached_data.get("sources_used", []),
             cached=True,
         )
 

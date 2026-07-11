@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useMapStore, DEFAULT_VIEW } from '../../store/useMapStore';
 
 describe('useMapStore', () => {
@@ -81,7 +81,8 @@ describe('useMapStore', () => {
     expect(state.activeLayers.ercMap).toBe(false);
   });
 
-  it('should reset isAtsGeometryLoaded and increment toggle counter when atsRoutes layer is toggled on', () => {
+  it('should reset isAtsGeometryLoaded and increment toggle counter when atsRoutes layer is toggled on, then resolve via fallback', () => {
+    vi.useFakeTimers();
     let state = useMapStore.getState();
     const initialCounter = state.atsRoutesToggleCounter;
     state.setAtsGeometryLoaded(true);
@@ -92,6 +93,27 @@ describe('useMapStore', () => {
     state = useMapStore.getState();
     expect(state.isAtsGeometryLoaded).toBe(false);
     expect(state.atsRoutesToggleCounter).toBe(initialCounter + 1);
+
+    // Advance fake timers by 200ms
+    vi.advanceTimersByTime(200);
+    expect(useMapStore.getState().isAtsGeometryLoaded).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it('should reset isAirspaceLoaded when airspaces layer is toggled on, then resolve via fallback', () => {
+    vi.useFakeTimers();
+    const state = useMapStore.getState();
+    state.setAirspaceLoaded(true);
+    expect(useMapStore.getState().isAirspaceLoaded).toBe(true);
+
+    // Toggle airspaces layer ON
+    state.toggleLayer('airspaces');
+    expect(useMapStore.getState().isAirspaceLoaded).toBe(false);
+
+    // Advance fake timers by 200ms
+    vi.advanceTimersByTime(200);
+    expect(useMapStore.getState().isAirspaceLoaded).toBe(true);
+    vi.useRealTimers();
   });
 
   it('should test remaining actions correctly', () => {

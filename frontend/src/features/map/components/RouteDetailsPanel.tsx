@@ -1,10 +1,10 @@
 // fallow-ignore-file complexity
 import { useState, useEffect, useRef } from 'react';
 
-import { Plane, ArrowUpDown, ChevronDown, ChevronUp } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Plane, ArrowUpDown } from 'lucide-react';
 import type { AtsRouteDetails } from '../../../api/client';
 import { LabelVal } from './SharedLabel';
+import { CollapsibleRemarks } from './CollapsibleRemarks';
 
 export function RouteDetailsPanel({
   isLoadingRoute,
@@ -207,40 +207,12 @@ export function RouteDetailsPanel({
       </div>
 
       {/* ── Remarks (Collapsible) ── */}
-      {remarks && (
-        <div ref={remarksRef} className="rounded-lg border border-outline-variant overflow-hidden">
-          <button
-            onClick={() => setShowRemarks(!showRemarks)}
-            className="w-full flex items-center justify-between px-3 py-2 hover:bg-surface-container-high transition-colors"
-          >
-            <span className="text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">
-              Remarks
-            </span>
-            {showRemarks ? (
-              <ChevronUp size={14} className="text-on-surface-variant" />
-            ) : (
-              <ChevronDown size={14} className="text-on-surface-variant" />
-            )}
-          </button>
-          <AnimatePresence>
-            {showRemarks && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="px-3 py-2 border-t border-outline-variant">
-                  <p className="text-[11px] text-on-surface-variant leading-relaxed whitespace-pre-line">
-                    {remarks}
-                  </p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
+      <CollapsibleRemarks
+        remarks={remarks}
+        isOpen={showRemarks}
+        onToggle={setShowRemarks}
+        ref={remarksRef}
+      />
       {/* ── Spacer for Remarks (Allows pushing table up) ── */}
       {showRemarks && <div className="h-[40vh]" />}
     </div>

@@ -6,6 +6,7 @@ import { WebMercatorViewport } from '@deck.gl/core';
 import { useMapStore } from '../../../store/useMapStore';
 import { WIND_BOUNDS } from '../utils/windUtils';
 import { useWeatherFrameLoader, getFrameIndices } from './useWeatherFrameLoader';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 import type { ForecastTimestamp } from '../utils/windUtils';
 
 // Provide geotiff library to weatherlayers-gl to fix Vite's dynamic import resolution
@@ -217,21 +218,34 @@ function createCloudFrameLoader(altitude: number) {
 // ---------------------------------------------------------------------------
 
 export function useCloudLayer() {
-  const {
-    isWeatherMode,
-    isCloudMode,
-    viewMode,
-    windAltitude,
-    windAnimationTime,
-    setCloudLoadingStatus,
-    viewState,
-    forecastTimestamps,
-    windIsPlaying,
-    fetchWeatherManifest,
-    weatherStatus,
-  } = useMapStore();
+  const isMobile = useIsMobile();
+  const maxParticles = isMobile ? 12_000 : MAX_PARTICLES;
+
+  const isWeatherMode = useMapStore((s) => s.isWeatherMode);
+  const isCloudMode = useMapStore((s) => s.isCloudMode);
+  const viewMode = useMapStore((s) => s.viewMode);
+  const windAltitude = useMapStore((s) => s.windAltitude);
+  const windAnimationTime = useMapStore((s) => s.windAnimationTime);
+  const setCloudLoadingStatus = useMapStore((s) => s.setCloudLoadingStatus);
+  const forecastTimestamps = useMapStore((s) => s.forecastTimestamps);
+  const windIsPlaying = useMapStore((s) => s.windIsPlaying);
+  const fetchWeatherManifest = useMapStore((s) => s.fetchWeatherManifest);
+  const weatherStatus = useMapStore((s) => s.weatherStatus);
 
   const isCloudActive = isWeatherMode && isCloudMode && viewMode === 'ENROUTE';
+
+  const zoom = useMapStore((s) => {
+    const active = s.isWeatherMode && s.isCloudMode && s.viewMode === 'ENROUTE';
+    return active ? Math.round(s.viewState.zoom * 2) / 2 : 0;
+  });
+  const lng = useMapStore((s) => {
+    const active = s.isWeatherMode && s.isCloudMode && s.viewMode === 'ENROUTE';
+    return active ? Math.round(s.viewState.longitude * 5) / 5 : 0;
+  });
+  const lat = useMapStore((s) => {
+    const active = s.isWeatherMode && s.isCloudMode && s.viewMode === 'ENROUTE';
+    return active ? Math.round(s.viewState.latitude * 5) / 5 : 0;
+  });
 
   // Create a stable, altitude-dependent frame loader
   const [loadFrame, setLoadFrame] = useState(() => createCloudFrameLoader(windAltitude));
@@ -287,10 +301,6 @@ export function useCloudLayer() {
   const isSurface = windAltitude === 0;
   const baseAltMeters = isSurface ? 1000 : windAltitude * 100 * 0.3048;
 
-  const zoom = viewState.zoom;
-  const lng = viewState.longitude;
-  const lat = viewState.latitude;
-
   // 3. Helper to generate cloud particle geometry for a single frame
   const generateCloudGeometry = useCallback(
     // fallow-ignore-next-line complexity
@@ -345,14 +355,14 @@ export function useCloudLayer() {
       const cellW = (maxLng - minLng) / width;
       const cellH = (maxLat - minLat) / height;
 
-      // Pre-allocate arrays at the MAX_PARTICLES limit
-      const positions = new Float64Array(MAX_PARTICLES * 3);
-      const colors = new Uint8Array(MAX_PARTICLES * 4);
-      const sizes = new Float32Array(MAX_PARTICLES);
+      // Pre-allocate arrays at the maxParticles limit
+      const positions = new Float64Array(maxParticles * 3);
+      const colors = new Uint8Array(maxParticles * 4);
+      const sizes = new Float32Array(maxParticles);
       let idx = 0;
 
-      for (let row = rowStart; row <= rowEnd && idx < MAX_PARTICLES; row++) {
-        for (let col = colStart; col <= colEnd && idx < MAX_PARTICLES; col++) {
+      for (let row = rowStart; row <= rowEnd && idx < maxParticles; row++) {
+        for (let col = colStart; col <= colEnd && idx < maxParticles; col++) {
           const p = row * width + col;
           const alphaVal = frame.opacityMap[p] ?? 0;
           if (alphaVal <= 0) continue;
@@ -362,7 +372,7 @@ export function useCloudLayer() {
           const cellLat = maxLat - row * cellH;
 
           // Scatter sub-particles within this cell
-          for (let s = 0; s < subCount && idx < MAX_PARTICLES; s++) {
+          for (let s = 0; s < subCount && idx < maxParticles; s++) {
             const seed = p * 67 + s;
 
             // Position jitter within the cell
@@ -407,7 +417,7 @@ export function useCloudLayer() {
         length: idx,
       };
     },
-    [isCloudActive, baseAltMeters, zoom, lng, lat, windIsPlaying],
+    [isCloudActive, baseAltMeters, zoom, lng, lat, windIsPlaying, maxParticles],
   );
 
   // Memoize geometries for frame A and frame B independently.

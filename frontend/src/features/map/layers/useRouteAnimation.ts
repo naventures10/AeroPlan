@@ -17,14 +17,12 @@ import { buildRouteAnimations } from '../utils/routeAnimation';
 import { fetchAtsRouteDetails } from '../../../api/client';
 
 export function useRouteAnimation() {
-  const {
-    activeLayers,
-    selectedRouteIds,
-    selectedFeature,
-    setAnimatedTrips,
-    animationConfig,
-    setAnimationConfig,
-  } = useMapStore();
+  const activeLayers = useMapStore((s) => s.activeLayers);
+  const selectedRouteIds = useMapStore((s) => s.selectedRouteIds);
+  const selectedFeature = useMapStore((s) => s.selectedFeature);
+  const setAnimatedTrips = useMapStore((s) => s.setAnimatedTrips);
+  const animationConfig = useMapStore((s) => s.animationConfig);
+  const setAnimationConfig = useMapStore((s) => s.setAnimationConfig);
 
   const [isAtsRendered, setIsAtsRendered] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);

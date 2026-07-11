@@ -19,6 +19,7 @@ interface ConditionsWidgetProps {
   parsedMetar: ParsedMetar;
   daylight: DaylightRecord | null;
   todayStr: string;
+  isCompact?: boolean;
 }
 
 // Shared card label style
@@ -51,9 +52,9 @@ function UnavailableCard({ icaoCode }: { icaoCode: string }) {
   );
 }
 
-function WindCard({ parsedMetar }: { parsedMetar: ParsedMetar }) {
+function WindCard({ parsedMetar, isCompact }: { parsedMetar: ParsedMetar; isCompact?: boolean }) {
   return (
-    <div className={`col-span-12 md:col-span-6 ${cardBase}`}>
+    <div className={`col-span-12 ${isCompact ? '' : 'md:col-span-6'} ${cardBase}`}>
       <span className={sectionLabel}>Wind</span>
       <div className="flex items-center justify-between gap-4">
         {/* Values */}
@@ -113,9 +114,15 @@ function getVisibilityPercentage(vis: string | null): string {
   return '100%';
 }
 
-function VisibilityCloudCard({ parsedMetar }: { parsedMetar: ParsedMetar }) {
+function VisibilityCloudCard({
+  parsedMetar,
+  isCompact,
+}: {
+  parsedMetar: ParsedMetar;
+  isCompact?: boolean;
+}) {
   return (
-    <div className="col-span-12 md:col-span-6 flex flex-col gap-3">
+    <div className={`col-span-12 ${isCompact ? '' : 'md:col-span-6'} flex flex-col gap-3`}>
       {/* Visibility */}
       <div className={cardBase}>
         <span className={sectionLabel}>Visibility</span>
@@ -193,11 +200,17 @@ function TempDewQnhCards({ parsedMetar }: { parsedMetar: ParsedMetar }) {
   );
 }
 
-function WeatherDataCards({ parsedMetar }: { parsedMetar: ParsedMetar }) {
+function WeatherDataCards({
+  parsedMetar,
+  isCompact,
+}: {
+  parsedMetar: ParsedMetar;
+  isCompact?: boolean;
+}) {
   return (
     <>
-      <WindCard parsedMetar={parsedMetar} />
-      <VisibilityCloudCard parsedMetar={parsedMetar} />
+      <WindCard parsedMetar={parsedMetar} isCompact={isCompact} />
+      <VisibilityCloudCard parsedMetar={parsedMetar} isCompact={isCompact} />
       <TempDewQnhCards parsedMetar={parsedMetar} />
     </>
   );
@@ -206,9 +219,11 @@ function WeatherDataCards({ parsedMetar }: { parsedMetar: ParsedMetar }) {
 function DaylightCard({
   todayStr,
   daylight,
+  isCompact,
 }: {
   todayStr: string;
   daylight: DaylightRecord | null;
+  isCompact?: boolean;
 }) {
   return (
     <div className={`col-span-12 ${cardBase}`}>
@@ -219,7 +234,7 @@ function DaylightCard({
         </span>
       </div>
       {daylight ? (
-        <div className="grid grid-cols-4 gap-2">
+        <div className={`grid ${isCompact ? 'grid-cols-2' : 'grid-cols-4'} gap-2`}>
           {[
             {
               icon: Sunrise,
@@ -266,6 +281,7 @@ export function ConditionsWidget({
   parsedMetar,
   daylight,
   todayStr,
+  isCompact,
 }: ConditionsWidgetProps) {
   const hasWeather = weather
     ? !!weather.metar
@@ -296,9 +312,9 @@ export function ConditionsWidget({
         {!hasWeather ? (
           <UnavailableCard icaoCode={icaoCode} />
         ) : (
-          <WeatherDataCards parsedMetar={parsedMetar} />
+          <WeatherDataCards parsedMetar={parsedMetar} isCompact={isCompact} />
         )}
-        <DaylightCard todayStr={todayStr} daylight={daylight} />
+        <DaylightCard todayStr={todayStr} daylight={daylight} isCompact={isCompact} />
       </div>
     </motion.div>
   );

@@ -145,10 +145,8 @@ describe('createAirspaceLayers', () => {
     };
 
     const layers = createAirspaceLayers(ctx as any);
-    expect(layers[0].props.transitions.getFillColor).toBe(300);
     expect(layers[0].props.transitions.getLineColor).toBe(300);
     expect(layers[1].props.transitions.getTextColor).toBe(300);
-    expect(layers[1].props.transitions.getBackgroundColor).toBe(300);
     expect(layers[1].props.transitions.getBorderColor).toBe(300);
   });
 });

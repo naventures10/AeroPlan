@@ -18,17 +18,15 @@ import './ViewToggle.css';
  * - Branding badge
  */
 export default function ViewToggle() {
-  const {
-    viewMode,
-    viewState,
-    setViewState,
-    activeAirport,
-    activeLayers,
-    toggleLayer,
-    mapStyle,
-    setMapStyle,
-    selectedFeature,
-  } = useMapStore();
+  const viewMode = useMapStore((s) => s.viewMode);
+  const viewState = useMapStore((s) => s.viewState);
+  const setViewState = useMapStore((s) => s.setViewState);
+  const activeAirport = useMapStore((s) => s.activeAirport);
+  const activeLayers = useMapStore((s) => s.activeLayers);
+  const toggleLayer = useMapStore((s) => s.toggleLayer);
+  const mapStyle = useMapStore((s) => s.mapStyle);
+  const setMapStyle = useMapStore((s) => s.setMapStyle);
+  const selectedFeature = useMapStore((s) => s.selectedFeature);
 
   const isEnroute2D = viewMode === 'ENROUTE' && !activeAirport;
 

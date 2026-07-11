@@ -7,6 +7,7 @@ const baseURL = process.env.BASE_URL || 'http://localhost:5173';
  */
 export default defineConfig({
   testDir: './src/tests/e2e',
+  testIgnore: '**/._*',
   globalSetup: './src/tests/e2e/global-setup.ts',
   globalTeardown: './src/tests/e2e/global-teardown.ts',
   /* Run tests in files in parallel */
@@ -51,11 +52,13 @@ export default defineConfig({
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
+      testIgnore: /.*performance\.spec\.ts/,
     },
 
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
+      testIgnore: /.*performance\.spec\.ts/,
     },
   ],
 

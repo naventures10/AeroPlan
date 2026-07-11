@@ -27,7 +27,15 @@ interface AerodromeChartViewerProps {
 function candidateChartKeys(chart: ChartItem): string[] {
   const raw = [chart.chart_url, chart.chart_title, chart.chart_index];
   const keys = raw.map((s) => normalizeChartKey(s ?? '')).filter(Boolean);
-  return [...new Set(keys)];
+  const derived: string[] = [];
+  for (const k of keys) {
+    derived.push(k);
+    const stripped = k.replace(/-RNP-[A-Z]-RWY-/gi, '-RNP-RWY-');
+    if (stripped !== k) {
+      derived.push(stripped);
+    }
+  }
+  return [...new Set(derived)];
 }
 
 function isSecondaryChart(chart: ChartItem): boolean {
@@ -104,8 +112,16 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
 
   const rnpByChartKey = useMemo(() => {
     const m = new Map<string, RnpProcedureApi>();
+    // First pass: exact matches
     for (const p of rnpProcedures) {
       if (!m.has(p.chart_key)) m.set(p.chart_key, p);
+    }
+    // Second pass: fallback matches (strip Y/Z suffixes)
+    for (const p of rnpProcedures) {
+      const stripped = p.chart_key.replace(/-RNP-[A-Z]-RWY-/gi, '-RNP-RWY-');
+      if (stripped !== p.chart_key && !m.has(stripped)) {
+        m.set(stripped, p);
+      }
     }
     return m;
   }, [rnpProcedures]);

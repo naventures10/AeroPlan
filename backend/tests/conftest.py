@@ -10,6 +10,7 @@ os.environ["MINIO_ACCESS_KEY"] = "mock_minio_access"
 os.environ["MINIO_SECRET_KEY"] = "mock_minio_secret"
 os.environ["DATABASE_URL"] = "postgresql+asyncpg://postgres:mock_db_password@localhost/test_db"
 os.environ["POSTGRES_DB"] = "test_aeronautical_information_system"
+os.environ["ENVIRONMENT"] = "testing"
 
 
 @pytest.fixture(autouse=True)
@@ -102,6 +103,26 @@ def override_get_db(db_session):
     yield
     # Clean up override
     app.dependency_overrides.pop(get_db, None)
+
+
+@pytest.fixture(autouse=True)
+def mock_redis(monkeypatch):
+    """Mock Redis client to avoid network calls during tests."""
+    mock_client = AsyncMock()
+    mock_client.ping.return_value = True
+    mock_client.close = AsyncMock()
+    mock_client.get = AsyncMock(return_value=None)
+    mock_client.set = AsyncMock(return_value=True)
+
+    monkeypatch.setattr("app.core.redis.from_url", lambda *args, **kwargs: mock_client)
+
+    import app.core.redis
+
+    app.core.redis.redis_client = mock_client
+
+    yield mock_client
+
+    app.core.redis.redis_client = None
 
 
 @pytest_asyncio.fixture

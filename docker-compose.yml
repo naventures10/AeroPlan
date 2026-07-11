@@ -14,6 +14,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - eaip_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
 
   minio:
     image: minio/minio
@@ -30,6 +35,11 @@ services:
       - ./data/minio:/data
     networks:
       - eaip_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
 
   martin:
     image: ghcr.io/maplibre/martin:v0.14.2
@@ -57,9 +67,32 @@ services:
       - minio
     networks:
       - eaip_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: eaip-redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 100mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    networks:
+      - eaip_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
 
   backend:
     image: eaip-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: eaip-backend
     restart: unless-stopped
     environment:
@@ -74,21 +107,25 @@ services:
       - LOG_FORMAT=json
       - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://alloy:4318/v1/traces
       - OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://alloy:4318/v1/metrics
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     ports:
       - "8000:8000"
     depends_on:
       - postgres
       - minio
+      - redis
     networks:
       - eaip_network
-
-
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
 volumes:
   postgres_data:
-    name: cea54d8184a203b630ab55ae2e2429ee565b144cbc8e5430cd5fe4d6dc90c4de
+    name: eaip_postgres_data
     external: true
-
-
 networks:
   eaip_network:
     name: eaip_network

@@ -75,6 +75,16 @@ resource "google_cloud_run_v2_service" "backend" {
         }
       }
 
+      env {
+        name  = "REDIS_HOST"
+        value = "localhost" # Overwritten dynamically during deployment
+      }
+
+      env {
+        name  = "REDIS_PORT"
+        value = "6379"
+      }
+
       volume_mounts {
         name       = "gcs-volume"
         mount_path = "/mnt/gcs"
@@ -92,7 +102,8 @@ resource "google_cloud_run_v2_service" "backend" {
 
   lifecycle {
     ignore_changes = [
-      template[0].containers[0].image
+      template[0].containers[0].image,
+      template[0].containers[0].env,
     ]
   }
 

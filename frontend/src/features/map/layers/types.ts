@@ -67,4 +67,7 @@ export interface LayerContext {
   /** Tracks if MVT tiles for airspace geometry have loaded in the current viewport */
   isAirspaceLoaded: boolean;
   setAirspaceLoaded: (loaded: boolean) => void;
+
+  /** Dynamic mobile viewport status */
+  isMobile?: boolean;
 }

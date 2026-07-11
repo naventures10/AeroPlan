@@ -109,6 +109,14 @@ postgres:
         direction_odd: "varchar"
         direction_even: "varchar"
 
+  functions:
+    get_airspaces_geometry:
+      schema: public
+      function: get_airspaces_geometry
+    get_airspaces_metadata:
+      schema: public
+      function: get_airspaces_metadata
+
 
 pmtiles:
   access_key_id: "${AWS_ACCESS_KEY_ID}"

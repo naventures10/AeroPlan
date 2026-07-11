@@ -18,7 +18,9 @@ export function StatusBadge({ status }: { status: WindStatus }) {
       stateClass = 'status--idle';
   }
 
-  const { setIsWindMode, setIsCloudMode, setIsWeatherMode } = useMapStore();
+  const setIsWindMode = useMapStore((s) => s.setIsWindMode);
+  const setIsCloudMode = useMapStore((s) => s.setIsCloudMode);
+  const setIsWeatherMode = useMapStore((s) => s.setIsWeatherMode);
 
   const handleClose = () => {
     setIsWindMode(false);

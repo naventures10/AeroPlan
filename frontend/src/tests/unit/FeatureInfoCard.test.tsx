@@ -2,17 +2,27 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { FeatureInfoCard } from '../../features/map/FeatureInfoCard';
 import { useMapStore } from '../../store/useMapStore';
-import * as api from '../../api/client';
 
 // Mock the store
-vi.mock('../../store/useMapStore', () => ({
-  useMapStore: vi.fn(),
-}));
+vi.mock('../../store/useMapStore', () => {
+  const stateRef = { current: {} as any };
+  const mockStore = vi.fn((selector?: any) => {
+    if (typeof selector === 'function') {
+      return selector(stateRef.current);
+    }
+    return stateRef.current;
+  });
+  (mockStore as any).mockReturnValue = (val: any) => {
+    stateRef.current = val;
+    return mockStore;
+  };
+  return { useMapStore: mockStore };
+});
 
-// Mock the API
-vi.mock('../../api/client', () => ({
-  fetchAtsRouteDetails: vi.fn(),
-  fetchNavaidDetails: vi.fn(),
+// Mock useIsMobile hook
+const mockUseIsMobile = vi.fn(() => false);
+vi.mock('../../hooks/useIsMobile', () => ({
+  useIsMobile: () => mockUseIsMobile(),
 }));
 
 describe('FeatureInfoCard', () => {
@@ -21,11 +31,16 @@ describe('FeatureInfoCard', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseIsMobile.mockReturnValue(false);
     (useMapStore as any).mockReturnValue({
       selectedFeature: null,
       setSelectedFeature,
       viewMode: 'ENROUTE',
       setSelectedRouteIds,
+      routeDetails: null,
+      isLoadingRoute: false,
+      navaidDetails: null,
+      isLoadingNavaid: false,
     });
   });
 
@@ -34,7 +49,7 @@ describe('FeatureInfoCard', () => {
     expect(screen.queryByTestId('feature-info-card')).toBeNull();
   });
 
-  it('should render ATS route details and fetch data', async () => {
+  it('should render ATS route details', async () => {
     const mockRouteDetails = {
       route_id: 'L333',
       route_designator: 'L333',
@@ -43,13 +58,16 @@ describe('FeatureInfoCard', () => {
       waypoints: [],
       total_distance_nm: 120,
     };
-    (api.fetchAtsRouteDetails as any).mockResolvedValue(mockRouteDetails);
 
     (useMapStore as any).mockReturnValue({
       selectedFeature: { type: 'ATS_ROUTE', data: { route_id: 'L333' } },
       setSelectedFeature,
       viewMode: 'ENROUTE',
       setSelectedRouteIds,
+      routeDetails: mockRouteDetails,
+      isLoadingRoute: false,
+      navaidDetails: null,
+      isLoadingNavaid: false,
     });
 
     render(<FeatureInfoCard />);
@@ -57,35 +75,33 @@ describe('FeatureInfoCard', () => {
     expect(screen.getByTestId('feature-info-card')).toBeDefined();
     expect(screen.getByText('L333')).toBeDefined();
 
-    // Wait for the data to be rendered
     const distanceBadge = await screen.findByText('120 NM');
     expect(distanceBadge).toBeDefined();
-
-    expect(api.fetchAtsRouteDetails).toHaveBeenCalledWith('L333');
   });
 
-  it('should render Navaid details and fetch data', async () => {
+  it('should render Navaid details', async () => {
     const mockNavaidDetails = {
       ident: 'BBB',
       station_name: 'BOMBAY',
       aid_type: 'VOR/DME',
       frequency: '116.6',
     };
-    (api.fetchNavaidDetails as any).mockResolvedValue(mockNavaidDetails);
 
     (useMapStore as any).mockReturnValue({
       selectedFeature: { type: 'NAVAID', data: { ident: 'BBB', station_name: 'BOMBAY' } },
       setSelectedFeature,
       viewMode: 'ENROUTE',
       setSelectedRouteIds,
+      routeDetails: null,
+      isLoadingRoute: false,
+      navaidDetails: mockNavaidDetails,
+      isLoadingNavaid: false,
     });
 
     render(<FeatureInfoCard />);
 
     const title = await screen.findByText('BOMBAY');
     expect(title).toBeDefined();
-
-    expect(api.fetchNavaidDetails).toHaveBeenCalledWith('BBB');
   });
 
   it('should render Waypoint details', () => {
@@ -97,6 +113,10 @@ describe('FeatureInfoCard', () => {
       setSelectedFeature,
       viewMode: 'ENROUTE',
       setSelectedRouteIds,
+      routeDetails: null,
+      isLoadingRoute: false,
+      navaidDetails: null,
+      isLoadingNavaid: false,
     });
 
     render(<FeatureInfoCard />);
@@ -118,6 +138,10 @@ describe('FeatureInfoCard', () => {
       setSelectedFeature,
       viewMode: 'ENROUTE',
       setSelectedRouteIds,
+      routeDetails: null,
+      isLoadingRoute: false,
+      navaidDetails: null,
+      isLoadingNavaid: false,
     });
 
     render(<FeatureInfoCard />);
@@ -132,6 +156,10 @@ describe('FeatureInfoCard', () => {
       setSelectedFeature,
       viewMode: 'ENROUTE',
       setSelectedRouteIds,
+      routeDetails: null,
+      isLoadingRoute: false,
+      navaidDetails: null,
+      isLoadingNavaid: false,
     });
 
     render(<FeatureInfoCard />);
@@ -140,5 +168,88 @@ describe('FeatureInfoCard', () => {
 
     expect(setSelectedFeature).toHaveBeenCalledWith(null);
     expect(setSelectedRouteIds).toHaveBeenCalledWith([]);
+  });
+
+  it('should not render Waypoint details on mobile', () => {
+    mockUseIsMobile.mockReturnValue(true);
+    (useMapStore as any).mockReturnValue({
+      selectedFeature: {
+        type: 'WAYPOINT',
+        data: { waypoint_name: 'DOSTI', raw_coordinates: '180000N 0720000E' },
+      },
+      setSelectedFeature,
+      viewMode: 'ENROUTE',
+      setSelectedRouteIds,
+      routeDetails: null,
+      isLoadingRoute: false,
+      navaidDetails: null,
+      isLoadingNavaid: false,
+    });
+
+    render(<FeatureInfoCard />);
+    expect(screen.queryByTestId('feature-info-card')).toBeNull();
+  });
+
+  it('should not render Navaid details on mobile', () => {
+    mockUseIsMobile.mockReturnValue(true);
+    (useMapStore as any).mockReturnValue({
+      selectedFeature: { type: 'NAVAID', data: { ident: 'BBB', station_name: 'BOMBAY' } },
+      setSelectedFeature,
+      viewMode: 'ENROUTE',
+      setSelectedRouteIds,
+      routeDetails: null,
+      isLoadingRoute: false,
+      navaidDetails: null,
+      isLoadingNavaid: false,
+    });
+
+    render(<FeatureInfoCard />);
+    expect(screen.queryByTestId('feature-info-card')).toBeNull();
+  });
+
+  it('should not render Airspace details on mobile', () => {
+    mockUseIsMobile.mockReturnValue(true);
+    (useMapStore as any).mockReturnValue({
+      selectedFeature: {
+        type: 'AIRSPACE',
+        data: { name: 'MUMBAI CTR', airspace_type: 'CTR' },
+      },
+      setSelectedFeature,
+      viewMode: 'ENROUTE',
+      setSelectedRouteIds,
+      routeDetails: null,
+      isLoadingRoute: false,
+      navaidDetails: null,
+      isLoadingNavaid: false,
+    });
+
+    render(<FeatureInfoCard />);
+    expect(screen.queryByTestId('feature-info-card')).toBeNull();
+  });
+
+  it('should not render ATS Route details on mobile', () => {
+    mockUseIsMobile.mockReturnValue(true);
+    const mockRouteDetails = {
+      route_id: 'L333',
+      route_designator: 'L333',
+      route_type: 'RNAV',
+      segments: [],
+      waypoints: [],
+      total_distance_nm: 120,
+    };
+
+    (useMapStore as any).mockReturnValue({
+      selectedFeature: { type: 'ATS_ROUTE', data: { route_id: 'L333' } },
+      setSelectedFeature,
+      viewMode: 'ENROUTE',
+      setSelectedRouteIds,
+      routeDetails: mockRouteDetails,
+      isLoadingRoute: false,
+      navaidDetails: null,
+      isLoadingNavaid: false,
+    });
+
+    render(<FeatureInfoCard />);
+    expect(screen.queryByTestId('feature-info-card')).toBeNull();
   });
 });

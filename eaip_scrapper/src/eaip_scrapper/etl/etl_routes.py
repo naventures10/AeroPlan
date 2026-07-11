@@ -11,18 +11,18 @@ class RouteLoader:
     """Loads ENR 3.1 Conventional Routes and ENR 3.2 RNAV Routes from MinIO into PostGIS."""
 
     def __init__(self, bucket_name="ais"):
+        from dotenv import load_dotenv
+
+        load_dotenv()
+
         self.s3 = boto3.client(
             "s3",
-            endpoint_url="http://localhost:9000",
+            endpoint_url=os.getenv("MINIO_ENDPOINT", "http://localhost:9000"),
             aws_access_key_id=os.environ.get("MINIO_ACCESS_KEY"),
             aws_secret_access_key=os.environ.get("MINIO_SECRET_KEY"),
             region_name="us-east-1",
         )
         self.bucket_name = bucket_name
-
-        from dotenv import load_dotenv
-
-        load_dotenv()
 
         db_host = os.getenv("DB_HOST")
         db_port = os.getenv("DB_PORT")
@@ -253,8 +253,59 @@ class RouteLoader:
         print("[*] Pushing to database...")
 
         with self.conn.cursor() as cur:
-            # Clean slate for idempotent reload (cascade deletes children)
-            cur.execute("TRUNCATE TABLE ats_routes RESTART IDENTITY CASCADE;")
+            # Ensure database extension and tables exist
+            cur.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS ats_routes (
+                    id SERIAL PRIMARY KEY,
+                    route_id VARCHAR(20) NOT NULL,
+                    route_designator VARCHAR(100),
+                    route_type VARCHAR(20) NOT NULL,
+                    remarks TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE INDEX IF NOT EXISTS ix_ats_routes_id ON ats_routes (id);
+                CREATE INDEX IF NOT EXISTS ix_ats_routes_route_id ON ats_routes (route_id);
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS ats_route_segments (
+                    id SERIAL PRIMARY KEY,
+                    route_id VARCHAR(20) NOT NULL,
+                    sequence_number INTEGER NOT NULL,
+                    track_magnetic VARCHAR(20),
+                    distance_nm NUMERIC,
+                    upper_limit VARCHAR(20),
+                    lower_limit VARCHAR(20),
+                    airspace_class VARCHAR(10),
+                    moca VARCHAR(20),
+                    lateral_limits VARCHAR(20),
+                    direction_odd VARCHAR(5),
+                    direction_even VARCHAR(5),
+                    geom GEOMETRY(GEOMETRY, 4326)
+                );
+                CREATE INDEX IF NOT EXISTS ix_ats_route_segments_id ON ats_route_segments (id);
+                CREATE INDEX IF NOT EXISTS ix_ats_route_segments_route_id ON ats_route_segments (route_id);
+                CREATE INDEX IF NOT EXISTS idx_ats_route_segments_geom ON ats_route_segments USING GIST (geom);
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS ats_route_waypoints (
+                    id SERIAL PRIMARY KEY,
+                    route_id VARCHAR(20) NOT NULL,
+                    sequence_number INTEGER NOT NULL,
+                    waypoint_name VARCHAR(50),
+                    raw_coordinates VARCHAR(60),
+                    navaid_info VARCHAR(50),
+                    geom GEOMETRY(GEOMETRY, 4326)
+                );
+                CREATE INDEX IF NOT EXISTS ix_ats_route_waypoints_id ON ats_route_waypoints (id);
+                CREATE INDEX IF NOT EXISTS ix_ats_route_waypoints_route_id ON ats_route_waypoints (route_id);
+                CREATE INDEX IF NOT EXISTS idx_ats_route_waypoints_geom ON ats_route_waypoints USING GIST (geom);
+            """)
+
+            # Clean slate for idempotent reload (explicitly truncate children since there are no hard foreign keys)
+            cur.execute(
+                "TRUNCATE TABLE ats_routes, ats_route_segments, ats_route_waypoints RESTART IDENTITY CASCADE;"
+            )
             print("[!] Cleared existing route records for a clean reload.")
 
             # 1. Insert routes
@@ -349,10 +400,44 @@ class RouteLoader:
                 WHERE s.geom IS NOT NULL;
             """)
 
-            # 6. Refresh Materialized View (pre-computed label midpoints & bearings)
+            # 6. Ensure Materialized Views exist
+            print("[*] Recreating mv_ats_route_labels materialized view...")
+            cur.execute("""
+                CREATE MATERIALIZED VIEW IF NOT EXISTS mv_ats_route_labels AS
+                SELECT
+                    s.id,
+                    s.route_id,
+                    r.route_type,
+                    ST_LineInterpolatePoint(s.geom, 0.5) AS midpoint_geom,
+                    COALESCE(
+                        NULLIF(REGEXP_REPLACE(split_part(s.track_magnetic, '/', 1), '[^0-9.]', '', 'g'), '')::numeric,
+                        degrees(ST_Azimuth(ST_StartPoint(s.geom), ST_EndPoint(s.geom)))::numeric,
+                        0
+                    ) AS bearing
+                FROM ats_route_segments s
+                JOIN ats_routes r ON s.route_id = r.route_id
+                WHERE s.geom IS NOT NULL;
+            """)
             print("[*] Refreshing mv_ats_route_labels materialized view...")
             cur.execute("""
                 REFRESH MATERIALIZED VIEW mv_ats_route_labels;
+            """)
+
+            print("[*] Recreating ats_waypoints_grouped materialized view...")
+            cur.execute("""
+                CREATE MATERIALIZED VIEW IF NOT EXISTS ats_waypoints_grouped AS
+                SELECT
+                    MIN(id)::integer as id,
+                    waypoint_name,
+                    array_agg(DISTINCT route_id)::text[] AS route_ids,
+                    ST_Centroid(ST_Collect(geom)) AS geom
+                FROM ats_route_waypoints
+                WHERE geom IS NOT NULL
+                GROUP BY waypoint_name;
+            """)
+            print("[*] Refreshing ats_waypoints_grouped materialized view...")
+            cur.execute("""
+                REFRESH MATERIALIZED VIEW ats_waypoints_grouped;
             """)
 
             # 7. Ensure Spatial Indexes exist
@@ -363,6 +448,12 @@ class RouteLoader:
 
                 CREATE INDEX IF NOT EXISTS idx_mv_ats_route_labels_geom
                 ON public.mv_ats_route_labels USING gist (midpoint_geom);
+
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_ats_waypoints_grouped_name
+                ON public.ats_waypoints_grouped (waypoint_name);
+
+                CREATE INDEX IF NOT EXISTS idx_ats_waypoints_grouped_geom
+                ON public.ats_waypoints_grouped USING gist (geom);
             """)
 
             self.conn.commit()

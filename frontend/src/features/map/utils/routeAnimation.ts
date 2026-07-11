@@ -59,7 +59,7 @@ function findClickedWaypointIndex(
 }
 
 function buildForwardTrip(segments: any[], routeData: any, clickedIndex: number, isFrom: boolean) {
-  const forwardPath = [];
+  const forwardPath: [number, number, number][] = [];
   let distance = 0;
   const startSeg = segments[clickedIndex];
   const startCoords = isFrom ? startSeg.from_coordinates : startSeg.to_coordinates;
@@ -74,13 +74,19 @@ function buildForwardTrip(segments: any[], routeData: any, clickedIndex: number,
 
   if (forwardPath.length <= 1) return null;
   return {
-    trip: { route_id: routeData.route_id, route_type: routeData.route_type, path: forwardPath },
+    trip: {
+      route_id: routeData.route_id,
+      route_type: routeData.route_type,
+      path: forwardPath,
+      path2d: forwardPath.map((p) => [p[0], p[1]] as [number, number]),
+      timestamps: forwardPath.map((p) => p[2]),
+    },
     distance,
   };
 }
 
 function buildBackwardTrip(segments: any[], routeData: any, clickedIndex: number, isFrom: boolean) {
-  const backwardPath = [];
+  const backwardPath: [number, number, number][] = [];
   let distance = 0;
   const startSeg = segments[clickedIndex];
   const startCoords = isFrom ? startSeg.from_coordinates : startSeg.to_coordinates;
@@ -95,14 +101,20 @@ function buildBackwardTrip(segments: any[], routeData: any, clickedIndex: number
 
   if (backwardPath.length <= 1) return null;
   return {
-    trip: { route_id: routeData.route_id, route_type: routeData.route_type, path: backwardPath },
+    trip: {
+      route_id: routeData.route_id,
+      route_type: routeData.route_type,
+      path: backwardPath,
+      path2d: backwardPath.map((p) => [p[0], p[1]] as [number, number]),
+      timestamps: backwardPath.map((p) => p[2]),
+    },
     distance,
   };
 }
 
 function buildFullTrip(segments: any[], routeData: any) {
   let distance = 0;
-  const path = [];
+  const path: [number, number, number][] = [];
   path.push([...parseDMS(segments[0].from_coordinates), 0]);
   for (let i = 0; i < segments.length; i++) {
     const seg = segments[i];
@@ -110,7 +122,15 @@ function buildFullTrip(segments: any[], routeData: any) {
     path.push([...parseDMS(seg.to_coordinates), distance]);
   }
   return {
-    trips: [{ route_id: routeData.route_id, route_type: routeData.route_type, path }],
+    trips: [
+      {
+        route_id: routeData.route_id,
+        route_type: routeData.route_type,
+        path,
+        path2d: path.map((p) => [p[0], p[1]] as [number, number]),
+        timestamps: path.map((p) => p[2]),
+      },
+    ],
     maxDistance: distance,
   };
 }

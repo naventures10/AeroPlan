@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import './FeatureInfoCard.css';
 
 import { X, EyeOff, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMapStore } from '../../store/useMapStore';
-import { fetchAtsRouteDetails, fetchNavaidDetails } from '../../api/client';
-import type { AtsRouteDetails, NavAidDetails } from '../../api/client';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 import { RouteDetailsPanel } from './components/RouteDetailsPanel';
 import { NavaidDetailsPanel } from './components/NavaidDetailsPanel';
@@ -13,81 +12,28 @@ import { WaypointDetailsPanel } from './components/WaypointDetailsPanel';
 import { AirspaceDetailsPanel } from './components/AirspaceDetailsPanel';
 
 // fallow-ignore-next-line complexity
-export function FeatureInfoCard() {
-  const { selectedFeature, setSelectedFeature, viewMode, setSelectedRouteIds } = useMapStore();
+export const FeatureInfoCard = memo(function FeatureInfoCard() {
+  const selectedFeature = useMapStore((state) => state.selectedFeature);
+  const setSelectedFeature = useMapStore((state) => state.setSelectedFeature);
+  const viewMode = useMapStore((state) => state.viewMode);
+  const setSelectedRouteIds = useMapStore((state) => state.setSelectedRouteIds);
+  const routeDetails = useMapStore((state) => state.routeDetails);
+  const isLoadingRoute = useMapStore((state) => state.isLoadingRoute);
+  const navaidDetails = useMapStore((state) => state.navaidDetails);
+  const isLoadingNavaid = useMapStore((state) => state.isLoadingNavaid);
   const [isPanelHidden, setIsPanelHidden] = useState(false);
 
   useEffect(() => {
     setIsPanelHidden(false);
   }, [selectedFeature]);
 
-  const isVisible = viewMode === 'ENROUTE' && selectedFeature !== null;
+  const isMobile = useIsMobile();
   const type = selectedFeature?.type || '';
+  const isVisible = viewMode === 'ENROUTE' && selectedFeature !== null && !isMobile;
   const rawData = selectedFeature?.data || {};
   // Normalize data: if it has a 'properties' key (like MVT features), use that.
   // Otherwise use it directly (like search results).
   const data = rawData.properties || rawData;
-
-  // Route details state — fetched on demand when an ATS_ROUTE is selected
-  const [routeDetails, setRouteDetails] = useState<AtsRouteDetails | null>(null);
-  const [navaidDetails, setNavaidDetails] = useState<NavAidDetails | null>(null);
-  const [isLoadingRoute, setIsLoadingRoute] = useState(false);
-  const [isLoadingNavaid, setIsLoadingNavaid] = useState(false);
-
-  // Fetch full route details when an ATS_ROUTE is selected
-  useEffect(() => {
-    if (type !== 'ATS_ROUTE' || !data.route_id) {
-      setRouteDetails(null);
-      setIsLoadingRoute(false);
-      return;
-    }
-
-    let cancelled = false;
-    setIsLoadingRoute(true);
-
-    fetchAtsRouteDetails(data.route_id)
-      .then((details) => {
-        if (!cancelled) {
-          setRouteDetails(details);
-          setIsLoadingRoute(false);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setIsLoadingRoute(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [type, data.route_id]);
-
-  // Fetch full Navaid details when a NAVAID is selected
-  useEffect(() => {
-    const ident = data.ident || data.id;
-    if (type !== 'NAVAID' || !ident) {
-      setNavaidDetails(null);
-      setIsLoadingNavaid(false);
-      return;
-    }
-
-    let cancelled = false;
-    setIsLoadingNavaid(true);
-
-    fetchNavaidDetails(ident)
-      .then((details) => {
-        if (!cancelled) {
-          setNavaidDetails(details);
-          setIsLoadingNavaid(false);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setIsLoadingNavaid(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [type, data.ident, data.id]);
 
   let title = 'Feature Details';
   if (type === 'AIRSPACE') {
@@ -243,4 +189,4 @@ export function FeatureInfoCard() {
       )}
     </AnimatePresence>
   );
-}
+});

@@ -56,7 +56,16 @@ jobs:
       - name: Deploy Backend to Cloud Run
         run: |-
           IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-backend:${{ github.sha }}"
-          gcloud run deploy eaip-backend --image $IMAGE --region ${{ env.REGION }}
+          
+          # Retrieve the database VM private IP dynamically
+          DB_VM_IP=$(gcloud compute instances describe eaip-db-vm \
+            --zone=us-central1-a \
+            --format='value(networkInterfaces[0].networkIP)')
+          
+          gcloud run deploy eaip-backend \
+            --image $IMAGE \
+            --region ${{ env.REGION }} \
+            --update-env-vars REDIS_HOST=$DB_VM_IP,REDIS_PORT=6379
 
       - name: Configure Backend OTLP Telemetry
         run: |-

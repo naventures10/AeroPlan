@@ -7,13 +7,11 @@ interface TimelineControlProps {
 }
 
 export function TimelineControl({ timestamps }: TimelineControlProps) {
-  const {
-    windAnimationTime,
-    setWindAnimationTime,
-    windIsPlaying,
-    setWindIsPlaying,
-    toggleWindPlayback,
-  } = useMapStore();
+  const windAnimationTime = useMapStore((s) => s.windAnimationTime);
+  const setWindAnimationTime = useMapStore((s) => s.setWindAnimationTime);
+  const windIsPlaying = useMapStore((s) => s.windIsPlaying);
+  const setWindIsPlaying = useMapStore((s) => s.setWindIsPlaying);
+  const toggleWindPlayback = useMapStore((s) => s.toggleWindPlayback);
 
   const nowIndex = calculateNowIndex(timestamps);
   const currentIndex = Math.min(

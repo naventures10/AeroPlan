@@ -1,0 +1,86 @@
+@reference "../../../../index.css";
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Responsive Mobile View Toggle Styles
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.aip-mobile-view-toggle-container {
+  position: absolute;
+  z-index: 200;
+  pointer-events: auto;
+}
+
+/* Enroute placement: float mid-height right side */
+.aip-mobile-view-toggle-container.enroute-layout {
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+}
+
+/* Terminal placement: float bottom-right above the mobile layer toolbar */
+.aip-mobile-view-toggle-container.terminal-layout {
+  bottom: calc(5.25rem + env(safe-area-inset-bottom));
+  right: 1.25rem;
+}
+
+/* Compass bearing animation */
+.view-toggle-compass {
+  transform: rotate(var(--bearing, 0deg));
+}
+
+/* Glassmorphic vertical pill container for mobile enroute view */
+.aip-mobile-view-toggle-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--glass-bg-heavy);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border);
+  border-radius: 9999px;
+  box-shadow: light-dark(0 10px 30px rgba(0, 0, 0, 0.08), 0 10px 30px rgba(0, 0, 0, 0.4));
+  transition:
+    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.5s ease;
+}
+
+/* 2D/3D Cube Container perspective */
+.view-toggle-cube-container {
+  perspective: 1000px;
+}
+
+.view-toggle-cube {
+  transform-style: preserve-3d;
+  transform: rotateX(0deg);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.view-toggle-cube.pitch-active {
+  transform: rotateX(-90deg) scale(0.95);
+}
+
+/* Cube Face positions */
+.view-toggle-face-2d {
+  transform: translateZ(20px);
+}
+
+.view-toggle-face-3d {
+  transform: rotateX(90deg) translateZ(20px);
+  background-color: var(--accent-cyan-opacity-10);
+}
+
+.view-toggle-side-top {
+  transform: rotateX(-90deg) translateZ(20px);
+}
+
+.view-toggle-side-right {
+  transform: rotateY(90deg) translateZ(20px);
+}
+
+.view-toggle-side-left {
+  transform: rotateY(-90deg) translateZ(20px);
+}
+
+.view-toggle-side-back {
+  transform: rotateY(180deg) translateZ(20px);
+}

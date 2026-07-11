@@ -1,6 +1,7 @@
 import type { ObjectColumnDef } from '../sectionConfig';
 import { extractDisplayValue } from '../sectionConfig';
 import { sanitizeHtml } from '../../../utils/sanitize';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 
 interface ObjectRendererProps {
   data: any;
@@ -15,6 +16,8 @@ interface ObjectRendererProps {
  * Otherwise falls back to auto-generating from object keys.
  */
 export default function ObjectRenderer({ data, columnConfig }: ObjectRendererProps) {
+  const isMobile = useIsMobile();
+
   if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
     return (
       <div className="text-on-surface-variant text-sm font-medium tracking-wide py-8 text-center">
@@ -56,6 +59,42 @@ export default function ObjectRenderer({ data, columnConfig }: ObjectRendererPro
         value,
       });
     });
+  }
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col gap-3.5 p-1">
+        {rows.map((row) => {
+          const displayValue = extractDisplayValue(row.value);
+          return (
+            <div
+              key={row.ref}
+              className="p-4 rounded-xl border border-outline-variant bg-surface-container-lowest/50 backdrop-blur-sm flex flex-col gap-2"
+            >
+              <div className="flex items-start gap-2.5">
+                <span className="text-[11px] font-mono font-bold text-accent-cyan bg-accent-cyan-opacity-10 px-1.5 py-0.5 rounded border border-accent-cyan-glow/30 flex-shrink-0">
+                  {row.ref}
+                </span>
+                <span className="text-[12px] font-semibold text-on-surface-variant leading-snug">
+                  {row.label}
+                </span>
+              </div>
+              <div
+                className="text-[13px] text-on-surface leading-relaxed whitespace-pre-wrap break-words border-t border-outline-variant/30 pt-2.5 mt-0.5"
+                dangerouslySetInnerHTML={{
+                  __html: sanitizeHtml(
+                    displayValue
+                      .replace(/\\n/g, '<br/>')
+                      .replace(/\n/g, '<br/>')
+                      .replace(/\s*\|\s*/g, '<br/>'),
+                  ),
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
   }
 
   return (

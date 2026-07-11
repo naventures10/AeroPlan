@@ -8,6 +8,7 @@ import {
 } from '@deck.gl/core';
 import Map, { Source, Layer } from 'react-map-gl/maplibre';
 import type { MapRef } from 'react-map-gl/maplibre';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { useMapStore, TERMINAL_EXIT_ZOOM_THRESHOLD } from '../../store/useMapStore';
@@ -16,6 +17,7 @@ import { useDeckLayers } from './layers/useDeckLayers';
 import { InterleavedDeckGL } from './InterleavedDeckGL';
 import { useMapTooltip } from './tooltips/useMapTooltip';
 import { FeatureInfoCard } from './FeatureInfoCard';
+import PerformanceOverlay from './components/PerformanceOverlay';
 import {
   TerminalSpatialLayers,
   TERMINAL_INTERACTIVE_LAYERS,
@@ -33,8 +35,6 @@ const RASTER_PAINT = {
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 const IS_E2E = import.meta.env.VITE_E2E === 'true';
-
-const BASE_MAP_LABEL_ZOOM_THRESHOLD = 12;
 
 // Mock style for E2E tests to save MapTiler quota
 const MOCK_STYLE = {
@@ -73,6 +73,9 @@ const TERRAIN_SOURCE_URL =
  * 2. Bind Middle-Mouse button to Rotation/Tilt
  */
 class CustomMapController extends MapController {
+  _myStartPinchRotation = 0;
+  _myPinchRotationUnlocked = false;
+
   /**
    * Override rotation detection to swap Right-Click for Middle-Click.
    */
@@ -117,6 +120,27 @@ class CustomMapController extends MapController {
 
     return super.handleEvent(event);
   }
+
+  _onPinchStart(event: any) {
+    this._myStartPinchRotation = event.rotation || 0;
+    this._myPinchRotationUnlocked = false;
+    return super._onPinchStart(event);
+  }
+
+  _onPinch(event: any) {
+    const delta = Math.abs((event.rotation || 0) - this._myStartPinchRotation);
+
+    if (this.touchRotate && !this._myPinchRotationUnlocked) {
+      if (delta > 20) {
+        this._myPinchRotationUnlocked = true;
+      } else {
+        // Lock rotation by passing a cloned event where rotation matches the start rotation
+        return super._onPinch({ ...event, rotation: this._myStartPinchRotation });
+      }
+    }
+
+    return super._onPinch(event);
+  }
 }
 
 const DECK_CONTROLLER = {
@@ -140,6 +164,8 @@ interface MapViewProps {
  * - MapLibre raster/vector sources (WAC, spatial features)
  */
 export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) {
+  const isMobile = useIsMobile();
+  const baseMapZoomThreshold = isMobile ? 14 : 12;
   const {
     viewState,
     setViewState,
@@ -158,6 +184,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
 
   const mapRef = useRef<MapRef>(null);
   const overlayRef = useRef<MapboxOverlay | null>(null);
+  const deckRef = useRef<any>(null);
   const hoveredRnpApproachIdRef = useRef<string | null>(null);
   const [hoveredRnpApproachId, setHoveredRnpApproachId] = useState<string | null>(null);
   const { windHoverInfo, handleWindHover } = useWindTooltip();
@@ -218,28 +245,41 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
   useEffect(() => {
     if (boundsToFit && boundsToFit.length === 4) {
       try {
+        const width = window.innerWidth || 1024;
+        const height = window.innerHeight || 768;
+        // Limit padding dynamically to a safe percentage (e.g., 20%) of the smallest viewport dimension
+        const safePadding = Math.min(150, Math.floor(Math.min(width, height) * 0.2));
+
         const vp = new WebMercatorViewport({
-          width: window.innerWidth || 1024,
-          height: window.innerHeight || 768,
+          width,
+          height,
         });
         const { longitude, latitude, zoom } = vp.fitBounds(
           [
             [boundsToFit[0], boundsToFit[1]],
             [boundsToFit[2], boundsToFit[3]],
           ],
-          { padding: 150 },
+          { padding: safePadding },
         );
 
-        setViewState({
-          ...viewState,
-          longitude,
-          latitude,
-          zoom,
-          pitch: viewMode === 'TERMINAL' ? 45 : 0,
-          bearing: 0,
-          transitionDuration: 1200,
-          transitionType: 'FLY',
-        });
+        if (Number.isFinite(longitude) && Number.isFinite(latitude) && Number.isFinite(zoom)) {
+          setViewState({
+            ...viewState,
+            longitude,
+            latitude,
+            zoom,
+            pitch: viewMode === 'TERMINAL' ? 45 : 0,
+            bearing: 0,
+            transitionDuration: 1200,
+            transitionType: 'FLY',
+          });
+        } else {
+          console.warn('fitBounds produced invalid coordinates or zoom:', {
+            longitude,
+            latitude,
+            zoom,
+          });
+        }
 
         // Reset the intent so it doesn't re-trigger
         fitBounds(null);
@@ -260,30 +300,33 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
    * symbol / label / road layers.  Skips our own terminal layers
    * (mvt-*, runway-*) so they remain under react-map-gl control.
    */
-  const configureBaseMap = useCallback((map: any, isTerminal: boolean) => {
-    const layers = map.getStyle()?.layers;
-    if (!layers) return;
+  const configureBaseMap = useCallback(
+    (map: any, isTerminal: boolean) => {
+      const layers = map.getStyle()?.layers;
+      if (!layers) return;
 
-    const targetVisibility = isTerminal ? 'none' : 'visible';
+      const targetVisibility = isTerminal ? 'none' : 'visible';
 
-    layers.forEach((layer: any) => {
-      if (layer.id.startsWith('mvt-') || layer.id.startsWith('runway-')) return;
+      layers.forEach((layer: any) => {
+        if (layer.id.startsWith('mvt-') || layer.id.startsWith('runway-')) return;
 
-      if (
-        layer.type === 'symbol' ||
-        layer.id.includes('road') ||
-        layer.id.includes('place') ||
-        layer.id.includes('label')
-      ) {
-        try {
-          map.setLayerZoomRange(layer.id, BASE_MAP_LABEL_ZOOM_THRESHOLD, 24);
-          map.setLayoutProperty(layer.id, 'visibility', targetVisibility);
-        } catch {
-          // Layer may not exist yet or was removed during a style rebuild
+        if (
+          layer.type === 'symbol' ||
+          layer.id.includes('road') ||
+          layer.id.includes('place') ||
+          layer.id.includes('label')
+        ) {
+          try {
+            map.setLayerZoomRange(layer.id, baseMapZoomThreshold, 24);
+            map.setLayoutProperty(layer.id, 'visibility', targetVisibility);
+          } catch {
+            // Layer may not exist yet or was removed during a style rebuild
+          }
         }
-      }
-    });
-  }, []);
+      });
+    },
+    [baseMapZoomThreshold],
+  );
 
   // 4. Initial load: configure base map layers
   const onMapLoad = useCallback(
@@ -393,6 +436,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
   return (
     <div className="absolute inset-0 z-0">
       <DeckGL
+        ref={deckRef}
         viewState={processedViewState}
         controller={DECK_CONTROLLER}
         layers={overlaidLayers}
@@ -407,6 +451,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
         }}
         pickingRadius={15}
         useDevicePixels={Math.min(window.devicePixelRatio, 1.5)}
+        _typedArrayManagerProps={isMobile ? { overAlloc: 1, poolSize: 0 } : undefined}
         onClick={handleDeckClick}
         onHover={handleDeckHover}
       >
@@ -446,6 +491,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
       </DeckGL>
       <FeatureInfoCard />
       {windHoverInfo && <WindTooltip {...windHoverInfo} />}
+      <PerformanceOverlay deckRef={deckRef} overlayRef={overlayRef} />
     </div>
   );
 }

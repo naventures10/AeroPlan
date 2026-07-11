@@ -19,20 +19,18 @@ import { Wind, Cloud } from 'lucide-react';
  */
 export function WeatherControls() {
   const { windStatus } = useWindLayer();
-  const {
-    isWindMode,
-    setIsWindMode,
-    isCloudMode,
-    setIsCloudMode,
-    cloudLoadingStatus,
-    isWeatherMode,
-    viewMode,
-    windIsPlaying,
-    setWindIsPlaying,
-    setWindAnimationTime,
-    forecastTimestamps,
-    fetchWeatherManifest,
-  } = useMapStore();
+  const isWindMode = useMapStore((s) => s.isWindMode);
+  const setIsWindMode = useMapStore((s) => s.setIsWindMode);
+  const isCloudMode = useMapStore((s) => s.isCloudMode);
+  const setIsCloudMode = useMapStore((s) => s.setIsCloudMode);
+  const cloudLoadingStatus = useMapStore((s) => s.cloudLoadingStatus);
+  const isWeatherMode = useMapStore((s) => s.isWeatherMode);
+  const viewMode = useMapStore((s) => s.viewMode);
+  const windIsPlaying = useMapStore((s) => s.windIsPlaying);
+  const setWindIsPlaying = useMapStore((s) => s.setWindIsPlaying);
+  const setWindAnimationTime = useMapStore((s) => s.setWindAnimationTime);
+  const forecastTimestamps = useMapStore((s) => s.forecastTimestamps);
+  const fetchWeatherManifest = useMapStore((s) => s.fetchWeatherManifest);
 
   // 1. Fetch manifest on mount if not already loaded
   useEffect(() => {

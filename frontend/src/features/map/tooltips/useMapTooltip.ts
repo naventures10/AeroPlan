@@ -3,6 +3,7 @@ import './MapTooltip.css';
 import type { MapRef } from 'react-map-gl/maplibre';
 import { useMapStore } from '../../../store/useMapStore';
 import { sanitizeHtml } from '../../../utils/sanitize';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 
 const buildTooltip = (content: string) =>
   sanitizeHtml(`<div class="aip-tooltip-wrapper">${content}</div>`);
@@ -502,6 +503,7 @@ function getMapLibreTooltip(features: any[], indexedMetadata: IndexedMetadata | 
 }
 
 export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
+  const isMobile = useIsMobile();
   const getTooltip = useCallback(
     // fallow-ignore-next-line complexity
     (info: any) => {
@@ -509,6 +511,18 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
       const { activeAerodromeMetadata, activeLayers, selectedRouteIds } = useMapStore.getState();
 
       if (activeLayers.weather) return null;
+
+      if (isMobile && layer?.id) {
+        const lid = String(layer.id);
+        if (
+          lid === 'waypoints-layer' ||
+          lid === 'navaids-layer' ||
+          lid.startsWith('atsRoutes-waypoints-layer') ||
+          lid.startsWith('atsRoutes-geom-layer')
+        ) {
+          return null;
+        }
+      }
 
       // 1. Check hover cache to avoid redundant work on micro-movements
       const hoverKey = getHoverKey(info, mapRef);
@@ -574,7 +588,7 @@ export function useMapTooltip(mapRef: React.RefObject<MapRef | null>) {
       lastHoveredTooltip = tooltipResult;
       return tooltipResult;
     },
-    [mapRef],
+    [mapRef, isMobile],
   );
 
   return getTooltip;

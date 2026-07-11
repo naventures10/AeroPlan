@@ -19,6 +19,23 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const [isCompact, setIsCompact] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth <= 1024;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(max-width: 1024px)');
+    const listener = (e: MediaQueryListEvent) => setIsCompact(e.matches);
+    media.addEventListener('change', listener);
+    // Initial check
+    setIsCompact(media.matches);
+    return () => media.removeEventListener('change', listener);
+  }, []);
+
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [notams, setNotams] = useState<NotamData[]>([]);
   const [daylight, setDaylight] = useState<DaylightRecord | null>(null);
@@ -114,10 +131,10 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
       animate={{ opacity: 1 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       exit={{ opacity: 0 }}
-      className="h-fit max-h-[calc(100vh-12rem)] flex pointer-events-none"
+      className={`h-fit ${isCompact ? 'max-h-[420px]' : 'max-h-[calc(100vh-12rem)]'} flex pointer-events-none`}
     >
       <motion.div
-        animate={{ width: isCollapsed ? 44 : 72, backdropFilter: 'blur(20px)' }}
+        animate={{ width: isCollapsed ? 44 : isCompact ? 60 : 72, backdropFilter: 'blur(20px)' }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className="terminal-dashboard-sidebar flex flex-col items-center relative shrink-0 z-20 pointer-events-auto overflow-hidden"
       >
@@ -174,7 +191,7 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
 
       <motion.div
         animate={{
-          width: isCollapsed ? 0 : 480,
+          width: isCollapsed ? 0 : isCompact ? 360 : 480,
           opacity: isCollapsed ? 0 : 1,
           paddingLeft: isCollapsed ? 0 : 12,
           borderWidth: isCollapsed ? 0 : 1,
@@ -190,7 +207,9 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
             <div className="w-7 h-7 border-t-2 border-teal-600 dark:border-cyan-400 border-solid rounded-full animate-spin"></div>
           </div>
         ) : (
-          <div className="py-4 px-6 h-full overflow-y-auto aip-scrollbar w-[480px]">
+          <div
+            className={`py-4 px-6 h-full overflow-y-auto aip-scrollbar ${isCompact ? 'w-[360px]' : 'w-[480px]'}`}
+          >
             <AnimatePresence>
               {activeTab === 'CONDITIONS' && (
                 <ConditionsWidget
@@ -199,6 +218,7 @@ export default function TerminalDashboard({ icaoCode }: { icaoCode: string }) {
                   parsedMetar={parsedMetar}
                   daylight={daylight}
                   todayStr={todayStr}
+                  isCompact={isCompact}
                 />
               )}
               {activeTab === 'METAR' && <MetarWidget weather={weather} />}

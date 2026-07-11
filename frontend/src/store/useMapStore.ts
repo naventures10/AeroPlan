@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { formatIST, calculateNowIndex } from '../features/map/utils/windUtils';
 import type { ForecastTimestamp } from '../features/map/utils/windUtils';
+import { fetchAtsRouteDetails, fetchNavaidDetails } from '../api/client';
+import type { AtsRouteDetails, NavAidDetails } from '../api/client';
 
 // 1. Define the TypeScript Blueprint
 interface MapState {
@@ -73,6 +75,11 @@ interface MapState {
   setSelectedFeature: (
     feature: { type: 'ATS_ROUTE' | 'WAYPOINT' | 'NAVAID' | 'AIRSPACE'; data: any } | null,
   ) => void;
+
+  routeDetails: AtsRouteDetails | null;
+  isLoadingRoute: boolean;
+  navaidDetails: NavAidDetails | null;
+  isLoadingNavaid: boolean;
 
   atsRouteLabels: any | null;
   setAtsRouteLabels: (data: any) => void;
@@ -289,6 +296,15 @@ export const useMapStore = create<MapState>()(
               ...stateUpdates,
               isAirspaceLoaded: false,
             };
+
+            // Fallback timeout to ensure layer is marked loaded if tiles are cached
+            // or if onViewportLoad fails to fire within 200ms
+            setTimeout(() => {
+              const currentStore = get();
+              if (currentStore.activeLayers.airspaces && !currentStore.isAirspaceLoaded) {
+                set({ isAirspaceLoaded: true });
+              }
+            }, 200);
           }
 
           if (layer === 'atsRoutes' && !newActiveLayers.atsRoutes) {
@@ -306,6 +322,15 @@ export const useMapStore = create<MapState>()(
               isAtsGeometryLoaded: false,
               atsRoutesToggleCounter: state.atsRoutesToggleCounter + 1,
             };
+
+            // Fallback timeout to ensure route labels render if tiles are cached
+            // or if onViewportLoad fails to fire within 200ms
+            setTimeout(() => {
+              const currentStore = get();
+              if (currentStore.activeLayers.atsRoutes && !currentStore.isAtsGeometryLoaded) {
+                set({ isAtsGeometryLoaded: true });
+              }
+            }, 200);
           }
 
           if (
@@ -388,7 +413,72 @@ export const useMapStore = create<MapState>()(
         ),
 
       selectedFeature: null,
-      setSelectedFeature: (feature) => set({ selectedFeature: feature }),
+      routeDetails: null,
+      isLoadingRoute: false,
+      navaidDetails: null,
+      isLoadingNavaid: false,
+      setSelectedFeature: (feature) => {
+        const current = get().selectedFeature;
+        if (current && feature && current.type === feature.type) {
+          const currentData = current.data?.properties || current.data || {};
+          const newData = feature.data?.properties || feature.data || {};
+          let isSame = false;
+          if (feature.type === 'WAYPOINT') {
+            isSame = currentData.waypoint_name === newData.waypoint_name;
+          } else if (feature.type === 'NAVAID') {
+            isSame = (currentData.ident || currentData.id) === (newData.ident || newData.id);
+          } else if (feature.type === 'AIRSPACE') {
+            isSame = (currentData.id || currentData.name) === (newData.id || newData.name);
+          } else if (feature.type === 'ATS_ROUTE') {
+            isSame = currentData.route_id === newData.route_id;
+          }
+          if (isSame) return;
+        } else if (!current && !feature) {
+          return;
+        }
+
+        set({
+          selectedFeature: feature,
+          routeDetails: null,
+          isLoadingRoute: false,
+          navaidDetails: null,
+          isLoadingNavaid: false,
+        });
+
+        if (!feature) return;
+
+        const { type, data } = feature;
+        const normalizedData = data?.properties || data || {};
+
+        if (type === 'ATS_ROUTE' && normalizedData.route_id) {
+          set({ isLoadingRoute: true });
+          fetchAtsRouteDetails(normalizedData.route_id)
+            .then((details) => {
+              if (get().selectedFeature?.data?.route_id === normalizedData.route_id) {
+                set({ routeDetails: details, isLoadingRoute: false });
+              }
+            })
+            .catch(() => {
+              set({ isLoadingRoute: false });
+            });
+        } else if (type === 'NAVAID') {
+          const ident = normalizedData.ident || normalizedData.id;
+          if (ident) {
+            set({ isLoadingNavaid: true });
+            fetchNavaidDetails(ident)
+              .then((details) => {
+                const currentIdent =
+                  get().selectedFeature?.data?.ident || get().selectedFeature?.data?.id;
+                if (currentIdent === ident) {
+                  set({ navaidDetails: details, isLoadingNavaid: false });
+                }
+              })
+              .catch(() => {
+                set({ isLoadingNavaid: false });
+              });
+          }
+        }
+      },
 
       atsRouteLabels: null,
       setAtsRouteLabels: (data) => {
@@ -651,6 +741,10 @@ export const useMapStore = create<MapState>()(
           isAirspaceLoaded,
           atsRoutesToggleCounter,
           activeLayers,
+          routeDetails,
+          isLoadingRoute,
+          navaidDetails,
+          isLoadingNavaid,
           ...rest
         } = state;
         return {

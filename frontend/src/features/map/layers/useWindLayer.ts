@@ -3,6 +3,7 @@ import * as WeatherLayers from 'weatherlayers-gl';
 import * as geotiff from 'geotiff';
 import { ClipExtension } from '@deck.gl/extensions';
 import { useMapStore } from '../../../store/useMapStore';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 import { WIND_BOUNDS, CLIP_BOUNDS, WIND_PALETTE } from '../utils/windUtils';
 import {
   useWeatherFrameLoader,
@@ -57,16 +58,15 @@ async function loadWindFrame(
 }
 
 export function useWindLayer() {
-  const {
-    isWeatherMode,
-    isWindMode,
-    viewMode,
-    windAltitude,
-    windAnimationTime,
-    forecastTimestamps,
-    fetchWeatherManifest,
-    weatherStatus,
-  } = useMapStore();
+  const isMobile = useIsMobile();
+  const isWeatherMode = useMapStore((s) => s.isWeatherMode);
+  const isWindMode = useMapStore((s) => s.isWindMode);
+  const viewMode = useMapStore((s) => s.viewMode);
+  const windAltitude = useMapStore((s) => s.windAltitude);
+  const windAnimationTime = useMapStore((s) => s.windAnimationTime);
+  const forecastTimestamps = useMapStore((s) => s.forecastTimestamps);
+  const fetchWeatherManifest = useMapStore((s) => s.fetchWeatherManifest);
+  const weatherStatus = useMapStore((s) => s.weatherStatus);
 
   const isWindActive = isWeatherMode && isWindMode && viewMode === 'ENROUTE';
 
@@ -123,7 +123,7 @@ export function useWindLayer() {
       image2: renderImages[index2] || null,
       imageWeight: interpolationWeight,
       bounds: WIND_BOUNDS,
-      numParticles: 1000,
+      numParticles: isMobile ? 400 : 1000,
       maxAge: 100,
       speedFactor: 5,
       width: 2,
@@ -131,7 +131,7 @@ export function useWindLayer() {
       extensions: [new ClipExtension()],
       clipBounds: CLIP_BOUNDS,
     });
-  }, [isWindActive, renderImages, index1, index2, interpolationWeight]);
+  }, [isWindActive, renderImages, index1, index2, interpolationWeight, isMobile]);
 
   // Tooltip helper
   const getWindAtLngLat = useCallback(

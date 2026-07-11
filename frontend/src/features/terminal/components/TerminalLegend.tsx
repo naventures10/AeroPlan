@@ -44,7 +44,8 @@ const categories = [
  * Positioned at bottom-left of the map in TERMINAL view.
  */
 export default function TerminalLegend() {
-  const { terminalSpatialFilters, toggleTerminalSpatialFilter } = useMapStore();
+  const terminalSpatialFilters = useMapStore((s) => s.terminalSpatialFilters);
+  const toggleTerminalSpatialFilter = useMapStore((s) => s.toggleTerminalSpatialFilter);
 
   return (
     <motion.div

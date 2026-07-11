@@ -5,13 +5,21 @@ import { createAirspaceLayers } from './createAirspaceLayers';
 import { createAerodromeLayers } from './createAerodromeLayers';
 import { createWaypointLayer } from './createWaypointLayer';
 import { createNavaidLayer } from './createNavaidLayer';
-import { createAtsRouteLayers } from './createAtsRouteLayers';
-import { createRnpLayers } from '../../terminal/layers/rnp/createRnpLayers';
+import {
+  createStaticAtsRouteLayers,
+  createDynamicAtsRouteLayers,
+  preProcessRouteLabels,
+} from './createAtsRouteLayers';
+import {
+  createStaticRnpLayers,
+  createDynamicRnpLayers,
+} from '../../terminal/layers/rnp/createRnpLayers';
 import { useRnpPath3d } from '../../terminal/layers/rnp/useRnpPath3d';
 import { useRnpAnimation } from '../../terminal/layers/rnp/useRnpAnimation';
 import { useWindLayer } from './useWindLayer';
 import { useCloudLayer } from './useCloudLayer';
-import { useDelayedUnmount } from '../../../hooks/useDelayedUnmount';
+
+import { useIsMobile } from '../../../hooks/useIsMobile';
 import type { LayerContext } from './types';
 
 /**
@@ -55,6 +63,7 @@ export function useDeckLayers({
 
   // Derive isDarkMode from the reactive mapStyle field (getter is not reactive)
   const isDarkMode = mapStyle !== 'light';
+  const isMobile = useIsMobile();
 
   const { isAtsRendered, currentTime } = useRouteAnimation();
 
@@ -86,25 +95,42 @@ export function useDeckLayers({
     }));
   }, [aerodromes]);
 
-  const zoom = viewState.zoom;
+  const currentZoom = viewState.zoom;
+  const { effectiveZoom, isZoomWaypoints, isZoomNavaids, isZoomAtsWaypoints } = useMemo(() => {
+    const effectiveZoom =
+      [2.0, 2.5, 4.0, 4.5, 6.0, 6.5, 7.0, 7.5].reverse().find((z) => currentZoom >= z) || 0;
+    const isZoomWaypoints = currentZoom > 7.0; // ZOOM_WAYPOINTS
+    const isZoomNavaids = currentZoom > 2.5; // ZOOM_NAVAIDS
+    const isZoomAtsWaypoints = currentZoom > 7.5; // ZOOM_ATS_WAYPOINTS
+    return {
+      effectiveZoom,
+      isZoomWaypoints,
+      isZoomNavaids,
+      isZoomAtsWaypoints,
+    };
+  }, [currentZoom]);
 
-  const mountAirspaces = useDelayedUnmount(activeLayers.airspaces, 300);
-  const mountAerodromes = useDelayedUnmount(activeLayers.aerodromes, 300);
-  const mountWaypoints = useDelayedUnmount(activeLayers.waypoints, 300);
-  const mountNavaids = useDelayedUnmount(activeLayers.navaids, 300);
+  // Pre-process overlapping ATS route labels only when raw labels change
+  const processedRouteLabels = useMemo(() => {
+    if (!atsRouteLabels) return null;
+    return {
+      type: 'FeatureCollection',
+      features: preProcessRouteLabels(atsRouteLabels),
+    };
+  }, [atsRouteLabels]);
 
-  // Build the shared context passed to every layer factory
-  const ctx: LayerContext = {
+  // ── Shared Context Base ─────────────────────────────────────────────
+
+  const baseCtx = {
     viewMode,
     activeLayers,
     selectedRouteIds,
     selectedRouteType,
     selectedFeature,
-    zoom,
+    zoom: currentZoom,
     isDarkMode,
-    atsRouteLabels,
+    atsRouteLabels: processedRouteLabels,
     animatedTrips,
-    currentTime,
     setSelectedRouteIds,
     setSelectedFeature,
     isAtsGeometryLoaded,
@@ -112,95 +138,149 @@ export function useDeckLayers({
     atsRoutesToggleCounter,
     isAirspaceLoaded,
     setAirspaceLoaded,
+    isMobile,
   };
 
-  // fallow-ignore-next-line complexity
-  const layers = useMemo(() => {
-    const overlaidLayers: any[] = [];
-    const interleavedLayers: any[] = [];
+  // ── 1. Static Map Layers Memo ──────────────────────────────────────
 
-    if (mountAirspaces) {
-      overlaidLayers.push(...createAirspaceLayers(ctx));
-    }
-
-    if (mountAerodromes) {
-      overlaidLayers.push(...createAerodromeLayers(ctx, aerodromes, textData, onAerodromeClick));
-    }
-
-    if (mountWaypoints) {
-      overlaidLayers.push(...createWaypointLayer(ctx));
-    }
-
-    if (mountNavaids) {
-      overlaidLayers.push(...createNavaidLayer(ctx));
-    }
-
-    if (isAtsRendered) {
-      overlaidLayers.push(...createAtsRouteLayers(ctx));
-    }
-
-    // RNP 3D approach path (TERMINAL mode only)
-    if (viewMode === 'TERMINAL' && rnpPathData) {
-      interleavedLayers.push(
-        ...createRnpLayers({
-          pathData: rnpPathData,
-          selectedRnpApproachId,
-          hoveredRnpApproachId,
-          setSelectedRnpApproachId,
-          rnpCurrentTime,
-          approachDist,
-          pickable: true,
-          opacity: 1,
-        }),
-      );
-    }
-
-    if (windLayer) {
-      overlaidLayers.push(windLayer);
-    }
-
-    if (cloudLayers.length > 0) {
-      overlaidLayers.push(...cloudLayers);
-    }
-
-    return { overlaidLayers, interleavedLayers };
+  const staticLayers = useMemo(() => {
+    const staticCtx: LayerContext = { ...baseCtx, currentTime: 0 };
+    return [
+      ...createAirspaceLayers(staticCtx),
+      ...createAerodromeLayers(staticCtx, aerodromes, textData, onAerodromeClick),
+      ...createWaypointLayer(staticCtx),
+      ...createNavaidLayer(staticCtx),
+    ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    aerodromes,
     viewMode,
-    textData,
-    onAerodromeClick,
     activeLayers,
     selectedRouteIds,
     selectedRouteType,
-    setSelectedRouteIds,
-    setSelectedFeature,
     selectedFeature,
-    zoom,
-    hoveredRnpApproachId,
-    isAtsRendered,
+    effectiveZoom,
+    isZoomWaypoints,
+    isZoomNavaids,
+    isDarkMode,
     atsRouteLabels,
     animatedTrips,
-    currentTime,
-    rnpPathData,
-    selectedRnpApproachId,
-    setSelectedRnpApproachId,
-    rnpCurrentTime,
-    approachDist,
-    windLayer,
-    cloudLayers,
-    isDarkMode,
-    mapStyle,
+    aerodromes,
+    textData,
+    onAerodromeClick,
     isAtsGeometryLoaded,
     setAtsGeometryLoaded,
     atsRoutesToggleCounter,
-    mountAirspaces,
-    mountAerodromes,
-    mountWaypoints,
-    mountNavaids,
-
     isAirspaceLoaded,
     setAirspaceLoaded,
+    isMobile,
   ]);
 
-  return layers;
+  // ── 2. ATS Route Layers Memo ───────────────────────────────────────
+
+  const staticAtsRouteLayers = useMemo(() => {
+    if (!isAtsRendered) return [];
+    return createStaticAtsRouteLayers({ ...baseCtx, currentTime: 0 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isAtsRendered,
+    viewMode,
+    activeLayers,
+    selectedRouteIds,
+    selectedRouteType,
+    isZoomAtsWaypoints,
+    isDarkMode,
+    isAtsGeometryLoaded,
+    setAtsGeometryLoaded,
+    atsRoutesToggleCounter,
+    isMobile,
+  ]);
+
+  const dynamicAtsRouteLayers = useMemo(() => {
+    if (!isAtsRendered) return [];
+    const atsCtx: LayerContext = { ...baseCtx, currentTime };
+    return createDynamicAtsRouteLayers(atsCtx);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isAtsRendered,
+    viewMode,
+    activeLayers,
+    selectedRouteIds,
+    selectedRouteType,
+    selectedFeature,
+    isDarkMode,
+    atsRouteLabels,
+    animatedTrips,
+    currentTime,
+    isAtsGeometryLoaded,
+    isMobile,
+  ]);
+
+  // ── 3. RNP Layers Memo ─────────────────────────────────────────────
+
+  const staticRnpLayers = useMemo(() => {
+    if (viewMode !== 'TERMINAL' || !rnpPathData) return [];
+    return createStaticRnpLayers({
+      pathData: rnpPathData,
+      selectedRnpApproachId,
+      hoveredRnpApproachId,
+      setSelectedRnpApproachId,
+      pickable: true,
+      opacity: 1,
+    });
+  }, [
+    viewMode,
+    rnpPathData,
+    selectedRnpApproachId,
+    hoveredRnpApproachId,
+    setSelectedRnpApproachId,
+  ]);
+
+  const dynamicRnpLayers = useMemo(() => {
+    if (viewMode !== 'TERMINAL' || !rnpPathData || !selectedRnpApproachId) return [];
+    return createDynamicRnpLayers({
+      pathData: rnpPathData,
+      selectedRnpApproachId,
+      rnpCurrentTime,
+      approachDist,
+      opacity: 1,
+    });
+  }, [viewMode, rnpPathData, selectedRnpApproachId, rnpCurrentTime, approachDist]);
+
+  // ── 4. Weather Layers Memo ─────────────────────────────────────────
+
+  const weatherLayers = useMemo(() => {
+    const overlaid: any[] = [];
+    if (windLayer) {
+      overlaid.push(windLayer);
+    }
+    if (cloudLayers.length > 0) {
+      overlaid.push(...cloudLayers);
+    }
+    return overlaid;
+  }, [windLayer, cloudLayers]);
+
+  // ── 5. Composite Output Memo ───────────────────────────────────────
+
+  return useMemo(() => {
+    const rnpCombined = [...staticRnpLayers];
+    if (dynamicRnpLayers.length > 0) {
+      rnpCombined.splice(2, 0, ...dynamicRnpLayers);
+    }
+    return {
+      overlaidLayers: [
+        ...staticLayers,
+        ...staticAtsRouteLayers,
+        ...dynamicAtsRouteLayers,
+        ...weatherLayers,
+      ],
+      interleavedLayers: rnpCombined,
+    };
+  }, [
+    staticLayers,
+    staticAtsRouteLayers,
+    dynamicAtsRouteLayers,
+    weatherLayers,
+    staticRnpLayers,
+    dynamicRnpLayers,
+  ]);
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import { useControl } from 'react-map-gl/maplibre';
 import type { ControlPosition } from 'react-map-gl/maplibre';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 interface InterleavedDeckGLProps {
   layers: any[];
@@ -20,6 +21,7 @@ export function InterleavedDeckGL(props: InterleavedDeckGLProps) {
   const { onOverlayCreated, ...overlayProps } = props;
   const onOverlayCreatedRef = useRef(onOverlayCreated);
   const overlayRef = useRef<MapboxOverlay | null>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     onOverlayCreatedRef.current = onOverlayCreated;
@@ -27,7 +29,12 @@ export function InterleavedDeckGL(props: InterleavedDeckGLProps) {
 
   const overlay = useControl(
     () => {
-      const instance = new MapboxOverlay({ ...overlayProps, interleaved: true });
+      const instance = new MapboxOverlay({
+        ...overlayProps,
+        interleaved: true,
+        useDevicePixels: Math.min(window.devicePixelRatio, 1.5),
+        _typedArrayManagerProps: isMobile ? { overAlloc: 1, poolSize: 0 } : undefined,
+      });
       overlayRef.current = instance;
       return instance;
     },

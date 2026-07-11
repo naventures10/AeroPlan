@@ -12,7 +12,8 @@ from dotenv import load_dotenv
 from joblib import Parallel, delayed
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import connected_components
-from shapely import STRtree, line_merge, snap, unary_union
+from shapely import STRtree, line_merge, set_precision, snap, unary_union
+from shapely.ops import polygonize
 from sqlalchemy import create_engine, text
 
 load_dotenv()
@@ -313,51 +314,164 @@ class AirspaceETL:
 
         print("\n[*] Starting geometry reconstruction pipeline...")
 
-        # 1. Project to metric plane (EPSG:3857) for accurate clustering
+        # 1. Project to metric plane (EPSG:3857) for accurate clustering/spatial operations
         print("  [Step 1] Projecting to metric plane (EPSG:3857)...")
         planar_gdf = full_gdf.to_crs(epsg=3857)
 
         reconstructed_results = []
-        eps = 7000.0  # 7km clustering distance
+        eps = 7000.0  # 7km clustering distance for standard airspaces
 
         # 2. Process each Airspace Type separately
         for airspace_type, type_group in planar_gdf.groupby("airspace_type"):
             print(f"  --- Processing {airspace_type} ---")
 
-            # A. Clustering
-            geoms = type_group.geometry.values
-            # pyrefly: ignore [bad-argument-type]
-            tree = STRtree(geoms)
-            # pyrefly: ignore [no-matching-overload]
-            indices_i, indices_j = tree.query(geoms, predicate="dwithin", distance=eps)
+            if airspace_type in ["FIR", "ADIZ"]:
+                print(
+                    f"    [+] Running Point-in-Polygon spatial reconstruction for {airspace_type}..."
+                )
 
-            n = len(type_group)
-            adj_matrix = csr_matrix((np.ones(len(indices_i)), (indices_i, indices_j)), shape=(n, n))
-            n_components, labels = connected_components(csgraph=adj_matrix, directed=False)
+                # Fetch centroids
+                try:
+                    sql_meta = f"""
+                        SELECT id, name, geom AS geometry
+                        FROM airspaces_metadata
+                        WHERE airspace_type = '{airspace_type}'
+                    """
+                    gdf_meta = gpd.read_postgis(sql_meta, con=self.engine, geom_col="geometry")
+                except Exception as e:
+                    raise RuntimeError(
+                        f"Failed to query {airspace_type} centroids from airspaces_metadata: {e}. "
+                        "Centroids are required for spatial reconstruction. Please run etl_airspace_metadata.py first."
+                    ) from e
 
-            type_group = type_group.copy()
-            type_group["cluster_id"] = labels
-            print(f"    Identified {n_components} zones.")
+                if gdf_meta.empty:
+                    raise RuntimeError(
+                        f"No centroids found in airspaces_metadata for {airspace_type}. "
+                        "Centroids are required for spatial reconstruction. Please run etl_airspace_metadata.py first."
+                    )
 
-            # B. Stitching in Parallel
-            results = Parallel(n_jobs=-1)(
-                delayed(stitch_cluster)(airspace_type, cid, group)
-                for cid, group in type_group.groupby("cluster_id")
-            )
+                # Project metadata to planar (EPSG:3857)
+                gdf_meta_planar = gdf_meta.to_crs(epsg=3857)
 
-            stitched_geoms = [r for r in results if r is not None]
-            if not stitched_geoms:
-                continue
+                # Extract line segments
+                original_lines = []
+                for geom in type_group.geometry:
+                    if geom.geom_type == "LineString":
+                        original_lines.append(geom)
+                    elif geom.geom_type == "MultiLineString":
+                        original_lines.extend(geom.geoms)
 
-            stitched_gdf = gpd.GeoDataFrame(stitched_geoms, crs="EPSG:3857")
-            stitched_gdf["geometry"] = stitched_gdf["geometry"].simplify(10.0)
+                if not original_lines:
+                    print(f"    [!] No line geometries found for {airspace_type}. Skipping...")
+                    continue
 
-            # C. Post-processing
-            final_type_gdf = stitched_gdf.to_crs(epsg=4326)
-            final_type_gdf["airspace_type"] = airspace_type
-            final_type_gdf["layer_name"] = f"{airspace_type}_RECONSTRUCTED"
+                # Snap to grid to close all gaps
+                grid = 500.0
+                print(f"    Aligning lines to a {grid}m grid...")
+                aligned = [set_precision(line, grid_size=grid) for line in original_lines]
+                union_geom = unary_union(aligned)
 
-            reconstructed_results.append(final_type_gdf)
+                # Polygonize
+                polygons = list(polygonize(union_geom))
+                print(f"    Formed {len(polygons)} closed polygons.")
+                if not polygons:
+                    raise RuntimeError(
+                        f"Could not form any polygons from the snapped {airspace_type} lines."
+                    )
+
+                polygons_gdf = gpd.GeoDataFrame(geometry=polygons, crs="EPSG:3857")
+
+                # Group polygons by closest centroid
+                fir_polygons = {row["name"]: [] for idx, row in gdf_meta_planar.iterrows()}
+                unassigned_polygons = []
+
+                for _idx, poly_row in polygons_gdf.iterrows():
+                    poly = poly_row.geometry
+                    assigned = False
+                    for _c_idx, centroid_row in gdf_meta_planar.iterrows():
+                        if poly.contains(centroid_row.geometry):
+                            fir_polygons[centroid_row["name"]].append(poly)
+                            assigned = True
+                            break
+                    if not assigned:
+                        unassigned_polygons.append(poly)
+
+                # Assign slivers to closest centroid
+                for poly in unassigned_polygons:
+                    centroid_poly = poly.centroid
+                    closest_name = None
+                    min_dist = float("inf")
+                    for _idx, centroid_row in gdf_meta_planar.iterrows():
+                        dist = centroid_poly.distance(centroid_row.geometry)
+                        if dist < min_dist:
+                            min_dist = dist
+                            closest_name = centroid_row["name"]
+                    if closest_name:
+                        fir_polygons[closest_name].append(poly)
+
+                # Dissolve, simplify and extract boundaries
+                final_geoms = []
+                simplify_tol = 2000.0  # 2km tolerance
+                for _name, polys in fir_polygons.items():
+                    if not polys:
+                        continue
+                    fir_union = unary_union(polys)
+                    if fir_union.geom_type in ["Polygon", "MultiPolygon"]:
+                        simplified = fir_union.simplify(simplify_tol, preserve_topology=True)
+                        # Extract outline boundary (LineString or MultiLineString)
+                        boundary = simplified.boundary
+                        if not boundary.is_empty:
+                            final_geoms.append(
+                                {"geometry": boundary, "airspace_type": airspace_type}
+                            )
+
+                if not final_geoms:
+                    raise RuntimeError(
+                        f"No valid boundary outlines could be resolved for {airspace_type}."
+                    )
+
+                stitched_gdf = gpd.GeoDataFrame(final_geoms, crs="EPSG:3857")
+                final_type_gdf = stitched_gdf.to_crs(epsg=4326)
+                final_type_gdf["layer_name"] = f"{airspace_type}_RECONSTRUCTED"
+                reconstructed_results.append(final_type_gdf)
+
+            else:
+                # A. Clustering
+                geoms = type_group.geometry.values
+                # pyrefly: ignore [bad-argument-type]
+                tree = STRtree(geoms)
+                # pyrefly: ignore [no-matching-overload]
+                indices_i, indices_j = tree.query(geoms, predicate="dwithin", distance=eps)
+
+                n = len(type_group)
+                adj_matrix = csr_matrix(
+                    (np.ones(len(indices_i)), (indices_i, indices_j)), shape=(n, n)
+                )
+                n_components, labels = connected_components(csgraph=adj_matrix, directed=False)
+
+                type_group = type_group.copy()
+                type_group["cluster_id"] = labels
+                print(f"    Identified {n_components} zones.")
+
+                # B. Stitching in Parallel
+                results = Parallel(n_jobs=-1)(
+                    delayed(stitch_cluster)(airspace_type, cid, group)
+                    for cid, group in type_group.groupby("cluster_id")
+                )
+
+                stitched_geoms = [r for r in results if r is not None]
+                if not stitched_geoms:
+                    continue
+
+                stitched_gdf = gpd.GeoDataFrame(stitched_geoms, crs="EPSG:3857")
+                stitched_gdf["geometry"] = stitched_gdf["geometry"].simplify(10.0)
+
+                # C. Post-processing
+                final_type_gdf = stitched_gdf.to_crs(epsg=4326)
+                final_type_gdf["airspace_type"] = airspace_type
+                final_type_gdf["layer_name"] = f"{airspace_type}_RECONSTRUCTED"
+
+                reconstructed_results.append(final_type_gdf)
 
         if not reconstructed_results:
             return gpd.GeoDataFrame()
@@ -400,6 +514,92 @@ class AirspaceETL:
                     conn.execute(
                         text(f"ALTER TABLE {TARGET_TABLE} ADD COLUMN ogc_fid SERIAL PRIMARY KEY")
                     )
+
+                # Create helper function sources for Martin zoom filtering
+                conn.execute(
+                    text("""
+                    CREATE OR REPLACE FUNCTION public.get_airspaces_geometry(z integer, x integer, y integer)
+                    RETURNS bytea AS $$
+                    DECLARE
+                      mvt bytea;
+                    BEGIN
+                      SELECT INTO mvt ST_AsMVT(tile, 'get_airspaces_geometry') FROM (
+                        SELECT
+                          a.ogc_fid,
+                          a.airspace_type,
+                          a.layer_name,
+                          ST_AsMVTGeom(
+                            ST_Transform(a.wkb_geometry, 3857),
+                            ST_TileEnvelope(z, x, y),
+                            4096,
+                            64,
+                            true
+                          ) AS geom
+                        FROM
+                          public.airspaces_geometry a
+                        WHERE
+                          a.wkb_geometry && ST_Transform(ST_TileEnvelope(z, x, y), 4326)
+                          AND (
+                            (z >= 2 AND a.airspace_type = 'FIR') OR
+                            (z >= 3 AND a.airspace_type = 'ADIZ') OR
+                            (z >= 4 AND a.airspace_type = 'CTA_UPPER') OR
+                            (z >= 4 AND a.airspace_type = 'UPR_ZONE') OR
+                            (z >= 6 AND a.airspace_type = 'CTA_LOWER') OR
+                            (z >= 6 AND a.airspace_type = 'TRA') OR
+                            (z >= 6 AND a.airspace_type = 'TSA') OR
+                            (z >= 7 AND a.airspace_type IN ('DANGER', 'PROHIBITED', 'RESTRICTED', 'CTR'))
+                          )
+                      ) AS tile;
+                      RETURN mvt;
+                    END;
+                    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+                    """)
+                )
+
+                conn.execute(
+                    text("""
+                    CREATE OR REPLACE FUNCTION public.get_airspaces_metadata(z integer, x integer, y integer)
+                    RETURNS bytea AS $$
+                    DECLARE
+                      mvt bytea;
+                    BEGIN
+                      SELECT INTO mvt ST_AsMVT(tile, 'get_airspaces_metadata') FROM (
+                        SELECT
+                          a.id,
+                          a.airspace_type,
+                          a.name,
+                          a.identification,
+                          a.upper_limit,
+                          a.lower_limit,
+                          a.remarks,
+                          a.source_file,
+                          ST_AsMVTGeom(
+                            ST_Transform(a.geom, 3857),
+                            ST_TileEnvelope(z, x, y),
+                            4096,
+                            64,
+                            true
+                          ) AS geom
+                        FROM
+                          public.airspaces_metadata a
+                        WHERE
+                          a.geom && ST_Transform(ST_TileEnvelope(z, x, y), 4326)
+                          AND (
+                            (z >= 2 AND a.airspace_type = 'FIR') OR
+                            (z >= 3 AND a.airspace_type = 'ADIZ') OR
+                            (z >= 4 AND a.airspace_type = 'CTA_UPPER') OR
+                            (z >= 4 AND a.airspace_type = 'UPR_ZONE') OR
+                            (z >= 6 AND a.airspace_type = 'CTA_LOWER') OR
+                            (z >= 6 AND a.airspace_type = 'TRA') OR
+                            (z >= 6 AND a.airspace_type = 'TSA') OR
+                            (z >= 7 AND a.airspace_type IN ('DANGER', 'PROHIBITED', 'RESTRICTED', 'CTR'))
+                          )
+                      ) AS tile;
+                      RETURN mvt;
+                    END;
+                    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+                    """)
+                )
 
             print(f"[+] SUCCESS: Data loaded into PostGIS table: {TARGET_TABLE}")
             return True
