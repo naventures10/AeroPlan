@@ -125,7 +125,12 @@ resource "google_cloud_run_v2_service" "backend" {
     ]
   }
 
-  depends_on = [google_project_service.run]
+  depends_on = [
+    google_project_service.run,
+    google_secret_manager_secret_iam_member.sa_secret_access_db,
+    google_secret_manager_secret_iam_member.sa_secret_access_otel_endpoint,
+    google_secret_manager_secret_iam_member.sa_secret_access_otel_headers
+  ]
 }
 
 # Make backend public
@@ -249,7 +254,10 @@ resource "google_cloud_run_v2_service" "martin" {
 
   # No lifecycle block needed since image is managed in OpenTofu
 
-  depends_on = [google_project_service.run]
+  depends_on = [
+    google_project_service.run,
+    google_secret_manager_secret_iam_member.sa_secret_access_martin
+  ]
 }
 
 # Make martin public
