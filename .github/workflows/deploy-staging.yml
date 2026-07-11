@@ -53,43 +53,11 @@ jobs:
           docker build -t $IMAGE ./backend
           docker push $IMAGE
 
-      - name: Deploy Backend to Cloud Run
-        run: |-
-          IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-backend:${{ github.sha }}"
-          
-          # Retrieve the database VM private IP dynamically
-          DB_VM_IP=$(gcloud compute instances describe eaip-db-vm \
-            --zone=us-central1-a \
-            --format='value(networkInterfaces[0].networkIP)')
-          
-          gcloud run deploy eaip-backend \
-            --image $IMAGE \
-            --region ${{ env.REGION }} \
-            --update-env-vars REDIS_HOST=$DB_VM_IP,REDIS_PORT=6379
-
-      - name: Configure Backend OTLP Telemetry
-        run: |-
-          gcloud run services update eaip-backend \
-            --region ${{ env.REGION }} \
-            --update-env-vars OTEL_SERVICE_NAME="aeroplan_GCP_backend" \
-            --update-env-vars OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}/v1/traces \
-            --update-env-vars OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}/v1/metrics \
-            --update-env-vars OTEL_EXPORTER_OTLP_HEADERS="${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}"
-
-      # ── Weather Pipeline (Cloud Run Job) ────────────────────────────────────
-
       - name: Build and Push Weather Pipeline Image
         run: |-
           IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/weather-pipeline:${{ github.sha }}"
           docker build -f backend/Dockerfile.weather -t $IMAGE ./backend
           docker push $IMAGE
-
-      - name: Deploy Weather Pipeline Cloud Run Job
-        run: |-
-          IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/weather-pipeline:${{ github.sha }}"
-          gcloud run jobs update weather-pipeline --image $IMAGE --region ${{ env.REGION }}
-
-      # ── Martin Tile Server ─────────────────────────────────────────────────
 
       - name: Pull, Tag, and Push Martin Image to Artifact Registry
         run: |-
@@ -99,37 +67,78 @@ jobs:
           docker tag $MARTIN_IMAGE_SRC $MARTIN_IMAGE_DEST
           docker push $MARTIN_IMAGE_DEST
 
-      - name: Deploy Martin Tile Server to Cloud Run
-        run: |-
-          IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-martin:v0.14.2"
-          gcloud run deploy eaip-martin --image $IMAGE --region ${{ env.REGION }}
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.8.8
 
-      # ── Frontend ───────────────────────────────────────────────────────────
-
-      - name: Save Previous Frontend Revision
-        id: prev_revision
+      - name: Retrieve Google access token for OpenTofu
         run: |
-          REV=$(gcloud run services describe eaip-frontend --region ${{ env.REGION }} --format 'value(status.latestReadyRevisionName)' || echo "")
-          echo "PREV_REV=$REV" >> $GITHUB_ENV
+          GOOGLE_OAUTH_ACCESS_TOKEN=$(gcloud auth print-access-token)
+          echo "GOOGLE_OAUTH_ACCESS_TOKEN=$GOOGLE_OAUTH_ACCESS_TOKEN" >> $GITHUB_ENV
+
+      - name: Fetch Secrets from GCP Secret Manager
+        id: secrets
+        uses: google-github-actions/get-secretmanager-secrets@v2
+        with:
+          secrets: |-
+            DB_PASSWORD:projects/${{ env.PROJECT_ID }}/secrets/eaip-db-password
+            VITE_MAPTILER_KEY:projects/${{ env.PROJECT_ID }}/secrets/vite-maptiler-key
+            VITE_FARO_URL:projects/${{ env.PROJECT_ID }}/secrets/vite-faro-url
+            OTEL_ENDPOINT:projects/${{ env.PROJECT_ID }}/secrets/otel-endpoint
+            OTEL_HEADERS:projects/${{ env.PROJECT_ID }}/secrets/otel-headers
+
+      # Run first tofu apply to ensure backend & martin services exist so we can fetch their URLs
+      - name: Deploy Base Infrastructure and Services
+        working-directory: infra/tofu
+        run: |-
+          tofu init -reconfigure -backend-config="access_token=${{ env.GOOGLE_OAUTH_ACCESS_TOKEN }}"
+          tofu apply -auto-approve \
+            -var="db_password=${{ steps.secrets.outputs.DB_PASSWORD }}" \
+            -var="vite_maptiler_key=${{ steps.secrets.outputs.VITE_MAPTILER_KEY }}" \
+            -var="vite_faro_url=${{ steps.secrets.outputs.VITE_FARO_URL }}" \
+            -var="otel_endpoint=${{ steps.secrets.outputs.OTEL_ENDPOINT }}" \
+            -var="otel_headers=${{ steps.secrets.outputs.OTEL_HEADERS }}" \
+            -var="backend_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-backend:${{ github.sha }}" \
+            -var="weather_pipeline_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/weather-pipeline:${{ github.sha }}" \
+            -var="martin_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-martin:v0.14.2"
+
+      - name: Fetch Deployed Service URLs
+        id: urls
+        run: |
+          BACKEND_URL=$(gcloud run services describe eaip-backend --region ${{ env.REGION }} --format 'value(status.url)')
+          MARTIN_URL=$(gcloud run services describe eaip-martin --region ${{ env.REGION }} --format 'value(status.url)')
+          echo "BACKEND_URL=$BACKEND_URL" >> $GITHUB_ENV
+          echo "MARTIN_URL=$MARTIN_URL" >> $GITHUB_ENV
 
       - name: Build, Push, and Deploy Frontend Image
         run: |-
-          # Fetch backend and martin URLs to inject into the frontend at build time
-          BACKEND_URL=$(gcloud run services describe eaip-backend --region ${{ env.REGION }} --format 'value(status.url)')
-          MARTIN_URL=$(gcloud run services describe eaip-martin --region ${{ env.REGION }} --format 'value(status.url)')
-
           IMAGE="${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-frontend:${{ github.sha }}"
           docker build \
-            --build-arg VITE_API_URL=$BACKEND_URL \
-            --build-arg VITE_MARTIN_URL=$MARTIN_URL \
-            --build-arg VITE_MAPTILER_KEY=${{ secrets.VITE_MAPTILER_KEY }} \
+            --build-arg VITE_API_URL=${{ env.BACKEND_URL }} \
+            --build-arg VITE_MARTIN_URL=${{ env.MARTIN_URL }} \
+            --build-arg VITE_MAPTILER_KEY=${{ steps.secrets.outputs.VITE_MAPTILER_KEY }} \
             --build-arg VITE_E2E_TEST=true \
-            --build-arg VITE_FARO_URL=${{ secrets.VITE_FARO_URL }} \
+            --build-arg VITE_FARO_URL=${{ steps.secrets.outputs.VITE_FARO_URL }} \
             -t $IMAGE ./frontend
           docker push $IMAGE
 
-          gcloud run deploy eaip-frontend --image $IMAGE --region ${{ env.REGION }}
-          gcloud run services update-traffic eaip-frontend --region ${{ env.REGION }} --to-latest
+      # Run second tofu apply to deploy the built frontend image
+      - name: Deploy Frontend via OpenTofu
+        working-directory: infra/tofu
+        run: |-
+          tofu apply -auto-approve \
+            -var="db_password=${{ steps.secrets.outputs.DB_PASSWORD }}" \
+            -var="vite_maptiler_key=${{ steps.secrets.outputs.VITE_MAPTILER_KEY }}" \
+            -var="vite_faro_url=${{ steps.secrets.outputs.VITE_FARO_URL }}" \
+            -var="otel_endpoint=${{ steps.secrets.outputs.OTEL_ENDPOINT }}" \
+            -var="otel_headers=${{ steps.secrets.outputs.OTEL_HEADERS }}" \
+            -var="backend_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-backend:${{ github.sha }}" \
+            -var="weather_pipeline_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/weather-pipeline:${{ github.sha }}" \
+            -var="martin_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-martin:v0.14.2" \
+            -var="frontend_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-frontend:${{ github.sha }}"
+
+
 
       - name: Setup Node.js for E2E
         uses: actions/setup-node@v4
