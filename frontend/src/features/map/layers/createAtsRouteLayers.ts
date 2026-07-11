@@ -174,6 +174,7 @@ export function createStaticAtsRouteLayers(ctx: LayerContext): any[] {
   const layers: any[] = [];
 
   const selectedSet = new Set(selectedRouteIds);
+  const isSelected = selectedSet.size > 0;
 
   const rnavSelectedColor: [number, number, number, number] = [
     palette.rgbRnavGreen[0],
@@ -226,7 +227,7 @@ export function createStaticAtsRouteLayers(ctx: LayerContext): any[] {
     new MVTLayer({
       id: `atsRoutes-geom-layer-${ctx.atsRoutesToggleCounter}`,
       data: `${window.location.origin}/tiles/ats_route_segments/{z}/{x}/{y}`,
-      visible: viewMode === 'ENROUTE',
+      visible: viewMode === 'ENROUTE' && (isLayerActive || isSelected),
       pickable: (isLayerActive || selectedSet.size > 0) && !activeLayers.weather,
       autoHighlight: true,
       highlightColor: isLayerActive
@@ -297,7 +298,7 @@ export function createStaticAtsRouteLayers(ctx: LayerContext): any[] {
     new MVTLayer({
       id: `atsRoutes-waypoints-layer-${ctx.atsRoutesToggleCounter}`,
       data: `${window.location.origin}/tiles/ats_route_waypoints/{z}/{x}/{y}`,
-      visible: viewMode === 'ENROUTE',
+      visible: viewMode === 'ENROUTE' && (isLayerActive || isSelected),
       pickable: (isLayerActive || selectedSet.size > 0) && !activeLayers.weather,
       autoHighlight: true,
       highlightColor: ctx.isDarkMode ? [255, 255, 255, 60] : [0, 0, 0, 40],

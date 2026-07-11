@@ -37,13 +37,14 @@ export function createNavaidLayer(ctx: LayerContext): any[] {
   const { viewMode, activeLayers, selectedFeature, setSelectedFeature } = ctx;
   const isZoomNavaids = ctx.zoom > ZOOM_NAVAIDS;
   const isLayerActive = activeLayers.navaids;
+  const isSelected = selectedFeature?.type === 'NAVAID';
   const palette = getLayerPalette(ctx.isDarkMode);
 
   return [
     new MVTLayer({
       id: 'navaids-layer',
       data: `${window.location.origin}/tiles/radio_nav_aids/{z}/{x}/{y}`,
-      visible: viewMode === 'ENROUTE',
+      visible: viewMode === 'ENROUTE' && (isLayerActive || isSelected),
       pickable: isLayerActive && !activeLayers.weather,
       autoHighlight: true,
       highlightColor: [255, 255, 255, 60],

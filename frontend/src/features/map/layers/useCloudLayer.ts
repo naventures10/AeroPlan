@@ -234,9 +234,17 @@ export function useCloudLayer() {
 
   const isCloudActive = isWeatherMode && isCloudMode && viewMode === 'ENROUTE';
 
-  const viewState = useMapStore((s) => {
+  const zoom = useMapStore((s) => {
     const active = s.isWeatherMode && s.isCloudMode && s.viewMode === 'ENROUTE';
-    return active ? s.viewState : null;
+    return active ? Math.round(s.viewState.zoom * 2) / 2 : 0;
+  });
+  const lng = useMapStore((s) => {
+    const active = s.isWeatherMode && s.isCloudMode && s.viewMode === 'ENROUTE';
+    return active ? Math.round(s.viewState.longitude * 5) / 5 : 0;
+  });
+  const lat = useMapStore((s) => {
+    const active = s.isWeatherMode && s.isCloudMode && s.viewMode === 'ENROUTE';
+    return active ? Math.round(s.viewState.latitude * 5) / 5 : 0;
   });
 
   // Create a stable, altitude-dependent frame loader
@@ -292,10 +300,6 @@ export function useCloudLayer() {
 
   const isSurface = windAltitude === 0;
   const baseAltMeters = isSurface ? 1000 : windAltitude * 100 * 0.3048;
-
-  const zoom = viewState?.zoom ?? 0;
-  const lng = viewState?.longitude ?? 0;
-  const lat = viewState?.latitude ?? 0;
 
   // 3. Helper to generate cloud particle geometry for a single frame
   const generateCloudGeometry = useCallback(

@@ -13,6 +13,7 @@ export function createWaypointLayer(ctx: LayerContext): any[] {
   const { viewMode, activeLayers, selectedFeature, setSelectedFeature } = ctx;
   const isZoomWaypoints = ctx.zoom > ZOOM_WAYPOINTS;
   const isLayerActive = activeLayers.waypoints;
+  const isSelected = selectedFeature?.type === 'WAYPOINT';
   const palette = getLayerPalette(ctx.isDarkMode);
 
   const transparentColor: [number, number, number, number] = [0, 0, 0, 0];
@@ -39,7 +40,7 @@ export function createWaypointLayer(ctx: LayerContext): any[] {
     new MVTLayer({
       id: 'waypoints-layer',
       data: `${window.location.origin}/tiles/significant_points/{z}/{x}/{y}`,
-      visible: viewMode === 'ENROUTE',
+      visible: viewMode === 'ENROUTE' && (isLayerActive || isSelected),
       // Disable picking when ATS routes are active to avoid selecting waypoints while viewing routes
       pickable: !activeLayers.atsRoutes && isLayerActive && !activeLayers.weather,
       autoHighlight: true,
