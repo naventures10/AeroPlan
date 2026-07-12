@@ -56,5 +56,8 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "local"
     SSL_VERIFY: bool = True
 
+    # ── Rate Limiting ────────────────────────────────────────────────
+    RATE_LIMIT_DEFAULT: str = "100/minute"
+
 
 settings = Settings()

@@ -26,6 +26,10 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
     screenshot: 'on',
+    /* Bypass Nginx rate limiting in E2E tests */
+    extraHTTPHeaders: {
+      'x-e2e-test': 'true',
+    },
   },
 
   /* Configure projects for major browsers */
