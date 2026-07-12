@@ -9,7 +9,7 @@ import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 
 // Initialize Grafana Faro Web SDK for observability
 const faroUrl = import.meta.env.VITE_FARO_URL;
-if (faroUrl) {
+if (faroUrl && faroUrl !== 'disabled' && faroUrl !== 'none') {
   initializeFaro({
     url: faroUrl,
     app: {
