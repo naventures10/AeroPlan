@@ -76,6 +76,12 @@ if [ "$SYNC_BUCKET" = true ]; then
     echo "☁️  Syncing MinIO bucket to GCS (excluding /output/ and /weather/)..."
     TEMP_MINIO_DIR=$(mktemp -d)
     /opt/homebrew/bin/mc mirror --exclude "output/*" --exclude "weather/*" localminio/ais "$TEMP_MINIO_DIR"
+
+    # 5. Copy the PMTiles file to output/ inside the temp directory so it gets synced to the GCS bucket output/ folder
+    echo "☁️  Copying PMTiles file from MinIO to temp sync directory..."
+    mkdir -p "$TEMP_MINIO_DIR/output"
+    /opt/homebrew/bin/mc cp localminio/ais/output/ERC-VOMF.pmtiles "$TEMP_MINIO_DIR/output/ERC-VOMF.pmtiles"
+
     gsutil -m rsync -r "$TEMP_MINIO_DIR" "gs://eaip-staging-data-project-d5038013-e773-4f0b-98a/"
     rm -rf "$TEMP_MINIO_DIR"
     echo "✅ Storage sync complete."
