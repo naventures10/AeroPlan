@@ -25,4 +25,4 @@ COPY app/ ./app/
 # Create logs directory
 RUN mkdir -p /app/logs
 
-CMD ["uv", "run", "python", "-m", "jobs.etl_weather"]
+CMD ["uv", "run", "python", "-m", "jobs.entrypoint"]
