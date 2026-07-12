@@ -18,10 +18,13 @@ from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from sqlalchemy import text
 
 from app.api.v1.api import api_router
 from app.core.database import AsyncSessionLocal, engine
+from app.core.limiter import limiter
 from app.core.logging_config import setup_logging
 from app.core.redis import close_redis, get_cached_json, init_redis, set_cached_json
 from app.schemas.geojson import HealthResponse
@@ -83,6 +86,8 @@ async def lifespan(app: FastAPI):
 
 # ── Application ──────────────────────────────────────────────────────────────
 app = FastAPI(title="Aero Plan API", version="0.1.0", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
 
 FastAPIInstrumentor.instrument_app(app)
 
@@ -195,6 +200,15 @@ async def cache_middleware(request: Request, call_next):  # type: ignore[no-unty
 
 
 # ── Global Exception Handler ────────────────────────────────────────────────
+@app.exception_handler(RateLimitExceeded)
+def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    """Handle RateLimitExceeded exceptions, return 429 JSON response."""
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "Rate limit exceeded"},
+    )
+
+
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Catch-all for unhandled exceptions. Logs full traceback."""

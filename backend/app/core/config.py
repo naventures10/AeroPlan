@@ -7,6 +7,7 @@ Other modules import the singleton `settings` instance.
 
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Base directory for the project
@@ -55,6 +56,22 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     ENVIRONMENT: str = "local"
     SSL_VERIFY: bool = True
+
+    # ── Rate Limiting ────────────────────────────────────────────────
+    RATE_LIMIT_DEFAULT: str = "100/minute"
+
+    @field_validator("RATE_LIMIT_DEFAULT")
+    @classmethod
+    def validate_rate_limit(cls, v: str) -> str:
+        # Avoid vulture unused variable warning
+        _ = cls
+        from limits import parse
+
+        try:
+            parse(v)
+        except Exception as exc:
+            raise ValueError(f"Invalid rate limit format: {v}") from exc
+        return v
 
 
 settings = Settings()

@@ -25,8 +25,10 @@ FROM nginx:alpine
 # Pass ARGs down and export as ENVs for envsubst
 ARG VITE_API_URL
 ARG VITE_MARTIN_URL
+ARG E2E_BYPASS_SECRET
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_MARTIN_URL=$VITE_MARTIN_URL
+ENV E2E_BYPASS_SECRET=${E2E_BYPASS_SECRET:-dev-secret-key}
 
 # Remove default nginx static assets
 RUN rm -rf /usr/share/nginx/html/*
