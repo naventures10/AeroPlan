@@ -8,7 +8,6 @@ from app.models.airspace import AtsRoute, AtsRouteSegment, AtsRouteWaypoint
 from app.models.daylight import DaylightTime
 from app.models.navigation import RadioNavAid, SignificantPoint
 from app.models.notam import Notam
-from app.models.user import User
 
 __all__ = [
     "AerodromeChart",
@@ -21,5 +20,4 @@ __all__ = [
     "RadioNavAid",
     "SignificantPoint",
     "SpatialFeature",
-    "User",
 ]

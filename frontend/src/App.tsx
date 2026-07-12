@@ -3,7 +3,6 @@ import { createBrowserRouter, RouterProvider } from 'react-router';
 import LandingPage from './pages/LandingPage';
 import MapPage from './pages/MapPage';
 import ShaderLab from './pages/ShaderLab/index';
-import ProtectedRoute from './components/ProtectedRoute';
 
 const router = createBrowserRouter([
   {
@@ -12,11 +11,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/app',
-    element: (
-      <ProtectedRoute>
-        <MapPage />
-      </ProtectedRoute>
-    ),
+    element: <MapPage />,
   },
   {
     path: '/shader-lab',

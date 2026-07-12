@@ -8,8 +8,6 @@ const baseURL = process.env.BASE_URL || 'http://localhost:5173';
 export default defineConfig({
   testDir: './src/tests/e2e',
   testIgnore: '**/._*',
-  globalSetup: './src/tests/e2e/global-setup.ts',
-  globalTeardown: './src/tests/e2e/global-teardown.ts',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -28,8 +26,6 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
     screenshot: 'on',
-    /* Use authenticated state globally */
-    storageState: 'src/tests/e2e/artifacts/storageState.json',
   },
 
   /* Configure projects for major browsers */

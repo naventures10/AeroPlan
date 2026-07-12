@@ -20,7 +20,6 @@ describe('MobileMenuDrawer Component', () => {
 
   it('renders sections and titles when open', () => {
     render(<MobileMenuDrawer {...defaultProps} />);
-    expect(screen.getByText('User Profile')).toBeInTheDocument();
     expect(screen.getByText('AIP Supplements')).toBeInTheDocument();
     expect(screen.getByText('Enroute Notams')).toBeInTheDocument();
   });
@@ -38,10 +37,10 @@ describe('MobileMenuDrawer Component', () => {
     const onClose = vi.fn();
     render(<MobileMenuDrawer {...defaultProps} onClose={onClose} />);
 
-    // Click User Profile
-    const profileBtn = screen.getByLabelText('User Profile');
-    fireEvent.click(profileBtn);
-    expect(useMapStore.getState().isUserProfileModalOpen).toBe(true);
+    // Click AIP Supplements
+    const supplementsBtn = screen.getByLabelText('AIP Supplements');
+    fireEvent.click(supplementsBtn);
+    expect(useMapStore.getState().isAipSupplementsModalOpen).toBe(true);
     expect(onClose).toHaveBeenCalled();
   });
 });

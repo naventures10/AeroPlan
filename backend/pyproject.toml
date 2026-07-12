@@ -18,15 +18,14 @@ dependencies = [
     "psycopg[binary]>=3.3.3",
     "pydantic>=2.12.5",
     "pydantic-settings>=2.13.1",
-    "passlib[bcrypt]>=1.7.4",
-    "pyjwt>=2.8.0",
-    "alembic>=1.13.1",
+
+
     "python-dotenv>=1.0.0",
     "sqlalchemy>=2.0.48",
     "structlog>=25.5.0",
     "uvicorn[standard]>=0.41.0",
     "email-validator>=2.3.0",
-    "bcrypt<4.0.0",
+
     "opentelemetry-api>=1.42.1",
     "opentelemetry-sdk>=1.42.1",
     "opentelemetry-instrumentation-fastapi>=0.63b1",
@@ -79,11 +78,11 @@ select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "RUF"]
 ignore = ["B008", "RUF012", "E501"]
 
 [tool.vulture]
-exclude = ["alembic", ".venv"]
+exclude = [".venv"]
 make_whitelist = true
 min_confidence = 80
 paths = ["."]
 ignore_names = ["exc_tb", "exc_type", "exc_val", "method_name", "mock_run"]
 
 [tool.deptry.per_rule_ignores]
-DEP002 = ["uvicorn", "alembic", "psycopg-binary", "psycopg2-binary", "greenlet", "python-dotenv", "pydantic-settings", "passlib", "asyncpg", "psycopg", "email-validator", "bcrypt", "scipy"]
+DEP002 = ["uvicorn", "psycopg-binary", "psycopg2-binary", "greenlet", "python-dotenv", "pydantic-settings", "asyncpg", "psycopg", "email-validator", "scipy"]

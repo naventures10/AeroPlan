@@ -5,7 +5,6 @@ All environment variables are loaded once via pydantic-settings.
 Other modules import the singleton `settings` instance.
 """
 
-import logging
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -55,17 +54,7 @@ class Settings(BaseSettings):
     # ── Dev / Debug ────────────────────────────────────────────────────
     DEBUG: bool = False
     ENVIRONMENT: str = "local"
-
-    # ── Security ─────────────────────────────────────────────────────
-    SECRET_KEY: str = "eAIP-super-secret-key-change-in-production"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     SSL_VERIFY: bool = True
 
 
 settings = Settings()
-
-if settings.SECRET_KEY == "eAIP-super-secret-key-change-in-production":
-    logging.warning(
-        "WARNING: Using default SECRET_KEY. This is insecure and must be changed in production!"
-    )

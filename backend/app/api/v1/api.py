@@ -4,7 +4,6 @@ from app.api.v1.endpoints import (
     aerodromes,
     aip_supplements,
     ats_routes,
-    auth,
     charts,
     daylight,
     navaids,
@@ -18,7 +17,6 @@ from app.api.v1.endpoints import (
 api_router = APIRouter()
 
 api_router.include_router(aerodromes.router)
-api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(search.router)
 api_router.include_router(charts.router)
 api_router.include_router(rnp.router)

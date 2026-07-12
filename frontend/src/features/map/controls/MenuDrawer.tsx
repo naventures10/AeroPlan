@@ -11,27 +11,6 @@ interface MenuDrawerProps {
 
 const drawerSections = [
   {
-    id: 'user-profile',
-    title: 'User Profile',
-    icon: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-      </svg>
-    ),
-    description: 'Manage your account settings and preferences',
-    badge: null,
-    badgeClass: '',
-  },
-
-  {
     id: 'aip-supplements',
     title: 'AIP Supplements',
     icon: (
@@ -100,7 +79,6 @@ const itemVariants = {
 export default function MenuDrawer({ isOpen, onClose }: MenuDrawerProps) {
   const setAipSupplementsModalOpen = useMapStore((s) => s.setAipSupplementsModalOpen);
   const setAirspaceNotamsModalOpen = useMapStore((s) => s.setAirspaceNotamsModalOpen);
-  const setUserProfileModalOpen = useMapStore((s) => s.setUserProfileModalOpen);
 
   const [notamCount, setNotamCount] = useState<number | null>(null);
 
@@ -118,9 +96,6 @@ export default function MenuDrawer({ isOpen, onClose }: MenuDrawerProps) {
       onClose();
     } else if (id === 'airspace-notams') {
       setAirspaceNotamsModalOpen(true);
-      onClose();
-    } else if (id === 'user-profile') {
-      setUserProfileModalOpen(true);
       onClose();
     }
   };

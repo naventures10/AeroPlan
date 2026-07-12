@@ -35,7 +35,7 @@ async def test_cache_middleware_get_miss_and_hit(api_client: AsyncClient, mock_r
 
 @pytest.mark.asyncio
 async def test_cache_middleware_excluded_paths(api_client: AsyncClient, mock_redis) -> None:
-    """Test that health checks and auth paths bypass the cache completely."""
+    """Test that health checks bypass the cache completely."""
     mock_redis.get.reset_mock()
     mock_redis.set.reset_mock()
 
@@ -47,12 +47,6 @@ async def test_cache_middleware_excluded_paths(api_client: AsyncClient, mock_red
     mock_redis.get.assert_not_called()
     mock_redis.set.assert_not_called()
 
-    # Request auth/me
-    await api_client.get("/api/v1/auth/me")
-    # Even if unauthorized (e.g. 401), cache middleware shouldn't process/look up auth
-    mock_redis.get.assert_not_called()
-    mock_redis.set.assert_not_called()
-
 
 @pytest.mark.asyncio
 async def test_cache_middleware_non_get_requests(api_client: AsyncClient, mock_redis) -> None:
@@ -60,8 +54,8 @@ async def test_cache_middleware_non_get_requests(api_client: AsyncClient, mock_r
     mock_redis.get.reset_mock()
     mock_redis.set.reset_mock()
 
-    # Post to register (returns validation error 422 because of empty request body, but triggers route)
-    await api_client.post("/api/v1/auth/register", json={})
+    # POST requests should never interact with cache
+    await api_client.post("/api/v1/aerodromes", json={})
 
     # Verify no cache interactions
     mock_redis.get.assert_not_called()

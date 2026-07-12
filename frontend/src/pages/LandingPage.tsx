@@ -1,9 +1,6 @@
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router';
-import { Plane, Map as MapIcon, FlaskConical, ChevronRight, UserPlus, LogIn } from 'lucide-react';
-import { useAuthStore } from '../store/useAuthStore';
-import AuthModals from '../features/user/AuthModals';
+import { Plane, Map as MapIcon, FlaskConical, ChevronRight } from 'lucide-react';
 
 /**
  * Premium Landing Page for Aero Plan.
@@ -11,29 +8,6 @@ import AuthModals from '../features/user/AuthModals';
  */
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, checkAuth } = useAuthStore();
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  useEffect(() => {
-    if (isAuthenticated && isAuthModalOpen) {
-      setIsAuthModalOpen(false);
-      navigate('/app');
-    }
-  }, [isAuthenticated, isAuthModalOpen, navigate]);
-
-  const openAuth = (mode: 'login' | 'register') => {
-    if (isAuthenticated) {
-      navigate('/app');
-    } else {
-      setAuthMode(mode);
-      setIsAuthModalOpen(true);
-    }
-  };
 
   return (
     <div className="relative w-screen h-screen bg-[#020617] overflow-hidden flex items-center justify-center font-sans">
@@ -95,33 +69,14 @@ export default function LandingPage() {
           transition={{ delay: 0.6, duration: 0.5 }}
           className="flex flex-col sm:flex-row gap-4 w-full justify-center"
         >
-          {isAuthenticated ? (
-            <button
-              onClick={() => navigate('/app')}
-              className="bg-surface-bright text-on-primary font-bold px-8 h-14 rounded-xl hover:bg-blue-50 transition-colors flex items-center justify-center gap-2 group text-lg w-full sm:w-auto"
-            >
-              <MapIcon className="w-5 h-5" />
-              Launch Application
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={() => openAuth('login')}
-                className="bg-surface-container text-on-surface font-bold px-8 h-14 rounded-xl hover:bg-surface-container-highest border border-glass-border transition-colors flex items-center justify-center gap-2 group text-lg flex-1"
-              >
-                <LogIn className="w-5 h-5" />
-                Sign In
-              </button>
-              <button
-                onClick={() => openAuth('register')}
-                className="bg-surface-bright text-on-primary font-bold px-8 h-14 rounded-xl hover:bg-blue-50 transition-colors flex items-center justify-center gap-2 group text-lg flex-1"
-              >
-                <UserPlus className="w-5 h-5" />
-                Create Account
-              </button>
-            </>
-          )}
+          <button
+            onClick={() => navigate('/app')}
+            className="bg-surface-bright text-on-primary font-bold px-8 h-14 rounded-xl hover:bg-blue-50 transition-colors flex items-center justify-center gap-2 group text-lg w-full sm:w-auto"
+          >
+            <MapIcon className="w-5 h-5" />
+            Launch Application
+            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </button>
         </motion.div>
 
         {/* Secondary Links/Shader Lab Access */}
@@ -145,12 +100,6 @@ export default function LandingPage() {
       <div className="absolute bottom-8 text-on-surface-variant text-[10px] uppercase tracking-[0.3em] font-bold">
         Next-Gen Aviation Intelligence
       </div>
-
-      <AuthModals
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        initialMode={authMode}
-      />
     </div>
   );
 }

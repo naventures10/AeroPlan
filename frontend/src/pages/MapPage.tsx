@@ -69,12 +69,6 @@ const MobileFeatureInfoCard = lazy(() =>
     default: m.MobileFeatureInfoCard,
   })),
 );
-const UserProfileModal = lazy(() => import('../features/user/UserProfileModal'));
-const MobileUserProfileModal = lazy(() =>
-  import('../features/user/mobile/MobileUserProfileModal').then((module) => ({
-    default: module.MobileUserProfileModal,
-  })),
-);
 
 // fallow-ignore-next-line complexity
 export default function MapPage() {
@@ -262,7 +256,6 @@ export default function MapPage() {
       <Suspense fallback={null}>
         {isMobile ? <MobileAipSupplementsModal /> : <AipSupplementsModal />}
         {isMobile ? <MobileAirspaceNotamsModal /> : <AirspaceNotamsModal />}
-        {isMobile ? <MobileUserProfileModal /> : <UserProfileModal />}
         {isMobile && activeAirport && (viewMode === 'TERMINAL' || pitch > 0) && (
           <MobileTerminalDashboard icaoCode={activeAirport} />
         )}
