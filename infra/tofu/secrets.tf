@@ -122,6 +122,10 @@ resource "google_secret_manager_secret" "vite_faro_url" {
 resource "google_secret_manager_secret_version" "vite_faro_url_version" {
   secret      = google_secret_manager_secret.vite_faro_url.id
   secret_data = var.vite_faro_url
+
+  lifecycle {
+    ignore_changes = [secret_data]
+  }
 }
 
 # OTEL Endpoint Secret
@@ -136,6 +140,10 @@ resource "google_secret_manager_secret" "otel_endpoint" {
 resource "google_secret_manager_secret_version" "otel_endpoint_version" {
   secret      = google_secret_manager_secret.otel_endpoint.id
   secret_data = var.otel_endpoint
+
+  lifecycle {
+    ignore_changes = [secret_data]
+  }
 }
 
 # OTEL Headers Secret
@@ -150,6 +158,10 @@ resource "google_secret_manager_secret" "otel_headers" {
 resource "google_secret_manager_secret_version" "otel_headers_version" {
   secret      = google_secret_manager_secret.otel_headers.id
   secret_data = var.otel_headers
+
+  lifecycle {
+    ignore_changes = [secret_data]
+  }
 }
 
 # Grant GitHub Actions Service Account access to read Faro & OTEL secrets
