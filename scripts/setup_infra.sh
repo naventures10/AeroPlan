@@ -152,6 +152,7 @@ echo "Applying OpenTofu configuration..."
 (
     cd "$TOFU_DIR"
     tofu apply -auto-approve \
+        -replace=terraform_data.upload_martin_yaml \
         -var="db_password=${DB_PASSWORD}" \
         -var="vite_maptiler_key=${VITE_MAPTILER_KEY}" \
         -var="vite_faro_url=${VITE_FARO_URL}" \
