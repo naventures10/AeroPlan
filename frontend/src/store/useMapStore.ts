@@ -723,34 +723,10 @@ export const useMapStore = create<MapState>()(
     }),
     {
       name: 'eaip-map-store',
-      partialize: (state) => {
-        // Exclude highly dynamic forecast timestamps, play state, and runtime weather
-        // status from persistence so they are freshly fetched on app startup/reload.
-        const {
-          forecastTimestamps,
-          weatherStatus,
-          windAnimationTime,
-          windIsPlaying,
-          isWeatherMode,
-          isWindMode,
-          isAtsGeometryLoaded,
-          isAirspaceLoaded,
-          atsRoutesToggleCounter,
-          activeLayers,
-          routeDetails,
-          isLoadingRoute,
-          navaidDetails,
-          isLoadingNavaid,
-          ...rest
-        } = state;
-        return {
-          ...rest,
-          activeLayers: {
-            ...activeLayers,
-            weather: false, // Ensure weather layer is disabled by default on clean reload
-          },
-        };
-      },
+      partialize: (state) => ({
+        mapStyle: state.mapStyle,
+        isDarkMode: state.isDarkMode,
+      }),
     },
   ),
 );

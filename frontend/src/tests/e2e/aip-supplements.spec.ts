@@ -69,7 +69,7 @@ test.describe('AIP Supplements Workflow', () => {
     await expect(aipSupplementsItem).toBeDisabled();
 
     // 4. Verify clicking it does not open the modal
-    await aipSupplementsItem.click({ force: true });
+    await aipSupplementsItem.dispatchEvent('click');
     await expect(page.locator('.aip-supplements-modal-container')).not.toBeVisible();
   });
 });
