@@ -13,10 +13,10 @@ export const featureFlags = {
 export type FeatureId = 'aip-supplements' | 'aerodrome-charts' | 'AD_2_24';
 
 // Initialize E2E runtime overrides on window
-if (typeof window !== 'undefined' && import.meta.env.VITE_E2E === 'true') {
-  (window as any).__LOCKS__ = {
-    lockAipSupplements: false,
-    lockAerodromeCharts: false,
+if (typeof window !== 'undefined') {
+  (window as any).__LOCKS__ = (window as any).__LOCKS__ || {
+    lockAipSupplements: import.meta.env.VITE_LOCK_AIP_SUPPLEMENTS === 'true',
+    lockAerodromeCharts: import.meta.env.VITE_LOCK_AERODROME_CHARTS === 'true',
   };
 }
 

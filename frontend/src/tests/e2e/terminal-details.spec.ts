@@ -115,15 +115,13 @@ test.describe('Terminal View - Detailed Interactions', () => {
         body: JSON.stringify({ records: [] }),
       });
     });
-
     mapPage = new MapPage(page);
     terminalPage = new TerminalPage(page);
-
-    await mapPage.goto();
-    await mapPage.waitForReady();
   });
 
   test('AIP Section dropdown and rendering', async ({ page }) => {
+    await mapPage.goto();
+    await mapPage.waitForReady();
     await mapPage.search('VOMM');
 
     await expect(mapPage.aerodromeInfoButton).toBeVisible({ timeout: 15000 });
@@ -148,6 +146,8 @@ test.describe('Terminal View - Detailed Interactions', () => {
   });
 
   test('Chart Dropdown scrollable list', async () => {
+    await mapPage.goto();
+    await mapPage.waitForReady();
     await mapPage.search('VOMM');
     await expect(terminalPage.chartDropdownTrigger).toBeVisible({ timeout: 15000 });
 
@@ -166,6 +166,8 @@ test.describe('Terminal View - Detailed Interactions', () => {
   });
 
   test('RNP Procedure selection activates transition', async ({ page }) => {
+    await mapPage.goto();
+    await mapPage.waitForReady();
     await mapPage.search('VOMM');
     await terminalPage.openChart('RNP Y RWY 07');
     await terminalPage.clickViewIn3D();
@@ -191,5 +193,28 @@ test.describe('Terminal View - Detailed Interactions', () => {
     expect(state.viewMode).toBe('TERMINAL');
     expect(state.pitch).toBeGreaterThan(40);
     await expect(page.locator('h2', { hasText: 'VOMM' })).toBeVisible();
+  });
+
+  test('Chart Dropdown is locked and disabled', async ({ page }) => {
+    // 1. Lock the charts feature
+    await page.addInitScript(() => {
+      (window as any).__LOCKS__ = {
+        lockAipSupplements: false,
+        lockAerodromeCharts: true,
+      };
+    });
+
+    await mapPage.goto();
+    await mapPage.waitForReady();
+    await mapPage.search('VOMM');
+
+    // 2. Verify trigger is visible and has locked styling and is disabled
+    await expect(terminalPage.chartDropdownTrigger).toBeVisible({ timeout: 15000 });
+    await expect(terminalPage.chartDropdownTrigger).toHaveClass(/locked/);
+    await expect(terminalPage.chartDropdownTrigger).toBeDisabled();
+
+    // 3. Verify clicking it does not show the dropdown
+    await terminalPage.chartDropdownTrigger.click({ force: true });
+    await expect(terminalPage.chartDropdownMenu).not.toBeVisible();
   });
 });

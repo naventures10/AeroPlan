@@ -4,13 +4,14 @@ import { MapPage } from './pages/MapPage';
 test.describe('AIP Supplements Workflow', () => {
   let mapPage: MapPage;
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(({ page }) => {
     mapPage = new MapPage(page);
-    await mapPage.goto();
-    await mapPage.waitForReady();
   });
 
   test('User Story 1: Open menu drawer and open AIP supplements modal', async ({ page }) => {
+    await mapPage.goto();
+    await mapPage.waitForReady();
+
     // 1. Toggle the menu drawer
     const menuToggleBtn = page.locator('#aip-menu-toggle-btn');
     await expect(menuToggleBtn).toBeVisible();
@@ -45,10 +46,16 @@ test.describe('AIP Supplements Workflow', () => {
   });
 
   test('User Story 2: Locked AIP supplements menu item', async ({ page }) => {
-    // 1. Lock the feature
-    await page.evaluate(() => {
-      (window as any).__LOCKS__.lockAipSupplements = true;
+    // 1. Lock the feature before navigation
+    await page.addInitScript(() => {
+      (window as any).__LOCKS__ = {
+        lockAipSupplements: true,
+        lockAerodromeCharts: false,
+      };
     });
+
+    await mapPage.goto();
+    await mapPage.waitForReady();
 
     // 2. Toggle the menu drawer
     const menuToggleBtn = page.locator('#aip-menu-toggle-btn');

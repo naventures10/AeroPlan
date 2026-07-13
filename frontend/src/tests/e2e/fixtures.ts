@@ -42,6 +42,13 @@ export const test = base.extend({
       await route.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from([]) });
     });
 
+    await page.addInitScript(() => {
+      (window as any).__LOCKS__ = {
+        lockAipSupplements: false,
+        lockAerodromeCharts: false,
+      };
+    });
+
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await use(page);
   },
