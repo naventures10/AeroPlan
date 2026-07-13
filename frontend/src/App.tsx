@@ -2,7 +2,6 @@ import { useLayoutEffect } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import LandingPage from './pages/LandingPage';
 import MapPage from './pages/MapPage';
-import ShaderLab from './pages/ShaderLab/index';
 
 const router = createBrowserRouter([
   {
@@ -12,10 +11,6 @@ const router = createBrowserRouter([
   {
     path: '/app',
     element: <MapPage />,
-  },
-  {
-    path: '/shader-lab',
-    element: <ShaderLab />,
   },
 ]);
 

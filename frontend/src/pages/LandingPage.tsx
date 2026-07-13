@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router';
-import { Plane, Map as MapIcon, FlaskConical, ChevronRight } from 'lucide-react';
+import { Plane, Map as MapIcon, ChevronRight } from 'lucide-react';
 
 /**
  * Premium Landing Page for Aero Plan.
@@ -76,22 +76,6 @@ export default function LandingPage() {
             <MapIcon className="w-5 h-5" />
             Launch Application
             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </button>
-        </motion.div>
-
-        {/* Secondary Links/Shader Lab Access */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.5 }}
-          className="mt-12 pt-8 border-t border-white/5 w-full flex justify-center"
-        >
-          <button
-            onClick={() => navigate('/shader-lab')}
-            className="flex items-center gap-2 text-on-surface-variant hover:text-orange-400 transition-colors text-sm font-medium group"
-          >
-            <FlaskConical className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-            Open Shader Lab
           </button>
         </motion.div>
       </motion.div>
