@@ -14,6 +14,7 @@ vi.mock('../../api/client', () => ({
 describe('useAerodromeData', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     useMapStore.setState({
       activeAirport: null,
       activeLayers: { atsRoutes: false } as any,
@@ -38,19 +39,94 @@ describe('useAerodromeData', () => {
     await waitFor(() => {
       expect(result.current.aerodromes).toEqual([{ id: 'test' }]);
     });
+    expect(localStorage.getItem('eaip_cached_aerodromes')).toEqual(
+      JSON.stringify([{ id: 'test' }]),
+    );
   });
 
-  it('should log error when fetch aerodromes fails', async () => {
+  it('should load initial aerodromes from localStorage if present', async () => {
+    const cachedData = [{ id: 'cached' }];
+    localStorage.setItem('eaip_cached_aerodromes', JSON.stringify(cachedData));
+
+    // API returns fresh data
+    const freshData = [{ id: 'fresh' }];
+    (client.fetchAerodromes as any).mockResolvedValue(freshData);
+
+    let result: any;
+    act(() => {
+      const rendered = renderHook(() => useAerodromeData());
+      result = rendered.result;
+    });
+
+    // Should return cached data immediately (synchronously)
+    expect(result.current.aerodromes).toEqual(cachedData);
+
+    // Eventually updates to fresh data
+    await waitFor(() => {
+      expect(result.current.aerodromes).toEqual(freshData);
+    });
+    expect(localStorage.getItem('eaip_cached_aerodromes')).toEqual(JSON.stringify(freshData));
+  });
+
+  it('should handle localStorage parse error gracefully', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    localStorage.setItem('eaip_cached_aerodromes', 'invalid-json{');
+    (client.fetchAerodromes as any).mockResolvedValue([{ id: 'fetched' }]);
+
+    let result: any;
+    act(() => {
+      const rendered = renderHook(() => useAerodromeData());
+      result = rendered.result;
+    });
+
+    // Should start as null due to parse failure
+    expect(result.current.aerodromes).toBeNull();
+    expect(warnSpy).toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(result.current.aerodromes).toEqual([{ id: 'fetched' }]);
+    });
+    warnSpy.mockRestore();
+  });
+
+  it('should log error and fallback to empty FeatureCollection when fetch aerodromes fails and no cache exists', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     (client.fetchAerodromes as any).mockRejectedValue(new Error('fail'));
 
+    let result: any;
     act(() => {
-      renderHook(() => useAerodromeData());
+      const rendered = renderHook(() => useAerodromeData());
+      result = rendered.result;
     });
 
     await waitFor(() => {
       expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch aerodromes', expect.any(Error));
+      expect(result.current.aerodromes).toEqual({ type: 'FeatureCollection', features: [] });
     });
+    consoleSpy.mockRestore();
+  });
+
+  it('should preserve cached aerodromes if fetch fails', async () => {
+    const cachedData = [{ id: 'cached' }];
+    localStorage.setItem('eaip_cached_aerodromes', JSON.stringify(cachedData));
+
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    (client.fetchAerodromes as any).mockRejectedValue(new Error('fail'));
+
+    let result: any;
+    act(() => {
+      const rendered = renderHook(() => useAerodromeData());
+      result = rendered.result;
+    });
+
+    // Starts with cached data
+    expect(result.current.aerodromes).toEqual(cachedData);
+
+    // Keeps cached data even after fetch fails
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch aerodromes', expect.any(Error));
+    });
+    expect(result.current.aerodromes).toEqual(cachedData);
     consoleSpy.mockRestore();
   });
 

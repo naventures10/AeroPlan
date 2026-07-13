@@ -7,6 +7,30 @@ import {
 } from '../api/client';
 import { useMapStore } from '../store/useMapStore';
 
+const CACHE_KEY = 'eaip_cached_aerodromes';
+
+function getCachedAerodromes(): any {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const cached = localStorage.getItem(CACHE_KEY);
+      return cached ? JSON.parse(cached) : null;
+    }
+  } catch (err) {
+    console.warn('Failed to parse cached aerodromes', err);
+  }
+  return null;
+}
+
+function setCachedAerodromes(data: any): void {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+    }
+  } catch (err) {
+    console.warn('Failed to cache aerodromes in localStorage', err);
+  }
+}
+
 /**
  * Manages:
  *  - Initial aerodromes GeoJSON fetch
@@ -24,7 +48,7 @@ export function useAerodromeData() {
   const activeLayers = useMapStore((s) => s.activeLayers);
   const selectedRouteIds = useMapStore((s) => s.selectedRouteIds);
 
-  const [aerodromes, setAerodromes] = useState<any>(null);
+  const [aerodromes, setAerodromes] = useState<any>(() => getCachedAerodromes());
   const atsLabelsFetched = useRef(false);
 
   // Section modal state
@@ -38,9 +62,13 @@ export function useAerodromeData() {
   // Fetch aerodromes once on mount
   useEffect(() => {
     fetchAerodromes()
-      .then(setAerodromes)
+      .then((data) => {
+        setAerodromes(data);
+        setCachedAerodromes(data);
+      })
       .catch((err) => {
         console.error('Failed to fetch aerodromes', err);
+        setAerodromes((prev: any) => prev || { type: 'FeatureCollection', features: [] });
       });
   }, []);
 

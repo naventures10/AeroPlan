@@ -101,8 +101,9 @@ export default function MapPage() {
 
   return (
     <div className="w-screen h-[100dvh] overflow-hidden bg-surface relative font-sans">
+      {!aerodromes && <GlobalLoader />}
       {/* Map (Primary Chunk) */}
-      <Suspense fallback={<GlobalLoader />}>
+      <Suspense fallback={aerodromes ? <GlobalLoader /> : null}>
         <MapView aerodromes={aerodromes} onAerodromeClick={handleAerodromeClick} />
       </Suspense>
 
