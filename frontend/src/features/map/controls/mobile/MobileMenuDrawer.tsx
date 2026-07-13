@@ -1,7 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { Lock } from 'lucide-react';
 import { useMapStore } from '../../../../store/useMapStore';
 import { fetchAirspaceNotams } from '../../../../api/client';
+import { isFeatureLocked, type FeatureId } from '../../../../config/featureFlags';
 import './MobileMenuDrawer.css';
 
 interface MobileMenuDrawerProps {
@@ -90,7 +92,7 @@ export default function MobileMenuDrawer({ isOpen, onClose }: MobileMenuDrawerPr
   }, [isOpen]);
 
   const handleSectionClick = (id: string) => {
-    if (id === 'aip-supplements') {
+    if (id === 'aip-supplements' && !isFeatureLocked('aip-supplements')) {
       setAipSupplementsModalOpen(true);
       onClose();
     } else if (id === 'airspace-notams') {
@@ -191,21 +193,30 @@ export default function MobileMenuDrawer({ isOpen, onClose }: MobileMenuDrawerPr
                     displayBadge = notamCount.toString();
                   }
 
+                  const isLocked = isFeatureLocked(id as FeatureId);
+
                   return (
                     <motion.li key={id} variants={itemVariants}>
                       <button
                         id={`aip-drawer-item-${id}`}
-                        className="aip-drawer-item"
+                        className={`aip-drawer-item${isLocked ? ' locked' : ''}`}
                         aria-label={title}
                         onClick={() => handleSectionClick(id)}
+                        disabled={isLocked}
                       >
                         <span className="aip-drawer-item-icon">{icon}</span>
                         <span className="aip-drawer-item-text">
                           <span className="aip-drawer-item-title">{title}</span>
                           <span className="aip-drawer-item-desc">{description}</span>
                         </span>
-                        {displayBadge && (
-                          <span className={`aip-drawer-badge ${badgeClass}`}>{displayBadge}</span>
+                        {isLocked ? (
+                          <span className="aip-drawer-lock-icon">
+                            <Lock size={14} strokeWidth={2} />
+                          </span>
+                        ) : (
+                          displayBadge && (
+                            <span className={`aip-drawer-badge ${badgeClass}`}>{displayBadge}</span>
+                          )
                         )}
                         <span className="aip-drawer-item-arrow">
                           <svg
