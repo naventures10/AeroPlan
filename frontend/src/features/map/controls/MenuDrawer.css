@@ -335,4 +335,27 @@
   text-transform: uppercase;
 }
 
+/* ── Locked drawer item ─────────────────────────────────────────────── */
+.aip-drawer-item.locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.aip-drawer-item.locked:hover {
+  background: transparent;
+  border-color: transparent;
+}
+
+.aip-drawer-lock-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: light-dark(
+    color-mix(in srgb, var(--on-surface-variant) 50%, transparent),
+    rgba(255, 255, 255, 0.35)
+  );
+  flex-shrink: 0;
+}
+
 /* Item entry animations are handled by Framer Motion stagger variants */

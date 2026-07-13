@@ -11,6 +11,7 @@ import { fetchAipSupplements, getProxyPdfUrl } from '../../api/client';
 import type { AipSupplement } from '../../types';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import './AipSupplementsModal.css';
+import { featureFlags } from '../../config/featureFlags';
 
 // Configure pdf.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -18,7 +19,6 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString();
 
-// fallow-ignore-next-line complexity
 export default function AipSupplementsModal() {
   const isOpen = useMapStore((s) => s.isAipSupplementsModalOpen);
   const setOpen = useMapStore((s) => s.setAipSupplementsModalOpen);
@@ -68,6 +68,8 @@ export default function AipSupplementsModal() {
   const onDocumentLoadError = useCallback(() => {
     setLoadError(true);
   }, []);
+
+  if (featureFlags.lockAipSupplements) return null;
 
   return createPortal(
     <AnimatePresence>

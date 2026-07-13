@@ -11,6 +11,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.dependencies import check_feature_lock
 from app.schemas.aerodrome import ChartResponse
 
 router = APIRouter(prefix="", tags=["Charts"])
@@ -32,7 +33,11 @@ def _validate_proxy_url(url: str) -> None:
         )
 
 
-@router.get("/aerodromes/{icao_code}/charts", response_model=list[ChartResponse])
+@router.get(
+    "/aerodromes/{icao_code}/charts",
+    response_model=list[ChartResponse],
+    dependencies=[Depends(check_feature_lock("LOCK_AERODROME_CHARTS"))],
+)
 async def get_aerodrome_charts(
     icao_code: str, db: AsyncSession = Depends(get_db)
 ) -> list[ChartResponse]:

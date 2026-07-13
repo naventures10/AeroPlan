@@ -1,8 +1,17 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 
-import { FileText, ChevronDown, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
+import {
+  FileText,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ZoomIn,
+  ZoomOut,
+  Lock,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { isFeatureLocked } from '../../config/featureFlags';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -62,6 +71,8 @@ function findRnpForChart(
 
 // fallow-ignore-next-line complexity
 export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerProps) {
+  const isLocked = isFeatureLocked('aerodrome-charts');
+
   const [charts, setCharts] = useState<ChartItem[]>([]);
   const [rnpProcedures, setRnpProcedures] = useState<RnpProcedureApi[]>([]);
   const [selectedChart, setSelectedChart] = useState<ChartItem | null>(null);
@@ -263,11 +274,13 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
         {/* Trigger Button */}
         <button
           onClick={() => {
+            if (isLocked) return;
             setIsDropdownOpen(!isDropdownOpen);
           }}
+          disabled={isLocked}
           className={`aip-dropdown-trigger flex items-center w-full gap-2.5 px-3 py-1.5 focus:outline-none ${
             isDropdownOpen ? 'active' : ''
-          }`}
+          }${isLocked ? ' locked' : ''}`}
         >
           <FileText
             size={16}
@@ -279,7 +292,9 @@ export default function AerodromeChartViewer({ icaoCode }: AerodromeChartViewerP
           <span className="text-[11px] font-bold tracking-[0.15em] uppercase">
             AERODROME CHARTS
           </span>
-          {isLoading ? (
+          {isLocked ? (
+            <Lock size={14} strokeWidth={2} className="ml-auto text-on-surface-variant shrink-0" />
+          ) : isLoading ? (
             <div className="ml-auto w-3.5 h-3.5 border-2 border-white/10 border-t-cyan-400 rounded-full animate-spin" />
           ) : (
             <ChevronDown

@@ -2,6 +2,16 @@ import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 import React from 'react';
 
+// Mock feature flags — all features unlocked by default in tests.
+// Individual tests can override via vi.mocked() if needed.
+vi.mock('../../config/featureFlags', () => ({
+  featureFlags: {
+    lockAipSupplements: false,
+    lockAerodromeCharts: false,
+  },
+  isFeatureLocked: () => false,
+}));
+
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

@@ -10,6 +10,7 @@ import { useMapStore } from '../../../store/useMapStore';
 import { fetchAipSupplements, getProxyPdfUrl } from '../../../api/client';
 import type { AipSupplement } from '../../../types';
 import { useEscapeKey } from '../../../hooks/useEscapeKey';
+import { featureFlags } from '../../../config/featureFlags';
 import './MobileAipSupplementsModal.css';
 
 // Configure pdf.js worker
@@ -209,6 +210,8 @@ export const MobileAipSupplementsModal = memo(function MobileAipSupplementsModal
   const onDocumentLoadError = useCallback(() => {
     setLoadError(true);
   }, []);
+
+  if (featureFlags.lockAipSupplements) return null;
 
   return createPortal(
     <AnimatePresence>

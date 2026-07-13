@@ -82,3 +82,30 @@
 }
 
 /* --- Dropdown --- */
+
+/* ── Locked dropdown item ───────────────────────────────────────────── */
+.aip-dropdown-item.locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.aip-dropdown-lock-icon {
+  display: flex;
+  align-items: center;
+  margin-inline-start: auto;
+  color: light-dark(
+    color-mix(in srgb, var(--on-surface-variant) 50%, transparent),
+    rgba(255, 255, 255, 0.35)
+  );
+  flex-shrink: 0;
+}
+
+.aip-dropdown-trigger.locked,
+.aip-dropdown-trigger.locked:hover {
+  background: light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.05));
+  border-color: light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.1));
+  color: light-dark(rgba(0, 0, 0, 0.4), rgba(255, 255, 255, 0.35));
+  cursor: not-allowed;
+  box-shadow: none;
+}

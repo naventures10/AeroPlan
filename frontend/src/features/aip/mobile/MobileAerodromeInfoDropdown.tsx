@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
-import { ChevronDown, BookOpen, X } from 'lucide-react';
+import { ChevronDown, BookOpen, X, Lock } from 'lucide-react';
+import { isFeatureLocked, type FeatureId } from '../../../config/featureFlags';
 import './MobileAerodromeInfoDropdown.css';
 
 // Mirrors backend SECTION_MAP ordering (AD 2.2 → AD 2.24)
@@ -122,19 +123,30 @@ export default function MobileAerodromeInfoDropdown({
                 {/* Scrollable list of sections */}
                 <div className="aip-mobile-info-content aip-scrollbar">
                   <div className="aip-mobile-info-grid">
-                    {AIP_SECTIONS.map((section) => (
-                      <button
-                        key={section.id}
-                        onClick={() => {
-                          onSectionSelect(section.id);
-                          handleClose();
-                        }}
-                        className="aip-mobile-info-item"
-                      >
-                        <span className="aip-mobile-info-item-code">{section.code}</span>
-                        <span className="aip-mobile-info-item-title">{section.title}</span>
-                      </button>
-                    ))}
+                    {AIP_SECTIONS.map((section) => {
+                      const isLocked = isFeatureLocked(section.id as FeatureId);
+
+                      return (
+                        <button
+                          key={section.id}
+                          onClick={() => {
+                            if (isLocked) return;
+                            onSectionSelect(section.id);
+                            handleClose();
+                          }}
+                          disabled={isLocked}
+                          className={`aip-mobile-info-item${isLocked ? ' locked' : ''}`}
+                        >
+                          <span className="aip-mobile-info-item-code">{section.code}</span>
+                          <span className="aip-mobile-info-item-title">{section.title}</span>
+                          {isLocked && (
+                            <span className="aip-mobile-info-lock-icon">
+                              <Lock size={12} strokeWidth={2} />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </motion.div>

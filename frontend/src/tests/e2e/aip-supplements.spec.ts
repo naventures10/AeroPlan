@@ -43,4 +43,26 @@ test.describe('AIP Supplements Workflow', () => {
     // Verify modal is closed
     await expect(page.locator('.aip-supplements-modal-container')).not.toBeVisible();
   });
+
+  test('User Story 2: Locked AIP supplements menu item', async ({ page }) => {
+    // 1. Lock the feature
+    await page.evaluate(() => {
+      (window as any).__LOCKS__.lockAipSupplements = true;
+    });
+
+    // 2. Toggle the menu drawer
+    const menuToggleBtn = page.locator('#aip-menu-toggle-btn');
+    await expect(menuToggleBtn).toBeVisible();
+    await menuToggleBtn.click();
+
+    // 3. Verify the drawer item is locked (has .locked class and is disabled)
+    const aipSupplementsItem = page.locator('#aip-drawer-item-aip-supplements');
+    await expect(aipSupplementsItem).toBeVisible();
+    await expect(aipSupplementsItem).toHaveClass(/locked/);
+    await expect(aipSupplementsItem).toBeDisabled();
+
+    // 4. Verify clicking it does not open the modal
+    await aipSupplementsItem.click({ force: true });
+    await expect(page.locator('.aip-supplements-modal-container')).not.toBeVisible();
+  });
 });

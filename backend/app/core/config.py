@@ -57,6 +57,10 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "local"
     SSL_VERIFY: bool = True
 
+    # ── Feature Locks ─────────────────────────────────────────────────
+    LOCK_AIP_SUPPLEMENTS: bool = False
+    LOCK_AERODROME_CHARTS: bool = False
+
     # ── Rate Limiting ────────────────────────────────────────────────
     RATE_LIMIT_DEFAULT: str = "100/minute"
 

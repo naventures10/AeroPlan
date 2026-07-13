@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import './AerodromeInfoDropdown.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, BookOpen } from 'lucide-react';
+import { ChevronDown, BookOpen, Lock } from 'lucide-react';
+import { isFeatureLocked, type FeatureId } from '../../config/featureFlags';
 
 // Mirrors backend SECTION_MAP ordering (AD 2.2 → AD 2.24)
 const AIP_SECTIONS = [
@@ -99,21 +100,32 @@ export default function AerodromeInfoDropdown({
             className="aip-dropdown-menu mt-2 w-80 max-h-[35vh] aip-scrollbar"
           >
             <div className="py-1.5">
-              {AIP_SECTIONS.map((section, idx) => (
-                <button
-                  key={section.id}
-                  onClick={() => {
-                    onSectionSelect(section.id);
-                    setIsOpen(false);
-                  }}
-                  className={`aip-dropdown-item ${
-                    idx !== AIP_SECTIONS.length - 1 ? 'border-b border-outline-variant ' : ''
-                  }`}
-                >
-                  <span className="aip-dropdown-item-code">{section.code}</span>
-                  <span className="aip-dropdown-item-title">{section.title}</span>
-                </button>
-              ))}
+              {AIP_SECTIONS.map((section, idx) => {
+                const isLocked = isFeatureLocked(section.id as FeatureId);
+
+                return (
+                  <button
+                    key={section.id}
+                    onClick={() => {
+                      if (isLocked) return;
+                      onSectionSelect(section.id);
+                      setIsOpen(false);
+                    }}
+                    disabled={isLocked}
+                    className={`aip-dropdown-item${
+                      idx !== AIP_SECTIONS.length - 1 ? ' border-b border-outline-variant ' : ''
+                    }${isLocked ? ' locked' : ''}`}
+                  >
+                    <span className="aip-dropdown-item-code">{section.code}</span>
+                    <span className="aip-dropdown-item-title">{section.title}</span>
+                    {isLocked && (
+                      <span className="aip-dropdown-lock-icon">
+                        <Lock size={12} strokeWidth={2} />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </motion.div>
         )}

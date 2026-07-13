@@ -1,7 +1,17 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { FileText, ChevronDown, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, X } from 'lucide-react';
+import {
+  FileText,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ZoomIn,
+  ZoomOut,
+  X,
+  Lock,
+} from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { isFeatureLocked } from '../../../config/featureFlags';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -59,6 +69,8 @@ function findRnpForChart(
 }
 
 export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodromeChartViewerProps) {
+  const isLocked = isFeatureLocked('aerodrome-charts');
+
   const [charts, setCharts] = useState<ChartItem[]>([]);
   const [rnpProcedures, setRnpProcedures] = useState<RnpProcedureApi[]>([]);
   const [selectedChart, setSelectedChart] = useState<ChartItem | null>(null);
@@ -448,14 +460,20 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
     <>
       {/* Trigger Button */}
       <button
-        onClick={() => setIsDrawerOpen(true)}
-        className="aip-mobile-trigger flex items-center gap-2 px-3.5 py-1.5 focus:outline-none"
+        onClick={() => {
+          if (isLocked) return;
+          setIsDrawerOpen(true);
+        }}
+        disabled={isLocked}
+        className={`aip-mobile-trigger flex items-center gap-2 px-3.5 py-1.5 focus:outline-none${isLocked ? ' locked' : ''}`}
       >
         <FileText size={14} strokeWidth={2.5} className="text-on-surface-variant shrink-0" />
         <span className="text-[11px] font-black tracking-[0.12em] uppercase whitespace-nowrap">
           AERO CHARTS
         </span>
-        {isLoading ? (
+        {isLocked ? (
+          <Lock size={12} strokeWidth={2.5} className="text-on-surface-variant shrink-0" />
+        ) : isLoading ? (
           <div className="w-3.5 h-3.5 border-2 border-white/10 border-t-cyan-400 rounded-full animate-spin shrink-0" />
         ) : (
           <ChevronDown size={12} strokeWidth={2.5} className="text-on-surface-variant shrink-0" />

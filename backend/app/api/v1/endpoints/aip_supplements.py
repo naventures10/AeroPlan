@@ -1,7 +1,8 @@
 import anyio
 import structlog
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from app.core.dependencies import check_feature_lock
 from app.core.storage_client import UnifiedStorageClient
 from app.schemas.aip_supplements import AipSupplement
 
@@ -13,7 +14,11 @@ FILE_KEY = "aip_supplements.json"
 storage_client = UnifiedStorageClient()
 
 
-@router.get("/", response_model=list[AipSupplement])
+@router.get(
+    "/",
+    response_model=list[AipSupplement],
+    dependencies=[Depends(check_feature_lock("LOCK_AIP_SUPPLEMENTS"))],
+)
 async def get_aip_supplements():
     """
     Fetch the latest AIP Supplements from the storage provider using UnifiedStorageClient.
