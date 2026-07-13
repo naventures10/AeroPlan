@@ -50,6 +50,21 @@ if [ -z "$VITE_FARO_URL" ] && [ -f "$WORKSPACE_ROOT/frontend/.env" ]; then
     fi
 fi
 
+if [ -z "$VITE_LOCK_AIP_SUPPLEMENTS" ] && [ -f "$WORKSPACE_ROOT/frontend/.env" ]; then
+    VITE_LOCK_AIP_SUPPLEMENTS=$(grep "^VITE_LOCK_AIP_SUPPLEMENTS=" "$WORKSPACE_ROOT/frontend/.env" | cut -d'=' -f2-)
+    if [ -n "$VITE_LOCK_AIP_SUPPLEMENTS" ]; then
+        echo "✅ Loaded VITE_LOCK_AIP_SUPPLEMENTS from frontend/.env"
+    fi
+fi
+
+if [ -z "$VITE_LOCK_AERODROME_CHARTS" ] && [ -f "$WORKSPACE_ROOT/frontend/.env" ]; then
+    VITE_LOCK_AERODROME_CHARTS=$(grep "^VITE_LOCK_AERODROME_CHARTS=" "$WORKSPACE_ROOT/frontend/.env" | cut -d'=' -f2-)
+    if [ -n "$VITE_LOCK_AERODROME_CHARTS" ]; then
+        echo "✅ Loaded VITE_LOCK_AERODROME_CHARTS from frontend/.env"
+    fi
+fi
+
+
 if [ -f "$WORKSPACE_ROOT/monitoring/.env" ]; then
     GRAFANA_USER=$(grep "^GRAFANA_CLOUD_OTLP_USER=" "$WORKSPACE_ROOT/monitoring/.env" | cut -d'=' -f2-)
     GRAFANA_KEY=$(grep "^GRAFANA_CLOUD_API_KEY=" "$WORKSPACE_ROOT/monitoring/.env" | cut -d'=' -f2-)
@@ -116,6 +131,8 @@ if [ "$POOL_STATE" = "ACTIVE" ]; then
                 -var="vite_faro_url=${VITE_FARO_URL}" \
                 -var="otel_endpoint=${OTEL_ENDPOINT}" \
                 -var="otel_headers=${OTEL_HEADERS}" \
+                -var="vite_lock_aip_supplements=${VITE_LOCK_AIP_SUPPLEMENTS}" \
+                -var="vite_lock_aerodrome_charts=${VITE_LOCK_AERODROME_CHARTS}" \
                 google_iam_workload_identity_pool.github_pool \
                 projects/${PROJECT_ID}/locations/global/workloadIdentityPools/github-actions-pool
         )
@@ -139,6 +156,8 @@ if [ "$POOL_STATE" = "ACTIVE" ]; then
                     -var="vite_faro_url=${VITE_FARO_URL}" \
                     -var="otel_endpoint=${OTEL_ENDPOINT}" \
                     -var="otel_headers=${OTEL_HEADERS}" \
+                    -var="vite_lock_aip_supplements=${VITE_LOCK_AIP_SUPPLEMENTS}" \
+                    -var="vite_lock_aerodrome_charts=${VITE_LOCK_AERODROME_CHARTS}" \
                     google_iam_workload_identity_pool_provider.github_provider \
                     projects/${PROJECT_ID}/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider
             )
@@ -157,7 +176,9 @@ echo "Applying OpenTofu configuration..."
         -var="vite_maptiler_key=${VITE_MAPTILER_KEY}" \
         -var="vite_faro_url=${VITE_FARO_URL}" \
         -var="otel_endpoint=${OTEL_ENDPOINT}" \
-        -var="otel_headers=${OTEL_HEADERS}"
+        -var="otel_headers=${OTEL_HEADERS}" \
+        -var="vite_lock_aip_supplements=${VITE_LOCK_AIP_SUPPLEMENTS}" \
+        -var="vite_lock_aerodrome_charts=${VITE_LOCK_AERODROME_CHARTS}"
 )
 
 

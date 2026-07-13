@@ -87,6 +87,8 @@ jobs:
             VITE_FARO_URL:projects/${{ env.PROJECT_ID }}/secrets/vite-faro-url
             OTEL_ENDPOINT:projects/${{ env.PROJECT_ID }}/secrets/otel-endpoint
             OTEL_HEADERS:projects/${{ env.PROJECT_ID }}/secrets/otel-headers
+            VITE_LOCK_AIP_SUPPLEMENTS:projects/${{ env.PROJECT_ID }}/secrets/vite-lock-aip-supplements
+            VITE_LOCK_AERODROME_CHARTS:projects/${{ env.PROJECT_ID }}/secrets/vite-lock-aerodrome-charts
 
       # Run first tofu apply to ensure backend & martin services exist so we can fetch their URLs
       - name: Deploy Base Infrastructure and Services
@@ -99,6 +101,8 @@ jobs:
             -var="vite_faro_url=${{ steps.secrets.outputs.VITE_FARO_URL }}" \
             -var="otel_endpoint=${{ steps.secrets.outputs.OTEL_ENDPOINT }}" \
             -var="otel_headers=${{ steps.secrets.outputs.OTEL_HEADERS }}" \
+            -var="vite_lock_aip_supplements=${{ steps.secrets.outputs.VITE_LOCK_AIP_SUPPLEMENTS }}" \
+            -var="vite_lock_aerodrome_charts=${{ steps.secrets.outputs.VITE_LOCK_AERODROME_CHARTS }}" \
             -var="backend_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-backend:${{ github.sha }}" \
             -var="weather_pipeline_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/weather-pipeline:${{ github.sha }}" \
             -var="martin_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-martin:v0.14.2"
@@ -120,6 +124,8 @@ jobs:
             --build-arg VITE_MAPTILER_KEY=${{ steps.secrets.outputs.VITE_MAPTILER_KEY }} \
             --build-arg VITE_E2E_TEST=true \
             --build-arg VITE_FARO_URL=${{ steps.secrets.outputs.VITE_FARO_URL }} \
+            --build-arg VITE_LOCK_AIP_SUPPLEMENTS=${{ steps.secrets.outputs.VITE_LOCK_AIP_SUPPLEMENTS }} \
+            --build-arg VITE_LOCK_AERODROME_CHARTS=${{ steps.secrets.outputs.VITE_LOCK_AERODROME_CHARTS }} \
             -t $IMAGE ./frontend
           docker push $IMAGE
 
@@ -133,6 +139,8 @@ jobs:
             -var="vite_faro_url=${{ steps.secrets.outputs.VITE_FARO_URL }}" \
             -var="otel_endpoint=${{ steps.secrets.outputs.OTEL_ENDPOINT }}" \
             -var="otel_headers=${{ steps.secrets.outputs.OTEL_HEADERS }}" \
+            -var="vite_lock_aip_supplements=${{ steps.secrets.outputs.VITE_LOCK_AIP_SUPPLEMENTS }}" \
+            -var="vite_lock_aerodrome_charts=${{ steps.secrets.outputs.VITE_LOCK_AERODROME_CHARTS }}" \
             -var="backend_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-backend:${{ github.sha }}" \
             -var="weather_pipeline_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/weather-pipeline:${{ github.sha }}" \
             -var="martin_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-martin:v0.14.2" \

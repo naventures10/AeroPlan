@@ -41,3 +41,17 @@ variable "otel_headers" {
   default     = ""
 }
 
+variable "vite_lock_aip_supplements" {
+  description = "Build flag to lock/unlock AIP Supplements"
+  type        = string
+  sensitive   = true
+  default     = "false"
+}
+
+variable "vite_lock_aerodrome_charts" {
+  description = "Build flag to lock/unlock Aerodrome Charts"
+  type        = string
+  sensitive   = true
+  default     = "false"
+}
+

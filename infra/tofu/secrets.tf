@@ -183,4 +183,53 @@ resource "google_secret_manager_secret_iam_member" "sa_secret_access_otel_header
   member    = "serviceAccount:${google_service_account.github_actions_sa.email}"
 }
 
+# AIP Supplements Lock Secret
+resource "google_secret_manager_secret" "vite_lock_aip_supplements" {
+  secret_id = "vite-lock-aip-supplements"
+  replication {
+    auto {}
+  }
+  depends_on = [google_project_service.secretmanager]
+}
+
+resource "google_secret_manager_secret_version" "vite_lock_aip_supplements_version" {
+  secret      = google_secret_manager_secret.vite_lock_aip_supplements.id
+  secret_data = var.vite_lock_aip_supplements
+
+  lifecycle {
+    ignore_changes = [secret_data]
+  }
+}
+
+resource "google_secret_manager_secret_iam_member" "sa_secret_access_lock_aip_supplements" {
+  secret_id = google_secret_manager_secret.vite_lock_aip_supplements.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.github_actions_sa.email}"
+}
+
+# Aerodrome Charts Lock Secret
+resource "google_secret_manager_secret" "vite_lock_aerodrome_charts" {
+  secret_id = "vite-lock-aerodrome-charts"
+  replication {
+    auto {}
+  }
+  depends_on = [google_project_service.secretmanager]
+}
+
+resource "google_secret_manager_secret_version" "vite_lock_aerodrome_charts_version" {
+  secret      = google_secret_manager_secret.vite_lock_aerodrome_charts.id
+  secret_data = var.vite_lock_aerodrome_charts
+
+  lifecycle {
+    ignore_changes = [secret_data]
+  }
+}
+
+resource "google_secret_manager_secret_iam_member" "sa_secret_access_lock_aerodrome_charts" {
+  secret_id = google_secret_manager_secret.vite_lock_aerodrome_charts.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.github_actions_sa.email}"
+}
+
+
 
