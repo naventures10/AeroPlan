@@ -11,6 +11,7 @@ from app.api.v1.endpoints import (
     rnp,
     search,
     spatial,
+    system,
     weather,
 )
 
@@ -27,3 +28,4 @@ api_router.include_router(daylight.router)
 api_router.include_router(ats_routes.router)
 api_router.include_router(navaids.router)
 api_router.include_router(aip_supplements.router)
+api_router.include_router(system.router)

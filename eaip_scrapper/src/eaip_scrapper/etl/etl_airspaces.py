@@ -173,8 +173,14 @@ class MinIOSource:
         metadata = json.loads(response["Body"].read().decode("utf-8"))
 
         charts = metadata.get("charts", [])
+
+        def normalise(name: str) -> str:
+            return name.replace(" ", "").replace("-", "").lower()
+
+        target_norm = normalise(TARGET_CHART_NAME)
         for chart in charts:
-            if chart.get("chart_name") == TARGET_CHART_NAME:
+            name = chart.get("chart_name", "")
+            if normalise(name) == target_norm:
                 url = chart["pdf_url"]
                 print(f"[+] Found target chart URL: {url}")
                 return url

@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { Lock } from 'lucide-react';
 import { useMapStore } from '../../../store/useMapStore';
-import { fetchAirspaceNotams } from '../../../api/client';
+import { fetchAirspaceNotams, fetchSystemAirac } from '../../../api/client';
 import { isFeatureLocked, type FeatureId } from '../../../config/featureFlags';
 import './MenuDrawer.css';
 
@@ -83,12 +83,27 @@ export default function MenuDrawer({ isOpen, onClose }: MenuDrawerProps) {
   const setAirspaceNotamsModalOpen = useMapStore((s) => s.setAirspaceNotamsModalOpen);
 
   const [notamCount, setNotamCount] = useState<number | null>(null);
+  const [airacDates, setAiracDates] = useState<{
+    effective_date: string;
+    next_date: string;
+  } | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       fetchAirspaceNotams()
         .then((notams) => setNotamCount(notams.length))
         .catch(() => setNotamCount(null));
+
+      fetchSystemAirac()
+        .then((res) => {
+          if (res) {
+            setAiracDates({
+              effective_date: res.effective_date,
+              next_date: res.next_date,
+            });
+          }
+        })
+        .catch(() => setAiracDates(null));
     }
   }, [isOpen]);
 
@@ -240,7 +255,18 @@ export default function MenuDrawer({ isOpen, onClose }: MenuDrawerProps) {
 
             {/* Footer */}
             <div className="aip-drawer-footer">
-              <span className="aip-drawer-version">eAIP v1.0</span>
+              {airacDates && (
+                <div className="aip-drawer-airac-container" id="aip-drawer-airac-cycle">
+                  <div className="aip-drawer-airac-row">
+                    <span className="aip-drawer-airac-label">AIRAC Effective Date:</span>
+                    <span className="aip-drawer-airac-value">{airacDates.effective_date}</span>
+                  </div>
+                  <div className="aip-drawer-airac-row">
+                    <span className="aip-drawer-airac-label">Next AIRAC Date:</span>
+                    <span className="aip-drawer-airac-value">{airacDates.next_date}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </motion.aside>
         </>

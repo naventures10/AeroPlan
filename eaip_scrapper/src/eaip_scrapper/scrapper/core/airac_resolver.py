@@ -12,6 +12,7 @@ class AIRACResolver:
         self.session = session or requests.Session()
         # Regex to capture the date string exactly as it appears inside the parentheses
         self.date_pattern = re.compile(r"Effective Date:\s*(\d{1,2}\s+[a-zA-Z]{3}\s+\d{4})")
+        self.active_cycle_text = None
 
     def get_current_eaip_url(self):
         print(f"[*] Hop 0: Resolving active AIRAC cycle from {self.homepage_url}")
@@ -67,4 +68,5 @@ class AIRACResolver:
         print(f"[+] Active Cycle Locked: {best_match[2]}")
         print(f"[+] Target Base URL resolved: {best_match[1]}\n")
 
+        self.active_cycle_text = best_match[2]
         return best_match[1]

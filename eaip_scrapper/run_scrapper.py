@@ -42,6 +42,9 @@ if __name__ == "__main__":
     from datetime import datetime
 
     import questionary
+    from dotenv import load_dotenv
+
+    load_dotenv()
 
     os.makedirs("logs", exist_ok=True)
     log_filename = f"logs/orchestrator_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
@@ -136,6 +139,63 @@ if __name__ == "__main__":
         exit(1)
 
     logger.info(f"[+] AIRAC cycle resolved globally. Target: {active_eaip_url}")
+
+    # --- Save resolved AIRAC cycle to the database ---
+    db_host = os.getenv("DB_HOST") or os.getenv("POSTGRES_HOST", "localhost")
+    db_port = os.getenv("DB_PORT") or os.getenv("POSTGRES_PORT", "5432")
+    db_name = os.getenv("DB_NAME") or os.getenv("POSTGRES_DB", "aeronautical_information_system")
+    db_user = os.getenv("DB_USER") or os.getenv("POSTGRES_USER", "postgres")
+    db_password = os.getenv("DB_PASSWORD") or os.getenv("POSTGRES_PASSWORD")
+
+    if db_password:
+        import psycopg2
+
+        try:
+            logger.info("[*] Connecting to database to update system_metadata...")
+            conn = psycopg2.connect(
+                dbname=db_name,
+                user=db_user,
+                password=db_password,
+                host=db_host,
+                port=db_port,
+            )
+            with conn, conn.cursor() as cur:
+                cur.execute("""
+                        CREATE TABLE IF NOT EXISTS system_metadata (
+                            key VARCHAR(50) PRIMARY KEY,
+                            value TEXT NOT NULL,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );
+                    """)
+
+                cur.execute(
+                    """
+                        INSERT INTO system_metadata (key, value, updated_at)
+                        VALUES ('active_airac_url', %s, CURRENT_TIMESTAMP)
+                        ON CONFLICT (key) DO UPDATE
+                        SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP;
+                    """,
+                    (active_eaip_url,),
+                )
+
+                cycle_text = getattr(master_resolver, "active_cycle_text", None)
+                if cycle_text:
+                    cur.execute(
+                        """
+                            INSERT INTO system_metadata (key, value, updated_at)
+                            VALUES ('active_airac_cycle', %s, CURRENT_TIMESTAMP)
+                            ON CONFLICT (key) DO UPDATE
+                            SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP;
+                        """,
+                        (cycle_text,),
+                    )
+            logger.info("✅ Successfully stored AIRAC information in system_metadata table.")
+        except Exception as e:
+            logger.error(f"[!] Failed to store AIRAC cycle in database: {e}")
+    else:
+        logger.warning(
+            "[!] DB_PASSWORD / POSTGRES_PASSWORD not set. Skipping saving AIRAC to database."
+        )
 
     logger.info("[*] Launching ENR standalone extractors concurrently...")
 

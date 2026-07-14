@@ -147,8 +147,8 @@ async def cache_middleware(request: Request, call_next):  # type: ignore[no-unty
         return await call_next(request)
 
     path = request.url.path
-    # Exclude health endpoint
-    if path.endswith("/health"):
+    # Exclude health and system endpoints
+    if path.endswith("/health") or "/system/" in path:
         return await call_next(request)
 
     # Generate cache key (based on path and query parameters)

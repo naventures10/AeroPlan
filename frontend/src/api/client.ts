@@ -189,6 +189,17 @@ export async function fetchAipSupplements(): Promise<import('../types').AipSuppl
   }
 }
 
+// ── System Metadata ─────────────────────────────────────────────────────
+
+export interface SystemAiracResponse {
+  effective_date: string;
+  next_date: string;
+}
+
+export async function fetchSystemAirac(): Promise<SystemAiracResponse | null> {
+  return getOrNull<SystemAiracResponse>('/system/airac');
+}
+
 // ── ATS Routes ──────────────────────────────────────────────────────────
 
 export async function fetchAtsRouteLabels(): Promise<GeoJsonFeatureCollection> {
