@@ -1,5 +1,7 @@
 import asyncio
 import time
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import structlog
 from sqlalchemy import select
@@ -50,15 +52,29 @@ async def update_weather_cache_loop() -> None:
             logger.info(
                 "Finished periodic weather cache update.", elapsed_seconds=round(elapsed, 2)
             )
-            # Sleep until the next 30-minute system clock boundary (e.g. XX:00 or XX:30)
-            sleep_seconds = 1800 - (time.time() % 1800)
+            # Sleep until 3 minutes after the next 30-minute system clock boundary (e.g. XX:03 or XX:33) in IST.
+            # This ensures that weather stations have already published and updated their METAR/TAF.
+            now_ist = datetime.now(ZoneInfo("Asia/Kolkata"))
+            if now_ist.minute < 3:
+                target_dt = now_ist.replace(minute=3, second=0, microsecond=0)
+            elif now_ist.minute < 33:
+                target_dt = now_ist.replace(minute=33, second=0, microsecond=0)
+            else:
+                target_dt = (now_ist + timedelta(hours=1)).replace(
+                    minute=3, second=0, microsecond=0
+                )
+
+            sleep_seconds = (target_dt - now_ist).total_seconds()
+
             logger.info(
-                "Sleeping until next system clock boundary...",
+                "Sleeping until next system clock boundary + 3 minutes in IST...",
                 sleep_seconds=round(sleep_seconds, 2),
+                target_ist=target_dt.isoformat(),
             )
             await asyncio.sleep(sleep_seconds)
         except asyncio.CancelledError:
             logger.info("Weather cache update loop task cancelled.")
+
             break
         except Exception as exc:
             logger.error("weather_cache_loop_error", error=str(exc))
