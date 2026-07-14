@@ -48,6 +48,12 @@ const MobileTerminalLegend = lazy(() =>
     default: module.default,
   })),
 );
+const AirspaceLegend = lazy(() => import('../features/map/components/AirspaceLegend'));
+const MobileAirspaceLegend = lazy(() =>
+  import('../features/map/components/mobile/MobileAirspaceLegend').then((module) => ({
+    default: module.default,
+  })),
+);
 const AipSupplementsModal = lazy(() => import('../features/aip/AipSupplementsModal'));
 const MobileAipSupplementsModal = lazy(() =>
   import('../features/aip/mobile/MobileAipSupplementsModal').then((module) => ({
@@ -76,6 +82,7 @@ export default function MapPage() {
   const activeAirport = useMapStore((s) => s.activeAirport);
   const pitch = useMapStore((s) => s.viewState.pitch);
   const isWeatherMode = useMapStore((s) => s.isWeatherMode);
+  const activeLayers = useMapStore((s) => s.activeLayers);
   const returnToEnroute = useMapStore((s) => s.returnToEnroute);
   const search = useSearch();
   const fetchAiracDates = useMapStore((s) => s.fetchAiracDates);
@@ -197,6 +204,20 @@ export default function MapPage() {
           {viewMode === 'TERMINAL' && isMobile && (
             <Suspense fallback={null}>
               <MobileTerminalLegend />
+            </Suspense>
+          )}
+
+          {viewMode === 'ENROUTE' && activeLayers.airspaces && !isMobile && (
+            <div className="absolute bottom-6 left-[4.5rem] pointer-events-auto z-40">
+              <Suspense fallback={null}>
+                <AirspaceLegend />
+              </Suspense>
+            </div>
+          )}
+
+          {viewMode === 'ENROUTE' && activeLayers.airspaces && isMobile && (
+            <Suspense fallback={null}>
+              <MobileAirspaceLegend />
             </Suspense>
           )}
 

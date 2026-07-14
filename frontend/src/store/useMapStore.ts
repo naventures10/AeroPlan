@@ -38,10 +38,17 @@ interface MapState {
     navaids: boolean;
     atsRoutes: boolean;
     airspaces: boolean;
-    airspaceFIR: boolean;
-    airspaceRegulated: boolean;
-    airspaceControl: boolean;
-    airspaceUpr: boolean;
+    airspace_FIR: boolean;
+    airspace_ADIZ: boolean;
+    airspace_CTA_UPPER: boolean;
+    airspace_UPR_ZONE: boolean;
+    airspace_DANGER: boolean;
+    airspace_PROHIBITED: boolean;
+    airspace_RESTRICTED: boolean;
+    airspace_CTA_LOWER: boolean;
+    airspace_TRA: boolean;
+    airspace_TSA: boolean;
+    airspace_CTR: boolean;
     ercMap: boolean;
     weather: boolean;
   };
@@ -245,10 +252,17 @@ export const useMapStore = create<MapState>()(
         navaids: false,
         atsRoutes: false,
         airspaces: false,
-        airspaceFIR: false,
-        airspaceRegulated: false,
-        airspaceControl: false,
-        airspaceUpr: false,
+        airspace_FIR: false,
+        airspace_ADIZ: false,
+        airspace_CTA_UPPER: false,
+        airspace_UPR_ZONE: false,
+        airspace_DANGER: false,
+        airspace_PROHIBITED: false,
+        airspace_RESTRICTED: false,
+        airspace_CTA_LOWER: false,
+        airspace_TRA: false,
+        airspace_TSA: false,
+        airspace_CTR: false,
         ercMap: false,
         weather: false,
       },
@@ -288,10 +302,17 @@ export const useMapStore = create<MapState>()(
           }
 
           if (layer === 'airspaces' && newActiveLayers.airspaces) {
-            newActiveLayers.airspaceFIR = true;
-            newActiveLayers.airspaceRegulated = true;
-            newActiveLayers.airspaceControl = true;
-            newActiveLayers.airspaceUpr = true;
+            newActiveLayers.airspace_FIR = true;
+            newActiveLayers.airspace_ADIZ = true;
+            newActiveLayers.airspace_CTA_UPPER = true;
+            newActiveLayers.airspace_UPR_ZONE = true;
+            newActiveLayers.airspace_DANGER = true;
+            newActiveLayers.airspace_PROHIBITED = true;
+            newActiveLayers.airspace_RESTRICTED = true;
+            newActiveLayers.airspace_CTA_LOWER = true;
+            newActiveLayers.airspace_TRA = true;
+            newActiveLayers.airspace_TSA = true;
+            newActiveLayers.airspace_CTR = true;
             stateUpdates = {
               ...stateUpdates,
               isAirspaceLoaded: false,

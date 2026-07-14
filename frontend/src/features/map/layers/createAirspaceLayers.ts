@@ -3,23 +3,21 @@ import { GeoJsonLayer } from '@deck.gl/layers';
 import type { LayerContext } from './types';
 import { getAirspaceColors, getDefaultStroke } from './constants';
 
-const AIRSPACE_HIERARCHY: Record<string, { minZoom: number; priority: number }> = {
-  FIR: { minZoom: 2.0, priority: 100 },
-  ADIZ: { minZoom: 2.5, priority: 90 },
-  CTA_UPPER: { minZoom: 4.0, priority: 80 },
-  UPR_ZONE: { minZoom: 4.5, priority: 75 },
-  DANGER: { minZoom: 7.0, priority: 70 },
-  PROHIBITED: { minZoom: 7.0, priority: 70 },
-  RESTRICTED: { minZoom: 7.0, priority: 65 },
-  CTA_LOWER: { minZoom: 6.0, priority: 60 },
-  TRA: { minZoom: 6.5, priority: 50 },
-  TSA: { minZoom: 6.5, priority: 50 },
-  CTR: { minZoom: 7.0, priority: 40 },
+const AIRSPACE_HIERARCHY: Record<string, { priority: number }> = {
+  FIR: { priority: 100 },
+  ADIZ: { priority: 90 },
+  CTA_UPPER: { priority: 80 },
+  UPR_ZONE: { priority: 75 },
+  DANGER: { priority: 70 },
+  PROHIBITED: { priority: 70 },
+  RESTRICTED: { priority: 65 },
+  CTA_LOWER: { priority: 60 },
+  TRA: { priority: 50 },
+  TSA: { priority: 50 },
+  CTR: { priority: 40 },
 };
 
-const DEFAULT_HIERARCHY = { minZoom: 7.5, priority: 10 };
-
-const ZOOM_THRESHOLDS = [2.0, 2.5, 4.0, 4.5, 6.0, 6.5, 7.0, 7.5];
+const DEFAULT_HIERARCHY = { priority: 10 };
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -129,48 +127,30 @@ function getTextForFeature(f: any, isTypeVisible: (type: string) => boolean): st
 // ── Factory ──────────────────────────────────────────────────────────
 
 export function createAirspaceLayers(ctx: LayerContext): any[] {
-  const currentZoom = ctx.zoom || 0;
-  const effectiveZoom =
-    ZOOM_THRESHOLDS.slice()
-      .reverse()
-      .find((z) => currentZoom >= z) || 0;
   const isLayerActive = ctx.activeLayers.airspaces;
   const colors = getAirspaceColors(ctx.isDarkMode);
   const defStroke = getDefaultStroke(ctx.isDarkMode);
   const { isAirspaceLoaded, setAirspaceLoaded } = ctx;
 
-  const typeVisibilityMap = new Map<string, boolean>();
-  for (const type of Object.keys(AIRSPACE_HIERARCHY)) {
-    const h = AIRSPACE_HIERARCHY[type];
-    if (!h) continue;
-    const zoomVisible = effectiveZoom >= h.minZoom;
-    let layerActive = true;
-
-    if (type === 'FIR') {
-      layerActive = ctx.activeLayers.airspaceFIR;
-    } else if (type === 'UPR_ZONE') {
-      layerActive = ctx.activeLayers.airspaceUpr;
-    } else if (type === 'CTR' || type === 'CTA_LOWER' || type === 'CTA_UPPER') {
-      layerActive = ctx.activeLayers.airspaceControl;
-    } else if (
-      type === 'DANGER' ||
-      type === 'PROHIBITED' ||
-      type === 'RESTRICTED' ||
-      type === 'TRA' ||
-      type === 'TSA' ||
-      type === 'ADIZ'
-    ) {
-      layerActive = ctx.activeLayers.airspaceRegulated;
-    }
-
-    typeVisibilityMap.set(type, zoomVisible && layerActive);
-  }
+  const typeVisibilityMap = new Map<string, boolean>([
+    ['FIR', ctx.activeLayers.airspace_FIR],
+    ['ADIZ', ctx.activeLayers.airspace_ADIZ],
+    ['CTA_UPPER', ctx.activeLayers.airspace_CTA_UPPER],
+    ['UPR_ZONE', ctx.activeLayers.airspace_UPR_ZONE],
+    ['DANGER', ctx.activeLayers.airspace_DANGER],
+    ['PROHIBITED', ctx.activeLayers.airspace_PROHIBITED],
+    ['RESTRICTED', ctx.activeLayers.airspace_RESTRICTED],
+    ['CTA_LOWER', ctx.activeLayers.airspace_CTA_LOWER],
+    ['TRA', ctx.activeLayers.airspace_TRA],
+    ['TSA', ctx.activeLayers.airspace_TSA],
+    ['CTR', ctx.activeLayers.airspace_CTR],
+  ]);
 
   const isTypeVisible = (type: string): boolean => {
     const visible = typeVisibilityMap.get(type);
     if (visible !== undefined) return visible;
     // Fallback for types not in explicit hierarchy
-    return effectiveZoom >= DEFAULT_HIERARCHY.minZoom;
+    return true;
   };
 
   return [
@@ -211,14 +191,20 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       updateTriggers: {
         getLineColor: [
           ctx.viewMode,
-          effectiveZoom,
           isLayerActive,
           ctx.isDarkMode,
           isAirspaceLoaded,
-          ctx.activeLayers.airspaceFIR,
-          ctx.activeLayers.airspaceRegulated,
-          ctx.activeLayers.airspaceControl,
-          ctx.activeLayers.airspaceUpr,
+          ctx.activeLayers.airspace_FIR,
+          ctx.activeLayers.airspace_ADIZ,
+          ctx.activeLayers.airspace_CTA_UPPER,
+          ctx.activeLayers.airspace_UPR_ZONE,
+          ctx.activeLayers.airspace_DANGER,
+          ctx.activeLayers.airspace_PROHIBITED,
+          ctx.activeLayers.airspace_RESTRICTED,
+          ctx.activeLayers.airspace_CTA_LOWER,
+          ctx.activeLayers.airspace_TRA,
+          ctx.activeLayers.airspace_TSA,
+          ctx.activeLayers.airspace_CTR,
         ],
         getLineWidth: [],
       },
@@ -299,38 +285,62 @@ export function createAirspaceLayers(ctx: LayerContext): any[] {
       minZoom: 2,
       updateTriggers: {
         getText: [
-          effectiveZoom,
-          ctx.activeLayers.airspaceFIR,
-          ctx.activeLayers.airspaceRegulated,
-          ctx.activeLayers.airspaceControl,
-          ctx.activeLayers.airspaceUpr,
+          ctx.activeLayers.airspace_FIR,
+          ctx.activeLayers.airspace_ADIZ,
+          ctx.activeLayers.airspace_CTA_UPPER,
+          ctx.activeLayers.airspace_UPR_ZONE,
+          ctx.activeLayers.airspace_DANGER,
+          ctx.activeLayers.airspace_PROHIBITED,
+          ctx.activeLayers.airspace_RESTRICTED,
+          ctx.activeLayers.airspace_CTA_LOWER,
+          ctx.activeLayers.airspace_TRA,
+          ctx.activeLayers.airspace_TSA,
+          ctx.activeLayers.airspace_CTR,
         ],
         getTextSize: [
-          effectiveZoom,
-          ctx.activeLayers.airspaceFIR,
-          ctx.activeLayers.airspaceRegulated,
-          ctx.activeLayers.airspaceControl,
-          ctx.activeLayers.airspaceUpr,
+          ctx.activeLayers.airspace_FIR,
+          ctx.activeLayers.airspace_ADIZ,
+          ctx.activeLayers.airspace_CTA_UPPER,
+          ctx.activeLayers.airspace_UPR_ZONE,
+          ctx.activeLayers.airspace_DANGER,
+          ctx.activeLayers.airspace_PROHIBITED,
+          ctx.activeLayers.airspace_RESTRICTED,
+          ctx.activeLayers.airspace_CTA_LOWER,
+          ctx.activeLayers.airspace_TRA,
+          ctx.activeLayers.airspace_TSA,
+          ctx.activeLayers.airspace_CTR,
         ],
         getTextColor: [
-          effectiveZoom,
           isLayerActive,
           ctx.isDarkMode,
           isAirspaceLoaded,
-          ctx.activeLayers.airspaceFIR,
-          ctx.activeLayers.airspaceRegulated,
-          ctx.activeLayers.airspaceControl,
-          ctx.activeLayers.airspaceUpr,
+          ctx.activeLayers.airspace_FIR,
+          ctx.activeLayers.airspace_ADIZ,
+          ctx.activeLayers.airspace_CTA_UPPER,
+          ctx.activeLayers.airspace_UPR_ZONE,
+          ctx.activeLayers.airspace_DANGER,
+          ctx.activeLayers.airspace_PROHIBITED,
+          ctx.activeLayers.airspace_RESTRICTED,
+          ctx.activeLayers.airspace_CTA_LOWER,
+          ctx.activeLayers.airspace_TRA,
+          ctx.activeLayers.airspace_TSA,
+          ctx.activeLayers.airspace_CTR,
         ],
         getBorderColor: [
-          effectiveZoom,
           isLayerActive,
           ctx.isDarkMode,
           isAirspaceLoaded,
-          ctx.activeLayers.airspaceFIR,
-          ctx.activeLayers.airspaceRegulated,
-          ctx.activeLayers.airspaceControl,
-          ctx.activeLayers.airspaceUpr,
+          ctx.activeLayers.airspace_FIR,
+          ctx.activeLayers.airspace_ADIZ,
+          ctx.activeLayers.airspace_CTA_UPPER,
+          ctx.activeLayers.airspace_UPR_ZONE,
+          ctx.activeLayers.airspace_DANGER,
+          ctx.activeLayers.airspace_PROHIBITED,
+          ctx.activeLayers.airspace_RESTRICTED,
+          ctx.activeLayers.airspace_CTA_LOWER,
+          ctx.activeLayers.airspace_TRA,
+          ctx.activeLayers.airspace_TSA,
+          ctx.activeLayers.airspace_CTR,
         ],
       },
       binary: false,

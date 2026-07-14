@@ -545,16 +545,6 @@ class AirspaceETL:
                           public.airspaces_geometry a
                         WHERE
                           a.wkb_geometry && ST_Transform(ST_TileEnvelope(z, x, y), 4326)
-                          AND (
-                            (z >= 2 AND a.airspace_type = 'FIR') OR
-                            (z >= 3 AND a.airspace_type = 'ADIZ') OR
-                            (z >= 4 AND a.airspace_type = 'CTA_UPPER') OR
-                            (z >= 4 AND a.airspace_type = 'UPR_ZONE') OR
-                            (z >= 6 AND a.airspace_type = 'CTA_LOWER') OR
-                            (z >= 6 AND a.airspace_type = 'TRA') OR
-                            (z >= 6 AND a.airspace_type = 'TSA') OR
-                            (z >= 7 AND a.airspace_type IN ('DANGER', 'PROHIBITED', 'RESTRICTED', 'CTR'))
-                          )
                       ) AS tile;
                       RETURN mvt;
                     END;
@@ -590,16 +580,6 @@ class AirspaceETL:
                           public.airspaces_metadata a
                         WHERE
                           a.geom && ST_Transform(ST_TileEnvelope(z, x, y), 4326)
-                          AND (
-                            (z >= 2 AND a.airspace_type = 'FIR') OR
-                            (z >= 3 AND a.airspace_type = 'ADIZ') OR
-                            (z >= 4 AND a.airspace_type = 'CTA_UPPER') OR
-                            (z >= 4 AND a.airspace_type = 'UPR_ZONE') OR
-                            (z >= 6 AND a.airspace_type = 'CTA_LOWER') OR
-                            (z >= 6 AND a.airspace_type = 'TRA') OR
-                            (z >= 6 AND a.airspace_type = 'TSA') OR
-                            (z >= 7 AND a.airspace_type IN ('DANGER', 'PROHIBITED', 'RESTRICTED', 'CTR'))
-                          )
                       ) AS tile;
                       RETURN mvt;
                     END;

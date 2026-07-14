@@ -1,0 +1,52 @@
+/* --- Airspace Legend Card --- */
+.airspace-legend-card {
+  background: var(--glass-bg-heavy);
+  border: 1px solid var(--glass-border);
+  border-radius: 0.75rem;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: light-dark(0 4px 15px rgba(0, 0, 0, 0.06), var(--glass-shadow));
+  padding: 0.5rem;
+  min-width: 220px;
+}
+
+.airspace-legend-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.airspace-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.airspace-legend-row:hover {
+  background: light-dark(
+    color-mix(in srgb, var(--on-surface-variant) 4%, transparent),
+    rgba(255, 255, 255, 0.04)
+  );
+}
+
+.airspace-legend-color-indicator {
+  width: 14px;
+  height: 6px;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.airspace-legend-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition: all 0.2s ease;
+}

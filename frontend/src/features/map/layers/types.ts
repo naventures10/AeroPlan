@@ -11,10 +11,17 @@ export interface ActiveLayers {
   navaids: boolean;
   atsRoutes: boolean;
   airspaces: boolean;
-  airspaceFIR: boolean;
-  airspaceRegulated: boolean;
-  airspaceControl: boolean;
-  airspaceUpr: boolean;
+  airspace_FIR: boolean;
+  airspace_ADIZ: boolean;
+  airspace_CTA_UPPER: boolean;
+  airspace_UPR_ZONE: boolean;
+  airspace_DANGER: boolean;
+  airspace_PROHIBITED: boolean;
+  airspace_RESTRICTED: boolean;
+  airspace_CTA_LOWER: boolean;
+  airspace_TRA: boolean;
+  airspace_TSA: boolean;
+  airspace_CTR: boolean;
   weather?: boolean;
 }
 

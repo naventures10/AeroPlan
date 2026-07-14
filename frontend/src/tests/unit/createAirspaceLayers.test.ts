@@ -11,10 +11,17 @@ describe('createAirspaceLayers', () => {
       setAirspaceLoaded: () => {},
       activeLayers: {
         airspaces: true,
-        airspaceFIR: true,
-        airspaceRegulated: true,
-        airspaceControl: true,
-        airspaceUpr: true,
+        airspace_FIR: true,
+        airspace_ADIZ: true,
+        airspace_CTA_UPPER: true,
+        airspace_UPR_ZONE: true,
+        airspace_DANGER: true,
+        airspace_PROHIBITED: true,
+        airspace_RESTRICTED: true,
+        airspace_CTA_LOWER: true,
+        airspace_TRA: true,
+        airspace_TSA: true,
+        airspace_CTR: true,
       },
     };
 
@@ -30,10 +37,10 @@ describe('createAirspaceLayers', () => {
     const firFeature = { properties: { airspace_type: 'FIR' } };
     expect(geomLayer.props.getLineColor(firFeature)).toEqual([255, 165, 0, 80]); // FIR stroke
 
-    // Check line color hierarchy zoom hiding
+    // Check line color hierarchy zoom hiding (should remain visible as minZoom limits were removed)
     const lowZoomCtx = { ...ctx, zoom: 1 };
     const lowZoomLayers = createAirspaceLayers(lowZoomCtx as any);
-    expect(lowZoomLayers[0].props.getLineColor(firFeature)).toEqual([0, 0, 0, 0]);
+    expect(lowZoomLayers[0].props.getLineColor(firFeature)).toEqual([255, 165, 0, 80]);
 
     // Check text logic
     const ctaFeature = { properties: { airspace_type: 'CTA_LOWER', name: 'TEST CTA' } };
@@ -102,10 +109,17 @@ describe('createAirspaceLayers', () => {
       setAirspaceLoaded: () => {},
       activeLayers: {
         airspaces: true,
-        airspaceFIR: false,
-        airspaceRegulated: false,
-        airspaceControl: false,
-        airspaceUpr: false,
+        airspace_FIR: false,
+        airspace_ADIZ: false,
+        airspace_CTA_UPPER: false,
+        airspace_UPR_ZONE: false,
+        airspace_DANGER: false,
+        airspace_PROHIBITED: false,
+        airspace_RESTRICTED: false,
+        airspace_CTA_LOWER: false,
+        airspace_TRA: false,
+        airspace_TSA: false,
+        airspace_CTR: false,
       },
     };
 
@@ -137,10 +151,17 @@ describe('createAirspaceLayers', () => {
       setAirspaceLoaded: () => {},
       activeLayers: {
         airspaces: true,
-        airspaceFIR: true,
-        airspaceRegulated: true,
-        airspaceControl: true,
-        airspaceUpr: true,
+        airspace_FIR: true,
+        airspace_ADIZ: true,
+        airspace_CTA_UPPER: true,
+        airspace_UPR_ZONE: true,
+        airspace_DANGER: true,
+        airspace_PROHIBITED: true,
+        airspace_RESTRICTED: true,
+        airspace_CTA_LOWER: true,
+        airspace_TRA: true,
+        airspace_TSA: true,
+        airspace_CTR: true,
       },
     };
 
