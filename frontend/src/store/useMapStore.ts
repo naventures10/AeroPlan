@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { formatIST, calculateNowIndex } from '../features/map/utils/windUtils';
 import type { ForecastTimestamp } from '../features/map/utils/windUtils';
-import { fetchAtsRouteDetails, fetchNavaidDetails } from '../api/client';
+import { fetchAtsRouteDetails, fetchNavaidDetails, fetchSystemAirac } from '../api/client';
 import type { AtsRouteDetails, NavAidDetails } from '../api/client';
 
 // 1. Define the TypeScript Blueprint
@@ -158,6 +158,8 @@ interface MapState {
   setAipSupplementsModalOpen: (isOpen: boolean) => void;
   isAirspaceNotamsModalOpen: boolean;
   setAirspaceNotamsModalOpen: (isOpen: boolean) => void;
+  airacDates: { effective_date: string; next_date: string } | null;
+  fetchAiracDates: () => Promise<void>;
 }
 
 export const DEFAULT_VIEW = {
@@ -629,6 +631,24 @@ export const useMapStore = create<MapState>()(
       setAipSupplementsModalOpen: (isOpen) => set({ isAipSupplementsModalOpen: isOpen }),
       isAirspaceNotamsModalOpen: false,
       setAirspaceNotamsModalOpen: (isOpen) => set({ isAirspaceNotamsModalOpen: isOpen }),
+
+      airacDates: null,
+      fetchAiracDates: async () => {
+        if (get().airacDates) return; // Already cached
+        try {
+          const res = await fetchSystemAirac();
+          if (res) {
+            set({
+              airacDates: {
+                effective_date: res.effective_date,
+                next_date: res.next_date,
+              },
+            });
+          }
+        } catch (err) {
+          console.warn('[Store] fetchAiracDates failed:', err);
+        }
+      },
 
       // Basic Setters
       setViewState: (viewState) =>

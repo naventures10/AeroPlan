@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { Lock } from 'lucide-react';
 import { useMapStore } from '../../../../store/useMapStore';
-import { fetchAirspaceNotams, fetchSystemAirac } from '../../../../api/client';
+import { fetchAirspaceNotams } from '../../../../api/client';
 import { isFeatureLocked, type FeatureId } from '../../../../config/featureFlags';
 import './MobileMenuDrawer.css';
 
@@ -82,27 +82,13 @@ export default function MobileMenuDrawer({ isOpen, onClose }: MobileMenuDrawerPr
   const setAirspaceNotamsModalOpen = useMapStore((s) => s.setAirspaceNotamsModalOpen);
 
   const [notamCount, setNotamCount] = useState<number | null>(null);
-  const [airacDates, setAiracDates] = useState<{
-    effective_date: string;
-    next_date: string;
-  } | null>(null);
+  const airacDates = useMapStore((s) => s.airacDates);
 
   useEffect(() => {
     if (isOpen) {
       fetchAirspaceNotams()
         .then((notams) => setNotamCount(notams.length))
         .catch(() => setNotamCount(null));
-
-      fetchSystemAirac()
-        .then((res) => {
-          if (res) {
-            setAiracDates({
-              effective_date: res.effective_date,
-              next_date: res.next_date,
-            });
-          }
-        })
-        .catch(() => setAiracDates(null));
     }
   }, [isOpen]);
 

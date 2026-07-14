@@ -3,7 +3,7 @@ import { useSearch } from '../hooks/useSearch';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useAerodromeData } from '../hooks/useAerodromeData';
 import { useIsMobile } from '../hooks/useIsMobile';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { LogOut } from 'lucide-react';
 import GlobalLoader from '../components/GlobalLoader';
@@ -78,7 +78,12 @@ export default function MapPage() {
   const isWeatherMode = useMapStore((s) => s.isWeatherMode);
   const returnToEnroute = useMapStore((s) => s.returnToEnroute);
   const search = useSearch();
+  const fetchAiracDates = useMapStore((s) => s.fetchAiracDates);
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    fetchAiracDates();
+  }, [fetchAiracDates]);
 
   const {
     aerodromes,

@@ -63,6 +63,7 @@ describe('MapPage Component', () => {
         navaids: true,
       },
       toggleTerminalSpatialFilter: vi.fn(),
+      fetchAiracDates: vi.fn(),
     };
     (useMapStore as any).mockImplementation((selector: any) =>
       selector ? selector(storeObj) : storeObj,
@@ -123,6 +124,7 @@ describe('MapPage Component', () => {
         navaids: true,
       },
       toggleTerminalSpatialFilter: vi.fn(),
+      fetchAiracDates: vi.fn(),
     };
     (useMapStore as any).mockImplementation((selector: any) =>
       selector ? selector(storeObj) : storeObj,
@@ -154,6 +156,7 @@ describe('MapPage Component', () => {
         navaids: true,
       },
       toggleTerminalSpatialFilter: vi.fn(),
+      fetchAiracDates: vi.fn(),
     };
     (useMapStore as any).mockImplementation((selector: any) =>
       selector ? selector(storeObj) : storeObj,
@@ -213,6 +216,7 @@ describe('MapPage Component', () => {
         navaids: true,
       },
       toggleTerminalSpatialFilter: vi.fn(),
+      fetchAiracDates: vi.fn(),
     };
     (useMapStore as any).mockImplementation((selector: any) =>
       selector ? selector(storeObj) : storeObj,
