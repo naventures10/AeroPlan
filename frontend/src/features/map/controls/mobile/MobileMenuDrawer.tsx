@@ -152,7 +152,7 @@ export default function MobileMenuDrawer({ isOpen, onClose }: MobileMenuDrawerPr
                 </svg>
               </div>
               <div className="aip-drawer-title-group">
-                <span className="aip-drawer-title">eAIP</span>
+                <span className="aip-drawer-title">AeroInfo</span>
                 <span className="aip-drawer-subtitle">Navigation</span>
               </div>
               <button

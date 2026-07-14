@@ -308,6 +308,71 @@ body,
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
+   2b. Landing Page Animations
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@keyframes landing-dot-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.8;
+  }
+}
+
+@keyframes landing-cursor-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes landing-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes landing-glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 15px -5px var(--accent-cyan-glow);
+  }
+
+  50% {
+    box-shadow: 0 0 30px -3px var(--accent-cyan-glow);
+  }
+}
+
+.landing-dot-pulse {
+  animation: landing-dot-pulse 3s infinite ease-in-out;
+}
+
+.landing-cursor-blink {
+  animation: landing-cursor-blink 1s step-end infinite;
+}
+
+.landing-float {
+  animation: landing-float 6s ease-in-out infinite;
+}
+
+.landing-glow-pulse {
+  animation: landing-glow-pulse 3s ease-in-out infinite;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
    3. Layout & Shared Containers
    ───────────────────────────────────────────────────────────────────────────── */
 

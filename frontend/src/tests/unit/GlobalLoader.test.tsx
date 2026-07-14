@@ -5,6 +5,6 @@ import GlobalLoader from '../../components/GlobalLoader';
 describe('GlobalLoader', () => {
   it('should render the loading message and spinner', () => {
     render(<GlobalLoader />);
-    expect(screen.getByText(/Initializing eAIP Systems.../i)).toBeInTheDocument();
+    expect(screen.getByText(/Initializing AeroInfo Systems.../i)).toBeInTheDocument();
   });
 });
