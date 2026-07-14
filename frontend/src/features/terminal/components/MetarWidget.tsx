@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import type { WeatherData } from '../../../types';
+import { formatRelativeTime } from '../../../utils/time';
 
 interface MetarWidgetProps {
   weather: WeatherData | null;
@@ -17,17 +18,19 @@ export function MetarWidget({ weather }: MetarWidgetProps) {
       <h3 className="text-[9px] font-black tracking-[0.25em] text-on-surface-variant uppercase mb-4">
         Latest METAR
       </h3>
-      <div className="bg-surface-container p-5 rounded-2xl border border-outline-variant grow">
-        {weather?.metar ? (
-          <p className="text-sm text-emerald-600 dark:text-emerald-400 font-mono leading-relaxed tracking-wide">
-            {weather.metar}
-          </p>
-        ) : (
-          <p className="text-on-surface-variant italic text-sm">No METAR data available.</p>
-        )}
+      <div className="bg-surface-container p-5 rounded-2xl border border-outline-variant grow flex flex-col justify-between">
+        <div>
+          {weather?.metar ? (
+            <p className="text-sm text-emerald-600 dark:text-emerald-400 font-mono leading-relaxed tracking-wide">
+              {weather.metar}
+            </p>
+          ) : (
+            <p className="text-on-surface-variant italic text-sm">No METAR data available.</p>
+          )}
+        </div>
         {weather?.fetched_at && (
           <p className="text-[10px] text-on-surface-variant font-mono mt-4">
-            Fetched (UTC): {new Date(weather.fetched_at).toISOString()}
+            Fetched: {formatRelativeTime(weather.fetched_at)}
           </p>
         )}
       </div>

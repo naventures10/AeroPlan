@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import type { WeatherData } from '../../../../types';
+import { formatRelativeTime } from '../../../../utils/time';
 
 interface MobileMetarWidgetProps {
   weather: WeatherData | null;
@@ -18,17 +19,19 @@ export function MobileMetarWidget({ weather }: MobileMetarWidgetProps) {
       <h3 className="text-[10px] font-black tracking-[0.2em] text-on-surface-variant uppercase mb-2">
         Latest METAR
       </h3>
-      <div className="bg-surface-container p-4 rounded-2xl border border-outline-variant">
-        {weather?.metar ? (
-          <p className="text-xs text-emerald-600 dark:text-emerald-400 font-mono leading-relaxed tracking-wide select-all break-words">
-            {weather.metar}
-          </p>
-        ) : (
-          <p className="text-on-surface-variant italic text-xs">No METAR data available.</p>
-        )}
+      <div className="bg-surface-container p-4 rounded-2xl border border-outline-variant flex flex-col justify-between">
+        <div>
+          {weather?.metar ? (
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-mono leading-relaxed tracking-wide select-all break-words">
+              {weather.metar}
+            </p>
+          ) : (
+            <p className="text-on-surface-variant italic text-xs">No METAR data available.</p>
+          )}
+        </div>
         {weather?.fetched_at && (
           <p className="text-[9px] text-on-surface-variant font-mono mt-3">
-            Fetched (UTC): {new Date(weather.fetched_at).toISOString()}
+            Fetched: {formatRelativeTime(weather.fetched_at)}
           </p>
         )}
       </div>

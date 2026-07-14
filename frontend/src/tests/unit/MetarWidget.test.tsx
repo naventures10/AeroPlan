@@ -20,7 +20,7 @@ describe('MetarWidget', () => {
     };
     render(<MetarWidget weather={mockWeather as any} />);
     expect(screen.getByText('METAR DATA STRING')).toBeInTheDocument();
-    expect(screen.getByText(/Fetched \(UTC\):/)).toBeInTheDocument();
+    expect(screen.getByText(/Fetched:/)).toBeInTheDocument();
   });
 
   it('renders correctly without weather data', () => {

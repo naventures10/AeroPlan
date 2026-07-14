@@ -167,6 +167,7 @@ async def _fetch_weather(icao: str) -> dict:
         sources_used = [p["source"] for p in parsed]
 
         # Log comparison
+
         times = {p["source"]: p["_metar_time"] for p in parsed}
         metars_match = parsed[0].get("metar") == parsed[1].get("metar")
         logger.info(
@@ -176,9 +177,20 @@ async def _fetch_weather(icao: str) -> dict:
             metars_match=metars_match,
         )
 
-        # Clean up internal field
-        for p in parsed:
-            p.pop("_metar_time", None)
+    # Prevent overwriting valid cache with empty data if a source failed
+    if not best.get("metar") and not best.get("taf") and len(parsed) < len(SOURCES):
+        # Check if we are about to overwrite previously valid data
+        old_cache = await get_cached_json(_get_cache_key(icao_upper))
+        if old_cache and (
+            old_cache.get("data", {}).get("metar") or old_cache.get("data", {}).get("taf")
+        ):
+            raise HTTPException(
+                status_code=502,
+                detail=f"Partial failure: {sources_used} returned no data, and other sources failed. Refusing to overwrite valid cache with empty data.",
+            )
+            # If the cache was already empty or expired, we allow it to cache the null result
+            # This ensures genuinely empty airports (or permanently blocked sources) don't cause
+            # 15-second timeouts on every frontend request.
 
     now = time.time()
     fetched_at_str = datetime.fromtimestamp(now, tz=UTC).isoformat()

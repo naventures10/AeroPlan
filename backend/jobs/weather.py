@@ -31,8 +31,8 @@ async def update_weather_cache_loop() -> None:
 
             logger.info(f"Found {len(icao_codes)} aerodromes to update weather cache for.")
 
-            # Concurrently update cache with a limit of 5 concurrent scrapes to protect OLBS sources
-            sem = asyncio.Semaphore(5)
+            # Concurrently update cache with a limit of 2 concurrent scrapes to protect OLBS sources
+            sem = asyncio.Semaphore(2)
 
             async def fetch_and_cache(icao: str, sem=sem) -> None:
                 async with sem:
@@ -41,6 +41,7 @@ async def update_weather_cache_loop() -> None:
                         logger.debug("weather_cached_successfully", icao=icao)
                     except Exception as exc:
                         logger.warning("weather_cache_update_failed", icao=icao, error=str(exc))
+                    await asyncio.sleep(1.0)  # Gentle delay between requests to avoid rate limits
 
             tasks = [fetch_and_cache(icao) for icao in icao_codes]
             await asyncio.gather(*tasks, return_exceptions=True)
