@@ -90,7 +90,7 @@ jobs:
             VITE_LOCK_AIP_SUPPLEMENTS:projects/${{ env.PROJECT_ID }}/secrets/vite-lock-aip-supplements
             VITE_LOCK_AERODROME_CHARTS:projects/${{ env.PROJECT_ID }}/secrets/vite-lock-aerodrome-charts
 
-      # Run first tofu apply to ensure backend & martin services exist so we can fetch their URLs
+      # Run tofu apply once to ensure base infrastructure, database, secrets, and services exist
       - name: Deploy Base Infrastructure and Services
         working-directory: infra/tofu
         run: |-
@@ -102,10 +102,7 @@ jobs:
             -var="otel_endpoint=${{ steps.secrets.outputs.OTEL_ENDPOINT }}" \
             -var="otel_headers=${{ steps.secrets.outputs.OTEL_HEADERS }}" \
             -var="vite_lock_aip_supplements=${{ steps.secrets.outputs.VITE_LOCK_AIP_SUPPLEMENTS }}" \
-            -var="vite_lock_aerodrome_charts=${{ steps.secrets.outputs.VITE_LOCK_AERODROME_CHARTS }}" \
-            -var="backend_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-backend:${{ github.sha }}" \
-            -var="weather_pipeline_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/weather-pipeline:${{ github.sha }}" \
-            -var="martin_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-martin:v0.14.2"
+            -var="vite_lock_aerodrome_charts=${{ steps.secrets.outputs.VITE_LOCK_AERODROME_CHARTS }}"
 
       - name: Fetch Deployed Service URLs
         id: urls
@@ -114,6 +111,27 @@ jobs:
           MARTIN_URL=$(gcloud run services describe eaip-martin --region ${{ env.REGION }} --format 'value(status.url)')
           echo "BACKEND_URL=$BACKEND_URL" >> $GITHUB_ENV
           echo "MARTIN_URL=$MARTIN_URL" >> $GITHUB_ENV
+
+      - name: Fetch Current Frontend Revision (for rollback)
+        run: |
+          PREV_REV=$(gcloud run services describe eaip-frontend --region ${{ env.REGION }} --format 'value(status.latestReadyRevisionName)' || echo "")
+          echo "PREV_REV=$PREV_REV" >> $GITHUB_ENV
+
+      - name: Deploy Backend, Martin, and Job Images to Cloud Run
+        run: |-
+          gcloud run deploy eaip-backend \
+            --image ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-backend:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed
+
+          gcloud run deploy eaip-martin \
+            --image ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-martin:v0.14.2 \
+            --region ${{ env.REGION }} \
+            --platform managed
+
+          gcloud run jobs update weather-pipeline \
+            --image ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/weather-pipeline:${{ github.sha }} \
+            --region ${{ env.REGION }}
 
       - name: Build, Push, and Deploy Frontend Image
         run: |-
@@ -129,22 +147,12 @@ jobs:
             -t $IMAGE ./frontend
           docker push $IMAGE
 
-      # Run second tofu apply to deploy the built frontend image
-      - name: Deploy Frontend via OpenTofu
-        working-directory: infra/tofu
+      - name: Deploy Frontend to Cloud Run
         run: |-
-          tofu apply -auto-approve \
-            -var="db_password=${{ steps.secrets.outputs.DB_PASSWORD }}" \
-            -var="vite_maptiler_key=${{ steps.secrets.outputs.VITE_MAPTILER_KEY }}" \
-            -var="vite_faro_url=${{ steps.secrets.outputs.VITE_FARO_URL }}" \
-            -var="otel_endpoint=${{ steps.secrets.outputs.OTEL_ENDPOINT }}" \
-            -var="otel_headers=${{ steps.secrets.outputs.OTEL_HEADERS }}" \
-            -var="vite_lock_aip_supplements=${{ steps.secrets.outputs.VITE_LOCK_AIP_SUPPLEMENTS }}" \
-            -var="vite_lock_aerodrome_charts=${{ steps.secrets.outputs.VITE_LOCK_AERODROME_CHARTS }}" \
-            -var="backend_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-backend:${{ github.sha }}" \
-            -var="weather_pipeline_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/weather-pipeline:${{ github.sha }}" \
-            -var="martin_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-martin:v0.14.2" \
-            -var="frontend_image=${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-frontend:${{ github.sha }}"
+          gcloud run deploy eaip-frontend \
+            --image ${{ env.GAR_LOCATION }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/eaip-frontend:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed
 
 
 

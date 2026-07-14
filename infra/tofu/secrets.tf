@@ -58,6 +58,10 @@ resource "google_secret_manager_secret" "vite_maptiler_key" {
 resource "google_secret_manager_secret_version" "vite_maptiler_key_version" {
   secret      = google_secret_manager_secret.vite_maptiler_key.id
   secret_data = var.vite_maptiler_key
+
+  lifecycle {
+    ignore_changes = [secret_data]
+  }
 }
 
 # Grant the Github Actions SA access to read the secrets (since it runs the Cloud Run services)
