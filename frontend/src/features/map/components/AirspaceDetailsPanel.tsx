@@ -1,6 +1,44 @@
 import { LabelVal } from './SharedLabel';
 import { sanitizeAndSplitHtml } from '../../../utils/sanitize';
 
+export function parseVerticalLimits(
+  lowerLimit: string | null,
+  upperLimit: string | null,
+): { lower: string; upper: string } {
+  const lower = lowerLimit?.trim() || '';
+  const upper = upperLimit?.trim() || '';
+
+  if ((!lower || lower === 'SFC') && upper && upper.includes('/')) {
+    let cleanStr = upper.replace(/^(SFC|GND)\s*[-—]\s*/i, '').trim();
+    cleanStr = cleanStr.replace(/\b\d{6}[NS]\s*\d{7}[EW]\b/g, '').trim();
+
+    const parts = cleanStr.split('/');
+    const firstPart = parts[0];
+    const secondPart = parts[1];
+    if (firstPart !== undefined && secondPart !== undefined) {
+      // Strip leading non-alphanumeric characters (like bullets • or asterisks *)
+      const uPart = firstPart.replace(/^[^a-zA-Z0-9]+/, '').trim();
+      const lPart = secondPart.replace(/^[^a-zA-Z0-9]+/, '').trim();
+
+      const limitRegex = /(UNL|GND|SFC|FL\s*\d+|\d+\s*FT\s*(?:AMSL|AGL|ASML)?)/i;
+      const uMatch = uPart.match(limitRegex);
+      const lMatch = lPart.match(limitRegex);
+
+      if (uMatch && lMatch) {
+        return {
+          lower: lMatch[0].trim(),
+          upper: uMatch[0].trim(),
+        };
+      }
+    }
+  }
+
+  return {
+    lower: lower || 'SFC',
+    upper: upper || 'UNL',
+  };
+}
+
 export function AirspaceDetailsPanel({ data }: { data: any }) {
   if (!data) return null;
   const p = data;
@@ -21,6 +59,8 @@ export function AirspaceDetailsPanel({ data }: { data: any }) {
   );
   const remarksParts = sanitizeAndSplitHtml(p.remarks, '|');
 
+  const { lower, upper } = parseVerticalLimits(p.lower_limit, p.upper_limit);
+
   return (
     <div className="flex flex-col gap-4 px-1 py-1">
       {/* Header */}
@@ -39,7 +79,7 @@ export function AirspaceDetailsPanel({ data }: { data: any }) {
             Vertical Limits
           </span>
           <span className="text-xs text-on-surface font-medium">
-            {p.lower_limit || 'SFC'} — {p.upper_limit || 'UNL'}
+            {lower} — {upper}
           </span>
         </div>
       </div>
