@@ -200,6 +200,25 @@ export async function fetchSystemAirac(): Promise<SystemAiracResponse | null> {
   return getOrNull<SystemAiracResponse>('/system/airac');
 }
 
+export async function updateStaticAirac(effectiveDate: string, nextDate: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/system/airac`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        effective_date: effectiveDate,
+        next_date: nextDate,
+      }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error('[API] updateStaticAirac error:', err);
+    return false;
+  }
+}
+
 // ── ATS Routes ──────────────────────────────────────────────────────────
 
 export async function fetchAtsRouteLabels(): Promise<GeoJsonFeatureCollection> {

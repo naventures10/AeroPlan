@@ -42,3 +42,26 @@ async def test_get_system_airac_not_found(
     assert response.status_code == 404
     data = response.json()
     assert data["detail"] == "AIRAC cycle information not found"
+
+
+@pytest.mark.asyncio
+async def test_update_system_airac_static_success(api_client: AsyncClient, monkeypatch) -> None:
+    """Test updating the static airac.json files."""
+    import builtins
+    from unittest.mock import mock_open
+
+    mock_file = mock_open()
+    monkeypatch.setattr(builtins, "open", mock_file)
+
+    import os
+
+    monkeypatch.setattr(os, "makedirs", lambda *args, **kwargs: None)
+    monkeypatch.setattr(os.path, "exists", lambda *args, **kwargs: True)
+
+    payload = {"effective_date": "19 Mar 2026 UTC", "next_date": "16 Apr 2026 UTC"}
+
+    response = await api_client.post("/api/v1/system/airac", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    assert len(data["updated_files"]) > 0

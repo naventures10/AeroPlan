@@ -51,3 +51,45 @@ async def get_system_airac(db: AsyncSession = Depends(get_db)) -> SystemAiracRes
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database query failed: {e!s}") from e
+
+
+@router.post("/airac")
+async def update_system_airac_static(payload: SystemAiracResponse) -> dict:
+    """
+    Overwrites the frontend's static `airac.json` file in:
+    - frontend/public/airac.json
+    - frontend/dist/airac.json (if present)
+    """
+    import json
+    import os
+
+    content = {"effective_date": payload.effective_date, "next_date": payload.next_date}
+
+    file_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(file_dir, "../../../../../"))
+
+    frontend_public_path = os.path.join(project_root, "frontend", "public", "airac.json")
+    frontend_dist_path = os.path.join(project_root, "frontend", "dist", "airac.json")
+
+    updated_files = []
+
+    try:
+        os.makedirs(os.path.dirname(frontend_public_path), exist_ok=True)
+        with open(frontend_public_path, "w", encoding="utf-8") as f:
+            json.dump(content, f, indent=2)
+        updated_files.append(frontend_public_path)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to write public airac.json: {e!s}"
+        ) from e
+
+    try:
+        if os.path.exists(os.path.dirname(frontend_dist_path)):
+            with open(frontend_dist_path, "w", encoding="utf-8") as f:
+                json.dump(content, f, indent=2)
+            updated_files.append(frontend_dist_path)
+    except Exception:
+        # Don't fail if dist folder is read-only or not there, but log if we can
+        pass
+
+    return {"status": "success", "updated_files": updated_files}

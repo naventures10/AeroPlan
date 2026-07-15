@@ -2,7 +2,12 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { formatIST, calculateNowIndex } from '../features/map/utils/windUtils';
 import type { ForecastTimestamp } from '../features/map/utils/windUtils';
-import { fetchAtsRouteDetails, fetchNavaidDetails, fetchSystemAirac } from '../api/client';
+import {
+  fetchAtsRouteDetails,
+  fetchNavaidDetails,
+  fetchSystemAirac,
+  updateStaticAirac,
+} from '../api/client';
 import type { AtsRouteDetails, NavAidDetails } from '../api/client';
 
 // 1. Define the TypeScript Blueprint
@@ -655,19 +660,41 @@ export const useMapStore = create<MapState>()(
 
       airacDates: null,
       fetchAiracDates: async () => {
-        if (get().airacDates) return; // Already cached
+        let current = get().airacDates;
+        if (!current) {
+          try {
+            const staticRes = await fetch('/airac.json');
+            if (staticRes.ok) {
+              const staticDates = await staticRes.json();
+              if (staticDates && staticDates.effective_date && staticDates.next_date) {
+                set({ airacDates: staticDates });
+                current = staticDates;
+              }
+            }
+          } catch (err) {
+            console.warn('[Store] Failed to load static airac.json:', err);
+          }
+        }
+
         try {
           const res = await fetchSystemAirac();
           if (res) {
-            set({
-              airacDates: {
-                effective_date: res.effective_date,
-                next_date: res.next_date,
-              },
-            });
+            if (
+              !current ||
+              current.effective_date !== res.effective_date ||
+              current.next_date !== res.next_date
+            ) {
+              set({
+                airacDates: {
+                  effective_date: res.effective_date,
+                  next_date: res.next_date,
+                },
+              });
+              await updateStaticAirac(res.effective_date, res.next_date);
+            }
           }
         } catch (err) {
-          console.warn('[Store] fetchAiracDates failed:', err);
+          console.warn('[Store] fetchAiracDates api call failed:', err);
         }
       },
 
