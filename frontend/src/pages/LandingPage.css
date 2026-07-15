@@ -1,0 +1,285 @@
+/* AeroInfo Landing Page Stylesheet */
+
+.landing-container {
+  inline-size: 100vw;
+  block-size: 100vh;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  background-color: var(--surface);
+  color: var(--on-background);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   1. Animations
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@keyframes mesh-move-1 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(20%, -15%) scale(1.1);
+  }
+}
+
+@keyframes mesh-move-2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1.2);
+  }
+  50% {
+    transform: translate(-15%, 20%) scale(0.9);
+  }
+}
+
+@keyframes mesh-move-3 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(0.95);
+  }
+  50% {
+    transform: translate(10%, 15%) scale(1.15);
+  }
+}
+
+@keyframes grid-drift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 40px 40px;
+  }
+}
+
+.animate-mesh-1 {
+  animation: mesh-move-1 25s infinite ease-in-out alternate;
+}
+
+.animate-mesh-2 {
+  animation: mesh-move-2 20s infinite ease-in-out alternate;
+}
+
+.animate-mesh-3 {
+  animation: mesh-move-3 22s infinite ease-in-out alternate;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   2. Hero Section
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.hero-section {
+  position: relative;
+  inline-size: 100%;
+  block-size: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* CSS-only Animated Gradient Mesh Background */
+.hero-gradient-mesh {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.mesh-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.15;
+  transition: opacity 0.5s ease;
+}
+
+html.dark .mesh-blob {
+  opacity: 0.3;
+}
+
+/* Mesh Blobs mapping to cyan and primary theme colors */
+.mesh-blob-cyan {
+  background: color-mix(in srgb, var(--accent-cyan-500) 80%, transparent);
+  inline-size: 60%;
+  block-size: 60%;
+  top: -10%;
+  left: -10%;
+}
+
+.mesh-blob-primary {
+  background: color-mix(in srgb, var(--primary) 80%, transparent);
+  inline-size: 55%;
+  block-size: 55%;
+  bottom: -5%;
+  right: -5%;
+}
+
+.mesh-blob-accent {
+  background: color-mix(in srgb, var(--secondary) 70%, transparent);
+  inline-size: 40%;
+  block-size: 40%;
+  top: 30%;
+  left: 45%;
+}
+
+/* Grid Overlay overlaying the mesh */
+.hero-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--outline) 8%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--outline) 8%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 40px 40px;
+  mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
+  animation: grid-drift 60s linear infinite;
+  opacity: 0.7;
+  z-index: 2;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  max-size: 800px;
+  padding: 0 24px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   3. Navigation Header
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.landing-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  inline-size: 100%;
+  z-index: 100;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.header-scrolled {
+  background: var(--glass-bg-heavy);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-block-end: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Mobile Nav Menu */
+.mobile-nav-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  inline-size: 100%;
+  background: var(--surface-container-high);
+  border-block-end: 1px solid var(--outline-variant);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-nav-menu.is-open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   4. Feature Cards & Layouts
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  inline-size: 100%;
+}
+
+.feature-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.feature-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--accent-cyan-400);
+  background: var(--glass-bg-heavy);
+  box-shadow: var(--glass-shadow);
+}
+
+.feature-icon-wrapper {
+  inline-size: 48px;
+  block-size: 48px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent-cyan-500) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-cyan-500) 20%, transparent);
+  color: var(--primary);
+  margin-block-end: 16px;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover .feature-icon-wrapper {
+  background: color-mix(in srgb, var(--accent-cyan-500) 20%, transparent);
+  border-color: var(--accent-cyan-400);
+  color: var(--accent-cyan-400);
+  box-shadow: 0 0 15px -3px var(--accent-cyan-glow);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   5. Interactive Elements
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.nav-link-underline {
+  position: relative;
+}
+
+.nav-link-underline::after {
+  content: '';
+  position: absolute;
+  inline-size: 100%;
+  block-size: 2px;
+  bottom: -4px;
+  left: 0;
+  background-color: var(--primary);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s ease;
+}
+
+.nav-link-underline:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Smooth reveal animations */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.8s ease,
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-on-scroll.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}

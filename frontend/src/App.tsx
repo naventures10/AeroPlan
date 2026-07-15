@@ -2,6 +2,7 @@ import { useLayoutEffect } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import LandingPage from './pages/LandingPage';
 import MapPage from './pages/MapPage';
+import BlogPage from './pages/BlogPage';
 
 const router = createBrowserRouter([
   {
@@ -11,6 +12,10 @@ const router = createBrowserRouter([
   {
     path: '/app',
     element: <MapPage />,
+  },
+  {
+    path: '/blog',
+    element: <BlogPage />,
   },
 ]);
 

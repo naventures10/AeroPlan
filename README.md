@@ -1,6 +1,6 @@
-# eAIP — Electronic Aeronautical Information Publication
+# AeroInfo - Aeronautical Information System
 
-A monorepo containing the full eAIP platform stack for India.
+A comprehensive platform for Indian airspace visualization, NOTAM processing, and AI-powered flight planning.
 
 ## Packages
 

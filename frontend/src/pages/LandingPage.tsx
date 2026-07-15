@@ -1,416 +1,432 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router';
-import {
-  Plane,
-  Map as MapIcon,
-  ChevronRight,
-  Sun,
-  Moon,
-  CloudSun,
-  Route,
-  FileText,
-  Radar,
-} from 'lucide-react';
-import { useMapStore } from '../store/useMapStore';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router';
+import { motion } from 'framer-motion';
+import { Map, Cloud, Bell, Layers, Route, FileText, Mail, ArrowRight, Menu, X } from 'lucide-react';
+import './LandingPage.css';
 
-/* ─── Data ──────────────────────────────────────────────────────────────────── */
+export default function LandingPage() {
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-/** Waypoints/Fixes distributed across a 1920x1080 canvas for the background flight network. */
-const WAYPOINTS = [
-  { id: 'IKULA', x: 350, y: 250, label: 'IKULA' },
-  { id: 'POMAR', x: 960, y: 250, label: 'POMAR' },
-  { id: 'INDBA', x: 1570, y: 250, label: 'INDBA' },
-  { id: 'DABOL', x: 350, y: 550, label: 'DABOL' },
-  { id: 'MABAS', x: 960, y: 550, label: 'MABAS' },
-  { id: 'LURAA', x: 1570, y: 550, label: 'LURAA' },
-  { id: 'BIBGO', x: 350, y: 850, label: 'BIBGO' },
-  { id: 'ASOGI', x: 960, y: 850, label: 'ASOGI' },
-  { id: 'GIVAL', x: 1570, y: 850, label: 'GIVAL' },
-  { id: 'SAPAR', x: 655, y: 400, label: 'SAPAR' },
-  { id: 'VUTAS', x: 1265, y: 700, label: 'VUTAS' },
-] as const;
-
-/** Straight airway corridors connecting coordinates. */
-const NETWORK_PATHS = [
-  { path: 'M -100 250 L 2020 250', duration: '18s', delay: '0s' },
-  { path: 'M 2020 550 L -100 550', duration: '20s', delay: '3s' },
-  { path: 'M -100 850 L 2020 850', duration: '19s', delay: '1.5s' },
-  { path: 'M 350 -100 L 350 1180', duration: '15s', delay: '2s' },
-  { path: 'M 960 1180 L 960 -100', duration: '17s', delay: '0.5s' },
-  { path: 'M 1570 -100 L 1570 1180', duration: '16s', delay: '4s' },
-  { path: 'M -100 -50 L 2020 1010', duration: '22s', delay: '1s' },
-  { path: 'M 2020 70 L -100 1130', duration: '24s', delay: '2.5s' },
-] as const;
-
-const FEATURES = [
-  {
-    icon: MapIcon,
-    title: 'Interactive AIP Map',
-    description: 'Real-time airspace visualization with multi-layer overlays and 3D terrain',
-  },
-  {
-    icon: CloudSun,
-    title: 'Weather Intelligence',
-    description: 'Live METAR, TAF, SIGMET overlays with animated wind & precipitation layers',
-  },
-  {
-    icon: FileText,
-    title: 'Aerodrome Charts',
-    description: 'Terminal procedures, SID/STAR charts, and aerodrome ground layouts',
-  },
-  {
-    icon: Route,
-    title: 'Route Navigation',
-    description: 'ATS routes, RNAV procedures, waypoint search, and navaid details',
-  },
-] as const;
-
-const TYPEWRITER_PHRASES = [
-  'Real-time AIP Visualization',
-  'Live METAR & TAF Overlays',
-  'Terminal Procedure Charts',
-  'Airspace & Route Intelligence',
-  'Next-Gen Flight Planning',
-] as const;
-
-/* ─── Sub-Components ────────────────────────────────────────────────────────── */
-
-/** Fullscreen structured airway network with straight moving aircraft symbols. */
-function FlightNetworkSVG() {
-  return (
-    <svg
-      viewBox="0 0 1920 1080"
-      preserveAspectRatio="xMidYMid slice"
-      className="w-full h-full"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <defs>
-        <filter id="glow-filter" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="6" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-
-      {/* Flight Network Airway Corridors */}
-      {NETWORK_PATHS.map((item, idx) => (
-        <path
-          key={`path-${idx}`}
-          d={item.path}
-          stroke="var(--accent-cyan)"
-          strokeWidth="1.2"
-          strokeOpacity="0.25"
-          fill="none"
-        />
-      ))}
-
-      {/* Travelling Flight Dots */}
-      {NETWORK_PATHS.map((item, idx) => (
-        <g key={`dot-${idx}`}>
-          {/* Outer faint halo */}
-          <circle r="12" fill="var(--accent-cyan)" opacity="0.35" filter="url(#glow-filter)" />
-          {/* Inner core */}
-          <circle r="3" fill="var(--accent-cyan)" opacity="1" />
-          <animateMotion
-            path={item.path}
-            dur={item.duration}
-            begin={item.delay}
-            repeatCount="indefinite"
-          />
-        </g>
-      ))}
-
-      {/* Waypoint Nodes (Aeronautical Intersections) */}
-      {WAYPOINTS.map((wp) => (
-        <g key={wp.id}>
-          {/* Triangluar waypoint symbol standard in aviation charts */}
-          <polygon
-            points={`${wp.x},${wp.y - 7} ${wp.x - 7},${wp.y + 5} ${wp.x + 7},${wp.y + 5}`}
-            stroke="var(--accent-cyan)"
-            strokeWidth="1.2"
-            strokeOpacity="0.7"
-            fill="none"
-          />
-          {/* Pulsing visual indicator inside fix */}
-          <circle
-            cx={wp.x}
-            cy={wp.y + 1}
-            r="1.5"
-            fill="var(--accent-cyan)"
-            className="landing-dot-pulse"
-            style={{ transformOrigin: `${wp.x}px ${wp.y + 1}px` }}
-          />
-          {/* Waypoint Label */}
-          <text
-            x={wp.x}
-            y={wp.y + 20}
-            fill="var(--accent-cyan)"
-            fontSize="9"
-            fontWeight="bold"
-            letterSpacing="1.5"
-            opacity="0.6"
-            textAnchor="middle"
-            style={{ fontFamily: 'var(--font-mono)' }}
-          >
-            {wp.label}
-          </text>
-        </g>
-      ))}
-    </svg>
-  );
-}
-
-/** Typewriter effect that cycles through capability phrases. */
-function TypewriterSubtitle() {
-  const [phraseIndex, setPhraseIndex] = useState(0);
-  const [displayText, setDisplayText] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const tick = useCallback(() => {
-    const currentPhrase = TYPEWRITER_PHRASES[phraseIndex];
-    if (!currentPhrase) return;
-    if (!isDeleting) {
-      // Typing
-      setDisplayText(currentPhrase.slice(0, displayText.length + 1));
-      if (displayText.length + 1 === currentPhrase.length) {
-        // Pause at end of phrase before deleting
-        setTimeout(() => setIsDeleting(true), 2000);
-        return;
+  // Monitor the scroll position inside our custom container
+  useEffect(() => {
+    const handleScroll = () => {
+      if (containerRef.current) {
+        setScrolled(containerRef.current.scrollTop > 50);
       }
-    } else {
-      // Deleting
-      setDisplayText(currentPhrase.slice(0, displayText.length - 1));
-      if (displayText.length - 1 === 0) {
-        setIsDeleting(false);
-        setPhraseIndex((prev) => (prev + 1) % TYPEWRITER_PHRASES.length);
-        return;
-      }
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
     }
-  }, [displayText, isDeleting, phraseIndex]);
-
-  useEffect(() => {
-    const speed = isDeleting ? 40 : 70;
-    const timer = setTimeout(tick, speed);
-    return () => clearTimeout(timer);
-  }, [tick, isDeleting]);
-
-  return (
-    <span className="text-on-surface-variant text-lg md:text-xl font-light tracking-wide">
-      {displayText}
-      <span className="landing-cursor-blink text-accent-cyan ml-0.5">|</span>
-    </span>
-  );
-}
-
-/** Auto-rotating feature carousel with glassmorphism cards. */
-function FeatureCarousel() {
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % FEATURES.length);
-    }, 4000);
-    return () => clearInterval(timer);
+    return () => {
+      if (container) {
+        container.removeEventListener('scroll', handleScroll);
+      }
+    };
   }, []);
 
-  return (
-    <div className="flex flex-col items-center gap-4 w-full max-w-3xl">
-      {/* Card display area */}
-      <div className="relative w-full h-28 md:h-24">
-        <AnimatePresence mode="wait">
-          {FEATURES.map(
-            (feature, index) =>
-              index === activeIndex && (
-                <motion.div
-                  key={feature.title}
-                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                  transition={{ duration: 0.4, ease: 'easeOut' }}
-                  className="absolute inset-0 glass-morphism-heavy rounded-2xl p-5 md:p-6 flex items-center gap-5 landing-glow-pulse"
-                >
-                  <div className="w-12 h-12 min-w-12 rounded-xl bg-[var(--accent-cyan-opacity-20)] flex items-center justify-center">
-                    <feature.icon className="w-6 h-6 text-[var(--accent-cyan)]" />
-                  </div>
-                  <div className="flex flex-col gap-1 min-w-0">
-                    <h3 className="text-on-surface font-bold text-base tracking-tight">
-                      {feature.title}
-                    </h3>
-                    <p className="text-on-surface-variant text-sm leading-relaxed">
-                      {feature.description}
-                    </p>
-                  </div>
-                </motion.div>
-              ),
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Dot indicators */}
-      <div className="flex gap-2">
-        {FEATURES.map((feature, index) => (
-          <button
-            key={feature.title}
-            onClick={() => setActiveIndex(index)}
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              index === activeIndex
-                ? 'bg-[var(--accent-cyan)] w-6'
-                : 'bg-[var(--accent-cyan-opacity-30)] hover:bg-[var(--accent-cyan-opacity-20)]'
-            }`}
-            aria-label={`Show ${feature.title}`}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/** Theme toggle button using the existing map store. */
-function ThemeToggle() {
-  const isDarkMode = useMapStore((s) => s.isDarkMode);
-  const setMapStyle = useMapStore((s) => s.setMapStyle);
-
-  const toggle = () => {
-    setMapStyle(isDarkMode ? 'light' : 'dark');
+  const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+    e.preventDefault();
+    setMobileMenuOpen(false);
+    const targetElement = document.getElementById(targetId);
+    if (targetElement) {
+      targetElement.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
+  const featureItems = [
+    {
+      icon: <Map className="w-6 h-6" />,
+      title: 'Interactive Indian Aeronautical Map',
+      description:
+        'Enroute & terminal views with real-time Indian vector data layers, custom styling, and responsive filters.',
+    },
+    {
+      icon: <Cloud className="w-6 h-6" />,
+      title: 'Indian Meteorological Overlays',
+      description:
+        'Live Indian METAR/TAF weather data integrated directly into the map view for quick pilot briefings.',
+    },
+    {
+      icon: <Bell className="w-6 h-6" />,
+      title: 'NOTAMs & AIP Supplements',
+      description:
+        'Real-time notices to airmen and regulatory updates from Indian flight information regions, parsed by location.',
+    },
+    {
+      icon: <Layers className="w-6 h-6" />,
+      title: 'Airspace Visualization',
+      description:
+        'Explore detailed Indian FIR, TMA, and CTR boundaries with clear classification and altitudinal labels.',
+    },
+    {
+      icon: <Route className="w-6 h-6" />,
+      title: 'Indian Route Network',
+      description:
+        'Browse domestic RNAV routes, ATS airways, waypoint databases, and terminal arrival/departure gates.',
+    },
+    {
+      icon: <FileText className="w-6 h-6" />,
+      title: 'AIP Charts & Data',
+      description:
+        'Instant access to Indian aerodrome information, SID/STAR charts, and airport instrument approach procedures.',
+    },
+  ];
+
   return (
-    <motion.button
-      onClick={toggle}
-      className="fixed top-6 right-6 z-50 w-11 h-11 rounded-full glass-morphism-heavy flex items-center justify-center hover:scale-110 transition-transform"
-      aria-label={isDarkMode ? 'Switch to light theme' : 'Switch to dark theme'}
-      whileTap={{ scale: 0.9 }}
-    >
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={isDarkMode ? 'moon' : 'sun'}
-          initial={{ rotate: -90, opacity: 0 }}
-          animate={{ rotate: 0, opacity: 1 }}
-          exit={{ rotate: 90, opacity: 0 }}
-          transition={{ duration: 0.25 }}
+    <div ref={containerRef} className="landing-container font-sans aip-scrollbar">
+      {/* ─────────────────────────────────────────────────────────────────────────
+         Header
+         ───────────────────────────────────────────────────────────────────────── */}
+      <header
+        className={`landing-header px-6 py-4 flex items-center justify-between ${scrolled ? 'header-scrolled' : 'bg-transparent'}`}
+      >
+        <div className="flex items-center gap-2">
+          {/* SVG Favicon inline */}
+          <svg className="w-8 h-8 text-primary" viewBox="1182 1460 335 314" fill="currentColor">
+            <path
+              d="M1236,1615L1441,1535L1402,1710L1346,1670C1346,1670 1315.017,1699.885 1315,1697C1314.936,1685.984 1316.3,1653.412 1318,1649C1320.295,1643.045 1409.522,1571.367 1403,1569C1397.705,1567.079 1298.865,1637.2 1292,1638C1284.405,1638.885 1236,1615 1236,1615Z"
+              fill="var(--color-primary, #4c7a77)"
+            />
+          </svg>
+          <span className="font-display text-xl font-bold tracking-tight text-on-background">
+            AeroInfo India
+          </span>
+        </div>
+
+        {/* Desktop Nav */}
+        <nav className="hidden md:flex items-center gap-8 text-sm font-ui font-medium text-on-surface-variant">
+          <a
+            href="#about"
+            onClick={(e) => handleAnchorClick(e, 'about')}
+            className="nav-link-underline hover:text-on-background transition-colors"
+          >
+            About
+          </a>
+          <a
+            href="#features"
+            onClick={(e) => handleAnchorClick(e, 'features')}
+            className="nav-link-underline hover:text-on-background transition-colors"
+          >
+            Features
+          </a>
+          <a
+            href="#use-cases"
+            onClick={(e) => handleAnchorClick(e, 'use-cases')}
+            className="nav-link-underline hover:text-on-background transition-colors"
+          >
+            Use Cases
+          </a>
+          <Link
+            to="/blog"
+            className="nav-link-underline hover:text-on-background transition-colors"
+          >
+            Blog
+          </Link>
+          <a
+            href="#contact"
+            onClick={(e) => handleAnchorClick(e, 'contact')}
+            className="nav-link-underline hover:text-on-background transition-colors"
+          >
+            Contact
+          </a>
+        </nav>
+
+        {/* Desktop CTA */}
+        <div className="hidden md:block">
+          <Link
+            to="/app"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-on-primary hover:bg-opacity-95 text-sm font-semibold transition-all duration-150 active:scale-[0.98] cursor-pointer shadow-md glow-accent-strong"
+          >
+            Launch App
+            <ArrowRight size={16} />
+          </Link>
+        </div>
+
+        {/* Mobile menu toggle */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden p-2 rounded-lg bg-surface-container border border-outline/20 text-on-surface hover:text-primary transition-colors focus:outline-none"
+          aria-label="Toggle navigation menu"
         >
-          {isDarkMode ? (
-            <Moon className="w-5 h-5 text-on-surface-variant" />
-          ) : (
-            <Sun className="w-5 h-5 text-on-surface-variant" />
-          )}
-        </motion.div>
-      </AnimatePresence>
-    </motion.button>
-  );
-}
+          {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
 
-/* ─── Main Component ────────────────────────────────────────────────────────── */
+        {/* Mobile Navigation Dropdown */}
+        <div className={`mobile-nav-menu ${mobileMenuOpen ? 'is-open' : ''}`}>
+          <a
+            href="#about"
+            onClick={(e) => handleAnchorClick(e, 'about')}
+            className="py-2 text-on-surface hover:text-primary transition-colors border-b border-outline-variant/10"
+          >
+            About
+          </a>
+          <a
+            href="#features"
+            onClick={(e) => handleAnchorClick(e, 'features')}
+            className="py-2 text-on-surface hover:text-primary transition-colors border-b border-outline-variant/10"
+          >
+            Features
+          </a>
+          <a
+            href="#use-cases"
+            onClick={(e) => handleAnchorClick(e, 'use-cases')}
+            className="py-2 text-on-surface hover:text-primary transition-colors border-b border-outline-variant/10"
+          >
+            Use Cases
+          </a>
+          <Link
+            to="/blog"
+            className="py-2 text-on-surface hover:text-primary transition-colors border-b border-outline-variant/10"
+          >
+            Blog
+          </Link>
+          <a
+            href="#contact"
+            onClick={(e) => handleAnchorClick(e, 'contact')}
+            className="py-2 text-on-surface hover:text-primary transition-colors border-b border-outline-variant/10"
+          >
+            Contact
+          </a>
+          <Link
+            to="/app"
+            className="mt-2 py-3 flex items-center justify-center gap-2 rounded-xl bg-primary text-on-primary font-semibold text-center text-sm shadow-md"
+          >
+            Launch App
+            <ArrowRight size={16} />
+          </Link>
+        </div>
+      </header>
 
-/**
- * Premium Landing Page for AeroInfo.
- * Features animated SVG globe, typewriter subtitle, feature carousel,
- * and dark/light theme toggle.
- */
-export default function LandingPage() {
-  const navigate = useNavigate();
+      {/* ─────────────────────────────────────────────────────────────────────────
+         Hero Section
+         ───────────────────────────────────────────────────────────────────────── */}
+      <section className="hero-section">
+        {/* Animated Background Mesh & Grid Overlay */}
+        <div className="hero-gradient-mesh">
+          <div className="mesh-blob mesh-blob-cyan animate-mesh-1"></div>
+          <div className="mesh-blob mesh-blob-primary animate-mesh-2"></div>
+          <div className="mesh-blob mesh-blob-accent animate-mesh-3"></div>
+          <div className="hero-grid-overlay"></div>
+        </div>
 
-  return (
-    <div className="relative w-screen h-screen bg-background overflow-hidden flex items-center justify-center font-sans">
-      {/* Theme Toggle */}
-      <ThemeToggle />
+        <div className="hero-content relative">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+          >
+            <h1 className="font-display text-4xl sm:text-6xl font-bold tracking-tight text-on-background mb-6 leading-tight">
+              Navigate. Explore.{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-cyan-500">
+                Understand.
+              </span>
+              <br />
+              <span className="text-3xl sm:text-4xl mt-2 block">
+                Real-time Aeronautical Information of India
+              </span>
+            </h1>
 
-      {/* Ambient Background Glows */}
-      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-[var(--accent-cyan-opacity-10)] rounded-full blur-[120px] animate-pulse" />
-      <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-[var(--accent-cyan-opacity-10)] rounded-full blur-[100px] animate-pulse-slow" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[var(--accent-cyan-opacity-10)] rounded-full blur-[180px] opacity-30" />
+            <p className="font-ui text-base sm:text-xl text-on-surface-variant max-w-xl mx-auto mb-10 leading-relaxed">
+              A modern aviation data platform that puts interactive Indian airspace structures,
+              navigation routes, live weather layers, and aeronautical charts at your fingertips.
+            </p>
 
-      {/* Fullscreen Flight Network Background */}
-      <div className="absolute inset-0 opacity-60 pointer-events-none w-full h-full">
-        <FlightNetworkSVG />
-      </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link
+                to="/app"
+                className="w-full sm:w-auto px-8 py-4 flex items-center justify-center gap-2 rounded-2xl bg-primary text-on-primary font-ui font-bold text-base hover:bg-opacity-95 shadow-lg shadow-primary/20 active:scale-[0.98] transition-all duration-150 glow-accent-strong cursor-pointer"
+              >
+                Explore the Map
+                <ArrowRight size={18} />
+              </Link>
+              <a
+                href="#features"
+                onClick={(e) => handleAnchorClick(e, 'features')}
+                className="w-full sm:w-auto px-8 py-4 flex items-center justify-center gap-2 rounded-2xl bg-surface-container-high border border-outline/30 text-on-surface font-ui font-bold text-base hover:bg-surface-container-highest transition-all duration-150 cursor-pointer"
+              >
+                Learn More
+              </a>
+            </div>
+          </motion.div>
+        </div>
+      </section>
 
-      {/* Main Content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-6 gap-6 max-w-2xl w-full">
-        {/* Logo Icon */}
+      {/* ─────────────────────────────────────────────────────────────────────────
+         About Section
+         ───────────────────────────────────────────────────────────────────────── */}
+      <section
+        id="about"
+        className="py-24 px-6 max-w-7xl mx-auto border-t border-outline-variant/10"
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          <motion.div
+            className="lg:col-span-7 space-y-6"
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: '-100px' }}
+            transition={{ duration: 0.6 }}
+          >
+            <span className="text-xs font-bold tracking-widest uppercase text-primary font-ui">
+              About AeroInfo India
+            </span>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-on-background">
+              The Sky, Redefined in Vector Data.
+            </h2>
+            <p className="font-ui text-base text-on-surface-variant/90 leading-relaxed">
+              AeroInfo India is built for the curious minds, flight dispatchers, and aviation
+              students who demand high-performance visual tools. By translating Indian airspace
+              definitions and meteorological feeds into a unified vector engine, we render complex
+              airway networks and terminal areas seamlessly in three dimensions.
+            </p>
+            <p className="font-ui text-base text-on-surface-variant/90 leading-relaxed">
+              Whether you are analyzing a regional Terminal Control Area (TMA) or tracing RNAV
+              routes in Indian skies, our platform delivers an intuitive layout built for visual
+              clarity, sub-second queries, and offline-ready responsiveness.
+            </p>
+          </motion.div>
+
+          <motion.div
+            className="lg:col-span-5 flex justify-center"
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: '-100px' }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="relative w-full max-w-sm aspect-square rounded-3xl bg-surface-container-high border border-outline-variant/30 flex items-center justify-center overflow-hidden glass-morphism-heavy glow-accent">
+              <img
+                src="/about_image.png"
+                alt="About AeroInfo India"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ─────────────────────────────────────────────────────────────────────────
+         Features Section
+         ───────────────────────────────────────────────────────────────────────── */}
+      <section
+        id="features"
+        className="py-24 px-6 bg-surface-dim border-t border-outline-variant/10"
+      >
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+            <span className="text-xs font-bold tracking-widest uppercase text-primary font-ui">
+              Capabilities
+            </span>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-on-background">
+              What You'll Discover
+            </h2>
+            <p className="font-ui text-base text-on-surface-variant/80">
+              AeroInfo India packs power into a highly responsive, modern client shell designed for
+              interactive explorations.
+            </p>
+          </div>
+
+          <div className="features-grid">
+            {featureItems.map((item, index) => (
+              <motion.div
+                key={index}
+                className="feature-card p-6 rounded-2xl bg-surface-container border border-outline-variant/30 glass-morphism flex flex-col items-start text-left"
+                initial={{ opacity: 0, y: 25 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <div className="feature-icon-wrapper">{item.icon}</div>
+                <h3 className="font-display text-lg font-bold text-on-background mb-2">
+                  {item.title}
+                </h3>
+                <p className="font-ui text-sm text-on-surface-variant/80 leading-relaxed">
+                  {item.description}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─────────────────────────────────────────────────────────────────────────
+         Use Cases Section
+         ───────────────────────────────────────────────────────────────────────── */}
+      <section
+        id="use-cases"
+        className="py-24 px-6 max-w-7xl mx-auto border-t border-outline-variant/10 text-center"
+      >
         <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="landing-float"
+          className="max-w-3xl mx-auto space-y-6"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
         >
-          <div className="w-16 h-16 bg-gradient-to-br from-[var(--accent-cyan-700)] to-[var(--accent-cyan-500)] rounded-2xl flex items-center justify-center shadow-lg glow-accent-strong">
-            <Radar className="text-white w-8 h-8" />
+          <span className="text-xs font-bold tracking-widest uppercase text-primary font-ui">
+            Built For Explorers
+          </span>
+          <h2 className="font-display text-3xl sm:text-5xl font-bold tracking-tight text-on-background leading-tight">
+            For anyone who wants to explore and understand airspace.
+          </h2>
+          <p className="font-ui text-base sm:text-lg text-on-surface-variant/90 leading-relaxed max-w-2xl mx-auto">
+            AeroInfo India is custom-tailored for aviation students, simulation flight simulator
+            pilots, and airspace hobbyists who need a clear, visual reference of complex terminal
+            environments and Indian airways. We make aeronautical data approachable, interactive,
+            and beautifully visual.
+          </p>
+          <div className="pt-6">
+            <Link
+              to="/app"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-on-primary font-ui font-semibold text-base hover:bg-opacity-95 transition-all duration-150 cursor-pointer shadow-md glow-accent-strong"
+            >
+              Start Exploring Now
+              <ArrowRight size={18} />
+            </Link>
           </div>
         </motion.div>
+      </section>
 
-        {/* Title */}
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.6 }}
-          className="text-on-surface text-5xl md:text-7xl font-bold tracking-tighter"
-          style={{ fontFamily: 'var(--font-display)' }}
-        >
-          Aero
-          <span
-            className="bg-clip-text text-transparent"
-            style={{
-              backgroundImage:
-                'linear-gradient(135deg, var(--accent-cyan-500), var(--accent-cyan-300))',
-            }}
-          >
-            Info
-          </span>
-        </motion.h1>
-
-        {/* Typewriter Subtitle */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-          className="h-8 flex items-center justify-center"
-        >
-          <TypewriterSubtitle />
-        </motion.div>
-
-        {/* Primary CTA */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.7, duration: 0.5 }}
-        >
-          <button
-            id="launch-app-btn"
-            onClick={() => navigate('/app')}
-            className="bg-[var(--accent-cyan-700)] hover:bg-[var(--accent-cyan-800)] text-white font-bold px-8 h-14 rounded-xl transition-all flex items-center justify-center gap-2.5 group text-lg glow-accent shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <Plane className="w-5 h-5 -rotate-45" />
-            Launch Application
-            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </button>
-        </motion.div>
-
-        {/* Feature Carousel */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.0, duration: 0.6 }}
-          className="w-full mt-4"
-        >
-          <FeatureCarousel />
-        </motion.div>
-      </div>
-
-      {/* Footer Tag */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.3, duration: 0.5 }}
-        className="absolute bottom-6 text-on-surface-variant text-[10px] uppercase tracking-[0.3em] font-bold"
+      {/* ─────────────────────────────────────────────────────────────────────────
+         Contact Section
+         ───────────────────────────────────────────────────────────────────────── */}
+      <section
+        id="contact"
+        className="py-24 px-6 bg-surface-dim border-t border-outline-variant/10 text-center"
       >
-        Next-Gen Aviation Intelligence
-      </motion.div>
+        <motion.div
+          className="max-w-2xl mx-auto space-y-6"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-on-background">
+            Get in Touch
+          </h2>
+          <p className="font-ui text-sm sm:text-base text-on-surface-variant/80 max-w-md mx-auto">
+            Have suggestions, questions, or ideas for new integrations? We'd love to hear from you.
+          </p>
+          <div className="pt-2">
+            <a
+              href="mailto:naventures10@gmail.com"
+              className="inline-flex items-center gap-2 text-lg sm:text-xl font-semibold text-primary hover:text-cyan-500 transition-colors focus:outline-none"
+            >
+              <Mail size={22} className="text-primary" />
+              naventures10@gmail.com
+            </a>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ─────────────────────────────────────────────────────────────────────────
+         Footer
+         ───────────────────────────────────────────────────────────────────────── */}
+      <footer className="w-full py-8 text-center border-t border-outline-variant/10 bg-surface-dim text-xs text-on-surface-variant/50 font-ui">
+        © 2026 AeroInfo India. All rights reserved.
+      </footer>
     </div>
   );
 }
