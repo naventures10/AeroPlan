@@ -205,11 +205,11 @@ export default function LandingPage() {
          Hero Section
          ───────────────────────────────────────────────────────────────────────── */}
       <section className="hero-section">
-        {/* Animated Background Mesh & Grid Overlay */}
+        {/* Static Background Mesh & Grid Overlay */}
         <div className="hero-gradient-mesh">
-          <div className="mesh-blob mesh-blob-cyan animate-mesh-1"></div>
-          <div className="mesh-blob mesh-blob-primary animate-mesh-2"></div>
-          <div className="mesh-blob mesh-blob-accent animate-mesh-3"></div>
+          <div className="mesh-blob mesh-blob-cyan"></div>
+          <div className="mesh-blob mesh-blob-primary"></div>
+          <div className="mesh-blob mesh-blob-accent"></div>
           <div className="hero-grid-overlay"></div>
         </div>
 

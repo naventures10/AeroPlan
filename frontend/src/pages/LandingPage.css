@@ -9,122 +9,6 @@
   color: var(--on-background);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   1. Animations
-   ───────────────────────────────────────────────────────────────────────────── */
-
-@keyframes mesh-move-1 {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-  50% {
-    transform: translate(20%, -15%) scale(1.1);
-  }
-}
-
-@keyframes mesh-move-2 {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1.2);
-  }
-  50% {
-    transform: translate(-15%, 20%) scale(0.9);
-  }
-}
-
-@keyframes mesh-move-3 {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(0.95);
-  }
-  50% {
-    transform: translate(10%, 15%) scale(1.15);
-  }
-}
-
-@keyframes grid-drift {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 40px 40px;
-  }
-}
-
-.animate-mesh-1 {
-  animation: mesh-move-1 25s infinite ease-in-out alternate;
-}
-
-.animate-mesh-2 {
-  animation: mesh-move-2 20s infinite ease-in-out alternate;
-}
-
-.animate-mesh-3 {
-  animation: mesh-move-3 22s infinite ease-in-out alternate;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   2. Hero Section
-   ───────────────────────────────────────────────────────────────────────────── */
-
-.hero-section {
-  position: relative;
-  inline-size: 100%;
-  block-size: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-}
-
-/* CSS-only Animated Gradient Mesh Background */
-.hero-gradient-mesh {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.mesh-blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.15;
-  transition: opacity 0.5s ease;
-}
-
-html.dark .mesh-blob {
-  opacity: 0.3;
-}
-
-/* Mesh Blobs mapping to cyan and primary theme colors */
-.mesh-blob-cyan {
-  background: color-mix(in srgb, var(--accent-cyan-500) 80%, transparent);
-  inline-size: 60%;
-  block-size: 60%;
-  top: -10%;
-  left: -10%;
-}
-
-.mesh-blob-primary {
-  background: color-mix(in srgb, var(--primary) 80%, transparent);
-  inline-size: 55%;
-  block-size: 55%;
-  bottom: -5%;
-  right: -5%;
-}
-
-.mesh-blob-accent {
-  background: color-mix(in srgb, var(--secondary) 70%, transparent);
-  inline-size: 40%;
-  block-size: 40%;
-  top: 30%;
-  left: 45%;
-}
-
 /* Grid Overlay overlaying the mesh */
 .hero-grid-overlay {
   position: absolute;
@@ -142,7 +26,6 @@ html.dark .mesh-blob {
     );
   background-size: 40px 40px;
   mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
-  animation: grid-drift 60s linear infinite;
   opacity: 0.7;
   z-index: 2;
 }
