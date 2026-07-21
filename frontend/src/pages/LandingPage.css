@@ -1,4 +1,4 @@
-/* AeroInfo Landing Page Stylesheet */
+/* AeroInfo Landing Page Stylesheet - Fast Static Version */
 
 .landing-container {
   inline-size: 100vw;
@@ -9,37 +9,50 @@
   color: var(--on-background);
 }
 
-/* Grid Overlay overlaying the mesh */
-.hero-grid-overlay {
+/* ─────────────────────────────────────────────────────────────────────────────
+   1. Hero Section
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.hero-section {
+  position: relative;
+  inline-size: 100%;
+  min-block-size: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Static lightweight CSS Background Gradient */
+.hero-static-bg {
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(
-      to right,
-      color-mix(in srgb, var(--outline) 8%, transparent) 1px,
-      transparent 1px
+  pointer-events: none;
+  z-index: 1;
+  background:
+    radial-gradient(
+      circle at 50% 35%,
+      color-mix(in srgb, var(--primary) 18%, transparent) 0%,
+      transparent 65%
     ),
-    linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--outline) 8%, transparent) 1px,
-      transparent 1px
+    radial-gradient(
+      circle at 80% 70%,
+      color-mix(in srgb, var(--accent-cyan-500, #06b6d4) 12%, transparent) 0%,
+      transparent 50%
     );
-  background-size: 40px 40px;
-  mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
-  opacity: 0.7;
-  z-index: 2;
 }
 
 .hero-content {
   position: relative;
   z-index: 10;
   text-align: center;
-  max-size: 800px;
+  max-width: 800px;
   padding: 0 24px;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   3. Navigation Header
+   2. Navigation Header
    ───────────────────────────────────────────────────────────────────────────── */
 
 .landing-header {
@@ -48,15 +61,15 @@
   left: 0;
   inline-size: 100%;
   z-index: 100;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .header-scrolled {
-  background: var(--glass-bg-heavy);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-block-end: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  background: var(--surface-container-high, rgba(18, 24, 27, 0.95));
+  border-block-end: 1px solid var(--outline-variant);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.2);
 }
 
 /* Mobile Nav Menu */
@@ -67,7 +80,7 @@
   inline-size: 100%;
   background: var(--surface-container-high);
   border-block-end: 1px solid var(--outline-variant);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -75,7 +88,9 @@
   opacity: 0;
   transform: translateY(-10px);
   pointer-events: none;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 .mobile-nav-menu.is-open {
@@ -85,7 +100,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   4. Feature Cards & Layouts
+   3. Feature Cards & Layouts
    ───────────────────────────────────────────────────────────────────────────── */
 
 .features-grid {
@@ -96,14 +111,14 @@
 }
 
 .feature-card {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .feature-card:hover {
-  transform: translateY(-6px);
-  border-color: var(--accent-cyan-400);
-  background: var(--glass-bg-heavy);
-  box-shadow: var(--glass-shadow);
+  border-color: var(--accent-cyan-400, #22d3ee);
+  background: var(--surface-container-high);
 }
 
 .feature-icon-wrapper {
@@ -117,18 +132,19 @@
   border: 1px solid color-mix(in srgb, var(--accent-cyan-500) 20%, transparent);
   color: var(--primary);
   margin-block-end: 16px;
-  transition: all 0.3s ease;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .feature-card:hover .feature-icon-wrapper {
   background: color-mix(in srgb, var(--accent-cyan-500) 20%, transparent);
   border-color: var(--accent-cyan-400);
   color: var(--accent-cyan-400);
-  box-shadow: 0 0 15px -3px var(--accent-cyan-glow);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   5. Interactive Elements
+   4. Interactive Elements
    ───────────────────────────────────────────────────────────────────────────── */
 
 .nav-link-underline {
@@ -145,24 +161,10 @@
   background-color: var(--primary);
   transform: scaleX(0);
   transform-origin: right;
-  transition: transform 0.3s ease;
+  transition: transform 0.2s ease;
 }
 
 .nav-link-underline:hover::after {
   transform: scaleX(1);
   transform-origin: left;
-}
-
-/* Smooth reveal animations */
-.reveal-on-scroll {
-  opacity: 0;
-  transform: translateY(20px);
-  transition:
-    opacity 0.8s ease,
-    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.reveal-on-scroll.revealed {
-  opacity: 1;
-  transform: translateY(0);
 }

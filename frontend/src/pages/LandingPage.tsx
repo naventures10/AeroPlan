@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router';
-import { motion } from 'framer-motion';
 import { Map, Cloud, Bell, Layers, Route, FileText, Mail, ArrowRight, Menu, X } from 'lucide-react';
 import './LandingPage.css';
 
@@ -139,7 +138,7 @@ export default function LandingPage() {
         <div className="hidden md:block">
           <Link
             to="/app"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-on-primary hover:bg-opacity-95 text-sm font-semibold transition-all duration-150 active:scale-[0.98] cursor-pointer shadow-md glow-accent-strong"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-on-primary hover:bg-opacity-95 text-sm font-semibold transition-all duration-150 active:scale-[0.98] cursor-pointer shadow-md"
           >
             Launch App
             <ArrowRight size={16} />
@@ -205,20 +204,11 @@ export default function LandingPage() {
          Hero Section
          ───────────────────────────────────────────────────────────────────────── */}
       <section className="hero-section">
-        {/* Static Background Mesh & Grid Overlay */}
-        <div className="hero-gradient-mesh">
-          <div className="mesh-blob mesh-blob-cyan"></div>
-          <div className="mesh-blob mesh-blob-primary"></div>
-          <div className="mesh-blob mesh-blob-accent"></div>
-          <div className="hero-grid-overlay"></div>
-        </div>
+        {/* Fast Static Background */}
+        <div className="hero-static-bg"></div>
 
         <div className="hero-content relative">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
-          >
+          <div>
             <h1 className="font-display text-4xl sm:text-6xl font-bold tracking-tight text-on-background mb-6 leading-tight">
               Navigate. Explore.{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-cyan-500">
@@ -238,7 +228,7 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 to="/app"
-                className="w-full sm:w-auto px-8 py-4 flex items-center justify-center gap-2 rounded-2xl bg-primary text-on-primary font-ui font-bold text-base hover:bg-opacity-95 shadow-lg shadow-primary/20 active:scale-[0.98] transition-all duration-150 glow-accent-strong cursor-pointer"
+                className="w-full sm:w-auto px-8 py-4 flex items-center justify-center gap-2 rounded-2xl bg-primary text-on-primary font-ui font-bold text-base hover:bg-opacity-95 shadow-lg shadow-primary/20 active:scale-[0.98] transition-all duration-150 cursor-pointer"
               >
                 Explore the Map
                 <ArrowRight size={18} />
@@ -251,7 +241,7 @@ export default function LandingPage() {
                 Learn More
               </a>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -263,13 +253,7 @@ export default function LandingPage() {
         className="py-24 px-6 max-w-7xl mx-auto border-t border-outline-variant/10"
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          <motion.div
-            className="lg:col-span-7 space-y-6"
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: '-100px' }}
-            transition={{ duration: 0.6 }}
-          >
+          <div className="lg:col-span-7 space-y-6">
             <span className="text-xs font-bold tracking-widest uppercase text-primary font-ui">
               About AeroInfo India
             </span>
@@ -287,23 +271,17 @@ export default function LandingPage() {
               routes in Indian skies, our platform delivers an intuitive layout built for visual
               clarity, sub-second queries, and offline-ready responsiveness.
             </p>
-          </motion.div>
+          </div>
 
-          <motion.div
-            className="lg:col-span-5 flex justify-center"
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: '-100px' }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="relative w-full max-w-sm aspect-square rounded-3xl bg-surface-container-high border border-outline-variant/30 flex items-center justify-center overflow-hidden glass-morphism-heavy glow-accent">
+          <div className="lg:col-span-5 flex justify-center">
+            <div className="relative w-full max-w-sm aspect-square rounded-3xl bg-surface-container-high border border-outline-variant/30 flex items-center justify-center overflow-hidden">
               <img
                 src="/about_image.png"
                 alt="About AeroInfo India"
                 className="w-full h-full object-cover"
               />
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -330,13 +308,9 @@ export default function LandingPage() {
 
           <div className="features-grid">
             {featureItems.map((item, index) => (
-              <motion.div
+              <div
                 key={index}
-                className="feature-card p-6 rounded-2xl bg-surface-container border border-outline-variant/30 glass-morphism flex flex-col items-start text-left"
-                initial={{ opacity: 0, y: 25 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-50px' }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="feature-card p-6 rounded-2xl bg-surface-container border border-outline-variant/30 flex flex-col items-start text-left"
               >
                 <div className="feature-icon-wrapper">{item.icon}</div>
                 <h3 className="font-display text-lg font-bold text-on-background mb-2">
@@ -345,7 +319,7 @@ export default function LandingPage() {
                 <p className="font-ui text-sm text-on-surface-variant/80 leading-relaxed">
                   {item.description}
                 </p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -358,13 +332,7 @@ export default function LandingPage() {
         id="use-cases"
         className="py-24 px-6 max-w-7xl mx-auto border-t border-outline-variant/10 text-center"
       >
-        <motion.div
-          className="max-w-3xl mx-auto space-y-6"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-        >
+        <div className="max-w-3xl mx-auto space-y-6">
           <span className="text-xs font-bold tracking-widest uppercase text-primary font-ui">
             Built For Explorers
           </span>
@@ -380,13 +348,13 @@ export default function LandingPage() {
           <div className="pt-6">
             <Link
               to="/app"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-on-primary font-ui font-semibold text-base hover:bg-opacity-95 transition-all duration-150 cursor-pointer shadow-md glow-accent-strong"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-on-primary font-ui font-semibold text-base hover:bg-opacity-95 transition-all duration-150 cursor-pointer shadow-md"
             >
               Start Exploring Now
               <ArrowRight size={18} />
             </Link>
           </div>
-        </motion.div>
+        </div>
       </section>
 
       {/* ─────────────────────────────────────────────────────────────────────────
@@ -396,13 +364,7 @@ export default function LandingPage() {
         id="contact"
         className="py-24 px-6 bg-surface-dim border-t border-outline-variant/10 text-center"
       >
-        <motion.div
-          className="max-w-2xl mx-auto space-y-6"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-        >
+        <div className="max-w-2xl mx-auto space-y-6">
           <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-on-background">
             Get in Touch
           </h2>
@@ -418,7 +380,7 @@ export default function LandingPage() {
               naventures10@gmail.com
             </a>
           </div>
-        </motion.div>
+        </div>
       </section>
 
       {/* ─────────────────────────────────────────────────────────────────────────
