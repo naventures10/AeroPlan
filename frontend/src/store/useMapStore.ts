@@ -170,6 +170,8 @@ interface MapState {
   setAipSupplementsModalOpen: (isOpen: boolean) => void;
   isAirspaceNotamsModalOpen: boolean;
   setAirspaceNotamsModalOpen: (isOpen: boolean) => void;
+  isPdfViewerOpen: boolean;
+  setIsPdfViewerOpen: (isOpen: boolean) => void;
   airacDates: { effective_date: string; next_date: string } | null;
   fetchAiracDates: () => Promise<void>;
 }
@@ -657,6 +659,8 @@ export const useMapStore = create<MapState>()(
       setAipSupplementsModalOpen: (isOpen) => set({ isAipSupplementsModalOpen: isOpen }),
       isAirspaceNotamsModalOpen: false,
       setAirspaceNotamsModalOpen: (isOpen) => set({ isAirspaceNotamsModalOpen: isOpen }),
+      isPdfViewerOpen: false,
+      setIsPdfViewerOpen: (isOpen) => set({ isPdfViewerOpen: isOpen }),
 
       airacDates: null,
       fetchAiracDates: async () => {

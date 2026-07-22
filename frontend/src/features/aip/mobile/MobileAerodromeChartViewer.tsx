@@ -1,20 +1,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import {
-  FileText,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ZoomIn,
-  ZoomOut,
-  X,
-  Lock,
-} from 'lucide-react';
+import { FileText, ChevronDown, X, Lock } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
-import { isFeatureLocked } from '../../../config/featureFlags';
 import { Document, Page, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/Page/AnnotationLayer.css';
-import 'react-pdf/dist/Page/TextLayer.css';
+import { isFeatureLocked } from '../../../config/featureFlags';
 import './MobileAerodromeChartViewer.css';
 
 import { useMapStore } from '../../../store/useMapStore';
@@ -74,49 +63,58 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
   const [charts, setCharts] = useState<ChartItem[]>([]);
   const [rnpProcedures, setRnpProcedures] = useState<RnpProcedureApi[]>([]);
   const [selectedChart, setSelectedChart] = useState<ChartItem | null>(null);
-  const [numPages, setNumPages] = useState<number>(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pdfScale, setPdfScale] = useState(0.9);
   const [isLoading, setIsLoading] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Zoom & Pan state for edge-to-edge pinch-zoom viewer
+  const [pdfScale, setPdfScale] = useState(1.0);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [pageDimensions, setPageDimensions] = useState<{ width: number; height: number } | null>(
     null,
   );
 
-  // Refs to track drag/pinch state
+  // Touch gesture refs
   const isDraggingRef = useRef(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
   const panStartRef = useRef({ x: 0, y: 0 });
 
   const isPinchingRef = useRef(false);
   const pinchStartDistRef = useRef(0);
-  const pinchStartScaleRef = useRef(0.9);
+  const pinchStartScaleRef = useRef(1.0);
   const pinchStartPanOffsetRef = useRef({ x: 0, y: 0 });
   const pinchStartCenterRef = useRef({ x: 0, y: 0 });
   const lastTouchTimeRef = useRef(0);
 
-  // Calculate constraints based on scale and page dimensions
+  const dragControls = useDragControls();
+
+  const setViewMode = useMapStore((s) => s.setViewMode);
+  const setSelectedRnpProcedure = useMapStore((s) => s.setSelectedRnpProcedure);
+  const fitBounds = useMapStore((s) => s.fitBounds);
+  const setIsPdfViewerOpen = useMapStore((s) => s.setIsPdfViewerOpen);
+
+  // Signal global store when modal is open to pause background 3D WebGL map
+  useEffect(() => {
+    setIsPdfViewerOpen(isModalOpen);
+    return () => {
+      setIsPdfViewerOpen(false);
+    };
+  }, [isModalOpen, setIsPdfViewerOpen]);
+
   const clampOffset = useCallback(
     (x: number, y: number, scale: number) => {
-      if (!pageDimensions) return { x, y };
-
       const Wc = window.innerWidth;
       const Hc = window.innerHeight;
 
-      // Base dimensions used in the react-pdf Page component (width={Wc * 0.95})
-      const Wp = Wc * 0.95;
-      const Hp = Wp * (pageDimensions.height / pageDimensions.width);
+      const Wp = Wc;
+      const Hp = pageDimensions ? Wp * (pageDimensions.height / pageDimensions.width) : Hc;
 
-      // Current scaled dimensions
       const Wscaled = Wp * scale;
       const Hscaled = Hp * scale;
 
       let clampedX = x;
       let clampedY = y;
 
-      // Bounding horizontal panning
       if (Wscaled <= Wc) {
         clampedX = 0;
       } else {
@@ -124,7 +122,6 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
         clampedX = Math.min(maxDragX, Math.max(-maxDragX, x));
       }
 
-      // Bounding vertical panning
       if (Hscaled <= Hc) {
         clampedY = 0;
       } else {
@@ -137,25 +134,13 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
     [pageDimensions],
   );
 
-  const handleZoom = useCallback(
-    (newScale: number) => {
-      const scale = Math.min(4, Math.max(0.5, newScale));
-      setPdfScale(scale);
-      setPanOffset((prev) => clampOffset(prev.x, prev.y, scale));
-    },
-    [clampOffset],
-  );
-
-  // Double tap handler
   const handleDoubleTap = useCallback(
     (clientX: number, clientY: number) => {
       if (pdfScale > 1.2) {
-        // Reset scale and center
-        setPdfScale(0.9);
+        setPdfScale(1.0);
         setPanOffset({ x: 0, y: 0 });
       } else {
-        // Zoom to 2.0x centered at the double-tap point
-        const scale = 2.0;
+        const scale = 2.2;
         const r = scale / pdfScale;
         const Vcx = window.innerWidth / 2;
         const Vcy = window.innerHeight / 2;
@@ -171,14 +156,12 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
     [pdfScale, panOffset, clampOffset],
   );
 
-  // Touch handlers
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
       const now = Date.now();
       if (e.touches.length === 1) {
         const touch = e.touches[0];
         if (!touch) return;
-        // Check for double tap
         if (now - lastTouchTimeRef.current < 300) {
           e.preventDefault();
           handleDoubleTap(touch.clientX, touch.clientY);
@@ -219,7 +202,7 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
         const dist = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
         if (pinchStartDistRef.current > 0) {
           const factor = dist / pinchStartDistRef.current;
-          const scale = Math.min(4, Math.max(0.5, pinchStartScaleRef.current * factor));
+          const scale = Math.min(3.5, Math.max(0.8, pinchStartScaleRef.current * factor));
 
           const currentCenterX = (touch1.clientX + touch2.clientX) / 2;
           const currentCenterY = (touch1.clientY + touch2.clientY) / 2;
@@ -262,46 +245,11 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
     pinchStartDistRef.current = 0;
   }, []);
 
-  // Mouse drag handlers
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.button !== 0) return; // Only left click
-      isDraggingRef.current = true;
-      dragStartRef.current = { x: e.clientX, y: e.clientY };
-      panStartRef.current = { ...panOffset };
-    },
-    [panOffset],
-  );
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (!isDraggingRef.current) return;
-      const dx = e.clientX - dragStartRef.current.x;
-      const dy = e.clientY - dragStartRef.current.y;
-      const newX = panStartRef.current.x + dx;
-      const newY = panStartRef.current.y + dy;
-      setPanOffset(clampOffset(newX, newY, pdfScale));
-    },
-    [pdfScale, clampOffset],
-  );
-
-  const handleMouseUp = useCallback(() => {
-    isDraggingRef.current = false;
-  }, []);
-
-  const dragControls = useDragControls();
-
-  const setViewMode = useMapStore((s) => s.setViewMode);
-  const setSelectedRnpProcedure = useMapStore((s) => s.setSelectedRnpProcedure);
-  const fitBounds = useMapStore((s) => s.fitBounds);
-
   const rnpByChartKey = useMemo(() => {
     const m = new Map<string, RnpProcedureApi>();
-    // First pass: exact matches
     for (const p of rnpProcedures) {
       if (!m.has(p.chart_key)) m.set(p.chart_key, p);
     }
-    // Second pass: fallback matches (strip Y/Z suffixes)
     for (const p of rnpProcedures) {
       const stripped = p.chart_key.replace(/-RNP-[A-Z]-RWY-/gi, '-RNP-RWY-');
       if (stripped !== p.chart_key && !m.has(stripped)) {
@@ -316,7 +264,6 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
     return findRnpForChart(selectedChart, rnpByChartKey);
   }, [selectedChart, rnpByChartKey]);
 
-  // Fetch charts when icaoCode changes
   useEffect(() => {
     if (!icaoCode) {
       setCharts([]);
@@ -371,43 +318,21 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
 
   const handleChartClick = useCallback((chart: ChartItem) => {
     setSelectedChart(chart);
-    setCurrentPage(1);
-    setNumPages(0);
-    setPdfScale(0.9);
+    setPdfScale(1.0);
     setPanOffset({ x: 0, y: 0 });
     setPageDimensions(null);
     setIsDrawerOpen(false);
     setIsModalOpen(true);
   }, []);
 
-  const onDocumentLoadSuccess = useCallback(({ numPages: total }: { numPages: number }) => {
-    setNumPages(total);
-  }, []);
-
   const handleModalClose = useCallback(() => {
     setIsModalOpen(false);
     setSelectedChart(null);
-    setNumPages(0);
-    setCurrentPage(1);
-    setPdfScale(0.9);
+    setPdfScale(1.0);
     setPanOffset({ x: 0, y: 0 });
     setPageDimensions(null);
-    try {
-      (pdfjs as any).cleanup();
-    } catch (e) {
-      console.warn('Failed to cleanup pdfjs:', e);
-    }
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      try {
-        (pdfjs as any).cleanup();
-      } catch (e) {
-        console.warn('Failed to cleanup pdfjs on unmount:', e);
-      }
-    };
-  }, []);
+    setIsPdfViewerOpen(false);
+  }, [setIsPdfViewerOpen]);
 
   const handleViewIn3D = useCallback(() => {
     if (!selectedChart || !matchedRnpForModal) return;
@@ -567,7 +492,7 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
         document.body,
       )}
 
-      {/* Fullscreen PDF Modal */}
+      {/* 100% Fullscreen Edge-to-Edge PDF Viewer Modal */}
       {createPortal(
         <AnimatePresence>
           {isModalOpen && (
@@ -576,141 +501,77 @@ export default function MobileAerodromeChartViewer({ icaoCode }: MobileAerodrome
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-[200] bg-zinc-950/98 backdrop-blur-md flex flex-col items-center justify-center"
+              className="fixed inset-0 z-[500] w-screen h-screen bg-zinc-950 flex flex-col overflow-hidden select-none"
             >
-              <div className="relative w-full h-full overflow-hidden bg-zinc-950 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing">
-                {/* Close Button */}
+              {/* Floating Edge-to-Edge Header Bar */}
+              <div className="absolute top-0 left-0 right-0 z-[220] flex items-center justify-between px-4 py-3 bg-zinc-950/85 backdrop-blur-md border-b border-white/10 shadow-lg">
+                <div className="flex items-center gap-2 overflow-hidden pr-2">
+                  <FileText size={16} className="text-cyan-400 shrink-0" />
+                  <span className="text-xs font-bold text-zinc-100 tracking-wide truncate">
+                    {selectedChart?.chart_title || selectedChart?.chart_index || 'Aerodrome Chart'}
+                  </span>
+                </div>
                 <button
                   onClick={handleModalClose}
                   aria-label="Close chart"
-                  className="absolute top-4 right-4 z-[210] w-12 h-12 flex items-center justify-center rounded-full bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/50 text-zinc-400 hover:text-white transition-colors backdrop-blur-xl shadow-2xl"
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-300 hover:text-white transition-colors shrink-0"
                 >
-                  <span className="text-2xl font-light">✕</span>
+                  <X size={18} />
                 </button>
+              </div>
 
-                {/* Zoom Controls */}
-                <div className="absolute top-4 left-4 z-[210] flex flex-col gap-2">
-                  <div className="flex flex-col bg-zinc-900/80 backdrop-blur-xl border border-zinc-700/50 rounded-2xl overflow-hidden shadow-2xl">
-                    <button
-                      onClick={() => handleZoom(pdfScale + 0.2)}
-                      aria-label="Zoom in"
-                      className="p-3.5 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors border-b border-zinc-800/50"
-                    >
-                      <ZoomIn size={20} />
-                    </button>
-                    <button
-                      onClick={() => handleZoom(pdfScale - 0.2)}
-                      aria-label="Zoom out"
-                      className="p-3.5 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
-                    >
-                      <ZoomOut size={20} />
-                    </button>
-                  </div>
-                  <div className="px-3 py-1 bg-zinc-900/80 backdrop-blur-xl border border-zinc-700/50 rounded-xl shadow-2xl text-center">
-                    <span className="text-[10px] font-bold text-zinc-400 tracking-widest tabular-nums">
-                      {Math.round(pdfScale * 100)}%
-                    </span>
-                  </div>
+              {/* View in 3D Action Overlay */}
+              {matchedRnpForModal ? (
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[220]">
+                  <button
+                    type="button"
+                    onClick={handleViewIn3D}
+                    className="px-5 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-zinc-950 text-xs font-black tracking-wider uppercase rounded-full shadow-2xl transition-all active:scale-95"
+                  >
+                    View in 3D
+                  </button>
                 </div>
+              ) : null}
 
-                {/* View in 3D */}
-                {matchedRnpForModal ? (
-                  <div className="aip-mobile-view-3d-container">
-                    <button
-                      type="button"
-                      onClick={handleViewIn3D}
-                      className="aip-mobile-view-3d-button"
+              {/* Edge-to-Edge Touch Pinch & Pan Canvas Render Area */}
+              <div
+                className="w-full h-full flex items-center justify-center overflow-hidden bg-zinc-950"
+                style={{ touchAction: 'none' }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                {pdfUrl && (
+                  <motion.div
+                    animate={{ scale: pdfScale, x: panOffset.x, y: panOffset.y }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 32 }}
+                    className="relative w-full flex items-center justify-center"
+                  >
+                    <Document
+                      file={pdfUrl}
+                      loading={
+                        <div className="flex flex-col items-center justify-center gap-3 py-20">
+                          <div className="w-8 h-8 border-2 border-white/10 border-t-cyan-400 rounded-full animate-spin" />
+                          <span className="text-zinc-500 text-xs font-medium tracking-widest uppercase">
+                            Loading Chart...
+                          </span>
+                        </div>
+                      }
                     >
-                      View in 3D
-                    </button>
-                  </div>
-                ) : null}
-
-                {/* Pagination (Bottom-Center) */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[210]">
-                  <div className="flex items-center gap-2 p-1.5 bg-zinc-900/80 backdrop-blur-xl border border-zinc-700/50 rounded-2xl shadow-2xl">
-                    <button
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      disabled={currentPage <= 1}
-                      aria-label="Previous page"
-                      className="p-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronLeft size={22} />
-                    </button>
-                    <div className="px-4 min-w-[70px] text-center">
-                      <span className="text-xs font-bold text-zinc-200 tracking-[0.2em] tabular-nums">
-                        {numPages > 0 ? `${currentPage}/${numPages}` : '--'}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
-                      disabled={currentPage >= numPages}
-                      aria-label="Next page"
-                      className="p-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ChevronRight size={22} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* PDF rendering with drag & wheel zoom */}
-                <div
-                  className="w-full h-full flex items-center justify-center overflow-hidden bg-zinc-950"
-                  style={{ touchAction: 'none' }}
-                  onWheel={(e) => {
-                    const delta = e.deltaY;
-                    const factor = delta > 0 ? -0.1 : 0.1;
-                    handleZoom(pdfScale + factor);
-                  }}
-                  onMouseDown={handleMouseDown}
-                  onMouseMove={handleMouseMove}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                  onDoubleClick={(e) => handleDoubleTap(e.clientX, e.clientY)}
-                >
-                  {pdfUrl && (
-                    <motion.div
-                      animate={{ scale: pdfScale, x: panOffset.x, y: panOffset.y }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                      className="relative cursor-inherit"
-                    >
-                      <Document
-                        file={pdfUrl}
-                        onLoadSuccess={onDocumentLoadSuccess}
+                      <Page
+                        pageNumber={1}
+                        width={window.innerWidth}
+                        devicePixelRatio={Math.min(window.devicePixelRatio || 2, 2.5)}
+                        renderTextLayer={false}
+                        renderAnnotationLayer={false}
+                        onLoadSuccess={(page) => {
+                          setPageDimensions({ width: page.width, height: page.height });
+                        }}
                         className="shadow-2xl"
-                        loading={
-                          <div className="flex flex-col items-center justify-center gap-3 py-20">
-                            <div className="w-8 h-8 border-2 border-white/10 border-t-cyan-400 rounded-full animate-spin" />
-                            <span className="text-zinc-500 text-xs font-medium tracking-widest uppercase">
-                              Loading Chart...
-                            </span>
-                          </div>
-                        }
-                      >
-                        <Page
-                          pageNumber={currentPage}
-                          scale={1}
-                          devicePixelRatio={1.0}
-                          onLoadSuccess={(page) => {
-                            setPageDimensions({ width: page.width, height: page.height });
-                          }}
-                          className="rounded-sm overflow-hidden"
-                          renderTextLayer={true}
-                          renderAnnotationLayer={true}
-                          width={window.innerWidth * 0.95}
-                          loading={
-                            <div className="flex items-center justify-center py-20">
-                              <div className="w-6 h-6 border-2 border-white/10 border-t-cyan-400 rounded-full animate-spin" />
-                            </div>
-                          }
-                        />
-                      </Document>
-                    </motion.div>
-                  )}
-                </div>
+                      />
+                    </Document>
+                  </motion.div>
+                )}
               </div>
             </motion.div>
           )}

@@ -56,6 +56,7 @@ describe('MobileAipSupplementsModal', () => {
       const state = {
         isAipSupplementsModalOpen: true,
         setAipSupplementsModalOpen: mockSetOpen,
+        setIsPdfViewerOpen: vi.fn(),
       };
       return selector(state);
     });
@@ -66,6 +67,7 @@ describe('MobileAipSupplementsModal', () => {
       const state = {
         isAipSupplementsModalOpen: false,
         setAipSupplementsModalOpen: mockSetOpen,
+        setIsPdfViewerOpen: vi.fn(),
       };
       return selector(state);
     });
@@ -133,11 +135,13 @@ describe('MobileAipSupplementsModal', () => {
       expect(screen.getByTestId('pdf-document')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Supplement Document')).toBeInTheDocument();
+    // Click close button on PDF view (returns to list view)
+    const closePdfBtn = screen.getByLabelText('Close modal');
+    fireEvent.click(closePdfBtn);
 
-    // Click close button
-    const closeBtn = screen.getByLabelText('Close modal');
-    fireEvent.click(closeBtn);
+    // Click close button on list drawer (closes modal)
+    const closeDrawerBtn = screen.getByLabelText('Close modal');
+    fireEvent.click(closeDrawerBtn);
 
     // Modal should trigger store close
     expect(mockSetOpen).toHaveBeenCalledWith(false);

@@ -180,6 +180,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
     setSelectedRouteIds,
     mapStyle,
     isWeatherMode,
+    isPdfViewerOpen,
   } = useMapStore();
 
   const mapRef = useRef<MapRef>(null);
@@ -434,7 +435,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
   }, []);
 
   return (
-    <div className="absolute inset-0 z-0">
+    <div className="absolute inset-0 z-0" style={{ display: isPdfViewerOpen ? 'none' : 'block' }}>
       <DeckGL
         ref={deckRef}
         viewState={processedViewState}
