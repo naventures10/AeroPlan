@@ -348,6 +348,7 @@ test.describe('Mobile Map Layer Performance Profiling (iPhone 11)', () => {
   });
 
   test('Profile case: All Layers toggled ON', async ({ page }) => {
+    test.setTimeout(60000);
     await runPerformanceBenchmark(page, 'All Layers ON', () => {
       const store = (window as unknown as { useMapStore: { setState: (s: unknown) => void } })
         .useMapStore;

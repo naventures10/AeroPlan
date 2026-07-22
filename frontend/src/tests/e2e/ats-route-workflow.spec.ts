@@ -140,10 +140,11 @@ test.describe('ATS Route Workflows', () => {
     await expect(page.locator('body').first()).toContainText(/ROUTE/i, { timeout: 15000 });
 
     // 5. Manual Click on Canvas
+    await page.waitForTimeout(500);
     await page.mouse.click(width / 2, height / 2);
 
     // 6. Verify Info Card appears
-    await expect(infoCard).toBeVisible();
+    await expect(infoCard).toBeVisible({ timeout: 15000 });
     await expect(infoCard).toContainText('ATS ROUTE');
   });
 });

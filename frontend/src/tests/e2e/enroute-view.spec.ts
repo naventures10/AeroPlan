@@ -112,6 +112,7 @@ test.describe('Enroute View Workflows', () => {
     await expect(page.locator('body')).toContainText(/VATLA/i, { timeout: 15000 });
 
     // 5. Manual Click
+    await page.waitForTimeout(500);
     await page.mouse.click(width / 2, height / 2);
     await expect(page.getByTestId('feature-info-card')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'VATLA' })).toBeVisible();
