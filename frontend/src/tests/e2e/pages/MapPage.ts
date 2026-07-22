@@ -44,7 +44,7 @@ export class MapPage {
   }
 
   async goto() {
-    await this.page.goto('/app');
+    await this.page.goto('/app', { waitUntil: 'domcontentloaded' });
   }
 
   async waitForReady() {
