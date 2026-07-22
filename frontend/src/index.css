@@ -391,3 +391,8 @@ body,
     background: color-mix(in srgb, var(--on-surface-variant) 2%, transparent);
   }
 }
+
+/* Suppress MapLibre default attribution metadata text flash during initial MapTiler load */
+.maplibregl-ctrl-attrib {
+  display: none !important;
+}

@@ -1,11 +1,25 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router';
-import { Map, Cloud, Bell, Layers, Route, FileText, Mail, ArrowRight, Menu, X } from 'lucide-react';
+import { Link, useNavigate } from 'react-router';
+import {
+  Map,
+  Cloud,
+  Bell,
+  Layers,
+  Route,
+  FileText,
+  Mail,
+  ArrowRight,
+  Menu,
+  X,
+  ShieldAlert,
+} from 'lucide-react';
 import './LandingPage.css';
 
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
+  const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Monitor the scroll position inside our custom container
@@ -136,13 +150,14 @@ export default function LandingPage() {
 
         {/* Desktop CTA */}
         <div className="hidden md:block">
-          <Link
-            to="/app"
+          <button
+            type="button"
+            onClick={() => setShowDisclaimerModal(true)}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-on-primary hover:bg-opacity-95 text-sm font-semibold transition-all duration-150 active:scale-[0.98] cursor-pointer shadow-md"
           >
             Launch App
             <ArrowRight size={16} />
-          </Link>
+          </button>
         </div>
 
         {/* Mobile menu toggle */}
@@ -190,13 +205,17 @@ export default function LandingPage() {
           >
             Contact
           </a>
-          <Link
-            to="/app"
-            className="mt-2 py-3 flex items-center justify-center gap-2 rounded-xl bg-primary text-on-primary font-semibold text-center text-sm shadow-md"
+          <button
+            type="button"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setShowDisclaimerModal(true);
+            }}
+            className="mt-2 py-3 flex items-center justify-center gap-2 rounded-xl bg-primary text-on-primary font-semibold text-center text-sm shadow-md w-full"
           >
             Launch App
             <ArrowRight size={16} />
-          </Link>
+          </button>
         </div>
       </header>
 
@@ -209,30 +228,26 @@ export default function LandingPage() {
 
         <div className="hero-content relative">
           <div>
-            <h1 className="font-display text-4xl sm:text-6xl font-bold tracking-tight text-on-background mb-6 leading-tight">
-              Navigate. Explore.{' '}
+            <h1 className="font-display text-3xl sm:text-5xl font-bold tracking-tight text-on-background mb-6 leading-tight max-w-4xl mx-auto">
+              Comprehensive Digital Platform for Aeronautical Information{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-cyan-500">
-                Understand.
-              </span>
-              <br />
-              <span className="text-3xl sm:text-4xl mt-2 block">
-                Real-time Aeronautical Information of India
+                of India
               </span>
             </h1>
-
-            <p className="font-ui text-base sm:text-xl text-on-surface-variant max-w-xl mx-auto mb-10 leading-relaxed">
+            <p className="font-ui text-base sm:text-lg text-on-surface-variant max-w-xl mx-auto mb-10 leading-relaxed">
               A modern aviation data platform that puts interactive Indian airspace structures,
               navigation routes, live weather layers, and aeronautical charts at your fingertips.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                to="/app"
+              <button
+                type="button"
+                onClick={() => setShowDisclaimerModal(true)}
                 className="w-full sm:w-auto px-8 py-4 flex items-center justify-center gap-2 rounded-2xl bg-primary text-on-primary font-ui font-bold text-base hover:bg-opacity-95 shadow-lg shadow-primary/20 active:scale-[0.98] transition-all duration-150 cursor-pointer"
               >
                 Explore the Map
                 <ArrowRight size={18} />
-              </Link>
+              </button>
               <a
                 href="#features"
                 onClick={(e) => handleAnchorClick(e, 'features')}
@@ -346,13 +361,14 @@ export default function LandingPage() {
             and beautifully visual.
           </p>
           <div className="pt-6">
-            <Link
-              to="/app"
+            <button
+              type="button"
+              onClick={() => setShowDisclaimerModal(true)}
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-on-primary font-ui font-semibold text-base hover:bg-opacity-95 transition-all duration-150 cursor-pointer shadow-md"
             >
               Start Exploring Now
               <ArrowRight size={18} />
-            </Link>
+            </button>
           </div>
         </div>
       </section>
@@ -389,6 +405,89 @@ export default function LandingPage() {
       <footer className="w-full py-8 text-center border-t border-outline-variant/10 bg-surface-dim text-xs text-on-surface-variant/50 font-ui">
         © 2026 AeroInfo India. All rights reserved.
       </footer>
+
+      {/* Non-Operational Use Disclaimer Modal */}
+      {showDisclaimerModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+          onClick={() => setShowDisclaimerModal(false)}
+        >
+          <div
+            className="glass-morphism relative w-full max-w-lg p-6 sm:p-8 rounded-2xl sm:rounded-3xl shadow-2xl border border-outline/20 text-on-surface bg-surface-container/95 flex flex-col gap-5"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="disclaimer-title"
+          >
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setShowDisclaimerModal(false)}
+              className="absolute top-4 right-4 p-2 text-on-surface-variant hover:text-on-surface rounded-xl hover:bg-surface-container-high transition-colors focus:outline-none"
+              aria-label="Close disclaimer modal"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Header */}
+            <div className="flex items-center gap-3 pr-8">
+              <div className="p-3 rounded-2xl bg-accent-cyan/15 text-accent-cyan shrink-0">
+                <ShieldAlert size={28} />
+              </div>
+              <div>
+                <h2
+                  id="disclaimer-title"
+                  className="font-display text-lg sm:text-xl font-bold text-on-background"
+                >
+                  Non-Operational Use Disclaimer
+                </h2>
+                <p className="font-ui text-xs sm:text-sm text-on-surface-variant">
+                  Notice for flight visualization & research platform
+                </p>
+              </div>
+            </div>
+
+            {/* Body Content */}
+            <div className="font-ui text-sm sm:text-base text-on-surface-variant leading-relaxed flex flex-col gap-3">
+              <p>
+                <strong className="text-on-surface font-semibold">Aero Plan</strong> is an
+                interactive digital platform created strictly for situational awareness, airspace
+                visualization, research, and educational purposes.
+              </p>
+              <div className="p-3.5 rounded-xl bg-surface-container-high/60 border border-outline/10 text-xs sm:text-sm leading-relaxed">
+                <strong className="text-on-surface font-semibold block mb-1">
+                  Important Requirement:
+                </strong>
+                This platform and its data layers are{' '}
+                <span className="font-semibold text-on-surface underline">NOT</span> certified for
+                real-world flight navigation or operational flight planning. Pilots and flight
+                personnel must rely exclusively on official Aeronautical Information Publications.
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 mt-2">
+              <button
+                type="button"
+                onClick={() => setShowDisclaimerModal(false)}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-outline/30 text-on-surface hover:bg-surface-container-high text-sm font-semibold transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDisclaimerModal(false);
+                  navigate('/app');
+                }}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-primary text-on-primary hover:bg-opacity-95 text-sm font-semibold transition-all shadow-md active:scale-[0.98] cursor-pointer"
+              >
+                I Understand & Proceed
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

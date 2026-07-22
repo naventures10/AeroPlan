@@ -75,6 +75,7 @@ const MobileFeatureInfoCard = lazy(() =>
     default: m.MobileFeatureInfoCard,
   })),
 );
+const MapDisclaimerBanner = lazy(() => import('../features/map/components/MapDisclaimerBanner'));
 
 // fallow-ignore-next-line complexity
 export default function MapPage() {
@@ -218,6 +219,12 @@ export default function MapPage() {
           {viewMode === 'ENROUTE' && activeLayers.airspaces && isMobile && (
             <Suspense fallback={null}>
               <MobileAirspaceLegend />
+            </Suspense>
+          )}
+
+          {viewMode === 'ENROUTE' && (
+            <Suspense fallback={null}>
+              <MapDisclaimerBanner />
             </Suspense>
           )}
 

@@ -188,6 +188,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
   const deckRef = useRef<any>(null);
   const hoveredRnpApproachIdRef = useRef<string | null>(null);
   const [hoveredRnpApproachId, setHoveredRnpApproachId] = useState<string | null>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
   const { windHoverInfo, handleWindHover } = useWindTooltip();
 
   const { overlaidLayers, interleavedLayers } = useDeckLayers({
@@ -333,6 +334,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
   const onMapLoad = useCallback(
     (e: any) => {
       configureBaseMap(e.target, viewModeRef.current === 'TERMINAL');
+      setIsMapReady(true);
     },
     [configureBaseMap],
   );
@@ -435,7 +437,10 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
   }, []);
 
   return (
-    <div className="absolute inset-0 z-0" style={{ display: isPdfViewerOpen ? 'none' : 'block' }}>
+    <div
+      className={`absolute inset-0 z-0 transition-opacity duration-500 ${isMapReady ? 'opacity-100' : 'opacity-0'}`}
+      style={{ display: isPdfViewerOpen ? 'none' : 'block' }}
+    >
       <DeckGL
         ref={deckRef}
         viewState={processedViewState}
@@ -460,6 +465,7 @@ export default function MapView({ aerodromes, onAerodromeClick }: MapViewProps) 
           ref={mapRef}
           mapStyle={getMapStyleUrl(mapStyle, MAPTILER_KEY)}
           onLoad={onMapLoad}
+          attributionControl={false}
           reuseMaps
           terrain={terrainConfig}
           interactiveLayerIds={
