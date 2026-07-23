@@ -108,14 +108,7 @@
 }
 
 .feature-card {
-  transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.feature-card:hover {
-  border-color: var(--accent-cyan-400, #22d3ee);
-  background: var(--surface-container-high);
+  /* static card styling without hover animations */
 }
 
 .feature-icon-wrapper {
@@ -129,15 +122,6 @@
   border: 1px solid color-mix(in srgb, var(--accent-cyan-500) 20%, transparent);
   color: var(--primary);
   margin-block-end: 16px;
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease;
-}
-
-.feature-card:hover .feature-icon-wrapper {
-  background: color-mix(in srgb, var(--accent-cyan-500) 20%, transparent);
-  border-color: var(--accent-cyan-400);
-  color: var(--accent-cyan-400);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
