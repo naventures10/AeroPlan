@@ -1,25 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router';
-import {
-  Map,
-  Cloud,
-  Bell,
-  Layers,
-  Route,
-  FileText,
-  Mail,
-  ArrowRight,
-  Menu,
-  X,
-  ShieldAlert,
-} from 'lucide-react';
+import { Link } from 'react-router';
+import { Map, Cloud, Bell, Layers, Route, FileText, Mail, ArrowRight, Menu, X } from 'lucide-react';
+import DisclaimerModal from '../components/DisclaimerModal';
 import './LandingPage.css';
 
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
-  const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Monitor the scroll position inside our custom container
@@ -234,11 +222,6 @@ export default function LandingPage() {
                 of India
               </span>
             </h1>
-            <p className="font-ui text-base sm:text-lg text-on-surface-variant max-w-xl mx-auto mb-10 leading-relaxed">
-              A modern aviation data platform that puts interactive Indian airspace structures,
-              navigation routes, live weather layers, and aeronautical charts at your fingertips.
-            </p>
-
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
                 type="button"
@@ -407,87 +390,7 @@ export default function LandingPage() {
       </footer>
 
       {/* Non-Operational Use Disclaimer Modal */}
-      {showDisclaimerModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
-          onClick={() => setShowDisclaimerModal(false)}
-        >
-          <div
-            className="glass-morphism relative w-full max-w-lg p-6 sm:p-8 rounded-2xl sm:rounded-3xl shadow-2xl border border-outline/20 text-on-surface bg-surface-container/95 flex flex-col gap-5"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="disclaimer-title"
-          >
-            {/* Close Button */}
-            <button
-              type="button"
-              onClick={() => setShowDisclaimerModal(false)}
-              className="absolute top-4 right-4 p-2 text-on-surface-variant hover:text-on-surface rounded-xl hover:bg-surface-container-high transition-colors focus:outline-none"
-              aria-label="Close disclaimer modal"
-            >
-              <X size={20} />
-            </button>
-
-            {/* Header */}
-            <div className="flex items-center gap-3 pr-8">
-              <div className="p-3 rounded-2xl bg-accent-cyan/15 text-accent-cyan shrink-0">
-                <ShieldAlert size={28} />
-              </div>
-              <div>
-                <h2
-                  id="disclaimer-title"
-                  className="font-display text-lg sm:text-xl font-bold text-on-background"
-                >
-                  Non-Operational Use Disclaimer
-                </h2>
-                <p className="font-ui text-xs sm:text-sm text-on-surface-variant">
-                  Notice for flight visualization & research platform
-                </p>
-              </div>
-            </div>
-
-            {/* Body Content */}
-            <div className="font-ui text-sm sm:text-base text-on-surface-variant leading-relaxed flex flex-col gap-3">
-              <p>
-                <strong className="text-on-surface font-semibold">Aero Plan</strong> is an
-                interactive digital platform created strictly for situational awareness, airspace
-                visualization, research, and educational purposes.
-              </p>
-              <div className="p-3.5 rounded-xl bg-surface-container-high/60 border border-outline/10 text-xs sm:text-sm leading-relaxed">
-                <strong className="text-on-surface font-semibold block mb-1">
-                  Important Requirement:
-                </strong>
-                This platform and its data layers are{' '}
-                <span className="font-semibold text-on-surface underline">NOT</span> certified for
-                real-world flight navigation or operational flight planning. Pilots and flight
-                personnel must rely exclusively on official Aeronautical Information Publications.
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 mt-2">
-              <button
-                type="button"
-                onClick={() => setShowDisclaimerModal(false)}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-outline/30 text-on-surface hover:bg-surface-container-high text-sm font-semibold transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowDisclaimerModal(false);
-                  navigate('/app');
-                }}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-primary text-on-primary hover:bg-opacity-95 text-sm font-semibold transition-all shadow-md active:scale-[0.98] cursor-pointer"
-              >
-                I Understand & Proceed
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DisclaimerModal isOpen={showDisclaimerModal} onClose={() => setShowDisclaimerModal(false)} />
     </div>
   );
 }
