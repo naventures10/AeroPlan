@@ -262,21 +262,21 @@ export default function LandingPage() {
             <div className="stacked-theme-cards relative w-full max-w-sm aspect-square">
               <div className="stacked-card stacked-card-back">
                 <img
-                  src="/about_image3.png"
+                  src="/about_image3.jpg"
                   alt="AeroInfo India Layer 3"
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="stacked-card stacked-card-middle">
                 <img
-                  src="/about_image2.png"
+                  src="/about_image2.jpg"
                   alt="AeroInfo India Layer 2"
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="stacked-card stacked-card-front">
                 <img
-                  src="/about_image.png"
+                  src="/about_image.jpg"
                   alt="AeroInfo India Layer 1"
                   className="w-full h-full object-cover"
                 />
