@@ -37,7 +37,7 @@
       rgba(10, 15, 29, 0.35) 80%,
       var(--surface) 100%
     ),
-    url('/Backdrop.png') center/cover no-repeat;
+    url('/Backdrop.jpg') center/cover no-repeat;
 }
 
 .hero-content {
