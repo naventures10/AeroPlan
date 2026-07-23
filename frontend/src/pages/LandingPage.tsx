@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router';
 import { Map, Cloud, Bell, Layers, Route, FileText, Mail, ArrowRight, Menu, X } from 'lucide-react';
 import DisclaimerModal from '../components/DisclaimerModal';
 import './LandingPage.css';
@@ -121,12 +120,6 @@ export default function LandingPage() {
           >
             Use Cases
           </a>
-          <Link
-            to="/blog"
-            className="nav-link-underline hover:text-on-background transition-colors"
-          >
-            Blog
-          </Link>
           <a
             href="#contact"
             onClick={(e) => handleAnchorClick(e, 'contact')}
@@ -180,12 +173,6 @@ export default function LandingPage() {
           >
             Use Cases
           </a>
-          <Link
-            to="/blog"
-            className="py-2 text-on-surface hover:text-primary transition-colors border-b border-outline-variant/10"
-          >
-            Blog
-          </Link>
           <a
             href="#contact"
             onClick={(e) => handleAnchorClick(e, 'contact')}
@@ -217,8 +204,8 @@ export default function LandingPage() {
         <div className="hero-content relative">
           <div>
             <h1 className="font-display text-3xl sm:text-5xl font-bold tracking-tight text-on-background mb-6 leading-tight max-w-4xl mx-auto">
-              Comprehensive Digital Platform for Aeronautical Information{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-cyan-500">
+              A comprehensive digital platform for aeronautical information{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF9933] via-primary to-cyan-400">
                 of India
               </span>
             </h1>
@@ -272,12 +259,28 @@ export default function LandingPage() {
           </div>
 
           <div className="lg:col-span-5 flex justify-center">
-            <div className="relative w-full max-w-sm aspect-square rounded-3xl bg-surface-container-high border border-outline-variant/30 flex items-center justify-center overflow-hidden">
-              <img
-                src="/about_image.png"
-                alt="About AeroInfo India"
-                className="w-full h-full object-cover"
-              />
+            <div className="stacked-theme-cards relative w-full max-w-sm aspect-square">
+              <div className="stacked-card stacked-card-back">
+                <img
+                  src="/about_image3.png"
+                  alt="AeroInfo India Layer 3"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="stacked-card stacked-card-middle">
+                <img
+                  src="/about_image2.png"
+                  alt="AeroInfo India Layer 2"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="stacked-card stacked-card-front">
+                <img
+                  src="/about_image.png"
+                  alt="AeroInfo India Layer 1"
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
           </div>
         </div>

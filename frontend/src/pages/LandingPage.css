@@ -24,7 +24,6 @@
   overflow: hidden;
 }
 
-/* Static lightweight CSS Background Gradient */
 .hero-static-bg {
   position: absolute;
   inset: 0;
@@ -32,15 +31,13 @@
   z-index: 1;
   background:
     radial-gradient(
-      circle at 50% 35%,
-      color-mix(in srgb, var(--primary) 18%, transparent) 0%,
-      transparent 65%
+      ellipse at 50% 48%,
+      rgba(10, 15, 29, 0.92) 0%,
+      rgba(10, 15, 29, 0.75) 45%,
+      rgba(10, 15, 29, 0.35) 80%,
+      var(--surface) 100%
     ),
-    radial-gradient(
-      circle at 80% 70%,
-      color-mix(in srgb, var(--accent-cyan-500, #06b6d4) 12%, transparent) 0%,
-      transparent 50%
-    );
+    url('/Backdrop.png') center/cover no-repeat;
 }
 
 .hero-content {
@@ -167,4 +164,50 @@
 .nav-link-underline:hover::after {
   transform: scaleX(1);
   transform-origin: left;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   5. Stacked Theme Cards (About Section)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.stacked-theme-cards {
+  position: relative;
+  inline-size: 100%;
+  max-inline-size: 380px;
+  aspect-ratio: 1 / 1;
+}
+
+.stacked-card {
+  position: absolute;
+  inline-size: 82%;
+  block-size: 82%;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--outline-variant) 30%, transparent);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+  background-color: var(--surface-container-high);
+}
+
+.stacked-card-back {
+  top: 0;
+  right: 0;
+  z-index: 1;
+  opacity: 0.75;
+  filter: brightness(0.8);
+}
+
+.stacked-card-middle {
+  top: 9%;
+  right: 9%;
+  z-index: 2;
+  opacity: 0.9;
+  filter: brightness(0.9);
+}
+
+.stacked-card-front {
+  bottom: 0;
+  left: 0;
+  z-index: 3;
+  opacity: 1;
+  filter: brightness(1);
 }
