@@ -1,0 +1,12 @@
+# AeroInfo India
+
+> AeroInfo India is a digital platform providing interactive Indian airspace visualization, ATS navigation routes, real-time METAR and TAF aviation weather reports, NOTAMs, and aeronautical charts.
+
+## Core Features & Information
+- **AeroInfo Map App**: [AeroInfo App](https://aeroinfo.in/app) - Interactive 2D/3D map visualization for Indian airspace structures, FIR boundaries, waypoints, Navaids, ATS routes, live wind/cloud weather overlays, and real-time METAR/TAF.
+- **Aeronautical Information**: Electronic Aeronautical Information Publication (eAIP) data for situational awareness, research, and educational purposes.
+- **Disclaimer**: Strictly intended for situational awareness and research. Not certified for real-world flight navigation.
+
+## Links & Resources
+- [Main Landing Page](https://aeroinfo.in/)
+- [Interactive Map App](https://aeroinfo.in/app)
