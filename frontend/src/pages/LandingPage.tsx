@@ -340,22 +340,28 @@ export default function LandingPage() {
             <div className="stacked-theme-cards relative w-full max-w-sm aspect-square">
               <div className="stacked-card stacked-card-back">
                 <img
-                  src="/about_image3.jpg"
-                  alt="AeroInfo India Layer 3"
+                  src="/about_image3.webp"
+                  alt="AeroInfo India - DGCA Air Navigation & eAIP Charts Layer"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="stacked-card stacked-card-middle">
                 <img
-                  src="/about_image2.jpg"
-                  alt="AeroInfo India Layer 2"
+                  src="/about_image2.webp"
+                  alt="AeroInfo India - Live METAR TAF Weather & Airspace Visualization"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="stacked-card stacked-card-front">
                 <img
-                  src="/about_image.jpg"
-                  alt="AeroInfo India Layer 1"
+                  src="/about_image.webp"
+                  alt="AeroInfo India - RTR(A) Radio Telephony Reference & Indian ATS Routes"
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
               </div>

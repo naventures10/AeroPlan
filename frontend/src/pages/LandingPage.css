@@ -37,7 +37,7 @@
       light-dark(rgba(251, 248, 241, 0.88), rgba(10, 15, 29, 0.35)) 85%,
       var(--surface) 100%
     ),
-    url('/Backdrop.jpg') center/cover no-repeat;
+    url('/Backdrop.webp') center/cover no-repeat;
 }
 
 .hero-content {
@@ -202,4 +202,16 @@
   z-index: 3;
   opacity: 1;
   filter: brightness(1);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   6. Core Web Vitals & Rendering Performance (content-visibility)
+   ───────────────────────────────────────────────────────────────────────────── */
+
+#features,
+#use-cases,
+#faq,
+#contact {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 700px;
 }
