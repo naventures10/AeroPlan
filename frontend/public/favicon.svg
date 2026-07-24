@@ -1,30 +1,24 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg width="32" height="32" viewBox="1182 1460 335 314" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
-    <g transform="matrix(1,0,0,1,-9,-3)">
-        <path d="M1526,1541.5L1526,1698.5C1526,1741.825 1490.825,1777 1447.5,1777L1269.5,1777C1226.175,1777 1191,1741.825 1191,1698.5L1191,1541.5C1191,1498.175 1226.175,1463 1269.5,1463L1447.5,1463C1490.825,1463 1526,1498.175 1526,1541.5Z" style="fill:rgb(0,51,153);"/>
-    </g>
-    <path d="M1236,1615L1441,1535L1402,1710L1346,1670C1346,1670 1315.017,1699.885 1315,1697C1314.936,1685.984 1316.3,1653.412 1318,1649C1320.295,1643.045 1409.522,1571.367 1403,1569C1397.705,1567.079 1298.865,1637.2 1292,1638C1284.405,1638.885 1236,1615 1236,1615Z" style="fill:rgb(220,240,245);"/>
-    <g>
-        <clipPath id="_clip1">
-            <rect x="1198.329" y="1544.282" width="301.452" height="143.707"/>
-        </clipPath>
-        <g clip-path="url(#_clip1)">
-            <g transform="matrix(1.111531,0.013717,-0.010489,0.84998,-143.039449,224.301894)">
-                <path d="M1363.365,1552.05C1390.122,1552.66 1414.486,1558.854 1433.24,1568.724C1456.396,1580.911 1471,1598.701 1471,1618.5C1471,1655.202 1420.814,1685 1359,1685C1297.186,1685 1247,1655.202 1247,1618.5C1247,1581.798 1297.186,1552 1359,1552C1360.462,1552 1361.917,1552.017 1363.365,1552.05" style="fill:none;stroke:rgb(0,148,103);stroke-width:8.42px;"/>
-            </g>
-            <g transform="matrix(1.182513,0.014593,-0.011426,0.925901,-237.988267,100.233376)">
-                <path d="M1363.365,1552.05C1390.122,1552.66 1414.486,1558.854 1433.24,1568.724C1456.396,1580.911 1471,1598.701 1471,1618.5C1471,1655.202 1420.814,1685 1359,1685C1297.186,1685 1247,1655.202 1247,1618.5C1247,1581.798 1297.186,1552 1359,1552C1360.462,1552 1361.917,1552.017 1363.365,1552.05" style="fill:none;stroke:white;stroke-width:7.85px;"/>
-            </g>
-            <g transform="matrix(1.253496,0.015469,-0.012548,1.01686,-332.636741,-48.173487)">
-                <path d="M1363.365,1552.05C1390.122,1552.66 1414.486,1558.854 1433.24,1568.724C1456.396,1580.911 1471,1598.701 1471,1618.5C1471,1655.202 1420.814,1685 1359,1685C1297.186,1685 1247,1655.202 1247,1618.5C1247,1581.798 1297.186,1552 1359,1552C1360.462,1552 1361.917,1552.017 1363.365,1552.05" style="fill:none;stroke:rgb(255,153,51);stroke-width:7.3px;"/>
-            </g>
-        </g>
-    </g>
-    <clipPath id="_clip2">
-        <rect x="1242" y="1517" width="205" height="92"/>
-    </clipPath>
-    <g clip-path="url(#_clip2)">
-        <path d="M1236,1615L1441,1535L1402,1710L1346,1670C1346,1670 1315.017,1699.885 1315,1697C1314.936,1685.984 1316.3,1653.412 1318,1649C1320.295,1643.045 1409.522,1571.367 1403,1569C1397.705,1567.079 1298.865,1637.2 1292,1638C1284.405,1638.885 1236,1615 1236,1615Z" style="fill:rgb(220,240,245);"/>
-    </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="1230 1530 215 185" width="32" height="32">
+  <defs>
+    <!-- Dynamic Theme-Adapting Gradient for Favicon -->
+    <linearGradient id="aero-tricolor" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop id="stop-saffron" offset="0%" stop-color="#FF9933" />
+      <stop id="stop-mid" offset="45%" stop-color="#FFFFFF" />
+      <stop id="stop-cyan" offset="100%" stop-color="#5DF8D8" />
+    </linearGradient>
+    <style>
+      /* Light Browser Tab Theme High-Contrast Color Overrides */
+      @media (prefers-color-scheme: light) {
+        #stop-saffron { stop-color: #F97316; }
+        #stop-mid { stop-color: #314F4C; }
+        #stop-cyan { stop-color: #0891B2; }
+      }
+    </style>
+  </defs>
+
+  <!-- Clean Paper Airplane Icon -->
+  <path
+    d="M1236,1615 L1441,1535 L1402,1710 L1346,1670 C1346,1670 1315.017,1699.885 1315,1697 C1314.936,1685.984 1316.3,1653.412 1318,1649 C1320.295,1643.045 1409.522,1571.367 1403,1569 C1397.705,1567.079 1298.865,1637.2 1292,1638 C1284.405,1638.885 1236,1615 1236,1615 Z"
+    fill="url(#aero-tricolor)"
+  />
 </svg>

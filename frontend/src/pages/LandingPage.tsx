@@ -85,11 +85,30 @@ export default function LandingPage() {
         className={`landing-header px-6 py-4 flex items-center justify-between ${scrolled ? 'header-scrolled' : 'bg-transparent'}`}
       >
         <div className="flex items-center gap-2">
-          {/* SVG Favicon inline */}
-          <svg className="w-8 h-8 text-primary" viewBox="1182 1460 335 314" fill="currentColor">
+          {/* Tri-Color SVG Logo */}
+          <svg className="w-8 h-8" viewBox="1230 1530 215 185" fill="none">
+            <defs>
+              <linearGradient id="header-logo-tricolor" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="var(--logo-stop1, #F97316)" />
+                <stop offset="45%" stopColor="var(--logo-stop2, #314F4C)" />
+                <stop offset="100%" stopColor="var(--logo-stop3, #0891B2)" />
+              </linearGradient>
+              <style>{`
+                :root:not(.dark) {
+                  --logo-stop1: #F97316;
+                  --logo-stop2: #314F4C;
+                  --logo-stop3: #0891B2;
+                }
+                html.dark {
+                  --logo-stop1: #FF9933;
+                  --logo-stop2: #FFFFFF;
+                  --logo-stop3: #5DF8D8;
+                }
+              `}</style>
+            </defs>
             <path
               d="M1236,1615L1441,1535L1402,1710L1346,1670C1346,1670 1315.017,1699.885 1315,1697C1314.936,1685.984 1316.3,1653.412 1318,1649C1320.295,1643.045 1409.522,1571.367 1403,1569C1397.705,1567.079 1298.865,1637.2 1292,1638C1284.405,1638.885 1236,1615 1236,1615Z"
-              fill="var(--color-primary, #4c7a77)"
+              fill="url(#header-logo-tricolor)"
             />
           </svg>
           <span className="font-display text-xl font-bold tracking-tight text-on-background">
