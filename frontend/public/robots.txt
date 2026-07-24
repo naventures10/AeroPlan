@@ -22,6 +22,3 @@ User-agent: Google-Extended
 Allow: /
 
 Sitemap: https://aeroinfo.in/sitemap.xml
-# LLM Text File
-# https://aeroinfo.in/llms.txt
-
