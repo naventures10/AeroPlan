@@ -54,6 +54,10 @@ export class MapPage {
     await expect(this.mapCanvas).toBeVisible({ timeout: 15000 });
     // Ensure UI has faded in (important for framer-motion animations)
     await expect(this.searchInput).toBeVisible({ timeout: 15000 });
+    // Ensure tooltip platform polyfills are ready
+    await expect(this.page.locator('html[data-tooltip-platform-ready="true"]')).toBeAttached({
+      timeout: 15000,
+    });
   }
 
   async toggleLayer(layerName: string) {

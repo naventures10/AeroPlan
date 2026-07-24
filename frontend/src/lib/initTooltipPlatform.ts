@@ -17,4 +17,5 @@ export async function initTooltipPlatform() {
   if (jobs.length > 0) {
     await Promise.all(jobs);
   }
+  document.documentElement.dataset.tooltipPlatformReady = 'true';
 }
