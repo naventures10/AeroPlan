@@ -71,7 +71,7 @@ export default function MapDisclaimerBanner() {
                 scheduleAutoMinimize();
               }}
               className={`glass-morphism pointer-events-auto z-40 flex items-center justify-center p-2.5 rounded-xl text-accent-cyan hover:bg-surface-container-high transition-colors shadow-md ${className} ${
-                isMobile ? 'fixed bottom-20 left-3' : 'absolute bottom-6 right-6'
+                isMobile ? 'fixed bottom-20 right-3' : 'absolute bottom-6 right-6'
               }`}
               aria-label="Expand aeronautical disclaimer"
             >
@@ -110,7 +110,7 @@ export default function MapDisclaimerBanner() {
           transition={{ duration: 0.2, ease: 'easeOut' }}
           className={`glass-morphism pointer-events-auto z-40 flex items-center gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl shadow-md text-on-surface ${
             isMobile
-              ? 'fixed bottom-20 left-3 right-16 max-w-[calc(100vw-4.5rem)] text-xs'
+              ? 'fixed bottom-20 right-3 left-3 max-w-[calc(100vw-1.5rem)] text-xs'
               : 'absolute bottom-6 right-6 max-w-md text-xs sm:text-sm'
           }`}
           role="region"
