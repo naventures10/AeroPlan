@@ -48,42 +48,174 @@ function UnavailableCard({ icaoCode }: { icaoCode: string }) {
   );
 }
 
+function WindsockIcon({ className = 'w-[19px] h-[30px]' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`${className} drop-shadow-[0_2px_5px_rgba(0,0,0,0.7)] shrink-0`}
+    >
+      {/* Pivot Mount Dot on Ring */}
+      <circle cx="12" cy="1.2" r="1.2" fill="#ffffff" stroke="#0f172a" strokeWidth="0.6" />
+
+      {/* Wire Harness Lines (V-mount) */}
+      <line
+        x1="12"
+        y1="1.2"
+        x2="5.5"
+        y2="7.0"
+        stroke="#ffffff"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="12"
+        y1="1.2"
+        x2="18.5"
+        y2="7.0"
+        stroke="#ffffff"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+
+      {/* Metal Hoop Mouth Rim */}
+      <ellipse
+        cx="12"
+        cy="7.0"
+        rx="6.5"
+        ry="1.8"
+        fill="#cbd5e1"
+        stroke="#0f172a"
+        strokeWidth="0.8"
+      />
+      {/* Dark Inside Opening */}
+      <ellipse cx="12" cy="7.0" rx="4.8" ry="1.0" fill="#651a07" />
+
+      {/* Stripe 1 (Mouth Orange) */}
+      <path
+        d="M 5.5 7.0 C 5.5 8.2 18.5 8.2 18.5 7.0 L 17.7 11.5 C 17.7 12.6 6.3 12.6 6.3 11.5 Z"
+        fill="#ff5500"
+        stroke="#0f172a"
+        strokeWidth="0.6"
+      />
+
+      {/* Stripe 2 (White Band 1) */}
+      <path
+        d="M 6.3 11.5 C 6.3 12.6 17.7 12.6 17.7 11.5 L 16.9 16.0 C 16.9 17.0 7.1 17.0 7.1 16.0 Z"
+        fill="#ffffff"
+        stroke="#0f172a"
+        strokeWidth="0.6"
+      />
+
+      {/* Stripe 3 (Middle Orange) */}
+      <path
+        d="M 7.1 16.0 C 7.1 17.0 16.9 17.0 16.9 16.0 L 16.1 20.5 C 16.1 21.4 7.9 21.4 7.9 20.5 Z"
+        fill="#ff5500"
+        stroke="#0f172a"
+        strokeWidth="0.6"
+      />
+
+      {/* Stripe 4 (White Band 2) */}
+      <path
+        d="M 7.9 20.5 C 7.9 21.4 16.1 21.4 16.1 20.5 L 15.4 25.0 C 15.4 25.8 8.6 25.8 8.6 25.0 Z"
+        fill="#ffffff"
+        stroke="#0f172a"
+        strokeWidth="0.6"
+      />
+
+      {/* Stripe 5 (Tail Orange) */}
+      <path
+        d="M 8.6 25.0 C 8.6 25.8 15.4 25.8 15.4 25.0 L 14.8 28.5 C 14.8 29.3 9.2 29.3 9.2 28.5 Z"
+        fill="#ff5500"
+        stroke="#0f172a"
+        strokeWidth="0.6"
+      />
+
+      {/* Tail End Soft Wide Opening */}
+      <ellipse
+        cx="12"
+        cy="28.5"
+        rx="2.8"
+        ry="0.9"
+        fill="#ea580c"
+        stroke="#0f172a"
+        strokeWidth="0.8"
+      />
+      <ellipse cx="12" cy="28.5" rx="1.8" ry="0.5" fill="#651a07" />
+    </svg>
+  );
+}
+
 function WindCard({ parsedMetar }: { parsedMetar: ParsedMetar }) {
   return (
-    <div className={`col-span-12 ${cardBase}`}>
-      <span className={sectionLabel}>Wind</span>
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-1.5">
-            <Wind className="text-teal-700 dark:text-cyan-400 shrink-0" size={16} />
-            <span className="text-lg font-black text-on-surface">
-              {parsedMetar.windDir === 'VRB'
-                ? 'VRB'
-                : parsedMetar.windDir
-                  ? `${parsedMetar.windDir}°T`
-                  : '–'}
-            </span>
+    <div className={`col-span-12 ${cardBase} flex flex-col items-center justify-between`}>
+      {/* Header */}
+      <div className="w-full flex justify-between items-center mb-1">
+        <span className={sectionLabel + ' mb-0'}>Wind</span>
+        <div className="flex items-center gap-1 text-xs text-on-surface-variant font-semibold">
+          <Wind className="text-teal-700 dark:text-cyan-400 shrink-0" size={13} />
+          <span>
+            {parsedMetar.windDir === 'VRB'
+              ? 'VRB'
+              : parsedMetar.windDir
+                ? `${parsedMetar.windDir}° True`
+                : 'No Dir'}
+          </span>
+        </div>
+      </div>
+
+      {/* Centered Compass Ring (Above) */}
+      <div className="relative w-24 h-24 rounded-full border border-outline-variant flex items-center justify-center shrink-0 bg-surface/40 shadow-inner my-1">
+        {/* Dashed Inner Track */}
+        <div className="absolute inset-2 border border-dashed border-outline-variant/60 rounded-full" />
+
+        {/* Rotated Windsock */}
+        {parsedMetar.windDir && parsedMetar.windDir !== 'VRB' && (
+          <div
+            className="absolute inset-0 origin-center flex flex-col items-center justify-start py-0 pointer-events-none z-0"
+            style={{ transform: `rotate(${parsedMetar.windDir}deg)` }}
+          >
+            <WindsockIcon className="w-[19px] h-[30px]" />
           </div>
-          <span className="text-3xl font-black text-on-surface leading-none">
-            {parsedMetar.windSpeed ?? '–'}
-            <span className="text-xs font-medium text-on-surface-variant ml-1">
+        )}
+
+        {/* Center Readout */}
+        <div className="flex flex-col items-center justify-center z-10 text-center bg-surface-container/90 backdrop-blur-xs rounded-full w-9 h-9 border border-outline-variant/60 shadow-xs">
+          <span className="text-[10px] font-black text-on-surface leading-tight">
+            {parsedMetar.windDir === 'VRB'
+              ? 'VRB'
+              : parsedMetar.windDir
+                ? `${parsedMetar.windDir}°`
+                : '–'}
+          </span>
+          <span className="text-[7.5px] font-medium text-on-surface-variant leading-tight">
+            {parsedMetar.windSpeed
+              ? `${parsedMetar.windSpeed}${parsedMetar.windUnit || 'kt'}`
+              : '–'}
+          </span>
+        </div>
+      </div>
+
+      {/* Stats Readout (Below) */}
+      <div className="w-full grid grid-cols-2 gap-1.5 mt-1">
+        <div className="bg-surface/60 rounded-xl p-1 border border-outline-variant/50 flex flex-col items-center justify-center">
+          <span className="text-[8px] font-bold text-on-surface-variant uppercase tracking-wider">
+            Speed
+          </span>
+          <span className="text-xs font-black text-on-surface">
+            {parsedMetar.windSpeed ?? '–'}{' '}
+            <span className="text-[9px] font-medium text-on-surface-variant">
               {parsedMetar.windUnit || 'kt'}
             </span>
           </span>
         </div>
 
-        {/* Compact Compass */}
-        <div className="relative w-16 h-16 rounded-full border border-outline flex items-center justify-center shrink-0">
-          <div className="absolute inset-1 border border-dashed border-outline rounded-full" />
-          {parsedMetar.windDir && parsedMetar.windDir !== 'VRB' && (
-            <div
-              className="absolute origin-center w-1 h-full flex flex-col items-center justify-start py-1"
-              style={{ transform: `rotate(${parsedMetar.windDir}deg)` }}
-            >
-              <div className="w-1.5 h-1.5 bg-amber-500 rounded-full shadow-[0_0_6px_color-mix(in_srgb,var(--status-warning)_80%,transparent)]" />
-            </div>
-          )}
-          <span className="text-[10px] font-bold text-on-surface z-10">
+        <div className="bg-surface/60 rounded-xl p-1 border border-outline-variant/50 flex flex-col items-center justify-center">
+          <span className="text-[8px] font-bold text-on-surface-variant uppercase tracking-wider">
+            Direction
+          </span>
+          <span className="text-xs font-black text-on-surface">
             {parsedMetar.windDir === 'VRB'
               ? 'VRB'
               : parsedMetar.windDir
