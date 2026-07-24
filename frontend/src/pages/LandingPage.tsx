@@ -1,6 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
-import { Map, Cloud, Bell, Layers, Route, FileText, Mail, ArrowRight, Menu, X } from 'lucide-react';
+import {
+  Map,
+  Cloud,
+  Bell,
+  Layers,
+  Route,
+  FileText,
+  Mail,
+  ArrowRight,
+  Menu,
+  X,
+  ChevronDown,
+} from 'lucide-react';
 import DisclaimerModal from '../components/DisclaimerModal';
+import SEO from '../components/SEO';
 import './LandingPage.css';
 
 export default function LandingPage() {
@@ -37,47 +50,93 @@ export default function LandingPage() {
     }
   };
 
+  const [activeFaqIndex, setActiveFaqIndex] = useState<number | null>(null);
+
   const featureItems = [
     {
       icon: <Map className="w-6 h-6" />,
-      title: 'Interactive Indian Aeronautical Map',
+      title: 'Interactive eAIP India Aeronautical Map',
       description:
-        'Enroute & terminal views with real-time Indian vector data layers, custom styling, and responsive filters.',
+        'Enroute & terminal views with real-time Indian vector data layers, ATS navigation airways, custom styling, and responsive filters.',
     },
     {
       icon: <Cloud className="w-6 h-6" />,
-      title: 'Indian Meteorological Overlays',
+      title: 'DGCA Meteorology: METAR & TAF Weather',
       description:
-        'Live Indian METAR/TAF weather data integrated directly into the map view for quick pilot briefings.',
+        'Live Indian METAR and TAF aviation weather reports integrated directly into the map view for instant pilot briefings.',
+    },
+    {
+      icon: <FileText className="w-6 h-6" />,
+      title: 'DGCA Air Regulations & EXAMS Resources',
+      description:
+        'Interactive airspace classifications, FIR boundaries, and regulatory reference data for DGCA Air Navigation, Air Regulations, and Meteorology exams.',
+    },
+    {
+      icon: <Route className="w-6 h-6" />,
+      title: 'RTR(A) Radio Telephony Reference Data',
+      description:
+        'Detailed airspace sector maps, FIR communication frequencies, and terminal route data tailored for RTR(A) radio telephony candidates.',
     },
     {
       icon: <Bell className="w-6 h-6" />,
       title: 'NOTAMs & AIP Supplements',
       description:
-        'Real-time notices to airmen and regulatory updates from Indian flight information regions, parsed by location.',
+        'Real-time notices to airmen and regulatory updates from Indian flight information regions (Mumbai, Delhi, Kolkata, Chennai).',
     },
     {
       icon: <Layers className="w-6 h-6" />,
-      title: 'Airspace Visualization',
+      title: 'Indian Airspace & Terminal Visualization',
       description:
-        'Explore detailed Indian FIR, TMA, and CTR boundaries with clear classification and altitudinal labels.',
+        'Explore detailed Indian FIR, TMA, and CTR boundaries with clear altitude labels and instrument arrival/departure procedures.',
+    },
+  ];
+
+  const faqItems = [
+    {
+      question: 'What DGCA EXAMS resources and aviation regulations are covered on AeroInfo India?',
+      answer:
+        'AeroInfo India provides comprehensive digital reference materials for DGCA Air Navigation, DGCA Meteorology, and DGCA Air Regulations exams, including interactive airspace classifications, ATS route structures, and aerodrome instrument procedures.',
     },
     {
-      icon: <Route className="w-6 h-6" />,
-      title: 'Indian Route Network',
-      description:
-        'Browse domestic RNAV routes, ATS airways, waypoint databases, and terminal arrival/departure gates.',
+      question: 'Where can I find RTR(A) exam reference data and radio telephony procedures?',
+      answer:
+        'AeroInfo India features detailed Indian airspace sector maps, FIR frequencies, and terminal route data tailored specifically for RTR(A) Radio Telephony Restricted (Aero) exam preparation and aviation professionals.',
     },
     {
-      icon: <FileText className="w-6 h-6" />,
-      title: 'AIP Charts & Data',
-      description:
-        'Instant access to Indian aerodrome information, SID/STAR charts, and airport instrument approach procedures.',
+      question: 'How do I access real-time METAR and TAF aviation weather reports?',
+      answer:
+        'Live METAR and TAF weather reports for Indian aerodromes (including VIDP, VABB, VOBL, VECC, VOMM) are updated in real-time on our interactive map platform under DGCA Meteorology overlays.',
+    },
+    {
+      question: 'Are official eAIP India charts and ATS routes included?',
+      answer:
+        'Yes, AeroInfo India visualizes official eAIP India charts, instrument arrival and departure procedures, NOTAMs, and RNAV ATS route networks across all Indian Flight Information Regions (FIRs).',
     },
   ];
 
   return (
     <div ref={containerRef} className="landing-container font-sans aip-scrollbar">
+      <SEO
+        description="AeroInfo India is an interactive digital platform for Indian airspace visualization, eAIP India charts, ATS navigation routes, real-time METAR & TAF weather reports, NOTAMs, RTR(A) examination resources, DGCA Air Navigation, DGCA Meteorology, and DGCA Air Regulations."
+        keywords={[
+          'AeroInfo India',
+          'AIP India',
+          'eAIP India',
+          'METAR',
+          'TAF',
+          'RTR(A)',
+          'RTR Aero',
+          'DGCA EXAMS resources',
+          'DGCA Air Navigation',
+          'DGCA Meteorology',
+          'DGCA Air Regulations',
+          'Indian Airspace',
+          'ATS Routes',
+          'NOTAMs',
+          'Aeronautical Charts',
+        ]}
+        canonicalUrl="https://aeroinfo.in/"
+      />
       {/* ─────────────────────────────────────────────────────────────────────────
          Header
          ───────────────────────────────────────────────────────────────────────── */}
@@ -374,6 +433,56 @@ export default function LandingPage() {
               Start Exploring Now
               <ArrowRight size={18} />
             </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ─────────────────────────────────────────────────────────────────────────
+         FAQ Section (DGCA Exams, RTR(A), METAR/TAF, eAIP India)
+         ───────────────────────────────────────────────────────────────────────── */}
+      <section id="faq" className="py-24 px-6 bg-surface border-t border-outline-variant/10">
+        <div className="max-w-4xl mx-auto space-y-12">
+          <div className="text-center space-y-4">
+            <span className="text-xs font-bold tracking-widest uppercase text-primary font-ui">
+              Frequently Asked Questions
+            </span>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-on-background">
+              DGCA Exam Resources, RTR(A) & Airspace Regulations
+            </h2>
+            <p className="font-ui text-base text-on-surface-variant/80 max-w-2xl mx-auto">
+              Everything you need to know about AeroInfo India's aeronautical maps, live weather
+              feeds, and regulatory reference data.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {faqItems.map((faq, index) => {
+              const isOpen = activeFaqIndex === index;
+              return (
+                <div
+                  key={index}
+                  className="rounded-2xl bg-surface-container border border-outline-variant/30 overflow-hidden transition-all duration-200"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setActiveFaqIndex(isOpen ? null : index)}
+                    className="w-full p-6 text-left flex items-center justify-between gap-4 font-display font-semibold text-base sm:text-lg text-on-background hover:text-primary transition-colors focus:outline-none"
+                    aria-expanded={isOpen}
+                  >
+                    <span>{faq.question}</span>
+                    <ChevronDown
+                      size={20}
+                      className={`shrink-0 text-on-surface-variant transition-transform duration-200 ${isOpen ? 'rotate-180 text-primary' : ''}`}
+                    />
+                  </button>
+                  {isOpen && (
+                    <div className="px-6 pb-6 pt-0 font-ui text-sm sm:text-base text-on-surface-variant/90 leading-relaxed border-t border-outline-variant/10">
+                      {faq.answer}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

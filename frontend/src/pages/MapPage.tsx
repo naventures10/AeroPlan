@@ -7,6 +7,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { LogOut } from 'lucide-react';
 import GlobalLoader from '../components/GlobalLoader';
+import SEO from '../components/SEO';
 
 const MapView = lazy(() => import('../features/map/MapView'));
 const SearchBar = lazy(() => import('../features/map/controls/SearchBar'));
@@ -114,6 +115,25 @@ export default function MapPage() {
 
   return (
     <div className="w-screen h-[100dvh] overflow-hidden bg-surface relative font-sans">
+      <SEO
+        description="Interactive Indian Airspace Map with real-time METAR & TAF weather overlays, eAIP India aeronautical charts, ATS navigation airways, NOTAMs, RTR(A) data, and DGCA Air Regulations."
+        keywords={[
+          'AeroInfo India',
+          'AIP India',
+          'eAIP India Map',
+          'METAR',
+          'TAF',
+          'RTR(A)',
+          'DGCA EXAMS resources',
+          'DGCA Air Navigation',
+          'DGCA Meteorology',
+          'DGCA Air Regulations',
+          'Indian Airspace Radar',
+          'ATS Routes',
+          'Airspace Visualization',
+        ]}
+        canonicalUrl="https://aeroinfo.in/app"
+      />
       {!aerodromes && <GlobalLoader />}
       {/* Map (Primary Chunk) */}
       <Suspense fallback={aerodromes ? <GlobalLoader /> : null}>

@@ -1,12 +1,19 @@
 # AeroInfo India
 
-> AeroInfo India is a digital platform providing interactive Indian airspace visualization, ATS navigation routes, real-time METAR and TAF aviation weather reports, NOTAMs, and aeronautical charts.
+> AeroInfo India is a comprehensive digital platform providing interactive Indian airspace visualization, eAIP India aeronautical charts, ATS navigation routes, real-time METAR and TAF aviation weather reports, NOTAMs, RTR(A) examination resources, DGCA Air Navigation, DGCA Meteorology, and DGCA Air Regulations reference materials.
 
 ## Core Features & Information
-- **AeroInfo Map App**: [AeroInfo App](https://aeroinfo.in/app) - Interactive 2D/3D map visualization for Indian airspace structures, FIR boundaries, waypoints, Navaids, ATS routes, live wind/cloud weather overlays, and real-time METAR/TAF.
-- **Aeronautical Information**: Electronic Aeronautical Information Publication (eAIP) data for situational awareness, research, and educational purposes.
-- **Disclaimer**: Strictly intended for situational awareness and research. Not certified for real-world flight navigation.
+- **AeroInfo Map App**: [AeroInfo App](https://aeroinfo.in/app) - Interactive 2D/3D map visualization for Indian airspace structures, FIR boundaries (Mumbai, Delhi, Kolkata, Chennai), waypoints, Navaids, ATS airways, live wind/cloud overlays, and real-time METAR/TAF weather reports.
+- **eAIP India Aeronautical Data**: Electronic Aeronautical Information Publication (eAIP) charts, SID/STAR instrument approach procedures, aerodrome diagrams, and FIR frequency maps.
+- **DGCA EXAMS Resources & Regulations**: Digital study and reference materials for DGCA Air Navigation, DGCA Meteorology, and DGCA Air Regulations examination topics.
+- **RTR(A) Radio Telephony Reference**: Airspace sector boundaries, FIR communication frequencies, and terminal route data tailored for RTR(A) Radio Telephony Restricted (Aero) candidates and aviation professionals.
+- **Disclaimer**: Intended for situational awareness, academic research, and exam reference. Not for operational flight navigation.
 
 ## Links & Resources
 - [Main Landing Page](https://aeroinfo.in/)
-- [Interactive Map App](https://aeroinfo.in/app)
+- [Interactive Airspace Map App](https://aeroinfo.in/app)
+- [New Delhi Aerodrome Map (VIDP)](https://aeroinfo.in/app?icao=VIDP)
+- [Mumbai Aerodrome Map (VABB)](https://aeroinfo.in/app?icao=VABB)
+- [Bangalore Aerodrome Map (VOBL)](https://aeroinfo.in/app?icao=VOBL)
+- [Kolkata Aerodrome Map (VECC)](https://aeroinfo.in/app?icao=VECC)
+- [Chennai Aerodrome Map (VOMM)](https://aeroinfo.in/app?icao=VOMM)

@@ -9,37 +9,31 @@
     <title>AeroInfo India</title>
     <meta
       name="description"
-      content="AeroInfo India is an interactive digital platform for Indian airspace visualization, ATS navigation routes, real-time METAR &amp; TAF weather reports, NOTAMs, and aeronautical charts."
+      content="AeroInfo India is an interactive digital platform for Indian airspace visualization, eAIP India charts, ATS navigation routes, real-time METAR &amp; TAF weather reports, NOTAMs, RTR(A) examination resources, DGCA Air Navigation, DGCA Meteorology, and DGCA Air Regulations."
     />
     <meta
       name="keywords"
-      content="AeroInfo India, Aeronautical Information Publication, Indian Airspace, Flight Navigation, Airspace Visualization, ATS Routes, METAR, TAF, Real-time METAR, NOTAMs"
+      content="AeroInfo India, AIP India, eAIP India, METAR, TAF, RTR(A), RTR Aero, DGCA EXAMS resources, DGCA Exam Resources, DGCA Air Navigation, DGCA Meteorology, DGCA Air Regulations, Indian Airspace, Flight Navigation, Airspace Visualization, ATS Routes, Real-time METAR, NOTAMs, Aeronautical Charts"
     />
     <link rel="canonical" href="https://aeroinfo.in/" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://aeroinfo.in/" />
-    <meta
-      property="og:title"
-      content="AeroInfo India | Interactive Aeronautical Information &amp; Airspace Platform"
-    />
+    <meta property="og:title" content="AeroInfo India" />
     <meta
       property="og:description"
-      content="AeroInfo India is an interactive digital platform for Indian airspace visualization, ATS navigation routes, real-time METAR &amp; TAF weather reports, NOTAMs, and aeronautical charts."
+      content="Interactive aeronautical information platform for Indian airspace, eAIP India charts, real-time METAR &amp; TAF weather, RTR(A) reference data, DGCA Air Navigation, DGCA Meteorology, and DGCA Air Regulations."
     />
     <meta property="og:image" content="https://aeroinfo.in/Backdrop.jpg" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://aeroinfo.in/" />
-    <meta
-      name="twitter:title"
-      content="AeroInfo India | Interactive Aeronautical Information &amp; Airspace Platform"
-    />
+    <meta name="twitter:title" content="AeroInfo India" />
     <meta
       name="twitter:description"
-      content="AeroInfo India is an interactive digital platform for Indian airspace visualization, ATS navigation routes, real-time METAR &amp; TAF weather reports, NOTAMs, and aeronautical charts."
+      content="Interactive aeronautical information platform for Indian airspace, eAIP India charts, real-time METAR &amp; TAF weather, RTR(A) reference data, DGCA Air Navigation, DGCA Meteorology, and DGCA Air Regulations."
     />
     <meta name="twitter:image" content="https://aeroinfo.in/Backdrop.jpg" />
 
@@ -47,17 +41,89 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "AeroInfo India",
-        "url": "https://aeroinfo.in/",
-        "applicationCategory": "NavigationApplication",
-        "operatingSystem": "All",
-        "description": "AeroInfo India is an interactive digital platform for Indian airspace visualization, ATS navigation routes, real-time METAR & TAF weather reports, NOTAMs, and aeronautical charts.",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "INR"
-        }
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "@id": "https://aeroinfo.in/#webapp",
+            "name": "AeroInfo India",
+            "url": "https://aeroinfo.in/",
+            "applicationCategory": "NavigationApplication",
+            "operatingSystem": "All",
+            "description": "Interactive digital platform for Indian airspace visualization, eAIP India charts, ATS navigation routes, real-time METAR & TAF weather reports, NOTAMs, RTR(A) resources, DGCA Air Navigation, DGCA Meteorology, and DGCA Air Regulations.",
+            "keywords": [
+              "AIP India",
+              "eAIP India",
+              "METAR",
+              "TAF",
+              "RTR(A)",
+              "DGCA EXAMS resources",
+              "DGCA Air Navigation",
+              "DGCA Meteorology",
+              "DGCA Air Regulations",
+              "Indian Airspace",
+              "ATS Routes",
+              "NOTAMs"
+            ],
+            "featureList": [
+              "AIP India & eAIP Aeronautical Charts",
+              "Live Aviation Weather Reports (METAR & TAF)",
+              "ATS Navigation Routes & Airspace Visualization",
+              "RTR(A) Radio Telephony Reference Data",
+              "DGCA Air Navigation, Meteorology & Air Regulations Information"
+            ],
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "INR"
+            }
+          },
+          {
+            "@type": "Organization",
+            "@id": "https://aeroinfo.in/#organization",
+            "name": "AeroInfo India",
+            "url": "https://aeroinfo.in/",
+            "logo": "https://aeroinfo.in/favicon.svg",
+            "description": "Digital aeronautical information systems and airspace intelligence platform for India."
+          },
+          {
+            "@type": "FAQPage",
+            "@id": "https://aeroinfo.in/#faq",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What DGCA EXAMS resources and aviation regulations are covered on AeroInfo India?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "AeroInfo India provides comprehensive digital reference materials for DGCA Air Navigation, DGCA Meteorology, and DGCA Air Regulations exams, including airspace classifications, ATS route structures, and aeronautical charts."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Where can I find RTR(A) exam reference data and radio telephony procedures?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "AeroInfo India features detailed Indian airspace sector maps, FIR frequencies, and terminal route data tailored for RTR(A) Radio Telephony Restricted (Aero) candidates and aviation professionals."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How do I access real-time METAR and TAF aviation weather reports?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Live METAR and TAF weather reports for Indian aerodromes are updated in real-time on our interactive map platform under DGCA Meteorology overlays."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Are official eAIP India charts and ATS routes included?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes, AeroInfo India visualizes official eAIP India charts, instrument arrival and departure procedures, NOTAMs, and RNAV ATS route networks across all Indian Flight Information Regions (FIRs)."
+                }
+              }
+            ]
+          }
+        ]
       }
     </script>
   </head>
